@@ -1,0 +1,17 @@
+.accionCard {
+    color: var(--color-primario);
+    background-color: var(--color-secundario);
+    border-radius: 5px;
+}
+
+.accionCard:hover {
+    color: white;
+    background-color: var(--color-ternario);
+    border-radius: 5px;
+    border: 3px dashed var(--color-primario);
+    /* transition: 0.2s; */
+}
+
+.accionCard i {
+    font-size: 45px;
+}

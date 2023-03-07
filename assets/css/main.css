@@ -1,0 +1,18 @@
+:root{
+    --color-primario: #683f72;
+    --color-secundario: #eaba37;;
+    --color-ternario: #a9c030;
+    --color-forma: #ececec;
+}
+
+.colorForma {
+    background-color: var(--color-forma);
+}
+
+.colorHeader {
+    background-color: var(--color-primario);
+}
+
+.color1{color: var(--color-primario);}
+.color2{color: var(--color-secundario);}
+.color3{color: var(--color-ternario);}

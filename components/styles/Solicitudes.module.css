@@ -1,0 +1,27 @@
+.error-message {
+    color: red;
+    margin-top: 5px;
+    margin-bottom: 0;
+    font-size: 14px;
+}
+
+.cancelFile {
+    position: absolute;
+    top: -20px;
+    right: -12px;
+    font-size: 25px;
+    cursor: pointer;
+    color: var(--color-primario);
+}
+
+.fileContainer {
+    border: 2px dashed var(--color-ternario);
+    position: relative;
+    border-radius: 5px;
+}
+
+.fileUpload {
+    font-size: 80px;
+    cursor: pointer;
+    color: var(--color-secundario);
+}
