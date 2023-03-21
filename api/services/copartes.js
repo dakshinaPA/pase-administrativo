@@ -3,13 +3,29 @@ import { RespuestaController } from '../utils/response'
 
 class CopartesServices {
 
+    static async obtener( id ){
 
-    static async obtener(){
-        const res = await CoparteDB.obtener()
+        const res = await CoparteDB.obtener( id )
+        
         if(res.error){
             return RespuestaController.fallida( 400, 'Error al obtener copartes', res.data )
         }
-        return RespuestaController.exitosa( 200, 'Consulta exitosa', res.data )
+        const copartesHidratadas = res.data.map( cop => {
+
+            let tipoTxt
+
+            switch ( Number(cop.tipo) ) {
+                case 1:
+                    tipoTxt = "Constituida"
+                    break;
+                case 2:
+                    tipoTxt = "No constituida"
+                    break;
+            }
+
+            return { ...cop, tipoTxt }
+        })
+        return RespuestaController.exitosa( 200, 'Consulta exitosa', copartesHidratadas )
     }
 
     static async crear( data ){
@@ -20,8 +36,8 @@ class CopartesServices {
         return RespuestaController.exitosa( 201, 'Coparte creada con éxito', res.data )
     }
 
-    static async actualizar( data ){
-        const res = await CoparteDB.actualizar( data )
+    static async actualizar( id, data ){
+        const res = await CoparteDB.actualizar( id, data )
         if(res.error){
             return RespuestaController.fallida( 400, 'Error al actualziar coparte', res.data )
         }
@@ -35,11 +51,6 @@ class CopartesServices {
         }
         return RespuestaController.exitosa( 200, 'Coparte borrada con éxito', res.data )
     }
-
-    // static async actualizar( data ){
-    //     const res = await actualozarUsuario( data )
-    //     return res
-    // }
 }
 
 export { CopartesServices }

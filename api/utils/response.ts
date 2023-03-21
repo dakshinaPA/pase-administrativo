@@ -1,14 +1,15 @@
+import { ResController, ResDB } from '../models/respuestas.model'
 
 class RespuestaDB {
     
-    static exitosa( data ){
+    static exitosa( data: [] ): ResDB {
         return {
             data,
             error: false
         }
     }
 
-    static fallida( data ){
+    static fallida( data: object ): ResDB {
         return {
             data,
             error: true
@@ -18,7 +19,7 @@ class RespuestaDB {
 
 class RespuestaController {
     
-    static exitosa( status, mensaje, data ){
+    static exitosa( status: number, mensaje: string, data: [] | object ): ResController {
         return {
             status,
             mensaje,
@@ -27,7 +28,7 @@ class RespuestaController {
         }
     }
 
-    static fallida( status, mensaje, data ){
+    static fallida( status: number, mensaje: string, data: [] | object ): ResController {
         return {
             status,
             mensaje,

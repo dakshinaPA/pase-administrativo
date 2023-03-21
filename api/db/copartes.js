@@ -3,9 +3,13 @@ import { queryDB } from './query'
 
 class CoparteDB {
 
-    static async obtener(){
+    static async obtener( id ){
 
-        const query = 'SELECT * FROM `copartes`'
+        let query = 'SELECT * FROM `copartes` WHERE b_activo=1'
+
+        if( id ){
+            query += ` AND id_coparte=${id} LIMIT 1`
+        }
     
         try {
             const res = await queryDB( query )
@@ -29,9 +33,9 @@ class CoparteDB {
         }
     }
 
-    static async actualizar( data ){
+    static async actualizar( id_coparte, data ){
 
-        const { id_coparte, nombre, id, tipo } = data
+        const { nombre, id, tipo } = data
             
         const query = `UPDATE copartes SET nombre='${nombre}', id='${id}', tipo=${tipo} WHERE id_coparte=${id_coparte}`
     
@@ -45,7 +49,7 @@ class CoparteDB {
 
     static async borrar( id ){
             
-        const query = `DELETE FROM copartes WHERE id_coparte=${id} LIMIT 1`
+        const query = `UPDATE copartes SET b_activo=0 WHERE id_coparte=${id} LIMIT 1`
     
         try {
             const res = await queryDB( query )

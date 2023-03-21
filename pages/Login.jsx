@@ -14,13 +14,13 @@ const Login = () => {
     const onInputChange = ( ev ) => {
 
         if( error.hay ) limpiarError()
-        setUsuario( ev )
+        handleInputChange( ev )
     }
 
     const onSubmit = (ev) => {
 
         ev.preventDefault()
-        login(usuario)
+        login( estadoForma )
     }
 
     return(
@@ -39,7 +39,7 @@ const Login = () => {
                                 className="form-control"
                                 placeholder="Ingresa tu correo electrónico"
                                 name="email"
-                                value={usuario.email}
+                                value={estadoForma.email}
                                 onChange={onInputChange}
                             />
                         </div>
@@ -49,7 +49,7 @@ const Login = () => {
                                 type="password"
                                 className="form-control"
                                 name="password"
-                                value={usuario.password}
+                                value={estadoForma.password}
                                 onChange={onInputChange}
                             />
                         </div>

@@ -11,13 +11,22 @@ const Acciones = ({ editar, eliminar }) => {
     )
 }
 
-const TablaContainer = ({ children }) => {
+const TablaContainer = ({ children, headres }) => {
     return(
         <div className="container">
             <div className="row">
                 <div className="col-12">
                     <table className="table">
-                        { children }
+                        <thead>
+                            <tr>
+                            {headres.map( (header, index) => (
+                                <th key={`${index}_${header}`}>{header}</th>
+                            ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            { children }
+                        </tbody>
                     </table>
                 </div>
             </div>

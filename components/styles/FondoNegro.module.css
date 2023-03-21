@@ -1,0 +1,11 @@
+.fondo {
+    position: fixed;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.42);
+    overflow: auto;
+    /* display: flex;
+    justify-content: center;
+    align-items: flex-start; */
+}

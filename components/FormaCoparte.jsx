@@ -1,9 +1,6 @@
-import { useCopartes } from '@contexts/copartes.context'
 import { FormContainer, InputContainer } from '@components/FormContainer'
 
-const FormaCoparte = ({ onSubmit }) => {
-
-    const { estadoForma, handleInputChange } = useCopartes()
+const FormaCoparte = ({ onSubmit, estadoForma, handleInputChange, textoBoton }) => {
 
     const inputsForma = [
         { 
@@ -30,7 +27,7 @@ const FormaCoparte = ({ onSubmit }) => {
     return(
         <div className="container">
             <FormContainer
-                textoBoton="Registrar"
+                textoBoton={textoBoton}
                 onSubmit={onSubmit}
             >
             {inputsForma.map((input) => (
@@ -39,7 +36,7 @@ const FormaCoparte = ({ onSubmit }) => {
                     onChange={handleInputChange}
                     value={estadoForma[input.name]}
                     clase="col-md-6 col-lg-4"
-                    {...input}
+                    { ...input }
                 />
             ))}
             </FormContainer>

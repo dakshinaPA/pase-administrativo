@@ -13,7 +13,7 @@ class ApiCall {
         try {
             let res = await fetch( url, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json '},
+                headers: { 'Content-Type': 'application/json'},
                 body: JSON.stringify( data )
             })
             return await res.json()
@@ -35,12 +35,10 @@ class ApiCall {
         }
     }
 
-    static async delete( url, id ){
+    static async delete( url ){
         try {
             let res = await fetch( url, {
                 method: 'DELETE',
-                headers: { 'Content-Type': 'application/json '},
-                body: JSON.stringify({ id })
             })
             return await res.json()
         } catch (error) {

@@ -9,18 +9,19 @@ CREATE TABLE `usuarios` (
   `interno` TINYINT NOT NULL DEFAULT 1,
   `id_rol` TINYINT NOT NULL DEFAULT 3,
   `login` TINYINT NOT NULL DEFAULT 0,
+  `b_activo` TINYINT NOT NULL DEFAULT 1,
   PRIMARY KEY (`id_usuario`));
 
 INSERT INTO `usuarios` (`nombre`, `apellido_paterno`, `apellido_materno`, `email`, `email2`, `password`, `interno`, `id_rol`) 
 VALUES ('Omar', 'Maldonado', 'Villanueva', 'omar.maldo.vi@gmail.com', '', '123', 1, 2 ),
-('Isabel', 'Flores', 'Alarcon', 'iflores@dakshina.org.mx', '', '123', 1, 1 );
+('Isabel', 'Flores', 'Alarcon', 'iflores@dakshina.org.mx', '', '123', 1, 1 ),
+('Gabriel', 'Mendez', 'Alarcon', 'gabome@gmail.com', '', '123', 2, 3 );
 
-INSERT INTO `usuarios` (`nombre`, `apellido_paterno`, `apellido_materno`, `email`, `email2`, `password`, `interno`, `id_rol`) 
-VALUES ('Gabriel', 'Mendez', 'Alarcon', 'gabome@gmail.com', '', '123', 2, 3 ),
 
 CREATE TABLE `copartes` (
   `id_coparte` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `nombre` VARCHAR(45) NOT NULL,
   `id` VARCHAR(45) NOT NULL,
-  `tipo` INT UNSIGNED NOT NULL DEFAULT 2,
+  `tipo` TINYINT UNSIGNED NOT NULL DEFAULT 2,
+  `b_activo` TINYINT UNSIGNED NOT NULL DEFAULT 1,
   PRIMARY KEY (`id_coparte`));
