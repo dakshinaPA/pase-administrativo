@@ -3,30 +3,33 @@ import { useRouter } from 'next/router'
 import { useForm } from '@hooks/useForm'
 import { ApiCall } from '@assets/utils/apiCalls'
 import { Heading } from '@components/Heading'
-import { FormaCoparte } from '@components/FormaCoparte'
+import { FormaUsuario } from '@components/FormaUsuario'
 import { Loader } from '@components/Loader'
+import { Usuario } from '@api/models/usuarios.model'
 
+const Usuario = () => {
 
-const Coparte = () => {
-
-    const estadoInicialForma = {
+    const estadoInicialForma: Usuario = {
         nombre: '',
-        id: '',
-        id_tipo: 0
+        apellido_paterno: '',
+        apellido_materno: '',
+        email: '',
+        password: ''
     }
+
     const router = useRouter()
-    const idCoparte = router.query.id
+    const idUsuario = router.query.id
     const { estadoForma, setEstadoForma, handleInputChange } = useForm(estadoInicialForma)
-    const [ isLoading, setIsLoading ] = useState( true )
+    const [ isLoading, setIsLoading ] = useState<boolean>( true )
 
     useEffect(() => {
 
-        obtenerCoparte()
+        obtenerUsuario()
     }, [])
 
-    const obtenerCoparte = async () => {
+    const obtenerUsuario = async () => {
         try {
-            const { error, data } = await ApiCall.get( `/api/copartes/${idCoparte}` )
+            const { error, data } = await ApiCall.get( `/api/usuarios/${idUsuario}` )
 
             if( error ){
                 console.log( data )
@@ -40,17 +43,17 @@ const Coparte = () => {
         }
     }
 
-    const actulizarCoparte = async () => {
+    const actulizarUsuario = async () => {
 
         setIsLoading( true )
 
         try {
-            const { data, error, mensaje } = await ApiCall.put( `/api/copartes/${idCoparte}`, estadoForma )
+            const { data, error, mensaje } = await ApiCall.put( `/api/usuarios/${idUsuario}`, estadoForma )
 
             if( error ){
                 console.log( data )
             } else {
-                router.push('/copartes')
+                router.push('/usuarios')
             }
         } catch (error) {
             console.log( error )
@@ -61,20 +64,20 @@ const Coparte = () => {
 
     return(
         <>
-        <Heading titulo="Editar coparte" navLink="/copartes" />
+        <Heading titulo="Edita Usuario" navLink="/usuarios" />
         { isLoading 
         ? 
         <Loader />
         :         
-        <FormaCoparte
-            textoBoton="Actualizar"
+        <FormaUsuario
             estadoForma={estadoForma}
             handleInputChange={handleInputChange}
-            onSubmit={actulizarCoparte}
+            onSubmit={actulizarUsuario}
+            textoBoton="Actualizar"
         />
         }
         </>
     )
 }
 
-export default Coparte
+export default Usuario

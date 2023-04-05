@@ -5,7 +5,11 @@ export default async ( req: NextApiRequest, res: NextApiResponse ) => {
 
     switch( req.method ){
         case 'GET':
-            var { status, ...data } = await UsuariosServices.obtener( null )
+            var { status, ...data } = await UsuariosServices.obtener()
+            res.status(status).json( data )
+            break
+        case 'POST':
+            var { status, ...data } = await UsuariosServices.crear( req.body )
             res.status(status).json( data )
             break
         default:

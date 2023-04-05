@@ -1,87 +1,63 @@
-import { RespuestaDB } from '../utils/response'
 import { queryDB } from './query'
-import { ResDB } from '../models/respuestas.model'
+import { ResDB } from '@api/models/respuestas.model'
+import { Usuario, LoginUsuario } from '@api/models/usuarios.model'
 
 class UsuarioDB {
 
-    static async login({ email, password }): Promise<ResDB> {
+    static async login( { email, password }: LoginUsuario ){
 
         const query = `SELECT * FROM usuarios WHERE email='${email}' AND password='${password}'`
-    
-        try {
-            const res = await queryDB( query )
-            return RespuestaDB.exitosa( res )
-        } catch (error) {
-            return RespuestaDB.fallida( error )
-        }
+        const res = await queryDB( query )
+        return res
     }
 
-    static async loggear( idUsuario: number ) {
+    // static async loggear( idUsuario: number ) {
 
-        const query = `UPDATE usuarios SET login=1 WHERE id_usuario=${idUsuario} LIMIT 1`
+    //     const query = `UPDATE usuarios SET login=1 WHERE id_usuario=${idUsuario} LIMIT 1`
     
-        try {
-            const res = await queryDB( query )
-            return RespuestaDB.exitosa( res )
-        } catch (error) {
-            return RespuestaDB.fallida( error )
-        }
-    }
+    //     try {
+    //         const res = await queryDB( query )
+    //         return RespuestaDB.exitosa( res )
+    //     } catch (error) {
+    //         return RespuestaDB.fallida( error )
+    //     }
+    // }
 
-    static async obtener( id: number ): Promise<ResDB> {
+    static async obtener( id?: number ){
 
-        let query = 'SELECT id_usuario, nombre, apellido_paterno, apellido_materno, email, id_rol FROM `usuarios` WHERE b_activo=1'
+        let query = 'SELECT id_usuario, nombre, apellido_paterno, apellido_materno, email, id_rol, password FROM `usuarios` WHERE b_activo=1'
 
         if( id ){
             query += ` AND id_usuario=${id} LIMIT 1`
         }
-    
-        try {
-            const res = await queryDB( query )
-            return RespuestaDB.exitosa( res )
-        } catch (error) {
-            return RespuestaDB.fallida( error )
-        }
+
+        const res = await queryDB( query )
+        return res
     }
 
-    // static async crear( data ){
+    static async crear( data: Usuario ){
 
-    //     const { nombre, apellido } = data
+        const { nombre, apellido_paterno, apellido_materno, email, email2, interno, rol  } = data
             
-    //     const query = `INSERT INTO usuarios ( nombre, apellido ) VALUES ('${nombre}', '${apellido}')`
-    
-    //     try {
-    //         const res = await queryDB( query )
-    //         return dbRespuestaExitosa( res )
-    //     } catch (error) {
-    //         return dbRespuestaFallida( error )
-    //     }
-    // }
+        const query = `INSERT INTO usuarios ( nombre, apellido ) VALUES ('${nombre}', '${apellido_paterno}')`
+        const res = await queryDB( query )
+        return res
+    }
 
-    // static async actualizar( data ){
+    static async actualizar( id: number, data: Usuario ){
 
-    //     const { id, nombre, apellido } = data
+        const { nombre, apellido_paterno, apellido_materno } = data
             
-    //     const query = `UPDATE usuarios SET nombre='${nombre}', apellido='${apellido}' WHERE id_usuario=${1}`
-    
-    //     try {
-    //         const res = await queryDB( query )
-    //         return dbRespuestaExitosa( res )
-    //     } catch (error) {
-    //         return dbRespuestaFallida( error )
-    //     }
-    // }
+        const query = `UPDATE usuarios SET nombre='${nombre}', apellido_paterno='${apellido_paterno}', apellido_materno='${apellido_materno}' WHERE id_usuario=${id} LIMIT 1`
+        const res = await queryDB( query )
+        return res
+    }
 
-    static async borrar( id: number ): Promise<ResDB> {
+    static async borrar( id: number ){
             
         const query = `UPDATE usuarios SET b_activo=0 WHERE id_usuario=${id} LIMIT 1`
-    
-        try {
-            const res = await queryDB( query )
-            return RespuestaDB.exitosa( res )
-        } catch (error) {
-            return RespuestaDB.fallida( error )
-        }
+        const res = await queryDB( query )
+        return res
     }
     
 }

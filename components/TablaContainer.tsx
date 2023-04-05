@@ -1,4 +1,14 @@
-const Acciones = ({ editar, eliminar }) => {
+interface TablaContainerProps {
+    children: JSX.Element | JSX.Element[]
+    headers: string[]
+}
+
+interface AccionesProps {
+    editar: () => void
+    eliminar: () => void
+}
+
+const Acciones = ({ editar, eliminar }: AccionesProps) => {
     return(
         <td className="d-flex">
             <button className="btn btn-dark me-1" onClick={editar}>
@@ -11,7 +21,7 @@ const Acciones = ({ editar, eliminar }) => {
     )
 }
 
-const TablaContainer = ({ children, headres }) => {
+const TablaContainer = ({ children, headers }: TablaContainerProps) => {
     return(
         <div className="container">
             <div className="row">
@@ -19,7 +29,7 @@ const TablaContainer = ({ children, headres }) => {
                     <table className="table">
                         <thead>
                             <tr>
-                            {headres.map( (header, index) => (
+                            {headers.map( (header, index) => (
                                 <th key={`${index}_${header}`}>{header}</th>
                             ))}
                             </tr>

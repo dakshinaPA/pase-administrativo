@@ -5,7 +5,7 @@ const FormaCoparte = ({ onSubmit, estadoForma, handleInputChange, textoBoton }) 
     const inputsForma = [
         { 
             type: "select",
-            name: "tipo",
+            name: "id_tipo",
             label: "Tipo",
             options: [
                 { label: "Constituida", value: 1 },

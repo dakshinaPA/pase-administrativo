@@ -1,5 +1,32 @@
+interface FormCont {
+    textoBoton?: string
+    children: JSX.Element[]
+    cancelar?: boolean
+    onSubmit: () => void
+    onCancelSubmit?: () => void
+}
 
-const Input = ({ type, name, value, placeholder, onChange }) => {
+interface OptionsSelect {
+    value: string | number
+    label: string
+}
+
+interface InputGeneral {
+    type?: string
+    name: string
+    value: string
+    placeholder?: string
+    onChange: () => void
+    options?: OptionsSelect[]
+}
+
+interface InputCont extends InputGeneral {
+    label: string
+    sublabel?: string
+    clase: string
+}
+
+const Input = ({ type, name, value, placeholder, onChange }: InputGeneral) => {
     return(
         <input
             type={type}
@@ -12,7 +39,7 @@ const Input = ({ type, name, value, placeholder, onChange }) => {
     )
 }
 
-const TextArea = ({ name, value, placeholder, onChange }) => {
+const TextArea = ({ name, value, placeholder, onChange }: InputGeneral) => {
     return(
         <textarea
             className="form-control"
@@ -25,7 +52,7 @@ const TextArea = ({ name, value, placeholder, onChange }) => {
     )
 }
 
-const Select = ({ name, value, options, onChange }) => {
+const Select = ({ name, value, options, onChange }: InputGeneral) => {
     return(
         <select
             className="form-control"
@@ -40,7 +67,7 @@ const Select = ({ name, value, options, onChange }) => {
     )
 }
 
-const InputType = (props) => {
+const InputType = (props: InputGeneral) => {
 
     switch(props.type){
         case "select":
@@ -50,10 +77,9 @@ const InputType = (props) => {
         default:
             return <Input {...props} />
     }
-
 }
 
-const InputContainer = (props) => {
+const InputContainer = (props: InputCont) => {
 
     const {label, sublabel, clase } = props
 
@@ -82,13 +108,13 @@ const InputFile = (props) => {
                     name={name}
                     onChange={onChange}
                 />
-                <i class="bi bi-file-earmark-arrow-up"></i>
+                <i className="bi bi-file-earmark-arrow-up"></i>
             </label>
         </div>
     )
 }
 
-const FormContainer = ({ textoBoton, children, cancelar, onSubmit, onCancelSubmit }) => {
+const FormContainer = ({ textoBoton, children, cancelar, onSubmit, onCancelSubmit }: FormCont ) => {
 
     const handleSubmit = (ev) => {
         ev.preventDefault()

@@ -5,18 +5,8 @@ import { useRouter } from 'next/router'
 import { useEffect, useRef, useState } from 'react'
 import { Loader } from '@components/Loader'
 import { ModalEliminar } from '@components/ModalEliminar'
-
-interface Usuario {
-    id_usuario: number
-    nombre: string
-    apellido_materno: string
-    apellido_paterno: string
-    email: string                      
-    email2?: string                    
-    password?: string             
-    interno: 1 | 2               
-    id_rol: 1 | 2 | 3                
-}
+import { Usuario } from '@api/models/usuarios.model'
+import { TablaBusqueda } from '@components/TablaBusqueda'
 
 interface modalEliminar {
     show: boolean
@@ -24,10 +14,9 @@ interface modalEliminar {
     nombre: string
 }
 
-
 const Usuarios = () => {
 
-    const estadoInicialEliminarUsuario: modalEliminar = {
+    const estadoInicialEliminarUsuario = {
         show: false,
         id: 0,
         nombre: ''
@@ -35,8 +24,8 @@ const Usuarios = () => {
 
     const usuariosDB = useRef<Usuario[]>([])
     const [ usuarios, setUsuarios ] = useState<Usuario[]>([])
-    const [ isLoading, setIsLoading ] = useState<boolean>( true )
-    const [ showModalEliminar, setShowModalEliminar ] = useState<modalEliminar>( estadoInicialEliminarUsuario )
+    const [ isLoading, setIsLoading ] = useState<boolean>(true)
+    const [ showModalEliminar, setShowModalEliminar ] = useState<modalEliminar>(estadoInicialEliminarUsuario)
     const router = useRouter()
 
     useEffect(() => {
@@ -97,47 +86,25 @@ const Usuarios = () => {
 
         // const copartesFiltradas = usuariosDB.current.filter( cop => cop.nombre.toLowerCase().includes(value.toLowerCase()) || cop.id.toLowerCase().includes(value.toLowerCase()) )
         // setUsuarios( copartesFiltradas )
+        console.log(value)
     }
 
     const headersTabla = [ "Id", "Nombre", "Email", "Rol", "Acciones" ]
 
     return(
-        <>
-        <div className="container mb-4">
-            <div className="row">
-                <div className="col-12 col-md-7">
-                    <button
-                        type="button"
-                        className="btn btn-secondary"
-                        onClick={() => router.push('usuarios/registro')}
-                    >
-                        Registrar +
-                    </button>
-                </div>
-                <div className="col-12 col-md-5">
-                    <div className="input-group">
-                        <input
-                            type="text"
-                            name="busqueda"
-                            className="form-control"
-                            placeholder="Buscar usuario"
-                            onChange={buscarUsuario}
-                        />
-                        <span className="input-group-text">
-                            <i className="bi bi-search"></i>
-                        </span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        {isLoading
-        ?
-        <Loader />
-        :            
-        <TablaContainer headres={headersTabla}>
+        <TablaBusqueda 
+            routeRegistro="/usuarios/registro"
+            buscarRegistro={buscarUsuario}
+            isLoading={isLoading}
+            headersTabla={headersTabla}
+            showModalEliminar={showModalEliminar.show}
+            resetModalEliminar={() => setShowModalEliminar(estadoInicialEliminarUsuario)}
+            eliminarEntidad={() => eliminarUsuario(showModalEliminar.id)}
+            modalEliminarMsj={`¿Estás segur@ de eliminar al usuario ${showModalEliminar.nombre}`}
+        >
             {usuarios.map(( usuario ) => {
 
-                const { id_usuario, nombre, apellido_paterno, id_rol, email } = usuario 
+                const { id_usuario, nombre, apellido_paterno, rol, email } = usuario 
                 const nombreCompleto = `${nombre} ${apellido_paterno}`
 
                 return(
@@ -145,7 +112,7 @@ const Usuarios = () => {
                         <td>{id_usuario}</td>
                         <td>{nombreCompleto}</td>
                         <td>{email}</td>
-                        <td>{id_rol}</td>
+                        <td>{rol}</td>
                         <Acciones
                             editar={() => editarUsuario( id_usuario )}
                             eliminar={ () => abrirModalEliminarUsuario( id_usuario, nombreCompleto )}
@@ -153,17 +120,7 @@ const Usuarios = () => {
                     </tr>
                 )
             })}
-        </TablaContainer>
-        }
-        { showModalEliminar.show &&
-        <ModalEliminar
-            cancelar={() => setShowModalEliminar( estadoInicialEliminarUsuario )}
-            aceptar={() => eliminarUsuario( showModalEliminar.id )}
-        >
-            <p className="mb-0">¿Estás seguro de eliminar al usuario {showModalEliminar.nombre}?</p>
-        </ModalEliminar>
-        }
-        </>
+        </TablaBusqueda>
     )
 }
 

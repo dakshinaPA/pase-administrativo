@@ -1,6 +1,7 @@
-import { CopartesServices } from '../../../api/services/copartes'
+import { CopartesServices } from '@api/services/copartes'
+import { NextApiRequest, NextApiResponse  } from 'next'
 
-export default async ( req, res ) => {
+export default async ( req: NextApiRequest, res: NextApiResponse ) => {
 
     switch( req.method ){
         case 'GET':

@@ -1,7 +1,14 @@
 import { memo } from 'react'
 import Link from 'next/link'
 
-const Heading = memo(({ titulo, subtitulo, size, navLink }) => {
+interface HeadingProps {
+    titulo: string
+    subtitulo?: string
+    size?: string
+    navLink?: string
+}
+
+const Heading = memo(({ titulo, subtitulo, size, navLink }: HeadingProps) => {
 
     const TituloPrincipal = () => {
        

@@ -24,6 +24,7 @@
         "@hooks/*": ["hooks/*"],
         "@assets/*": ["assets/*"],
         "@api/*": ["api/*"],
+        "@models/*": ["models/*"],
     }
   },
   "include": [

@@ -10,8 +10,8 @@ const Copartes = () => {
 
     const estadoInicialCoparteEliminar = {
         show: false,
-        id: 0,
-        id_coparte: ''
+        id_coparte: 0,
+        id: ''
     }
 
     const copartesDB = useRef([])
@@ -117,11 +117,11 @@ const Copartes = () => {
         <Loader />
         :            
         <TablaContainer headres={headersTabla}>
-            {copartes.map(({ id_coparte, nombre, id, tipoTxt }) => (
+            {copartes.map(({ id_coparte, nombre, id, tipo }) => (
                 <tr key={id_coparte}>
                     <td>{nombre}</td>
                     <td>{id}</td>
-                    <td>{tipoTxt}</td>
+                    <td>{tipo}</td>
                     <Acciones
                         editar={() => editarCoparte( id_coparte )}
                         eliminar={ () => abrirModalEliminarCoparte( id, id_coparte )}

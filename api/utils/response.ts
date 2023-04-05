@@ -1,4 +1,4 @@
-import { ResController, ResDB } from '../models/respuestas.model'
+import { ResController, ResDB } from '@api/models/respuestas.model'
 
 class RespuestaDB {
     

@@ -10,15 +10,15 @@ export default async ( req: NextApiRequest, res: NextApiResponse ) => {
             var { status, ...data } = await UsuariosServices.obtener( id )
             res.status(status).json( data )
             break
-        // case 'PUT':
-        //     var { status, ...data } = await UsuariosServices.actualizar( id, req.body )
-        //     res.status(status).json( data )
-        //     break
+        case 'PUT':
+            var { status, ...data } = await UsuariosServices.actualizar( id, req.body )
+            res.status(status).json( data )
+            break
         case 'DELETE':
             var { status, ...data } = await UsuariosServices.borrar( id )
             res.status(status).json( data )
             break
         default:
-            res.status(500).json({ mensaje: "Acceso no autorizado"})
+            res.status(500).json({ mensaje: "Acceso no autorizado" })
     }   
 }

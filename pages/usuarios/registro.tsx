@@ -1,29 +1,32 @@
 import { useForm } from '@hooks/useForm'
 import { useRouter } from 'next/router'
-import { ApiCall } from '@assets/utils/apiCalls'
-import { FormaCoparte } from '@components/FormaCoparte'
+import { FormaUsuario } from '@components/FormaUsuario'
 import { Heading } from '@components/Heading'
+import { Usuario } from '@api/models/usuarios.model'
+import { ApiCall } from '@assets/utils/apiCalls'
 
+const RegistroUsuarios = () => {
 
-const RegistroCoparte = () => {
-
-    const estadoInicialForma = {
-        id_tipo: 1,
+    const estadoInicialForma: Usuario = {
         nombre: '',
-        id: ''
+        apellido_paterno: '',
+        apellido_materno: '',
+        email: '',
+        password: ''
     }
 
     const { estadoForma, handleInputChange } = useForm(estadoInicialForma)
     const router = useRouter()
 
-    const agregarCoparte = async () => {
+    const agregarUsuario = async () => {
+        // console.log(estadoForma)
         try {
             const { data, error, mensaje } = await ApiCall.post( '/api/copartes', estadoForma )
 
             if( error ){
                 console.log( data )
             } else {
-                router.push('/copartes')
+                router.push('/usuarios')
             }
         } catch (error) {
             console.log( error )
@@ -32,15 +35,14 @@ const RegistroCoparte = () => {
 
     return(
         <>
-        <Heading titulo="Registro de coparte" navLink="/copartes" />
-        <FormaCoparte
-            textoBoton="Registrar"
+        <Heading titulo="Registro de usuario" navLink="/usuarios" />
+        <FormaUsuario
             estadoForma={estadoForma}
             handleInputChange={handleInputChange}
-            onSubmit={agregarCoparte}
+            onSubmit={agregarUsuario}
         />
         </>
     )
 }
 
-export default RegistroCoparte
+export default RegistroUsuarios

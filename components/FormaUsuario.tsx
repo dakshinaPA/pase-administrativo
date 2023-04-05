@@ -1,19 +1,13 @@
-import { useForm } from '@hooks/useForm'
 import { FormContainer, InputContainer } from '@components/FormContainer'
-import { Heading } from '@components/Heading'
 
-const RegistroUsuarios = () => {
+interface FormUser {
+    onSubmit: () => void
+    estadoForma: any
+    handleInputChange: () => void
+    textoBoton?: string
+}
 
-    const estadoInicialForma = {
-        nombre: '',
-        apellidoPaterno: '',
-        apellidoMaterno: '',
-        email: '',
-        password: ''
-    }
-
-    const { estadoForma, handleInputChange } = useForm(estadoInicialForma)
-
+const FormaUsuario = ({ onSubmit, estadoForma, handleInputChange, textoBoton}: FormUser) => {
 
     const inputsForma = [
         { 
@@ -23,12 +17,12 @@ const RegistroUsuarios = () => {
         },
         { 
             type: "text",
-            name: "apellidoPaterno",
+            name: "apellido_paterno",
             label: "Apellido paterno",
         },
         { 
             type: "text",
-            name: "apellidoMaterno",
+            name: "apellido_materno",
             label: "Apellido materno",
         },
         { 
@@ -43,27 +37,21 @@ const RegistroUsuarios = () => {
         },
         { 
             type: "select",
-            name: "rol",
+            name: "id_rol",
             label: "Rol de usuario",
             options: [
                 { value: 2, label: 'Administrador' },
                 { value: 1, label: 'Super usuario' },
+                { value: 3, label: 'Coparte' },
             ]
         },
     ]
 
-    const onSubmit = () => {
-        console.log(estadoForma)
-    }
-
-    // if(!user) return null
-
     return(
         <>
-        <Heading titulo="Registro de usuario" />
         <div className="container">
             <FormContainer
-                textoBoton="Registrar"
+                textoBoton={ textoBoton || 'Registrar'}
                 onSubmit={onSubmit}
             >
             {inputsForma.map((input) => (
@@ -71,7 +59,7 @@ const RegistroUsuarios = () => {
                     key={`input_${input.name}`}
                     onChange={handleInputChange}
                     value={estadoForma[input.name]}
-                    clase="col-md-4"
+                    clase="col-md-6 col-lg-4"
                     {...input}
                 />
             ))}
@@ -81,4 +69,4 @@ const RegistroUsuarios = () => {
     )
 }
 
-export default RegistroUsuarios
+export { FormaUsuario }
