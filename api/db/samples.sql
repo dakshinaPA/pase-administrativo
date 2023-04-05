@@ -4,7 +4,7 @@ CREATE TABLE `usuarios` (
   `apellido_paterno` VARCHAR(45) NOT NULL,
   `apellido_materno` VARCHAR(45) NOT NULL,
   `email` VARCHAR(45) NOT NULL,
-  `email2` VARCHAR(45) NOT NULL,
+  `email2` VARCHAR(45) NOT NULL DEFAULT '',
   `password` VARCHAR(10) NOT NULL,
   `interno` TINYINT NOT NULL DEFAULT 1,
   `id_rol` TINYINT NOT NULL DEFAULT 3,

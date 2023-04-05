@@ -14,6 +14,8 @@ const determinarNombreArchivo = (archivo) => {
     }
 }
 
+const aMinuscula = ( clave ) => clave.toLowerCase()
+
 const estadosRepublica = [
   { id: 1, nombre: "Aguascalientes"},
   { id: 2, nombre: "Baja California"},
@@ -49,4 +51,8 @@ const estadosRepublica = [
   { id: 32, nombre: "Zacatecas"},
 ]
 
-export { determinarNombreArchivo, estadosRepublica }
+export {
+  determinarNombreArchivo,
+  estadosRepublica,
+  aMinuscula
+}

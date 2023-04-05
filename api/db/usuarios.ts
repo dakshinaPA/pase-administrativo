@@ -1,13 +1,13 @@
-import { queryDB } from './query'
-import { ResDB } from '@api/models/respuestas.model'
+import { queryDB, queryDBPlaceHolder } from './query'
 import { Usuario, LoginUsuario } from '@api/models/usuarios.model'
 
 class UsuarioDB {
 
     static async login( { email, password }: LoginUsuario ){
 
-        const query = `SELECT * FROM usuarios WHERE email='${email}' AND password='${password}'`
-        const res = await queryDB( query )
+        const query = "SELECT * FROM usuarios WHERE email=? AND password=? AND b_activo=1"
+        const placeHolders = [ email, password ]
+        const res = await queryDBPlaceHolder( query, placeHolders )
         return res
     }
 
@@ -37,19 +37,21 @@ class UsuarioDB {
 
     static async crear( data: Usuario ){
 
-        const { nombre, apellido_paterno, apellido_materno, email, email2, interno, rol  } = data
+        const { nombre, apellido_paterno, apellido_materno, email, id_rol, password } = data
             
-        const query = `INSERT INTO usuarios ( nombre, apellido ) VALUES ('${nombre}', '${apellido_paterno}')`
-        const res = await queryDB( query )
+        const query = 'INSERT INTO usuarios ( nombre, apellido_paterno, apellido_materno, email, id_rol, password ) VALUES (?, ?, ?, ?, ?, ?)'
+        const placeHolders = [ nombre, apellido_paterno, apellido_materno, email, id_rol, password ]
+        const res = await queryDBPlaceHolder( query, placeHolders )
         return res
     }
 
     static async actualizar( id: number, data: Usuario ){
 
-        const { nombre, apellido_paterno, apellido_materno } = data
+        const { nombre, apellido_paterno, apellido_materno, email, id_rol, password } = data
             
-        const query = `UPDATE usuarios SET nombre='${nombre}', apellido_paterno='${apellido_paterno}', apellido_materno='${apellido_materno}' WHERE id_usuario=${id} LIMIT 1`
-        const res = await queryDB( query )
+        const query = `UPDATE usuarios SET nombre=?, apellido_paterno=?, apellido_materno=?, email=?, id_rol=?, password=? WHERE id_usuario=? LIMIT 1`
+        const placeHolders = [ nombre, apellido_paterno, apellido_materno, email, id_rol, password, id ]
+        const res = await queryDBPlaceHolder( query, placeHolders )
         return res
     }
 

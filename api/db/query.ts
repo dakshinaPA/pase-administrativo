@@ -11,4 +11,13 @@ const queryDB = ( query: string ): Promise<ResDB> => {
     })
 }
 
-export { queryDB }
+const queryDBPlaceHolder = ( query: string, placeHolders: Array<string | number> ): Promise<ResDB> => {
+    return new Promise((resolve, reject) => {
+        connectionDB.query( query, placeHolders, (err, results, fields) => {
+            if(err) reject(RespuestaDB.fallida(err))
+            resolve(RespuestaDB.exitosa(results as []))
+        })
+    })
+}
+
+export { queryDB, queryDBPlaceHolder }

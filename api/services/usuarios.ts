@@ -75,7 +75,7 @@ class UsuariosServices {
         if(res.error){
             return RespuestaController.fallida( 400, 'Error al actualziar coparte', res.data )
         }
-        return RespuestaController.exitosa( 201, 'Coparte actualizada con éxito', res.data )
+        return RespuestaController.exitosa( 200, 'Coparte actualizada con éxito', res.data )
     }
 
     static async borrar( id: number ) {

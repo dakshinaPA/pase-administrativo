@@ -12,16 +12,16 @@ const RegistroUsuarios = () => {
         apellido_paterno: '',
         apellido_materno: '',
         email: '',
-        password: ''
+        password: '',
+        id_rol: 2
     }
 
     const { estadoForma, handleInputChange } = useForm(estadoInicialForma)
     const router = useRouter()
 
     const agregarUsuario = async () => {
-        // console.log(estadoForma)
         try {
-            const { data, error, mensaje } = await ApiCall.post( '/api/copartes', estadoForma )
+            const { data, error, mensaje } = await ApiCall.post( '/api/usuarios', estadoForma )
 
             if( error ){
                 console.log( data )
