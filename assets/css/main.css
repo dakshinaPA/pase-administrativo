@@ -20,3 +20,8 @@
 .bg1{background-color: var(--color-primario);}
 .bg2{background-color: var(--color-secundario);}
 .bg3{background-color: var(--color-ternario);}
+
+.tablaNoWrap {
+  overflow-x: auto;
+  white-space: nowrap;
+}

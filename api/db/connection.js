@@ -15,7 +15,21 @@ const connectionDB = mysql.createConnection({
     database: 'test',
 })
 
-export { connectionDB }
+async function connDB(){
+
+  const mysql = require('mysql2/promise');
+
+  const connection = await mysql.createConnection({
+    host: 'localhost',
+    user: 'root',
+    password: 'Tollotzin25',
+    database: 'test',
+  })
+
+  return connection
+}
+
+export { connectionDB, connDB }
 
 //mysql -h dakshina.cdnpwxaawgds.us-east-1.rds.amazonaws.com -P 3306 -u admin -p
 // mysql --user="root" --host="dakshina.cdnpwxaawgds.us-east-1.rds.amazonaws.com" --password="Dakshina23" --execute='SHOW VARIABLES LIKE "max_connections";'

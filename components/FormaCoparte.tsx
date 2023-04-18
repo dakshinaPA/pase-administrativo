@@ -7,38 +7,35 @@ import {
 import { Encabezado } from "@components/Encabezado"
 import { BtnBack } from "@components/BtnBack"
 import { useForm } from "@hooks/useForm"
-import { Usuario } from "@api/models/usuarios.model"
+import { Coparte } from "@api/models/copartes.model"
 import { useRouter } from "next/router"
 import { useEffect, useState } from "react"
 import { ApiCall, ApiCallRes } from "@assets/utils/apiCalls"
 import { Loader } from "@components/Loader"
 
-const FormaUsuario = () => {
-  const estadoInicialForma: Usuario = {
+const FormaCoparte = () => {
+  const estadoInicialForma: Coparte = {
     nombre: "",
-    apellido_paterno: "",
-    apellido_materno: "",
-    email: "",
-    password: "",
-    id_rol: 2,
+    id_tipo: 1,
+    id: "",
   }
 
   const { estadoForma, setEstadoForma, handleInputChange } =
     useForm(estadoInicialForma)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const router = useRouter()
-  const idUsuario = router.query.id
+  const idCoparte = router.query.id
 
   useEffect(() => {
-    if (idUsuario) {
-      obtenerUsuario()
+    if (idCoparte) {
+      obtenerCoparte()
     }
   }, [])
 
-  const obtenerUsuario = async () => {
+  const obtenerCoparte = async () => {
     setIsLoading(true)
 
-    const { error, data } = await ApiCall.get(`/api/usuarios/${idUsuario}`)
+    const { error, data } = await ApiCall.get(`/api/copartes/${idCoparte}`)
 
     if (!error) {
       setEstadoForma(data[0])
@@ -51,57 +48,41 @@ const FormaUsuario = () => {
 
     let res: ApiCallRes
 
-    if (idUsuario) {
-      res = await ApiCall.put(`/api/usuarios/${idUsuario}`, estadoForma)
+    if (idCoparte) {
+      res = await ApiCall.put(`/api/copartes/${idCoparte}`, estadoForma)
     } else {
-      res = await ApiCall.post(`/api/usuarios/${idUsuario}`, estadoForma)
+      res = await ApiCall.post(`/api/copartes/${idCoparte}`, estadoForma)
     }
 
     if (!res.error) {
-      router.push("/usuarios")
+      router.push("/copartes")
     }
     setIsLoading(false)
   }
 
   const cancelar = () => {
-    router.push("/usuarios")
+    router.push("/copartes")
   }
 
   const inputsForma = [
     {
+      type: "select",
+      name: "id_tipo",
+      label: "Tipo",
+      options: [
+        { label: "Constituida", value: 1 },
+        { label: "No constituida", value: 2 },
+      ],
+    },
+    {
       type: "text",
       name: "nombre",
-      label: "Nombre",
+      label: "Nombre de la colectiva",
     },
     {
       type: "text",
-      name: "apellido_paterno",
-      label: "Apellido paterno",
-    },
-    {
-      type: "text",
-      name: "apellido_materno",
-      label: "Apellido materno",
-    },
-    {
-      type: "text",
-      name: "email",
-      label: "Correo electrónico",
-    },
-    {
-      type: "text",
-      name: "password",
-      label: "Contraseña",
-    },
-    {
-      type: "select",
-      name: "id_rol",
-      label: "Rol de usuario",
-      options: [
-        { value: 2, label: "Administrador" },
-        { value: 1, label: "Super usuario" },
-        { value: 3, label: "Coparte" },
-      ],
+      name: "id",
+      label: "ID",
     },
   ]
 
@@ -118,7 +99,7 @@ const FormaUsuario = () => {
   const botones = (
     <>
       <BtnCancelar cancelar={cancelar} />
-      <BtnRegistrar textoBtn={idUsuario ? "Actualizar" : "Registrar"} />
+      <BtnRegistrar textoBtn={idCoparte ? "Actualizar" : "Registrar"} />
     </>
   )
 
@@ -127,10 +108,10 @@ const FormaUsuario = () => {
       <div className="container">
         <div className="row mb-4">
           <div className="col-12 d-flex align-items-center">
-            <BtnBack navLink="/usuarios" />
+            <BtnBack navLink="/copartes" />
             <Encabezado
               size="2"
-              titulo={`${idUsuario ? "Editar" : "Registrar"} usuario`}
+              titulo={`${idCoparte ? "Editar" : "Registrar"} coparte`}
             />
           </div>
         </div>
@@ -148,4 +129,4 @@ const FormaUsuario = () => {
   )
 }
 
-export { FormaUsuario }
+export { FormaCoparte }
