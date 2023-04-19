@@ -1,3 +1,4 @@
+import { RespuestaDB } from "@api/utils/response"
 import { queryDB, queryDBPlaceHolder } from "./query"
 import { Usuario, LoginUsuario } from "@api/models/usuarios.model"
 
@@ -6,8 +7,13 @@ class UsuarioDB {
     const query =
       "SELECT * FROM usuarios WHERE email=? AND password=? AND b_activo=1"
     const placeHolders = [email, password]
-    const res = await queryDBPlaceHolder(query, placeHolders)
-    return res
+    
+    try {
+      const res = await queryDBPlaceHolder(query, placeHolders)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
   }
 
   // static async loggear( idUsuario: number ) {
@@ -30,8 +36,12 @@ class UsuarioDB {
       query += ` AND id_usuario=${id} LIMIT 1`
     }
 
-    const res = await queryDB(query)
-    return res
+    try {
+      const res = await queryDB(query)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
   }
 
   static async crear(data: Usuario) {
@@ -44,7 +54,8 @@ class UsuarioDB {
       password,
     } = data
 
-    const query = "INSERT INTO usuarios ( nombre, apellido_paterno, apellido_materno, email, id_rol, password ) VALUES (?, ?, ?, ?, ?, ?)"
+    const query =
+      "INSERT INTO usuarios ( nombre, apellido_paterno, apellido_materno, email, id_rol, password ) VALUES (?, ?, ?, ?, ?, ?)"
     const placeHolders = [
       nombre,
       apellido_paterno,
@@ -53,8 +64,13 @@ class UsuarioDB {
       id_rol,
       password,
     ]
-    const res = await queryDBPlaceHolder(query, placeHolders)
-    return res
+
+    try {
+      const res = await queryDBPlaceHolder(query, placeHolders)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
   }
 
   static async actualizar(id: number, data: Usuario) {
@@ -77,14 +93,24 @@ class UsuarioDB {
       password,
       id,
     ]
-    const res = await queryDBPlaceHolder(query, placeHolders)
-    return res
+
+    try {
+      const res = await queryDBPlaceHolder(query, placeHolders)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
   }
 
   static async borrar(id: number) {
     const query = `UPDATE usuarios SET b_activo=0 WHERE id_usuario=${id} LIMIT 1`
-    const res = await queryDB(query)
-    return res
+
+    try {
+      const res = await queryDB(query)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
   }
 }
 

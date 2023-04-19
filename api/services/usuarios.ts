@@ -15,10 +15,9 @@ class UsuariosServices {
     }
 
     // encontró match con usuario
-    if (Array.isArray(data) && data.length > 0) {
-      const [usuario] = data
+    if (data.length > 0) {
       // const res = await this.loggear( usuario.id_usuario )
-      return RespuestaController.exitosa(200, "Usuario encontrado", usuario)
+      return RespuestaController.exitosa(200, "Usuario encontrado", data)
     }
 
     // no hubo error pero no hay match con usuario
@@ -42,7 +41,7 @@ class UsuariosServices {
     if (res.error) {
       return RespuestaController.fallida(
         400,
-        "Error al obtener copartes",
+        "Error al obtener usuarios",
         res.data
       )
     }
@@ -77,13 +76,13 @@ class UsuariosServices {
     if (res.error) {
       return RespuestaController.fallida(
         400,
-        "Error al actualziar coparte",
+        "Error al crear usuario",
         res.data
       )
     }
     return RespuestaController.exitosa(
       201,
-      "Coparte actualizada con éxito",
+      "Usuario creado con éxito",
       res.data
     )
   }
@@ -93,13 +92,13 @@ class UsuariosServices {
     if (res.error) {
       return RespuestaController.fallida(
         400,
-        "Error al actualziar coparte",
+        "Error al actualziar usuario",
         res.data
       )
     }
     return RespuestaController.exitosa(
       200,
-      "Coparte actualizada con éxito",
+      "Usuario actualizado con éxito",
       res.data
     )
   }
@@ -109,13 +108,13 @@ class UsuariosServices {
     if (res.error) {
       return RespuestaController.fallida(
         400,
-        "Error al borrar coparte",
+        "Error al borrar usuario",
         res.data
       )
     }
     return RespuestaController.exitosa(
       200,
-      "Coparte borrada con éxito",
+      "Usuairo borrado con éxito",
       res.data
     )
   }

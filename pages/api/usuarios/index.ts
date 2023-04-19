@@ -1,5 +1,6 @@
 import { UsuariosServices } from "@api/services/usuarios"
 import { NextApiRequest, NextApiResponse } from "next"
+import { Usuario } from "@api/models/usuarios.model"
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   switch (req.method) {
@@ -8,7 +9,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       res.status(status).json(data)
       break
     case "POST":
-      var { status, ...data } = await UsuariosServices.crear(req.body)
+      var { status, ...data } = await UsuariosServices.crear(req.body as Usuario)
       res.status(status).json(data)
       break
     default:

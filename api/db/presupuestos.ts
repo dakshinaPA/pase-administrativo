@@ -1,5 +1,6 @@
 import { queryDB, queryDBPlaceHolder } from "./query"
 import { SolicitudPresupuesto } from "@api/models/solicitudesPresupuestos.model"
+import { RespuestaDB } from "@api/utils/response"
 
 class PresupuestoDB {
   static async obtener(id?: number) {
@@ -10,8 +11,12 @@ class PresupuestoDB {
       query += ` AND id=${id} LIMIT 1`
     }
 
-    const res = await queryDB(query)
-    return res
+    try {
+      const res = await queryDB(query)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
   }
 
   static async crear(data: SolicitudPresupuesto) {
@@ -46,8 +51,13 @@ class PresupuestoDB {
       importe,
       comprobante,
     ]
-    const res = await queryDBPlaceHolder(query, placeHolders)
-    return res
+    
+    try {
+      const res = await queryDBPlaceHolder(query, placeHolders)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
   }
 
   static async actualizar(id: number, data: SolicitudPresupuesto) {
@@ -83,14 +93,22 @@ class PresupuestoDB {
       comprobante,
       id,
     ]
-    const res = await queryDBPlaceHolder(query, placeHolders)
-    return res
+    try {
+      const res = await queryDBPlaceHolder(query, placeHolders)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
   }
 
   static async borrar(id: number) {
     const query = `UPDATE solicitudes_presupuestos SET b_activo=0 WHERE id=${id} LIMIT 1`
-    const res = await queryDB(query)
-    return res
+    try {
+      const res = await queryDB(query)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
   }
 }
 

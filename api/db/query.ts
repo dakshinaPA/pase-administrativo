@@ -1,12 +1,12 @@
 import { connectionDB } from "./connection"
-import { RespuestaDB } from "@api/utils/response"
-import { ResDB } from "@api/models/respuestas.model"
+// import { RespuestaDB } from "@api/utils/response"
+import { ResultsDB } from "@api/models/respuestas.model"
 
-const queryDB = (query: string): Promise<ResDB> => {
+const queryDB = (query: string): Promise<ResultsDB> => {
   return new Promise((resolve, reject) => {
     connectionDB.query(query, (err, results, fields) => {
-      if (err) reject(RespuestaDB.fallida(err))
-      resolve(RespuestaDB.exitosa(results))
+      if (err) reject(err)
+      resolve(results)
     })
   })
 }
@@ -14,11 +14,11 @@ const queryDB = (query: string): Promise<ResDB> => {
 const queryDBPlaceHolder = (
   query: string,
   placeHolders: Array<string | number>
-): Promise<ResDB> => {
+): Promise<ResultsDB> => {
   return new Promise((resolve, reject) => {
     connectionDB.query(query, placeHolders, (err, results, fields) => {
-      if (err) reject(RespuestaDB.fallida(err))
-      resolve(RespuestaDB.exitosa(results))
+      if (err) reject(err)
+      resolve(results)
     })
   })
 }
