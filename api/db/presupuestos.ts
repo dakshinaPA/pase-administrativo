@@ -77,7 +77,7 @@ class PresupuestoDB {
     } = data
 
     const query =
-      "UPDATE solicitudes_presupuestos SET tipoGasto=?, proveedor=?, clabe=?, banco=?, titular=?, rfc=?, email=?, email2=?, partida=?, descripcion=?, importe=?, comprobante=?, WHERE id=? LIMIT 1"
+      "UPDATE solicitudes_presupuestos SET tipoGasto=?, proveedor=?, clabe=?, banco=?, titular=?, rfc=?, email=?, email2=?, partida=?, descripcion=?, importe=?, comprobante=? WHERE id=? LIMIT 1"
     const placeHolders = [
       tipoGasto,
       proveedor,

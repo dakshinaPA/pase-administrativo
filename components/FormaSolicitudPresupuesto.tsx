@@ -185,12 +185,12 @@ const FormaSolicitudPresupuesto = () => {
       <div className="container">
         <div className="row mb-4">
           <div className="col-12 d-flex align-items-center">
-            <BtnBack navLink="/usuarios" />
+            <BtnBack navLink="/presupuestos" />
             <Encabezado
               size="2"
               titulo={`${
                 idSolicitudPresupuesto ? "Editar" : "Registrar"
-              } usuario`}
+              } solicitud de presupuesto`}
             />
           </div>
         </div>

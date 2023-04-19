@@ -22,7 +22,7 @@ class UsuariosServices {
 
     // no hubo error pero no hay match con usuario
     return RespuestaController.fallida(
-      400,
+      200,
       "Usuario o contraseña no válidos",
       null
     )
