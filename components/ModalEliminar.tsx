@@ -1,7 +1,11 @@
 import { FondoNegro } from "@components/FondoNegro"
 import styles from "./styles/Modal.module.css"
 
-const ModalEliminar = ({ children, cancelar, aceptar }) => {
+const ModalEliminar = ({ children, show, cancelar, aceptar }) => {
+  if (!show) {
+    return null
+  }
+
   return (
     <FondoNegro>
       <div className={styles.modal}>

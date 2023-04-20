@@ -5,53 +5,69 @@ import { Loader } from "@components/Loader"
 import { ModalEliminar } from "@components/ModalEliminar"
 import { aMinuscula } from "@assets/utils/common"
 import { Coparte } from "@api/models/copartes.model"
-import { modalEliminarModel } from "@assets/models/modalEliminar.model"
 
 const Copartes = () => {
-  const estadoInicialModalEliminar = { show: false, id: 0, txt_id: "" }
   const router = useRouter()
   const [copartesDB, setcopartesDB] = useState<Coparte[]>([])
+  const [coparteAEliminar, setCoparteAEliminar] = useState<number>(0)
+  const [showModalEliminar, setShowModalEliminar] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [inputBusqueda, setInputBusqueda] = useState<string>("")
-  const [modalEliminar, setModalEliminar] = useState<modalEliminarModel>(
-    estadoInicialModalEliminar
-  )
 
   useEffect(() => {
     obtenercopartes()
   }, [])
 
-  const abrirModalEliminarCoparte = (id: number, txt_id: string) => {
-    setModalEliminar({ show: true, id, txt_id })
+  const abrirModalEliminarCoparte = (id: number) => {
+    setCoparteAEliminar(id)
+    setShowModalEliminar(true)
   }
 
-  const resetModalEliminar = () => {
-    setModalEliminar(estadoInicialModalEliminar)
-  }
+  // const resetModalEliminar = () => {
+  //   setModalEliminar(estadoInicialModalEliminar)
+  // }
 
   const obtenercopartes = async () => {
     setIsLoading(true)
     const res = await ApiCall.get("/api/copartes")
     const { error, data, mensaje } = res
-    if (!error) {
+
+    if (error) {
+      console.log(error)
+    } else {
       setcopartesDB(data as Coparte[])
     }
     setIsLoading(false)
   }
 
   const eliminarCoparte = async () => {
-    setModalEliminar(estadoInicialModalEliminar)
+    setCoparteAEliminar(0)
+    setShowModalEliminar(false)
     setIsLoading(true)
 
     const { error, data, mensaje } = await ApiCall.delete(
-      `/api/copartes/${modalEliminar.id}`
+      `/api/copartes/${coparteAEliminar}`
     )
 
-    if (!error) {
+    if (error) {
+      console.log(error)
+    } else {
       await obtenercopartes()
     }
 
     setIsLoading(false)
+  }
+
+  const determinarNombreCoparteAEliminar = (): string => {
+    const coparte = copartesDB.find(
+      (coparte) => coparte.id === coparteAEliminar
+    )
+    return coparte ? coparte.vc_id : ""
+  }
+
+  const cancelarEliminarUsuario = () => {
+    setCoparteAEliminar(0)
+    setShowModalEliminar(false)
   }
 
   const copartesFiltradas = copartesDB.filter(({ nombre, vc_id }) => {
@@ -124,7 +140,7 @@ const Copartes = () => {
                           </button>
                           <button
                             className="btn btn-dark"
-                            onClick={() => abrirModalEliminarCoparte(id, vc_id)}
+                            onClick={() => abrirModalEliminarCoparte(id)}
                           >
                             <i className="bi bi-x-circle"></i>
                           </button>
@@ -138,13 +154,16 @@ const Copartes = () => {
           </div>
         )}
       </div>
-      {modalEliminar.show && (
-        <ModalEliminar cancelar={resetModalEliminar} aceptar={eliminarCoparte}>
-          <p className="mb-0">
-            ¿Estás segur@ de eliminar la coparte {modalEliminar.txt_id}?
-          </p>
-        </ModalEliminar>
-      )}
+      <ModalEliminar
+        show={showModalEliminar}
+        aceptar={eliminarCoparte}
+        cancelar={cancelarEliminarUsuario}
+      >
+        <p className="mb-0">
+          ¿Estás segur@ de eliminar la coparte{" "}
+          {determinarNombreCoparteAEliminar()}?
+        </p>
+      </ModalEliminar>
     </>
   )
 }

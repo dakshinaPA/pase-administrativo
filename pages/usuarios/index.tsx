@@ -5,32 +5,27 @@ import { Loader } from "@components/Loader"
 import { ModalEliminar } from "@components/ModalEliminar"
 import { aMinuscula } from "@assets/utils/common"
 import { Usuario } from "@api/models/usuarios.model"
-import { modalEliminarModel } from "@assets/models/modalEliminar.model"
 
 const Usuarios = () => {
-  const estadoInicialModalEliminar = { show: false, id: 0, txt_id: "" }
   const router = useRouter()
   const [usuariosDB, setUsuariosDB] = useState<Usuario[]>([])
+  const [usuarioAEliminar, setUsuarioAEliminar] = useState<number>(0)
+  const [showModalEliminar, setShowModalEliminar] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [inputBusqueda, setInputBusqueda] = useState<string>("")
-  const [modalEliminar, setModalEliminar] = useState<modalEliminarModel>(
-    estadoInicialModalEliminar
-  )
 
   useEffect(() => {
     obtenerUsuarios()
   }, [])
 
-  const abrirModalEliminarUsuario = (id: number, txt_id: string) => {
-    setModalEliminar({ show: true, id, txt_id })
-  }
-
-  const resetModalEliminar = () => {
-    setModalEliminar(estadoInicialModalEliminar)
+  const abrirModalEliminarUsuario = (id: number) => {
+    setUsuarioAEliminar(id)
+    setShowModalEliminar(true)
   }
 
   const obtenerUsuarios = async () => {
     setIsLoading(true)
+
     const res = await ApiCall.get("/api/usuarios")
     const { error, data, mensaje } = res
 
@@ -43,11 +38,12 @@ const Usuarios = () => {
   }
 
   const eliminarUsuario = async () => {
-    setModalEliminar(estadoInicialModalEliminar)
+    setUsuarioAEliminar(0)
+    setShowModalEliminar(false)
     setIsLoading(true)
 
     const { error, data, mensaje } = await ApiCall.delete(
-      `/api/usuarios/${modalEliminar.id}`
+      `/api/usuarios/${usuarioAEliminar}`
     )
 
     if (error) {
@@ -57,6 +53,11 @@ const Usuarios = () => {
     }
 
     setIsLoading(false)
+  }
+
+  const cancelarEliminarUsuario = () => {
+    setUsuarioAEliminar(0)
+    setShowModalEliminar(false)
   }
 
   const usuariosFiltrados = usuariosDB.filter(
@@ -69,6 +70,13 @@ const Usuarios = () => {
       )
     }
   )
+
+  const determinarNombreUsuarioAEliminar = (): string => {
+    const usuario = usuariosDB.find(
+      (usuario) => usuario.id === usuarioAEliminar
+    )
+    return usuario ? `${usuario.nombre} ${usuario.apellido_paterno}` : ""
+  }
 
   return (
     <>
@@ -116,14 +124,7 @@ const Usuarios = () => {
                 </thead>
                 <tbody>
                   {usuariosFiltrados.map((coparte) => {
-                    const {
-                      id,
-                      nombre,
-                      apellido_paterno,
-                      apellido_materno,
-                      email,
-                      rol,
-                    } = coparte
+                    const { id, nombre, apellido_paterno, email, rol } = coparte
                     const nombreCompleto = `${nombre} ${apellido_paterno}`
 
                     return (
@@ -141,9 +142,7 @@ const Usuarios = () => {
                           </button>
                           <button
                             className="btn btn-dark"
-                            onClick={() =>
-                              abrirModalEliminarUsuario(id, nombreCompleto)
-                            }
+                            onClick={() => abrirModalEliminarUsuario(id)}
                           >
                             <i className="bi bi-x-circle"></i>
                           </button>
@@ -157,13 +156,16 @@ const Usuarios = () => {
           </div>
         )}
       </div>
-      {modalEliminar.show && (
-        <ModalEliminar cancelar={resetModalEliminar} aceptar={eliminarUsuario}>
-          <p className="mb-0">
-            ¿Estás segur@ de eliminar al usuario {modalEliminar.txt_id}?
-          </p>
-        </ModalEliminar>
-      )}
+      <ModalEliminar
+        show={showModalEliminar}
+        aceptar={eliminarUsuario}
+        cancelar={cancelarEliminarUsuario}
+      >
+        <p className="mb-0">
+          ¿Estás segur@ de eliminar al usuario{" "}
+          {determinarNombreUsuarioAEliminar()}?
+        </p>
+      </ModalEliminar>
     </>
   )
 }
