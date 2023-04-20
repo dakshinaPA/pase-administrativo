@@ -3,7 +3,7 @@ import { useRouter } from "next/router"
 import { ROLES } from "@assets/utils/seccionesusuario"
 import { ApiCall } from "@assets/utils/apiCalls"
 
-const AuthContext = createContext()
+const AuthContext = createContext(null)
 
 const AuthProvider = ({ children }) => {
   const estadoInicialError = { hay: false, mensaje: "" }
@@ -51,10 +51,10 @@ const AuthProvider = ({ children }) => {
 
   const limpiarError = () => setError(estadoInicialError)
 
-  const agregarSeccionesUsuario = ({ id_rol, ...usuario }) => {
+  const agregarSeccionesUsuario = ({ i_rol, ...usuario }) => {
     return {
       ...usuario,
-      rol: ROLES.find((rol) => rol.id == id_rol),
+      rol: ROLES.find((rol) => rol.id == i_rol),
     }
   }
 

@@ -1,7 +1,7 @@
 export interface Coparte {
-  id_coparte?: number
+  id?: number
   nombre: string
-  id: string
-  id_tipo: number
+  vc_id: string
+  i_tipo: number
   tipo?: string
 }

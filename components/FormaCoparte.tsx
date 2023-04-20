@@ -1,131 +1,138 @@
-import {
-  FormContainer,
-  InputContainer,
-  BtnRegistrar,
-  BtnCancelar,
-} from "@components/FormContainer"
-import { Encabezado } from "@components/Encabezado"
-import { BtnBack } from "@components/BtnBack"
-import { useForm } from "@hooks/useForm"
-import { Coparte } from "@api/models/copartes.model"
-import { useRouter } from "next/router"
 import { useEffect, useState } from "react"
-import { ApiCall, ApiCallRes } from "@assets/utils/apiCalls"
+import { useRouter } from "next/router"
+import { ChangeEvent } from "@assets/models/formEvents.model"
+import { Coparte } from "@api/models/copartes.model"
 import { Loader } from "@components/Loader"
+import { ApiCall } from "@assets/utils/apiCalls"
 
 const FormaCoparte = () => {
-  const estadoInicialForma: Coparte = {
+  const estadoInicialForma = {
+    i_tipo: 1,
     nombre: "",
-    id_tipo: 1,
-    id: "",
+    vc_id: "",
   }
 
-  const { estadoForma, setEstadoForma, handleInputChange } =
-    useForm(estadoInicialForma)
+  const [estadoForma, setEstadoForma] = useState<Coparte>(estadoInicialForma)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const router = useRouter()
   const idCoparte = router.query.id
 
   useEffect(() => {
     if (idCoparte) {
-      obtenerCoparte()
+      cargarDataCoparte()
     }
   }, [])
 
-  const obtenerCoparte = async () => {
+  const cargarDataCoparte = async () => {
     setIsLoading(true)
 
-    const { error, data } = await ApiCall.get(`/api/copartes/${idCoparte}`)
+    const { error, data } = await obtenerCoparte()
 
-    if (!error) {
-      setEstadoForma(data[0])
+    if (error) {
+      console.log(error)
+    } else {
+      const dataUsuario = data[0] as Coparte
+      setEstadoForma(dataUsuario)
     }
+
     setIsLoading(false)
   }
 
-  const handleSubmit = async () => {
-    setIsLoading(true)
+  const obtenerCoparte = async () => {
+    const res = await ApiCall.get(`/api/copartes/${idCoparte}`)
+    return res
+  }
 
-    let res: ApiCallRes
+  const registrarCoparte = async () => {
+    const res = await ApiCall.post("/api/copartes", estadoForma)
+    return res
+  }
 
-    if (idCoparte) {
-      res = await ApiCall.put(`/api/copartes/${idCoparte}`, estadoForma)
-    } else {
-      res = await ApiCall.post(`/api/copartes/${idCoparte}`, estadoForma)
-    }
-
-    if (!res.error) {
-      router.push("/copartes")
-    }
-    setIsLoading(false)
+  const editarCoparte = async () => {
+    const res = await ApiCall.put(`/api/copartes/${idCoparte}`, estadoForma)
+    return res
   }
 
   const cancelar = () => {
     router.push("/copartes")
   }
 
-  const inputsForma = [
-    {
-      type: "select",
-      name: "id_tipo",
-      label: "Tipo",
-      options: [
-        { label: "Constituida", value: 1 },
-        { label: "No constituida", value: 2 },
-      ],
-    },
-    {
-      type: "text",
-      name: "nombre",
-      label: "Nombre de la colectiva",
-    },
-    {
-      type: "text",
-      name: "id",
-      label: "ID",
-    },
-  ]
+  const handleChange = (ev: ChangeEvent) => {
+    const { name, value } = ev.target
 
-  const inputs = inputsForma.map((input) => (
-    <InputContainer
-      key={`input_${input.name}`}
-      onChange={handleInputChange}
-      value={estadoForma[input.name]}
-      clase="col-md-6 col-lg-4"
-      {...input}
-    />
-  ))
+    setEstadoForma({
+      ...estadoForma,
+      [name]: value,
+    })
+  }
 
-  const botones = (
-    <>
-      <BtnCancelar cancelar={cancelar} />
-      <BtnRegistrar textoBtn={idCoparte ? "Actualizar" : "Registrar"} />
-    </>
-  )
+  const handleSubmit = async (ev: React.SyntheticEvent) => {
+    ev.preventDefault()
+
+    setIsLoading(true)
+    const res = idCoparte ? await editarCoparte() : await registrarCoparte()
+    setIsLoading(false)
+
+    if (res.error) {
+      console.log(res)
+    } else {
+      router.push("/copartes")
+    }
+  }
+
+  if (isLoading) {
+    return <Loader />
+  }
 
   return (
-    <>
-      <div className="container">
-        <div className="row mb-4">
-          <div className="col-12 d-flex align-items-center">
-            <BtnBack navLink="/copartes" />
-            <Encabezado
-              size="2"
-              titulo={`${idCoparte ? "Editar" : "Registrar"} coparte`}
-            />
-          </div>
+    <div className="container">
+      <form className="row py-3 border" onSubmit={handleSubmit}>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label">Tipo</label>
+          <select
+            className="form-control"
+            onChange={handleChange}
+            name="i_tipo"
+            value={estadoForma.i_tipo}
+          >
+            <option value="1">Constituida</option>
+            <option value="2">No constituida</option>
+          </select>
         </div>
-        {isLoading ? (
-          <Loader />
-        ) : (
-          <FormContainer
-            inputs={inputs}
-            botones={botones}
-            onSubmit={handleSubmit}
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label">Nombre</label>
+          <input
+            className="form-control"
+            type="text"
+            onChange={handleChange}
+            name="nombre"
+            value={estadoForma.nombre}
           />
-        )}
-      </div>
-    </>
+        </div>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label">ID</label>
+          <input
+            className="form-control"
+            type="text"
+            onChange={handleChange}
+            name="vc_id"
+            value={estadoForma.vc_id}
+          />
+        </div>
+        <div className="col-12 text-end">
+          <button
+            className="btn btn-secondary me-2"
+            type="button"
+            onClick={cancelar}
+          >
+            Cancelar
+          </button>
+          <button className="btn btn-secondary" type="submit">
+            {idCoparte ? "Editar" : "Registrar"}
+          </button>
+        </div>
+      </form>
+    </div>
   )
 }
 

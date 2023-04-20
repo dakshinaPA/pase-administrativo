@@ -50,7 +50,7 @@ class UsuariosServices {
     const usuariosHidratadas: Usuario[] = usuariosDB.map((usuario: Usuario) => {
       let rol: string
 
-      switch (Number(usuario.id_rol)) {
+      switch (Number(usuario.i_rol)) {
         case 1:
           rol = "Super Usuario"
           break

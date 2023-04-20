@@ -18,7 +18,7 @@ class CopartesServices {
     const copartesHidratadas: Coparte[] = copartesDB.map((cop) => {
       let tipo: string
 
-      switch (Number(cop.id_tipo)) {
+      switch (Number(cop.i_tipo)) {
         case 1:
           tipo = "Constituida"
           break

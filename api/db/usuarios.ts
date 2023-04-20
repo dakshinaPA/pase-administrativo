@@ -7,7 +7,7 @@ class UsuarioDB {
     const query =
       "SELECT * FROM usuarios WHERE email=? AND password=? AND b_activo=1"
     const placeHolders = [email, password]
-    
+
     try {
       const res = await queryDBPlaceHolder(query, placeHolders)
       return RespuestaDB.exitosa(res)
@@ -30,10 +30,10 @@ class UsuarioDB {
 
   static async obtener(id?: number) {
     let query =
-      "SELECT id_usuario, nombre, apellido_paterno, apellido_materno, email, id_rol, password FROM `usuarios` WHERE b_activo=1"
+      "SELECT id, nombre, apellido_paterno, apellido_materno, email, email2, i_rol, password FROM `usuarios` WHERE b_activo=1"
 
     if (id) {
-      query += ` AND id_usuario=${id} LIMIT 1`
+      query += ` AND id=${id} LIMIT 1`
     }
 
     try {
@@ -50,18 +50,20 @@ class UsuarioDB {
       apellido_paterno,
       apellido_materno,
       email,
-      id_rol,
+      email2,
+      i_rol,
       password,
     } = data
 
     const query =
-      "INSERT INTO usuarios ( nombre, apellido_paterno, apellido_materno, email, id_rol, password ) VALUES (?, ?, ?, ?, ?, ?)"
+      "INSERT INTO usuarios ( nombre, apellido_paterno, apellido_materno, email, email2, i_rol, password ) VALUES (?, ?, ?, ?, ?, ?, ?)"
     const placeHolders = [
       nombre,
       apellido_paterno,
       apellido_materno,
       email,
-      id_rol,
+      email2,
+      i_rol,
       password,
     ]
 
@@ -79,17 +81,19 @@ class UsuarioDB {
       apellido_paterno,
       apellido_materno,
       email,
-      id_rol,
+      email2,
+      i_rol,
       password,
     } = data
 
-    const query = `UPDATE usuarios SET nombre=?, apellido_paterno=?, apellido_materno=?, email=?, id_rol=?, password=? WHERE id_usuario=? LIMIT 1`
+    const query = `UPDATE usuarios SET nombre=?, apellido_paterno=?, apellido_materno=?, email=?, email2=?, i_rol=?, password=? WHERE id=? LIMIT 1`
     const placeHolders = [
       nombre,
       apellido_paterno,
       apellido_materno,
       email,
-      id_rol,
+      email2,
+      i_rol,
       password,
       id,
     ]
@@ -103,7 +107,7 @@ class UsuarioDB {
   }
 
   static async borrar(id: number) {
-    const query = `UPDATE usuarios SET b_activo=0 WHERE id_usuario=${id} LIMIT 1`
+    const query = `UPDATE usuarios SET b_activo=0 WHERE id=${id} LIMIT 1`
 
     try {
       const res = await queryDB(query)

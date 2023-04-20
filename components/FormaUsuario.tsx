@@ -1,150 +1,183 @@
-import {
-  FormContainer,
-  InputContainer,
-  BtnRegistrar,
-  BtnCancelar,
-} from "@components/FormContainer"
-import { Encabezado } from "@components/Encabezado"
-import { BtnBack } from "@components/BtnBack"
-import { useForm } from "@hooks/useForm"
-import { Usuario } from "@api/models/usuarios.model"
-import { useRouter } from "next/router"
 import { useEffect, useState } from "react"
-import { ApiCall, ApiCallRes } from "@assets/utils/apiCalls"
+import { useRouter } from "next/router"
+import { ChangeEvent } from "@assets/models/formEvents.model"
+import { Usuario } from "@api/models/usuarios.model"
 import { Loader } from "@components/Loader"
+import { ApiCall } from "@assets/utils/apiCalls"
 
 const FormaUsuario = () => {
-  const estadoInicialForma: Usuario = {
+  const estadoInicialForma = {
     nombre: "",
     apellido_paterno: "",
     apellido_materno: "",
     email: "",
+    email2: "",
     password: "",
-    id_rol: 2,
+    i_rol: 1,
   }
 
-  const { estadoForma, setEstadoForma, handleInputChange } =
-    useForm(estadoInicialForma)
+  const [estadoForma, setEstadoForma] = useState<Usuario>(estadoInicialForma)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const router = useRouter()
   const idUsuario = router.query.id
 
   useEffect(() => {
     if (idUsuario) {
-      obtenerUsuario()
+      cargarDataUsuario()
     }
   }, [])
 
-  const obtenerUsuario = async () => {
+  const cargarDataUsuario = async () => {
     setIsLoading(true)
 
-    const { error, data } = await ApiCall.get(`/api/usuarios/${idUsuario}`)
+    const { error, data } = await obtenerUsuario()
 
-    if (!error) {
-      setEstadoForma(data[0])
+    if (error) {
+      console.log(error)
+    } else {
+      const dataUsuario = data[0] as Usuario
+      setEstadoForma(dataUsuario)
     }
+
     setIsLoading(false)
   }
 
-  const handleSubmit = async () => {
-    setIsLoading(true)
+  const obtenerUsuario = async () => {
+    const res = await ApiCall.get(`/api/usuarios/${idUsuario}`)
+    return res
+  }
 
-    let res: ApiCallRes
+  const registrarUsuario = async () => {
+    const res = await ApiCall.post("/api/usuarios", estadoForma)
+    return res
+  }
 
-    if (idUsuario) {
-      res = await ApiCall.put(`/api/usuarios/${idUsuario}`, estadoForma)
-    } else {
-      res = await ApiCall.post(`/api/usuarios/${idUsuario}`, estadoForma)
-    }
-
-    if (!res.error) {
-      router.push("/usuarios")
-    }
-    setIsLoading(false)
+  const editarUsuario = async () => {
+    const res = await ApiCall.put(`/api/usuarios/${idUsuario}`, estadoForma)
+    return res
   }
 
   const cancelar = () => {
     router.push("/usuarios")
   }
 
-  const inputsForma = [
-    {
-      type: "text",
-      name: "nombre",
-      label: "Nombre",
-    },
-    {
-      type: "text",
-      name: "apellido_paterno",
-      label: "Apellido paterno",
-    },
-    {
-      type: "text",
-      name: "apellido_materno",
-      label: "Apellido materno",
-    },
-    {
-      type: "text",
-      name: "email",
-      label: "Correo electrónico",
-    },
-    {
-      type: "text",
-      name: "password",
-      label: "Contraseña",
-    },
-    {
-      type: "select",
-      name: "id_rol",
-      label: "Rol de usuario",
-      options: [
-        { value: 2, label: "Administrador" },
-        { value: 1, label: "Super usuario" },
-        { value: 3, label: "Coparte" },
-      ],
-    },
-  ]
+  const handleChange = (ev: ChangeEvent) => {
+    const { name, value } = ev.target
 
-  const inputs = inputsForma.map((input) => (
-    <InputContainer
-      key={`input_${input.name}`}
-      onChange={handleInputChange}
-      value={estadoForma[input.name]}
-      clase="col-md-6 col-lg-4"
-      {...input}
-    />
-  ))
+    setEstadoForma({
+      ...estadoForma,
+      [name]: value,
+    })
+  }
 
-  const botones = (
-    <>
-      <BtnCancelar cancelar={cancelar} />
-      <BtnRegistrar textoBtn={idUsuario ? "Actualizar" : "Registrar"} />
-    </>
-  )
+  const handleSubmit = async (ev: React.SyntheticEvent) => {
+    ev.preventDefault()
+
+    setIsLoading(true)
+    const res = idUsuario ? await editarUsuario() : await registrarUsuario()
+    setIsLoading(false)
+
+    if (res.error) {
+      console.log(res)
+    } else {
+      router.push("/usuarios")
+    }
+  }
+
+  if (isLoading) {
+    return <Loader />
+  }
 
   return (
-    <>
-      <div className="container">
-        <div className="row mb-4">
-          <div className="col-12 d-flex align-items-center">
-            <BtnBack navLink="/usuarios" />
-            <Encabezado
-              size="2"
-              titulo={`${idUsuario ? "Editar" : "Registrar"} usuario`}
-            />
-          </div>
-        </div>
-        {isLoading ? (
-          <Loader />
-        ) : (
-          <FormContainer
-            inputs={inputs}
-            botones={botones}
-            onSubmit={handleSubmit}
+    <div className="container">
+      <form className="row py-3 border" onSubmit={handleSubmit}>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label">Nombre</label>
+          <input
+            className="form-control"
+            type="text"
+            onChange={handleChange}
+            name="nombre"
+            value={estadoForma.nombre}
           />
-        )}
-      </div>
-    </>
+        </div>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label">Apellido paterno</label>
+          <input
+            className="form-control"
+            type="text"
+            onChange={handleChange}
+            name="apellido_paterno"
+            value={estadoForma.apellido_paterno}
+          />
+        </div>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label">Apellido materno</label>
+          <input
+            className="form-control"
+            type="text"
+            onChange={handleChange}
+            name="apellido_materno"
+            value={estadoForma.apellido_materno}
+          />
+        </div>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label">Email</label>
+          <input
+            className="form-control"
+            type="text"
+            onChange={handleChange}
+            name="email"
+            value={estadoForma.email}
+          />
+        </div>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label">Email alterno</label>
+          <input
+            className="form-control"
+            type="text"
+            onChange={handleChange}
+            name="email2"
+            value={estadoForma.email2}
+          />
+        </div>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label">Password</label>
+          <input
+            className="form-control"
+            type="text"
+            onChange={handleChange}
+            name="password"
+            value={estadoForma.password}
+          />
+        </div>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label">Rol</label>
+          <select
+            className="form-control"
+            onChange={handleChange}
+            name="i_rol"
+            value={estadoForma.i_rol}
+          >
+            <option value="1">Super usuario</option>
+            <option value="2">Administrador</option>
+            <option value="3">Coparte</option>
+          </select>
+        </div>
+        <div className="col-12 text-end">
+          <button
+            className="btn btn-secondary me-2"
+            type="button"
+            onClick={cancelar}
+          >
+            Cancelar
+          </button>
+          <button className="btn btn-secondary" type="submit">
+            {idUsuario ? "Editar" : "Registrar"}
+          </button>
+        </div>
+      </form>
+    </div>
   )
 }
 
