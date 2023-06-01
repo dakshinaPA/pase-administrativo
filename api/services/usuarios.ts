@@ -1,6 +1,7 @@
 import { UsuarioDB } from "@api/db/usuarios"
 import { RespuestaController } from "@api/utils/response"
-import { Usuario, LoginUsuario } from "@api/models/usuarios.model"
+import { LoginUsuario, ResUsuarioDB } from "@api/models/usuario.model"
+import { Usuario, UsuarioCoparte } from "@models/usuario.model"
 
 class UsuariosServices {
   static async login(dataUsuario: LoginUsuario) {
@@ -14,8 +15,10 @@ class UsuariosServices {
       )
     }
 
+    const [usuario] = data as Usuario[]
+
     // encontró match con usuario
-    if (data.length > 0) {
+    if (usuario) {
       // const res = await this.loggear( usuario.id_usuario )
       return RespuestaController.exitosa(200, "Usuario encontrado", data)
     }
@@ -35,72 +38,153 @@ class UsuariosServices {
   //     return res
   // }
 
-  static async obtener(id?: number) {
-    const res = await UsuarioDB.obtener(id)
+  static async obtener(id_usuario: number, id_rol: number) {
+    const { data, error } = await UsuarioDB.obtener(id_usuario, id_rol)
 
-    if (res.error) {
-      return RespuestaController.fallida(
-        400,
-        "Error al obtener usuarios",
-        res.data
-      )
+    if (error) {
+      return RespuestaController.fallida(400, "Error al obtener usuarios", data)
     }
 
-    const usuariosDB = res.data as Usuario[]
-    const usuariosHidratadas: Usuario[] = usuariosDB.map((usuario: Usuario) => {
-      let rol: string
+    const usuariosDB = data as ResUsuarioDB[]
 
-      switch (Number(usuario.i_rol)) {
-        case 1:
-          rol = "Super Usuario"
-          break
-        case 2:
-          rol = "Administrador"
-          break
-        case 3:
-          rol = "Coparte"
-          break
-      }
+    try {
+      const datatransfromada: Usuario[] = await Promise.all(
+        usuariosDB.map(async (usuario) => {
+          const {
+            id,
+            nombre,
+            apellido_paterno,
+            apellido_materno,
+            email,
+            telefono,
+            id_rol,
+            rol,
+          } = usuario
 
-      return { ...usuario, rol }
-    })
-    return RespuestaController.exitosa(
-      200,
-      "Consulta exitosa",
-      usuariosHidratadas
-    )
+          let copartes: UsuarioCoparte[] = []
+
+          if (id_usuario) {
+            const { error, data } = await UsuarioDB.obtenerCopartes(id)
+            if (error) throw data
+            copartes = data as UsuarioCoparte[]
+          }
+
+          return {
+            id,
+            nombre,
+            apellido_paterno,
+            apellido_materno,
+            email,
+            telefono,
+            rol: {
+              id: id_rol,
+              nombre: rol,
+            },
+            copartes,
+          }
+        })
+      )
+
+      return RespuestaController.exitosa(
+        200,
+        "Consulta exitosa",
+        datatransfromada
+      )
+    } catch (error) {
+      return RespuestaController.fallida(
+        400,
+        "Error al obtener copartes de usuario",
+        error
+      )
+    }
   }
 
   static async crear(data: Usuario) {
-    const res = await UsuarioDB.crear(data)
-    if (res.error) {
+    try {
+      const { data: dataUsuarios, error } = await UsuarioDB.crear(data)
+      if (error) throw dataUsuarios
+
+      // @ts-ignore
+      const idInsertado = dataUsuarios.insertId
+      const id_rol = data.rol.id
+      // validacion para registrar copartes de usuario
+      // solo si 2.admin, 3.coparte
+      if (id_rol != 1) {
+        // Admin puede tener n copartes asignadas
+        // Coparte solo puede tener 1 coparte asignada
+        const registrarCopartesUsuario = await Promise.all(
+          data.copartes.map(async (coparte) => {
+            const { data, error } = await UsuarioDB.crearCoparte(
+              idInsertado,
+              coparte.id_coparte
+            )
+            if (error) throw data
+            return data
+          })
+        )
+      }
+
+      return RespuestaController.exitosa(201, "Usuario creado con éxito", {
+        idInsertado,
+      })
+    } catch (error) {
       return RespuestaController.fallida(
         400,
-        "Error al crear usuario",
-        res.data
+        "Error al crear copartes de usuario",
+        error
       )
     }
-    return RespuestaController.exitosa(
-      201,
-      "Usuario creado con éxito",
-      res.data
-    )
   }
 
-  static async actualizar(id: number, data: Usuario) {
-    const res = await UsuarioDB.actualizar(id, data)
-    if (res.error) {
+  static async actualizar(id_usuario: number, data: Usuario) {
+    try {
+      const usuarioActualizado = await UsuarioDB.actualizar(id_usuario, data)
+      if (usuarioActualizado.error) throw usuarioActualizado.data
+
+      const idRol = data.rol.id
+
+      //actualizar copartes en caso que no sea admin
+      if (idRol !== 1) {
+        const copartesLimpiadas = await UsuarioDB.limpiarCopartes(id_usuario)
+        if (copartesLimpiadas.error) throw copartesLimpiadas.data
+
+        const idsAReactviar = []
+        let copartesARegistar = []
+
+        for (const { id, id_coparte } of data.copartes) {
+          if (id) {
+            idsAReactviar.push(id)
+          } else {
+            copartesARegistar.push(id_coparte)
+          }
+        }
+
+        const reactivarIds = await UsuarioDB.reactivarCoparte(idsAReactviar)
+        if (reactivarIds.error) throw reactivarIds.data
+
+        const registrarNuevasCopartes = await Promise.all(
+          copartesARegistar.map(async (id_coparte) => {
+            const coparteCreada = await UsuarioDB.crearCoparte(
+              id_usuario,
+              id_coparte
+            )
+            if (coparteCreada.error) throw coparteCreada.data
+          })
+        )
+      }
+
+      return RespuestaController.exitosa(
+        200,
+        "Usuario actualizado con éxito",
+        null
+      )
+    } catch (error) {
       return RespuestaController.fallida(
         400,
         "Error al actualziar usuario",
-        res.data
+        error
       )
     }
-    return RespuestaController.exitosa(
-      200,
-      "Usuario actualizado con éxito",
-      res.data
-    )
   }
 
   static async borrar(id: number) {
@@ -115,7 +199,7 @@ class UsuariosServices {
     return RespuestaController.exitosa(
       200,
       "Usuairo borrado con éxito",
-      res.data
+      null
     )
   }
 }

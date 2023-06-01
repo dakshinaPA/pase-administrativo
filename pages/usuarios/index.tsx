@@ -4,7 +4,7 @@ import { useRouter } from "next/router"
 import { Loader } from "@components/Loader"
 import { ModalEliminar } from "@components/ModalEliminar"
 import { aMinuscula } from "@assets/utils/common"
-import { Usuario } from "@api/models/usuarios.model"
+import { Usuario } from "@api/models/usuario.model"
 
 const Usuarios = () => {
   const router = useRouter()

@@ -17,6 +17,21 @@ const determinarNombreArchivo = (archivo) => {
 
 const aMinuscula = (clave: string) => clave.toLowerCase()
 
+const epochAFecha = (epoch: string): string => {
+  let fecha_registro = new Date(Number(epoch) * 1000)
+  return fecha_registro.toLocaleDateString("es-MX", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "2-digit",
+  })
+}
+
+const fechaActualAEpoch = () => {
+  const fechaHoyEpoch = Date.now()
+  const fechaEpoch = (fechaHoyEpoch / 1000).toFixed()
+  return fechaEpoch
+}
+
 const estadosRepublica = [
   { id: 1, nombre: "Aguascalientes" },
   { id: 2, nombre: "Baja California" },
@@ -52,4 +67,10 @@ const estadosRepublica = [
   { id: 32, nombre: "Zacatecas" },
 ]
 
-export { determinarNombreArchivo, estadosRepublica, aMinuscula }
+export {
+  determinarNombreArchivo,
+  estadosRepublica,
+  aMinuscula,
+  epochAFecha,
+  fechaActualAEpoch,
+}

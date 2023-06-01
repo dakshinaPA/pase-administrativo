@@ -4,68 +4,69 @@ import { useRouter } from "next/router"
 import { Loader } from "@components/Loader"
 import { ModalEliminar } from "@components/ModalEliminar"
 import { aMinuscula } from "@assets/utils/common"
-import { Usuario } from "@api/models/usuarios.model"
-import { modalEliminarModel } from "@assets/models/modalEliminar.model"
+import { SolicitudPresupuesto } from "@api/models/solicitudesPresupuestos.model"
 
-const Usuarios = () => {
-  const estadoInicialModalEliminar = { show: false, id: 0, txt_id: "" }
+const SolicitudesPresupuesto = () => {
   const router = useRouter()
-  const [usuariosDB, setUsuariosDB] = useState<Usuario[]>([])
+  const [solicitudesDB, setSolicitudesDB] = useState<SolicitudPresupuesto[]>([])
+  const [solicitudAEliminar, setSolicitudAEliminar] = useState<number>(0)
+  const [showModalEliminar, setShowModalEliminar] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [inputBusqueda, setInputBusqueda] = useState<string>("")
-  const [modalEliminar, setModalEliminar] = useState<modalEliminarModel>(
-    estadoInicialModalEliminar
-  )
 
   useEffect(() => {
-    obtenerUsuarios()
+    obtenerSolicitudes()
   }, [])
 
-  const abrirModalEliminarUsuario = (id: number, txt_id: string) => {
-    setModalEliminar({ show: true, id, txt_id })
+  const abrirModalEliminarSolicitud = (id: number) => {
+    setSolicitudAEliminar(id)
+    setShowModalEliminar(true)
   }
 
-  const resetModalEliminar = () => {
-    setModalEliminar(estadoInicialModalEliminar)
-  }
-
-  const obtenerUsuarios = async () => {
+  const obtenerSolicitudes = async () => {
     setIsLoading(true)
-    const res = await ApiCall.get("/api/usuarios")
+
+    const res = await ApiCall.get("/api/presupuestos")
     const { error, data, mensaje } = res
 
     if (error) {
       console.log(error)
     } else {
-      setUsuariosDB(data as Usuario[])
+      setSolicitudesDB(data as SolicitudPresupuesto[])
     }
     setIsLoading(false)
   }
 
-  const eliminarUsuario = async () => {
-    setModalEliminar(estadoInicialModalEliminar)
+  const eliminarSolicitud = async () => {
+    setSolicitudAEliminar(0)
+    setShowModalEliminar(false)
     setIsLoading(true)
 
     const { error, data, mensaje } = await ApiCall.delete(
-      `/api/usuarios/${modalEliminar.id}`
+      `/api/presupuestos/${solicitudAEliminar}`
     )
 
     if (error) {
       console.log(error)
     } else {
-      await obtenerUsuarios()
+      await obtenerSolicitudes()
     }
 
     setIsLoading(false)
   }
 
-  const usuariosFiltrados = usuariosDB.filter(
-    ({ nombre, apellido_paterno, email }) => {
+  const cancelarEliminarSolicitud = () => {
+    setSolicitudAEliminar(0)
+    setShowModalEliminar(false)
+  }
+
+  const solicitudesFiltradas = solicitudesDB.filter(
+    ({ clabe, titular, rfc }) => {
       const query = inputBusqueda.toLocaleLowerCase()
       return (
-        aMinuscula(nombre).includes(query) ||
-        aMinuscula(apellido_paterno).includes(query) ||
-        aMinuscula(email).includes(query)
+        aMinuscula(clabe).includes(query) ||
+        aMinuscula(titular).includes(query) ||
+        aMinuscula(rfc).includes(query)
       )
     }
   )
@@ -78,7 +79,7 @@ const Usuarios = () => {
             <button
               type="button"
               className="btn btn-secondary"
-              onClick={() => router.push("/usuarios/registro")}
+              onClick={() => router.push("/presupuestos/registro")}
             >
               Registrar +
             </button>
@@ -108,42 +109,52 @@ const Usuarios = () => {
                 <thead>
                   <tr>
                     <th>#id</th>
-                    <th>Nombre</th>
+                    <th>Clabe</th>
+                    <th>Banco</th>
+                    <th>Titular</th>
+                    <th>Rfc</th>
                     <th>Email</th>
-                    <th>Rol</th>
+                    <th>Partida</th>
+                    <th>Descripción</th>
+                    <th>Importe</th>
                     <th>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {usuariosFiltrados.map((coparte) => {
+                  {solicitudesFiltradas.map((solicitud) => {
                     const {
                       id,
-                      nombre,
-                      apellido_paterno,
-                      apellido_materno,
+                      clabe,
+                      banco,
+                      titular,
+                      rfc,
                       email,
-                      rol,
-                    } = coparte
-                    const nombreCompleto = `${nombre} ${apellido_paterno}`
+                      partida,
+                      descripcion,
+                      importe,
+                    } = solicitud
 
                     return (
                       <tr key={`coparte_${id}`}>
                         <td>{id}</td>
-                        <td>{nombreCompleto}</td>
+                        <td>{clabe}</td>
+                        <td>{banco}</td>
+                        <td>{titular}</td>
+                        <td>{rfc}</td>
                         <td>{email}</td>
-                        <td>{rol}</td>
+                        <td>{partida}</td>
+                        <td>{descripcion}</td>
+                        <td>{importe}</td>
                         <td className="d-flex">
                           <button
                             className="btn btn-dark me-1"
-                            onClick={() => router.push(`/usuarios/${id}`)}
+                            onClick={() => router.push(`/presupuestos/${id}`)}
                           >
                             <i className="bi bi-pencil"></i>
                           </button>
                           <button
                             className="btn btn-dark"
-                            onClick={() =>
-                              abrirModalEliminarUsuario(id, nombreCompleto)
-                            }
+                            onClick={() => abrirModalEliminarSolicitud(id)}
                           >
                             <i className="bi bi-x-circle"></i>
                           </button>
@@ -157,15 +168,18 @@ const Usuarios = () => {
           </div>
         )}
       </div>
-      {modalEliminar.show && (
-        <ModalEliminar cancelar={resetModalEliminar} aceptar={eliminarUsuario}>
-          <p className="mb-0">
-            ¿Estás segur@ de eliminar al usuario {modalEliminar.txt_id}?
-          </p>
-        </ModalEliminar>
-      )}
+      <ModalEliminar
+        show={showModalEliminar}
+        aceptar={eliminarSolicitud}
+        cancelar={cancelarEliminarSolicitud}
+      >
+        <p className="mb-0">
+          ¿Estás segur@ de eliminar al la solicitud de presupuesto{" "}
+          {solicitudAEliminar}?
+        </p>
+      </ModalEliminar>
     </>
   )
 }
 
-export default Usuarios
+export default SolicitudesPresupuesto

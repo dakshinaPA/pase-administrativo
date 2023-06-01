@@ -12,7 +12,7 @@ const connectionDB = mysql.createConnection({
   host: "localhost",
   user: "root",
   password: "Tollotzin25",
-  database: "test",
+  database: "dakshina",
 })
 
 export { connectionDB }

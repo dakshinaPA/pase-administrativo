@@ -1,5 +1,4 @@
 import { connectionDB } from "./connection"
-// import { RespuestaDB } from "@api/utils/response"
 import { ResultsDB } from "@api/models/respuestas.model"
 
 const queryDB = (query: string): Promise<ResultsDB> => {

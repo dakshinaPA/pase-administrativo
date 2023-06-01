@@ -2,7 +2,7 @@ export interface SolicitudPresupuesto {
   id?: number
   tipoGasto: number
   proveedor: string
-  clabe: number
+  clabe: string
   banco: string
   titular: string
   rfc: string

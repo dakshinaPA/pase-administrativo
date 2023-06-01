@@ -1,23 +1,15 @@
-import {
-  FormContainer,
-  InputContainer,
-  BtnRegistrar,
-  BtnCancelar,
-} from "@components/FormContainer"
-import { Encabezado } from "@components/Encabezado"
-import { BtnBack } from "@components/BtnBack"
-import { useForm } from "@hooks/useForm"
-import { SolicitudPresupuesto } from "@api/models/solicitudesPresupuestos.model"
-import { useRouter } from "next/router"
 import { useEffect, useState } from "react"
-import { ApiCall, ApiCallRes } from "@assets/utils/apiCalls"
+import { useRouter } from "next/router"
+import { ChangeEvent } from "@assets/models/formEvents.model"
+import { SolicitudPresupuesto } from "@api/models/solicitudesPresupuestos.model"
 import { Loader } from "@components/Loader"
+import { ApiCall } from "@assets/utils/apiCalls"
 
 const FormaSolicitudPresupuesto = () => {
-  const estadoInicialForma: SolicitudPresupuesto = {
+  const estadoInicialForma = {
     tipoGasto: 1,
     proveedor: "",
-    clabe: 0,
+    clabe: "",
     banco: "",
     titular: "",
     rfc: "",
@@ -29,182 +21,230 @@ const FormaSolicitudPresupuesto = () => {
     comprobante: 1,
   }
 
-  const { estadoForma, setEstadoForma, handleInputChange } =
-    useForm(estadoInicialForma)
+  const [estadoForma, setEstadoForma] =
+    useState<SolicitudPresupuesto>(estadoInicialForma)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const router = useRouter()
-  const idSolicitudPresupuesto = router.query.id
+  const idSolicitud = router.query.id
 
   useEffect(() => {
-    if (idSolicitudPresupuesto) {
-      obtenerUsuario()
+    if (idSolicitud) {
+      cargarDataSolicitud()
     }
   }, [])
 
-  const obtenerUsuario = async () => {
+  const cargarDataSolicitud = async () => {
     setIsLoading(true)
 
-    const { error, data } = await ApiCall.get(
-      `/api/presupuestos/${idSolicitudPresupuesto}`
-    )
+    const { error, data } = await obtenerSolicitud()
 
-    if (!error) {
-      setEstadoForma(data[0])
+    if (error) {
+      console.log(error)
+    } else {
+      const dataUsuario = data[0] as SolicitudPresupuesto
+      setEstadoForma(dataUsuario)
     }
+
     setIsLoading(false)
   }
 
-  const handleSubmit = async () => {
-    setIsLoading(true)
+  const obtenerSolicitud = async () => {
+    const res = await ApiCall.get(`/api/presupuestos/${idSolicitud}`)
+    return res
+  }
 
-    let res: ApiCallRes
+  const registrarSolicitud = async () => {
+    const res = await ApiCall.post("/api/presupuestos", estadoForma)
+    return res
+  }
 
-    if (idSolicitudPresupuesto) {
-      res = await ApiCall.put(
-        `/api/presupuestos/${idSolicitudPresupuesto}`,
-        estadoForma
-      )
-    } else {
-      res = await ApiCall.post(
-        `/api/presupuestos/${idSolicitudPresupuesto}`,
-        estadoForma
-      )
-    }
-
-    if (!res.error) {
-      router.push("/presupuestos")
-    }
-    setIsLoading(false)
+  const editarSolicitud = async () => {
+    const res = await ApiCall.put(
+      `/api/presupuestos/${idSolicitud}`,
+      estadoForma
+    )
+    return res
   }
 
   const cancelar = () => {
     router.push("/presupuestos")
   }
 
-  const inputsForma = [
-    {
-      type: "select",
-      name: "tipoGasto",
-      label: "Tipo de gasto",
-      options: [
-        { value: 1, label: "Programación" },
-        { value: 2, label: "Reembolso" },
-        { value: 3, label: "Asimilados" },
-      ],
-    },
-    {
-      type: "text",
-      name: "proveedor",
-      label: "Proveedor",
-      placeholder: "Escribe el proveedor",
-    },
-    {
-      type: "number",
-      name: "clabe",
-      label: "CLABE interbancaria",
-    },
-    {
-      type: "text",
-      name: "banco",
-      label: "Nombre del banco",
-    },
-    {
-      type: "text",
-      name: "titular",
-      label: "Titular de la cuenta",
-    },
-    {
-      type: "text",
-      name: "rfc",
-      label: "RFC del proveedor",
-    },
-    {
-      type: "text",
-      name: "email",
-      label: "Correo electrónico",
-    },
-    {
-      type: "text",
-      name: "email2",
-      label: "Correo electrónico alterno",
-    },
-    {
-      type: "select",
-      name: "partida",
-      label: "Partida presupuestal",
-      options: [
-        { value: 1, label: "Algo" },
-        { value: 2, label: "Reembolso" },
-      ],
-    },
-    {
-      type: "textarea",
-      name: "descripcion",
-      label: "Descripción del gasto",
-    },
-    {
-      type: "number",
-      name: "importe",
-      label: "Importe",
-    },
-    {
-      type: "select",
-      name: "comprobante",
-      label: "Comprobante",
-      options: [
-        { value: 1, label: "Factura" },
-        { value: 2, label: "Recibo de asimilados" },
-        { value: 3, label: "Recibo de honorarios" },
-        { value: 4, label: "Invoice" },
-        { value: 5, label: "Recibo no deducible" },
-      ],
-    },
-  ]
+  const handleChange = (ev: ChangeEvent) => {
+    const { name, value } = ev.target
 
-  const inputs = inputsForma.map((input) => (
-    <InputContainer
-      key={`input_${input.name}`}
-      onChange={handleInputChange}
-      value={estadoForma[input.name]}
-      clase="col-md-6 col-lg-4"
-      {...input}
-    />
-  ))
+    setEstadoForma({
+      ...estadoForma,
+      [name]: value,
+    })
+  }
 
-  const botones = (
-    <>
-      <BtnCancelar cancelar={cancelar} />
-      <BtnRegistrar
-        textoBtn={idSolicitudPresupuesto ? "Actualizar" : "Registrar"}
-      />
-    </>
-  )
+  const handleSubmit = async (ev: React.SyntheticEvent) => {
+    ev.preventDefault()
+
+    setIsLoading(true)
+    const res = idSolicitud
+      ? await editarSolicitud()
+      : await registrarSolicitud()
+    setIsLoading(false)
+
+    if (res.error) {
+      console.log(res)
+    } else {
+      router.push("/presupuestos")
+    }
+  }
+
+  if (isLoading) {
+    return <Loader />
+  }
 
   return (
-    <>
-      <div className="container">
-        <div className="row mb-4">
-          <div className="col-12 d-flex align-items-center">
-            <BtnBack navLink="/presupuestos" />
-            <Encabezado
-              size="2"
-              titulo={`${
-                idSolicitudPresupuesto ? "Editar" : "Registrar"
-              } solicitud de presupuesto`}
-            />
-          </div>
+    <div className="container">
+      <form className="row py-3 border" onSubmit={handleSubmit}>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label">Tipo de gasto</label>
+          <select
+            className="form-control"
+            onChange={handleChange}
+            name="tipoGasto"
+            value={estadoForma.tipoGasto}
+          >
+            <option value="1">Programación</option>
+            <option value="2">Reembolso</option>
+            <option value="3">Asimilados</option>
+          </select>
         </div>
-        {isLoading ? (
-          <Loader />
-        ) : (
-          <FormContainer
-            inputs={inputs}
-            botones={botones}
-            onSubmit={handleSubmit}
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label">Proveedor</label>
+          <input
+            className="form-control"
+            type="text"
+            onChange={handleChange}
+            name="proveedor"
+            value={estadoForma.proveedor}
           />
-        )}
-      </div>
-    </>
+        </div>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label">Clabe</label>
+          <input
+            className="form-control"
+            type="text"
+            onChange={handleChange}
+            name="clabe"
+            value={estadoForma.clabe}
+          />
+        </div>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label">Banco</label>
+          <input
+            className="form-control"
+            type="text"
+            onChange={handleChange}
+            name="banco"
+            value={estadoForma.banco}
+          />
+        </div>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label">Titular</label>
+          <input
+            className="form-control"
+            type="text"
+            onChange={handleChange}
+            name="titular"
+            value={estadoForma.titular}
+          />
+        </div>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label">Rfc</label>
+          <input
+            className="form-control"
+            type="text"
+            onChange={handleChange}
+            name="rfc"
+            value={estadoForma.rfc}
+          />
+        </div>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label">Email</label>
+          <input
+            className="form-control"
+            type="text"
+            onChange={handleChange}
+            name="email"
+            value={estadoForma.email}
+          />
+        </div>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label">Email alterno</label>
+          <input
+            className="form-control"
+            type="text"
+            onChange={handleChange}
+            name="email2"
+            value={estadoForma.email2}
+          />
+        </div>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label">Partida presupuestal</label>
+          <select
+            className="form-control"
+            onChange={handleChange}
+            name="partida"
+            value={estadoForma.partida}
+          >
+            <option value="1">Algo</option>
+            <option value="2">Reembolso</option>
+          </select>
+        </div>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label">Descricpión</label>
+          <textarea
+            className="form-control"
+            onChange={handleChange}
+            name="descripcion"
+            value={estadoForma.descripcion}
+          ></textarea>
+        </div>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label">Importe</label>
+          <input
+            className="form-control"
+            type="number"
+            onChange={handleChange}
+            name="importe"
+            value={estadoForma.importe}
+          />
+        </div>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label">Comprobante</label>
+          <select
+            className="form-control"
+            onChange={handleChange}
+            name="comprobante"
+            value={estadoForma.comprobante}
+          >
+            <option value="1">Factura</option>
+            <option value="2">Recibo de asimilados</option>
+            <option value="3">Recibo de honorarios</option>
+            <option value="4">Invoice</option>
+            <option value="5">Recibo no deducible</option>
+          </select>
+        </div>
+        <div className="col-12 text-end">
+          <button
+            className="btn btn-secondary me-2"
+            type="button"
+            onClick={cancelar}
+          >
+            Cancelar
+          </button>
+          <button className="btn btn-secondary" type="submit">
+            {idSolicitud ? "Editar" : "Registrar"}
+          </button>
+        </div>
+      </form>
+    </div>
   )
 }
 
