@@ -187,11 +187,13 @@ class CopartesServices {
 
   static async actualizar(id_coparte: number, data: Coparte) {
     try {
-      const { direccion } = data
-      const resCoparte = CoparteDB.actualizar(id_coparte, data)
-      const resADireccion = CoparteDB.actualizarDireccion(direccion)
+      const { direccion, enlace } = data
+      const upCoparte = CoparteDB.actualizar(id_coparte, data)
+      const upADireccion = CoparteDB.actualizarDireccion(direccion)
+      const dlEnlace = CoparteDB.limpiarEnlace(id_coparte)
+      const upEnlace = CoparteDB.actualizarEnlace(enlace.id_usuario)
 
-      const resCombinadas = await Promise.all([resCoparte, resADireccion])
+      const resCombinadas = await Promise.all([upCoparte, upADireccion, dlEnlace, upEnlace])
 
       for (const rc of resCombinadas) {
         if (rc.error) throw rc.data

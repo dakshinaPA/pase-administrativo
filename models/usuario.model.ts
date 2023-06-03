@@ -3,7 +3,7 @@ export interface UsuarioCoparte {
   id_coparte: number
   nombre?: string
   cargo?: string
-  b_enlace?: string
+  b_enlace?: boolean
 }
 
 export interface RolUsuario {

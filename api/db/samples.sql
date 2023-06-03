@@ -265,3 +265,15 @@ VALUES (1, 'Yo que se', 'Azteca', '453454122323232323', 'felipe Calderón', 'CAL
 -- INTERMEDIAS
 
 financiador_enlace
+
+
+TRUNCATE TABLE coparte_direccion;
+TRUNCATE TABLE coparte_usuarios;
+TRUNCATE TABLE copartes;
+TRUNCATE TABLE proyectos;
+TRUNCATE TABLE usuarios;
+
+TRUNCATE TABLE financiador_direccion;
+TRUNCATE TABLE financiador_enlace;
+TRUNCATE TABLE financiador_notas;
+TRUNCATE TABLE financiadores;

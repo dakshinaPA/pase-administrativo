@@ -232,20 +232,31 @@ class CoparteDB {
     }
   }
 
-  // static async actualizarUsuarios(data: UsuariosCoparte) {
-  //   const { administrador, coparte } = data
+  static async limpiarEnlace(id_coparte: number) {
+    const query = `UPDATE coparte_usuarios SET b_enlace=0 WHERE id_coparte=?`
 
-  //   const query = `UPDATE coparte_usuarios SET id_usuario=? WHERE id=? LIMIT 1`
+    const placeHolders = [id_coparte]
 
-  //   const placeHolders = [administrador.id_usuario, administrador.id]
+    try {
+      const res = await queryDBPlaceHolder(query, placeHolders)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
 
-  //   try {
-  //     const res = await queryDBPlaceHolder(query, placeHolders)
-  //     return RespuestaDB.exitosa(res)
-  //   } catch (error) {
-  //     return RespuestaDB.fallida(error)
-  //   }
-  // }
+  static async actualizarEnlace(id_usuario: number) {
+    const query = `UPDATE coparte_usuarios SET b_enlace=1 WHERE id_usuario=? LIMIT 1`
+
+    const placeHolders = [id_usuario]
+
+    try {
+      const res = await queryDBPlaceHolder(query, placeHolders)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
 }
 
 export { CoparteDB }

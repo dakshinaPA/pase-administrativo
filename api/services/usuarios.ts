@@ -61,11 +61,24 @@ class UsuariosServices {
 
           let copartes: UsuarioCoparte[] = null
 
-          // if (id_usuario) {
-          //   const { error, data } = await UsuarioDB.obtenerCopartes(id)
-          //   if (error) throw data
-          //   copartes = data as UsuarioCoparte[]
-          // }
+          if (id_usuario && id_rol !== 1) {
+            const obtenerCoUs =
+              id_rol === 3
+                ? await UsuarioDB.obtenerCoparteCoparte(id_usuario)
+                : await UsuarioDB.obtenerCopartesAdministrador(id_usuario)
+
+            if (obtenerCoUs.error) throw obtenerCoUs.data
+
+            const copartesCoUS = obtenerCoUs.data as UsuarioCoparte[]
+
+            copartes =
+              id_rol === 3
+                ? copartesCoUS.map((cop) => ({
+                    ...cop,
+                    b_enlace: Boolean(cop.b_enlace),
+                  }))
+                : copartesCoUS
+          }
 
           return {
             id,
@@ -125,11 +138,7 @@ class UsuariosServices {
         idInsertadoCoparteUsuario,
       })
     } catch (error) {
-      return RespuestaController.fallida(
-        400,
-        "Error al crear usuario",
-        error
-      )
+      return RespuestaController.fallida(400, "Error al crear usuario", error)
     }
   }
 
@@ -137,38 +146,6 @@ class UsuariosServices {
     try {
       const usuarioActualizado = await UsuarioDB.actualizar(id_usuario, data)
       if (usuarioActualizado.error) throw usuarioActualizado.data
-
-      // const idRol = data.rol.id
-
-      // //actualizar copartes en caso que no sea admin
-      // if (idRol !== 1) {
-      //   const copartesLimpiadas = await UsuarioDB.limpiarCopartes(id_usuario)
-      //   if (copartesLimpiadas.error) throw copartesLimpiadas.data
-
-      //   const idsAReactviar = []
-      //   let copartesARegistar = []
-
-      //   for (const { id, id_coparte } of data.copartes) {
-      //     if (id) {
-      //       idsAReactviar.push(id)
-      //     } else {
-      //       copartesARegistar.push(id_coparte)
-      //     }
-      //   }
-
-      //   const reactivarIds = await UsuarioDB.reactivarCoparte(idsAReactviar)
-      //   if (reactivarIds.error) throw reactivarIds.data
-
-      //   const registrarNuevasCopartes = await Promise.all(
-      //     copartesARegistar.map(async (id_coparte) => {
-      //       const coparteCreada = await UsuarioDB.crearCoparte(
-      //         id_usuario,
-      //         id_coparte
-      //       )
-      //       if (coparteCreada.error) throw coparteCreada.data
-      //     })
-      //   )
-      // }
 
       return RespuestaController.exitosa(
         200,
