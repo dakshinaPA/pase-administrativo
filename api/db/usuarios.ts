@@ -63,8 +63,8 @@ class UsuarioDB {
       rol,
     } = data
 
-    const query =
-      "INSERT INTO usuarios ( nombre, apellido_paterno, apellido_materno, email, telefono, password, id_rol, dt_registro ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+    const query = `INSERT INTO usuarios ( nombre, apellido_paterno, apellido_materno,
+    email, telefono, password, id_rol, dt_registro ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
 
     const placeHolders = [
       nombre,
@@ -128,9 +128,9 @@ class UsuarioDB {
   }
 
   static async obtenerCopartes(id: number) {
-    let query = `SELECT uc.id, uc.id_coparte, c.nombre
-    FROM usuario_copartes uc JOIN copartes c on uc.id_coparte = c.id
-    WHERE uc.id_usuario=${id} AND uc.b_activo=1`
+    let query = `SELECT cu.id, cu.id_coparte, c.nombre
+    FROM coparte_usuarios cu JOIN copartes c ON cu.id_coparte = c.id
+    WHERE id_usuario=${id}`
 
     try {
       const res = await queryDB(query)
@@ -140,41 +140,41 @@ class UsuarioDB {
     }
   }
 
-  static async crearCoparte(id_usuario: number, id_coparte: number) {
-    const query = `INSERT INTO usuario_copartes ( id_usuario, id_coparte ) VALUES (?, ?)`
-    const placeHolders = [id_usuario, id_coparte]
+  // static async crearCoparte(id_usuario: number, id_coparte: number) {
+  //   const query = `INSERT INTO usuario_copartes ( id_usuario, id_coparte ) VALUES (?, ?)`
+  //   const placeHolders = [id_usuario, id_coparte]
 
-    try {
-      const res = await queryDBPlaceHolder(query, placeHolders)
-      return RespuestaDB.exitosa(res)
-    } catch (error) {
-      return RespuestaDB.fallida(error)
-    }
-  }
+  //   try {
+  //     const res = await queryDBPlaceHolder(query, placeHolders)
+  //     return RespuestaDB.exitosa(res)
+  //   } catch (error) {
+  //     return RespuestaDB.fallida(error)
+  //   }
+  // }
 
-  static async limpiarCopartes(idUsuario: number) {
-    const query = `UPDATE usuario_copartes SET b_activo = 0 WHERE id_usuario = ${idUsuario} AND b_activo = 1`
+  // static async limpiarCopartes(idUsuario: number) {
+  //   const query = `UPDATE usuario_copartes SET b_activo = 0 WHERE id_usuario = ${idUsuario} AND b_activo = 1`
 
-    try {
-      const res = await queryDB(query)
-      return RespuestaDB.exitosa(res)
-    } catch (error) {
-      return RespuestaDB.fallida(error)
-    }
-  }
+  //   try {
+  //     const res = await queryDB(query)
+  //     return RespuestaDB.exitosa(res)
+  //   } catch (error) {
+  //     return RespuestaDB.fallida(error)
+  //   }
+  // }
 
-  static async reactivarCoparte(ids: number[]) {
-    const phInterrogacion = ids.map( id => '?').join(',')
-    const query = `UPDATE usuario_copartes SET b_activo = 1 WHERE id IN (${phInterrogacion})`
-    const placeHolders = ids
+  // static async reactivarCoparte(ids: number[]) {
+  //   const phInterrogacion = ids.map( id => '?').join(',')
+  //   const query = `UPDATE usuario_copartes SET b_activo = 1 WHERE id IN (${phInterrogacion})`
+  //   const placeHolders = ids
 
-    try {
-      const res = await queryDBPlaceHolder(query, placeHolders)
-      return RespuestaDB.exitosa(res)
-    } catch (error) {
-      return RespuestaDB.fallida(error)
-    }
-  }
+  //   try {
+  //     const res = await queryDBPlaceHolder(query, placeHolders)
+  //     return RespuestaDB.exitosa(res)
+  //   } catch (error) {
+  //     return RespuestaDB.fallida(error)
+  //   }
+  // }
 }
 
 export { UsuarioDB }

@@ -4,7 +4,7 @@ import { useRouter } from "next/router"
 import { Loader } from "@components/Loader"
 import { ModalEliminar } from "@components/ModalEliminar"
 import { aMinuscula } from "@assets/utils/common"
-import { Coparte } from "@api/models/copartes.model"
+import { Coparte } from "@api/models/coparte.model"
 
 const Copartes = () => {
   const router = useRouter()

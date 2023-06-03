@@ -2,9 +2,11 @@ import { FinanciadoresServices } from "@api/services/financiadores"
 import { NextApiRequest, NextApiResponse } from "next"
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
+  const min = Boolean(req.query.min)
+
   switch (req.method) {
     case "GET":
-      var { status, ...data } = await FinanciadoresServices.obtener()
+      var { status, ...data } = await FinanciadoresServices.obtener(0, min)
       res.status(status).json(data)
       break
     case "POST":

@@ -5,29 +5,49 @@ import { ResFinanciadorDB } from "@api/models/financiador.model"
 import { epochAFecha } from "@assets/utils/common"
 
 class FinanciadoresServices {
-  static async obtener(idFinanciador?: number) {
-    const res = await FinanciadorDB.obtener(idFinanciador)
+  static obtenerTipo(id_tipo: 1 | 2) {
+    switch (id_tipo) {
+      case 1:
+        return "ALIADO"
+      case 2:
+        return "INDEPENDIENTE"
+    }
+  }
 
-    if (res.error) {
+  static async obtebnerVminimalista() {
+    const obtener = await FinanciadorDB.obtenerVminimalista()
+
+    if (obtener.error) {
       return RespuestaController.fallida(
         400,
         "Error al obtener financiadores",
-        res.data
+        obtener.error
       )
     }
 
-    const financiadoresDB = res.data as ResFinanciadorDB[]
+    return RespuestaController.exitosa(200, "Consulta exitosa", obtener.data)
+  }
+
+  static async obtener(id_financiador?: number, min = false) {
+    if (min) return await this.obtebnerVminimalista()
 
     try {
+      const obtenerDB = await FinanciadorDB.obtener(id_financiador)
+      if (obtenerDB.error) throw obtenerDB.data
+
+      const financiadoresDB = obtenerDB.data as ResFinanciadorDB[]
+
       const dataTransformada: Financiador[] = await Promise.all(
         financiadoresDB.map(async (financiador) => {
           const {
             id,
             nombre,
-            id_pais,
             representante_legal,
             pagina_web,
+            folio_fiscal,
+            actividad,
             i_tipo,
+            dt_constitucion,
             dt_registro,
             id_enlace,
             nombre_enlace,
@@ -35,16 +55,27 @@ class FinanciadoresServices {
             apellido_materno,
             email,
             telefono,
+            id_direccion,
+            calle,
+            numero_ext,
+            numero_int,
+            colonia,
+            municipio,
+            cp,
+            id_estado,
+            estado,
+            id_pais,
+            pais,
           } = financiador
 
           let notas: NotaFinanciador[] = []
 
           //obtener notas solo si se trata de un financiador
           //no saturar tiempo de respuesta al obtener todos
-          if (idFinanciador) {
-            const resNotas = await FinanciadorDB.obtenerNotas(id)
-            if (resNotas.error) throw resNotas.data
-            notas = resNotas.data as NotaFinanciador[]
+          if (id_financiador) {
+            const notasDB = await FinanciadorDB.obtenerNotas(id)
+            if (notasDB.error) throw notasDB.data
+            notas = notasDB.data as NotaFinanciador[]
             notas = notas.map((nota) => {
               return {
                 ...nota,
@@ -56,10 +87,13 @@ class FinanciadoresServices {
           return {
             id,
             nombre,
-            id_pais,
             representante_legal,
             pagina_web,
+            folio_fiscal,
+            actividad,
             i_tipo,
+            tipo: this.obtenerTipo(i_tipo),
+            dt_constitucion: epochAFecha(dt_constitucion),
             dt_registro: epochAFecha(dt_registro),
             enlace: {
               id: id_enlace,
@@ -68,6 +102,19 @@ class FinanciadoresServices {
               apellido_materno,
               email,
               telefono,
+            },
+            direccion: {
+              id: id_direccion,
+              calle,
+              numero_ext,
+              numero_int,
+              colonia,
+              municipio,
+              cp,
+              id_estado,
+              estado,
+              id_pais,
+              pais,
             },
             notas,
           }
@@ -89,99 +136,101 @@ class FinanciadoresServices {
   }
 
   static async crear(data: Financiador) {
-    const res = await FinanciadorDB.crear(data)
+    try {
+      const { enlace, direccion } = data
+      const cr = await FinanciadorDB.crear(data)
+      if (cr.error) throw cr.data
 
-    if (res.error) {
+      // @ts-ignore
+      const idInsertado = cr.data.insertId
+
+      const crEnlace = FinanciadorDB.crearEnlace(idInsertado, enlace)
+      const crDireccion = FinanciadorDB.crearDireccion(idInsertado, direccion)
+
+      const resCombinadas = await Promise.all([crEnlace, crDireccion])
+      for (const rc of resCombinadas) {
+        if (rc.error) throw rc.data
+      }
+
+      return RespuestaController.exitosa(201, "Financiador creado con éxito", {
+        idInsertado,
+      })
+    } catch (error) {
       return RespuestaController.fallida(
         400,
         "Error al crear financiador",
-        res.data
+        error
       )
     }
-
-    // @ts-ignore
-    const idInsertado = res.data.insertId
-
-    const resEnlace = await FinanciadorDB.crearEnlace(idInsertado, data.enlace)
-
-    if (resEnlace.error) {
-      return RespuestaController.fallida(
-        400,
-        "Error al crear enlace del financiador",
-        resEnlace.data
-      )
-    }
-
-    return RespuestaController.exitosa(
-      201,
-      "Financiador creado con éxito",
-      null
-    )
   }
 
   static async actualizar(id: number, data: Financiador) {
-    const res = FinanciadorDB.actualizar(id, data)
-    const resEnlace = FinanciadorDB.actualizarEnlace(data.enlace)
-    const resCombinada = await Promise.all([res, resEnlace])
+    try {
+      const { enlace, direccion } = data
 
-    const error = { error: false, data: [] }
+      const upFianciador = FinanciadorDB.actualizar(id, data)
+      const upEnlace = FinanciadorDB.actualizarEnlace(enlace)
+      const upDireccion = FinanciadorDB.actualizarDireccion(direccion)
 
-    for (const res of resCombinada) {
-      if (res.error) {
-        error.error = true
-        error.data = [...error.data, res.data]
+      const resCombinadas = await Promise.all([
+        upFianciador,
+        upEnlace,
+        upDireccion,
+      ])
+
+      for (const rc of resCombinadas) {
+        if (rc.error) throw rc.data
       }
-    }
 
-    if (error.error) {
+      return RespuestaController.exitosa(
+        200,
+        "Financiador actualizado con éxito",
+        null
+      )
+    } catch (error) {
       return RespuestaController.fallida(
         400,
         "Error al actualziar financiador",
-        error.data
+        error
       )
     }
-
-    // const financiadorActualizado = await FinanciadoresServices.obtener(id)
-
-    return RespuestaController.exitosa(
-      200,
-      "Financiador actualizado con éxito",
-      null
-    )
   }
 
   static async borrar(id: number) {
-    const res = await FinanciadorDB.borrar(id)
+    const dl = await FinanciadorDB.borrar(id)
 
-    if (res.error) {
+    if (dl.error) {
       return RespuestaController.fallida(
         400,
         "Error al borrar financiador",
-        res.data
+        null
       )
     }
     return RespuestaController.exitosa(
       200,
       "Financiador borrado con éxito",
-      res.data
+      dl.data
     )
   }
 
   static async crearNota(data: NotaFinanciador) {
-    const res = await FinanciadorDB.crearNota(data)
+    const crearNota = await FinanciadorDB.crearNota(data)
 
-    if (res.error) {
+    if (crearNota.error) {
       return RespuestaController.fallida(
         400,
         "Error al crear nota de financiador",
-        res.data
+        crearNota.data
       )
     }
+
+    // @ts-ignore
+    const idInsertado = crearNota.data.insertId
 
     return RespuestaController.exitosa(
       201,
       "Nota de financiador creada con éxito",
-      null
+      { idInsertado }
     )
   }
 }

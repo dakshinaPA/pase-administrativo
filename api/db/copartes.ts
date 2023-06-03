@@ -1,14 +1,21 @@
 import { RespuestaDB } from "@api/utils/response"
 import { queryDB, queryDBPlaceHolder } from "./query"
-import { Coparte } from "@api/models/copartes.model"
+import { Coparte, EnlaceCoparte, DireccionCoparte } from "@models/coparte.model"
+import { fechaActualAEpoch } from "@assets/utils/common"
 
 class CoparteDB {
   static async obtener(id: number) {
-    let query =
-      "SELECT id, nombre, vc_id, i_tipo FROM `copartes` WHERE b_activo=1"
+    let query = `
+      SELECT c.id, c.id_administrador, c.id_alt, c.nombre, c.i_estatus, c.i_estatus_legal, c.representante_legal, c.rfc, c.id_tema_social, c.dt_registro,
+      cd.id id_coparte_direccion, cd.calle, cd.numero_ext, cd.numero_int, cd.colonia, cd.municipio, cd.cp, cd.id_estado,
+      e.nombre estado
+      FROM copartes c
+      JOIN coparte_direccion cd ON c.id = cd.id_coparte
+      JOIN estados e ON cd.id_estado = e.id
+      WHERE c.b_activo=1`
 
     if (id) {
-      query += ` AND id=${id} LIMIT 1`
+      query += ` AND c.id=${id} LIMIT 1`
     }
 
     try {
@@ -20,10 +27,31 @@ class CoparteDB {
   }
 
   static async crear(data: Coparte) {
-    const { nombre, vc_id, i_tipo } = data
+    const {
+      administrador,
+      id_alt,
+      nombre,
+      i_estatus,
+      i_estatus_legal,
+      representante_legal,
+      rfc,
+      id_tema_social,
+    } = data
 
-    const query = `INSERT INTO copartes ( nombre, vc_id, i_tipo ) VALUES ( ?, ?, ? )`
-    const placeHolders = [nombre, vc_id, i_tipo]
+    const query = `INSERT INTO copartes ( id_administrador, id_alt, nombre, i_estatus, i_estatus_legal,
+      representante_legal, rfc, id_tema_social, dt_registro) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ? )`
+
+    const placeHolders = [
+      administrador.id,
+      id_alt,
+      nombre,
+      i_estatus,
+      i_estatus_legal,
+      representante_legal,
+      rfc,
+      id_tema_social,
+      fechaActualAEpoch(),
+    ]
 
     try {
       const res = await queryDBPlaceHolder(query, placeHolders)
@@ -33,11 +61,32 @@ class CoparteDB {
     }
   }
 
-  static async actualizar(id: number, data: Coparte) {
-    const { nombre, vc_id, i_tipo } = data
+  static async actualizar(id_coparte: number, data: Coparte) {
+    const {
+      administrador,
+      id_alt,
+      nombre,
+      i_estatus,
+      i_estatus_legal,
+      representante_legal,
+      rfc,
+      id_tema_social,
+    } = data
 
-    const query = `UPDATE copartes SET nombre=?, vc_id=?, i_tipo=? WHERE id=? LIMIT 1`
-    const placeHolders = [nombre, vc_id, i_tipo, id]
+    const query = `UPDATE copartes SET id_administrador=?, id_alt=?, nombre=?, i_estatus=?,
+      i_estatus_legal=?, representante_legal=?, rfc=?, id_tema_social=? WHERE id=? LIMIT 1`
+
+    const placeHolders = [
+      administrador.id,
+      id_alt,
+      nombre,
+      i_estatus,
+      i_estatus_legal,
+      representante_legal,
+      rfc,
+      id_tema_social,
+      id_coparte,
+    ]
 
     try {
       const res = await queryDBPlaceHolder(query, placeHolders)
@@ -57,6 +106,146 @@ class CoparteDB {
       return RespuestaDB.fallida(error)
     }
   }
+
+  static async obtenerUsuarios(id_coparte: number) {
+    let query = `SELECT cu.id, cu.id_usuario, cu.cargo, cu.b_enlace,
+      u.nombre, u.apellido_paterno, u.apellido_materno, u.email, u.telefono
+      FROM coparte_usuarios cu
+      JOIN usuarios u ON cu.id_usuario = u.id
+      WHERE cu.id_coparte = ${id_coparte} AND u.b_activo = 1`
+
+    try {
+      const res = await queryDB(query)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
+
+  static async crearDireccion(id_coparte: number, data: DireccionCoparte) {
+    const { calle, numero_ext, numero_int, colonia, municipio, cp, id_estado } =
+      data
+
+    const query = `INSERT INTO coparte_direccion ( id_coparte, calle, numero_ext, numero_int,
+      colonia, municipio, cp, id_estado ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )`
+
+    const placeHolders = [
+      id_coparte,
+      calle,
+      numero_ext,
+      numero_int,
+      colonia,
+      municipio,
+      cp,
+      id_estado,
+    ]
+
+    try {
+      const res = await queryDBPlaceHolder(query, placeHolders)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
+
+  static async actualizarDireccion(data: DireccionCoparte) {
+    const {
+      id,
+      calle,
+      numero_ext,
+      numero_int,
+      colonia,
+      municipio,
+      cp,
+      id_estado,
+    } = data
+
+    const query = `UPDATE coparte_direccion SET calle=?, numero_ext=?, numero_int=?,
+    colonia=?, municipio=?, cp=?, id_estado=? WHERE id=? LIMIT 1`
+
+    const placeHolders = [
+      calle,
+      numero_ext,
+      numero_int,
+      colonia,
+      municipio,
+      cp,
+      id_estado,
+      id,
+    ]
+
+    try {
+      const res = await queryDBPlaceHolder(query, placeHolders)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
+
+  static async crearEnlace(data: EnlaceCoparte) {
+    const {
+      nombre,
+      apellido_paterno,
+      apellido_materno,
+      email,
+      telefono,
+      password,
+    } = data
+
+    const query = `INSERT INTO usuarios ( nombre, apellido_paterno, apellido_materno, email,
+      telefono, password, dt_registro ) VALUES ( ?, ?, ?, ?, ?, ?, ? )`
+
+    const placeHolders = [
+      nombre,
+      apellido_paterno,
+      apellido_materno,
+      email,
+      telefono,
+      password,
+      fechaActualAEpoch(),
+    ]
+
+    try {
+      const res = await queryDBPlaceHolder(query, placeHolders)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
+
+  static async crearUsuario(
+    id_coparte: number,
+    id_usuario: number,
+    cargo: string,
+    b_enlace = false
+  ) {
+    const query = `INSERT INTO coparte_usuarios ( id_coparte, id_usuario,
+      cargo, b_enlace ) VALUES ( ?, ?, ?, ? )`
+
+    const placeHolders = [id_coparte, id_usuario, cargo, Number(b_enlace)]
+
+    try {
+      const res = await queryDBPlaceHolder(query, placeHolders)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
+
+  // static async actualizarUsuarios(data: UsuariosCoparte) {
+  //   const { administrador, coparte } = data
+
+  //   const query = `UPDATE coparte_usuarios SET id_usuario=? WHERE id=? LIMIT 1`
+
+  //   const placeHolders = [administrador.id_usuario, administrador.id]
+
+  //   try {
+  //     const res = await queryDBPlaceHolder(query, placeHolders)
+  //     return RespuestaDB.exitosa(res)
+  //   } catch (error) {
+  //     return RespuestaDB.fallida(error)
+  //   }
+  // }
 }
 
 export { CoparteDB }

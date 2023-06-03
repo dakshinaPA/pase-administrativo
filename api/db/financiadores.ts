@@ -3,17 +3,33 @@ import { queryDB, queryDBPlaceHolder } from "./query"
 import {
   Financiador,
   EnlaceFinanciador,
+  DireccionFinanciador,
   NotaFinanciador,
 } from "@models/financiador.model"
 import { fechaActualAEpoch } from "@assets/utils/common"
 
 class FinanciadorDB {
+  static async obtenerVminimalista() {
+    let query = `SELECT id, nombre from financiadores`
+
+    try {
+      const res = await queryDB(query)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
+
   static async obtener(id: number) {
-    let query = `SELECT f.id, f.nombre, f.id_pais, f.representante_legal, f.pagina_web, f.i_tipo, f.dt_registro, 
-    fe.id id_enlace, fe.nombre nombre_enlace, fe.apellido_paterno, fe.apellido_materno, fe.email, fe.telefono 
-    FROM financiadores f 
-    INNER JOIN financiador_enlace fe ON f.id = fe.id_financiador 
-    WHERE f.b_activo=1`
+    let query = `SELECT f.id, f.nombre, f.representante_legal, f.pagina_web, f.folio_fiscal, f.actividad, f.i_tipo, f.dt_constitucion, f.dt_registro,
+      fe.id id_enlace, fe.nombre nombre_enlace, fe.apellido_paterno, fe.apellido_materno, fe.email, fe.telefono,
+      fd.id id_direccion, fd.calle, fd.numero_ext, fd.numero_int, fd.colonia, fd.municipio, fd.cp, fd.id_estado, fd.estado, fd.id_pais,
+      p.nombre pais
+      FROM financiadores f
+      JOIN financiador_enlace fe ON f.id = fe.id_financiador
+      JOIN financiador_direccion fd ON f.id = fd.id_financiador
+      JOIN paises p ON fd.id_pais = p.id
+      WHERE f.b_activo=1`
 
     if (id) {
       query += ` AND f.id=${id} LIMIT 1`
@@ -28,15 +44,27 @@ class FinanciadorDB {
   }
 
   static async crear(data: Financiador) {
-    const { nombre, id_pais, representante_legal, pagina_web, i_tipo } = data
-
-    const query = `INSERT INTO financiadores ( nombre, id_pais, representante_legal, pagina_web, i_tipo, dt_registro) VALUES ( ?, ?, ?, ?, ?, ? )`
-    const placeHolders = [
+    const {
       nombre,
-      id_pais,
       representante_legal,
       pagina_web,
+      folio_fiscal,
+      actividad,
       i_tipo,
+      dt_constitucion,
+    } = data
+
+    const query = `INSERT INTO financiadores ( nombre, representante_legal, pagina_web,
+      folio_fiscal, actividad, i_tipo, dt_constitucion, dt_registro) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )`
+
+    const placeHolders = [
+      nombre,
+      representante_legal,
+      pagina_web,
+      folio_fiscal,
+      actividad,
+      i_tipo,
+      dt_constitucion,
       fechaActualAEpoch(),
     ]
 
@@ -49,14 +77,27 @@ class FinanciadorDB {
   }
 
   static async actualizar(id: number, data: Financiador) {
-    const { nombre, id_pais, representante_legal, pagina_web, i_tipo } = data
-    const query = `UPDATE financiadores SET nombre=?, id_pais=?, representante_legal=?, pagina_web=?, i_tipo=? WHERE id=? LIMIT 1`
-    const placeHolders = [
+    const {
       nombre,
-      id_pais,
       representante_legal,
       pagina_web,
+      folio_fiscal,
+      actividad,
       i_tipo,
+      dt_constitucion,
+    } = data
+
+    const query = `UPDATE financiadores SET nombre=?, representante_legal=?,
+      pagina_web=?, folio_fiscal=?, actividad=?, i_tipo=?, dt_constitucion=? WHERE id=? LIMIT 1`
+
+    const placeHolders = [
+      nombre,
+      representante_legal,
+      pagina_web,
+      folio_fiscal,
+      actividad,
+      i_tipo,
+      dt_constitucion,
       id,
     ]
 
@@ -81,9 +122,9 @@ class FinanciadorDB {
 
   static async obtenerNotas(idFinanciador: number) {
     let query = `SELECT fn.id, fn.mensaje, fn.dt_registro,
-    CONCAT(u.nombre, ' ', u.apellido_paterno) usuario
-    FROM financiador_notas fn JOIN usuarios u ON fn.id_usuario = u.id
-    WHERE fn.id_financiador=${idFinanciador} AND fn.b_activo=1`
+      CONCAT(u.nombre, ' ', u.apellido_paterno) usuario
+      FROM financiador_notas fn JOIN usuarios u ON fn.id_usuario = u.id
+      WHERE fn.id_financiador=${idFinanciador} AND fn.b_activo=1`
 
     try {
       const res = await queryDB(query)
@@ -96,7 +137,9 @@ class FinanciadorDB {
   static async crearNota(data: NotaFinanciador) {
     const { id_financiador, id_usuario, mensaje } = data
 
-    const query = `INSERT INTO financiador_notas ( id_financiador, id_usuario, mensaje, dt_registro ) VALUES ( ?, ?, ?, ? )`
+    const query = `INSERT INTO financiador_notas ( id_financiador, id_usuario,
+      mensaje, dt_registro ) VALUES ( ?, ?, ?, ? )`
+
     const placeHolders = [
       id_financiador,
       id_usuario,
@@ -115,7 +158,9 @@ class FinanciadorDB {
   static async crearEnlace(idFinanciador: number, data: EnlaceFinanciador) {
     const { nombre, apellido_paterno, apellido_materno, email, telefono } = data
 
-    const query = `INSERT INTO financiador_enlace ( id_financiador, nombre, apellido_paterno, apellido_materno, email, telefono ) VALUES ( ?, ?, ?, ?, ?, ? )`
+    const query = `INSERT INTO financiador_enlace ( id_financiador, nombre, apellido_paterno,
+      apellido_materno, email, telefono ) VALUES ( ?, ?, ?, ?, ?, ? )`
+
     const placeHolders = [
       idFinanciador,
       nombre,
@@ -136,13 +181,93 @@ class FinanciadorDB {
   static async actualizarEnlace(data: EnlaceFinanciador) {
     const { id, nombre, apellido_paterno, apellido_materno, email, telefono } =
       data
-    const query = `UPDATE financiador_enlace SET nombre=?, apellido_paterno=?, apellido_materno=?, email=?, telefono=? WHERE id=? LIMIT 1`
+    const query = `UPDATE financiador_enlace SET nombre=?, apellido_paterno=?,
+      apellido_materno=?, email=?, telefono=? WHERE id=? LIMIT 1`
+
     const placeHolders = [
       nombre,
       apellido_paterno,
       apellido_materno,
       email,
       telefono,
+      id,
+    ]
+
+    try {
+      const res = await queryDBPlaceHolder(query, placeHolders)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
+
+  static async crearDireccion(
+    id_financiador: number,
+    data: DireccionFinanciador
+  ) {
+    const {
+      calle,
+      numero_ext,
+      numero_int,
+      colonia,
+      municipio,
+      cp,
+      id_estado,
+      estado,
+      id_pais,
+    } = data
+
+    const query = `INSERT INTO financiador_direccion ( id_financiador, calle, numero_ext, numero_int,
+      colonia, municipio, cp, id_estado, estado, id_pais ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )`
+
+    const placeHolders = [
+      id_financiador,
+      calle,
+      numero_ext,
+      numero_int,
+      colonia,
+      municipio,
+      cp,
+      id_estado,
+      estado,
+      id_pais,
+    ]
+
+    try {
+      const res = await queryDBPlaceHolder(query, placeHolders)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
+
+  static async actualizarDireccion(data: DireccionFinanciador) {
+    const {
+      id,
+      calle,
+      numero_ext,
+      numero_int,
+      colonia,
+      municipio,
+      cp,
+      id_estado,
+      estado,
+      id_pais,
+    } = data
+
+    const query = `UPDATE financiador_direccion SET calle=?, numero_ext=?,
+    numero_int=?, colonia=?, municipio=?, cp=?, id_estado=?, estado=?, id_pais=? WHERE id=? LIMIT 1`
+
+    const placeHolders = [
+      calle,
+      numero_ext,
+      numero_int,
+      colonia,
+      municipio,
+      cp,
+      id_estado,
+      estado,
+      id_pais,
       id,
     ]
 

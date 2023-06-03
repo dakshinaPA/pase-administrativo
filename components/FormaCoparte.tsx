@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/router"
 import { ChangeEvent } from "@assets/models/formEvents.model"
-import { Coparte } from "@api/models/copartes.model"
+import { Coparte } from "@api/models/coparte.model"
 import { Loader } from "@components/Loader"
 import { ApiCall } from "@assets/utils/apiCalls"
 

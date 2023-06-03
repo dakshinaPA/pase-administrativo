@@ -2,6 +2,8 @@ export interface UsuarioCoparte {
   id?: number
   id_coparte: number
   nombre?: string
+  cargo?: string
+  b_enlace?: string
 }
 
 export interface RolUsuario {
