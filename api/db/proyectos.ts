@@ -42,8 +42,9 @@ class ProyectoDB {
     }
   }
 
-  static async crear(id_coparte: number, data: Proyecto) {
+  static async crear(data: Proyecto) {
     const {
+      id_coparte,
       id_financiador,
       responsable,
       id_alt,
@@ -74,13 +75,28 @@ class ProyectoDB {
     }
   }
 
-  static async actualizar(id: number, data: Proyecto) {
-    const {} = data
+  static async actualizar(id_proyecto: number, data: Proyecto) {
+    const {
+      id_financiador,
+      responsable,
+      id_alt,
+      f_monto_total,
+      i_tipo_financiamiento,
+      i_beneficiados,
+    } = data
 
-    const query = `UPDATE financiadores SET nombre=?, representante_legal=?,
-      pagina_web=?, folio_fiscal=?, actividad=?, i_tipo=?, dt_constitucion=? WHERE id=? LIMIT 1`
+    const query = `UPDATE proyectos SET id_financiador=?, id_responsable=?,
+    id_alt=?, f_monto_total=?, i_tipo_financiamiento=?, i_beneficiados=? WHERE id=? LIMIT 1`
 
-    const placeHolders = []
+    const placeHolders = [
+      id_financiador,
+      responsable.id,
+      id_alt,
+      f_monto_total,
+      i_tipo_financiamiento,
+      i_beneficiados,
+      id_proyecto,
+    ]
 
     try {
       const res = await queryDBPlaceHolder(query, placeHolders)
@@ -131,6 +147,32 @@ class ProyectoDB {
     }
   }
 
+  static async limpiarRubros(id_proyecto: number) {
+    const query = `UPDATE proyecto_rubros_presupuestales SET b_activo=0 WHERE id_proyecto=${id_proyecto}`
+
+    try {
+      const res = await queryDB(query)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
+
+  static async actualizarRubro(rubro: RubroProyecto) {
+    const { id, f_monto } = rubro
+
+    const query = `UPDATE proyecto_rubros_presupuestales SET f_monto=?, b_activo=1 WHERE id=?`
+
+    const placeHolders = [f_monto, id]
+
+    try {
+      const res = await queryDBPlaceHolder(query, placeHolders)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
+
   static async obtenerMinistraciones(id_proyecto: number) {
     let query = `SELECT id, i_numero, f_monto, i_grupo, dt_recepcion, dt_registro
       FROM proyecto_ministraciones WHERE id_proyecto = ${id_proyecto} AND b_activo = 1`
@@ -159,6 +201,22 @@ class ProyectoDB {
       dt_recepcion,
       fechaActualAEpoch(),
     ]
+
+    try {
+      const res = await queryDBPlaceHolder(query, placeHolders)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
+
+  static async actualizarMinistracion(data: MinistracionProyecto) {
+    const { id, i_numero, f_monto, i_grupo, dt_recepcion } = data
+
+    const query = `UPDATE proyecto_ministraciones SET i_numero=?, f_monto=?,
+      i_grupo=?, dt_recepcion=? WHERE id=? LIMIT 1`
+
+    const placeHolders = [i_numero, f_monto, i_grupo, dt_recepcion, id]
 
     try {
       const res = await queryDBPlaceHolder(query, placeHolders)

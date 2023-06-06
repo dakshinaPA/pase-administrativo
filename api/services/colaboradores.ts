@@ -14,9 +14,9 @@ class ColaboradorServices {
     }
   }
 
-  static async obtener(id_proyecto: number) {
+  static async obtener(id_proyecto: number, id_colaborador: number) {
     try {
-      const obtenerDB = await ColaboradorDB.obtener(id_proyecto)
+      const obtenerDB = await ColaboradorDB.obtener(id_proyecto, id_colaborador)
       if (obtenerDB.error) throw obtenerDB.data
 
       const colaboradoresDB = obtenerDB.data as ResColaboradoreDB[]
@@ -102,16 +102,19 @@ class ColaboradorServices {
     }
   }
 
-  static async crear(id_proyecto: number, data: ColaboradorProyecto) {
+  static async crear(data: ColaboradorProyecto) {
     try {
       const { direccion } = data
-      const cr = await ColaboradorDB.crear(id_proyecto, data)
+      const cr = await ColaboradorDB.crear(data)
       if (cr.error) throw cr.data
 
       // @ts-ignore
       const idInsertado = cr.data.insertId
 
-      const crDireccion = await ColaboradorDB.crearDireccion(idInsertado, direccion)
+      const crDireccion = await ColaboradorDB.crearDireccion(
+        idInsertado,
+        direccion
+      )
       if (crDireccion.error) throw crDireccion.data
 
       return RespuestaController.exitosa(201, "Colaborador creado con éxito", {
@@ -126,54 +129,49 @@ class ColaboradorServices {
     }
   }
 
-  // static async actualizar(id: number, data: Financiador) {
-  //   try {
-  //     const { enlace, direccion } = data
+  static async actualizar(id_colaborador: number, data: ColaboradorProyecto) {
+    try {
+      const { direccion } = data
 
-  //     const upFianciador = FinanciadorDB.actualizar(id, data)
-  //     const upEnlace = FinanciadorDB.actualizarEnlace(enlace)
-  //     const upDireccion = FinanciadorDB.actualizarDireccion(direccion)
+      const up = ColaboradorDB.actualizar(id_colaborador, data)
+      const upDireccion = ColaboradorDB.actualizarDireccion(direccion)
 
-  //     const resCombinadas = await Promise.all([
-  //       upFianciador,
-  //       upEnlace,
-  //       upDireccion,
-  //     ])
+      const resCombinadas = await Promise.all([up, upDireccion])
 
-  //     for (const rc of resCombinadas) {
-  //       if (rc.error) throw rc.data
-  //     }
+      for (const rc of resCombinadas) {
+        if (rc.error) throw rc.data
+      }
 
-  //     return RespuestaController.exitosa(
-  //       200,
-  //       "Financiador actualizado con éxito",
-  //       null
-  //     )
-  //   } catch (error) {
-  //     return RespuestaController.fallida(
-  //       400,
-  //       "Error al actualziar financiador",
-  //       error
-  //     )
-  //   }
-  // }
+      return RespuestaController.exitosa(
+        200,
+        "Colaborador actualizado con éxito",
+        null
+      )
+    } catch (error) {
+      return RespuestaController.fallida(
+        400,
+        "Error al actualziar colaborador",
+        error
+      )
+    }
+  }
 
-  // static async borrar(id: number) {
-  //   const dl = await FinanciadorDB.borrar(id)
+  static async borrar(id: number) {
+    const dl = await ColaboradorDB.borrar(id)
 
-  //   if (dl.error) {
-  //     return RespuestaController.fallida(
-  //       400,
-  //       "Error al borrar financiador",
-  //       null
-  //     )
-  //   }
-  //   return RespuestaController.exitosa(
-  //     200,
-  //     "Financiador borrado con éxito",
-  //     dl.data
-  //   )
-  // }
+    if (dl.error) {
+      return RespuestaController.fallida(
+        400,
+        "Error al borrar financiador",
+        null
+      )
+    }
+    return RespuestaController.exitosa(
+      200,
+      "Financiador borrado con éxito",
+      dl.data
+    )
+  }
 }
 
 export { ColaboradorServices }

@@ -66,7 +66,8 @@ class ProyectosServices {
             ministraciones = reMinistraciones.data as MinistracionProyecto[]
 
             const reColaboradores = await ColaboradorServices.obtener(
-              id_proyecto
+              id_proyecto,
+              0
             )
             if (reColaboradores.error) throw reColaboradores.data
             colaboradores = reColaboradores.data as ColaboradorProyecto[]
@@ -76,7 +77,6 @@ class ProyectosServices {
             id,
             id_financiador,
             id_coparte,
-            id_responsable,
             id_alt,
             f_monto_total,
             i_tipo_financiamiento,
@@ -89,7 +89,7 @@ class ProyectosServices {
             },
             rubros,
             ministraciones,
-            colaboradores
+            colaboradores,
           }
         })
       )
@@ -108,10 +108,10 @@ class ProyectosServices {
     }
   }
 
-  static async crear(id_coparte: number, data: Proyecto) {
+  static async crear(data: Proyecto) {
     try {
       const { rubros, ministraciones } = data
-      const cr = await ProyectoDB.crear(id_coparte, data)
+      const cr = await ProyectoDB.crear(data)
       if (cr.error) throw cr.data
 
       // @ts-ignore
@@ -140,51 +140,60 @@ class ProyectosServices {
     }
   }
 
-  // static async actualizar(id: number, data: Financiador) {
-  //   try {
-  //     const { enlace, direccion } = data
+  static async actualizar(id_proyecto: number, data: Proyecto) {
+    try {
+      const { rubros, ministraciones } = data
 
-  //     const upFianciador = FinanciadorDB.actualizar(id, data)
-  //     const upEnlace = FinanciadorDB.actualizarEnlace(enlace)
-  //     const upDireccion = FinanciadorDB.actualizarDireccion(direccion)
+      const promesas: Promise<ResDB>[] = []
 
-  //     const resCombinadas = await Promise.all([
-  //       upFianciador,
-  //       upEnlace,
-  //       upDireccion,
-  //     ])
+      promesas.push(ProyectoDB.actualizar(id_proyecto, data))
+      promesas.push(ProyectoDB.limpiarRubros(id_proyecto))
 
-  //     for (const rc of resCombinadas) {
-  //       if (rc.error) throw rc.data
-  //     }
+      for (const rubro of rubros) {
+        if (rubro.id) {
+          promesas.push(ProyectoDB.actualizarRubro(rubro))
+        } else {
+          promesas.push(ProyectoDB.crearRubro(id_proyecto, rubro))
+        }
+      }
 
-  //     return RespuestaController.exitosa(
-  //       200,
-  //       "Financiador actualizado con éxito",
-  //       null
-  //     )
-  //   } catch (error) {
-  //     return RespuestaController.fallida(
-  //       400,
-  //       "Error al actualziar financiador",
-  //       error
-  //     )
-  //   }
-  // }
+      for (const minis of ministraciones) {
+        if (minis.id) {
+          promesas.push(ProyectoDB.actualizarMinistracion(minis))
+        } else {
+          promesas.push(ProyectoDB.crearMinistracion(id_proyecto, minis))
+        }
+      }
+
+      const resCombinadas = await Promise.all(promesas)
+
+      for (const rc of resCombinadas) {
+        if (rc.error) throw rc.data
+      }
+
+      return RespuestaController.exitosa(
+        200,
+        "Proyecto actualizado con éxito",
+        null
+      )
+    } catch (error) {
+      return RespuestaController.fallida(
+        400,
+        "Error al actualziar proyecto",
+        error
+      )
+    }
+  }
 
   static async borrar(id: number) {
     const dl = await ProyectoDB.borrar(id)
 
     if (dl.error) {
-      return RespuestaController.fallida(
-        400,
-        "Error al borrar financiador",
-        null
-      )
+      return RespuestaController.fallida(400, "Error al borrar proyecto", null)
     }
     return RespuestaController.exitosa(
       200,
-      "Financiador borrado con éxito",
+      "Proyecto borrado con éxito",
       dl.data
     )
   }

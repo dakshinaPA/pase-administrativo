@@ -3,6 +3,7 @@ import { Direccion } from "./direccion.model"
 
 export interface ColaboradorProyecto {
   id?: number
+  id_proyecto?: number
   nombre: string
   apellido_paterno: string
   apellido_materno: string
