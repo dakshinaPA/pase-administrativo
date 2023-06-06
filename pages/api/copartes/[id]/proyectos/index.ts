@@ -1,15 +1,19 @@
-import { PresupuestosServices } from "@api/services/presupuestos"
+import { ProyectosServices } from "@api/services/proyectos"
 import { NextApiRequest, NextApiResponse } from "next"
-import { SolicitudPresupuesto } from "@api/models/solicitudesPresupuestos.model"
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
+  const id_coparte = Number(req.query.id)
+
   switch (req.method) {
     case "GET":
-      var { status, ...data } = await PresupuestosServices.obtener()
+      var { status, ...data } = await ProyectosServices.obtener(id_coparte, 0)
       res.status(status).json(data)
       break
     case "POST":
-      var { status, ...data } = await PresupuestosServices.crear(req.body as SolicitudPresupuesto)
+      var { status, ...data } = await ProyectosServices.crear(
+        id_coparte,
+        req.body
+      )
       res.status(status).json(data)
       break
     default:

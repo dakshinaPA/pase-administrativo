@@ -1,10 +1,10 @@
-import { FinanciadoresServices } from "@api/services/financiadores"
+import { ProyectosServices } from "@api/services/proyectos"
 import { NextApiRequest, NextApiResponse } from "next"
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   switch (req.method) {
-    case "POST":
-      var { status, ...data } = await FinanciadoresServices.crearNota(req.body)
+    case "GET":
+      var { status, ...data } = await ProyectosServices.obtener(0, 0)
       res.status(status).json(data)
       break
     default:

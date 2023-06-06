@@ -134,8 +134,8 @@ class FinanciadorDB {
     }
   }
 
-  static async crearNota(data: NotaFinanciador) {
-    const { id_financiador, id_usuario, mensaje } = data
+  static async crearNota(id_financiador: number, data: NotaFinanciador) {
+    const { id_usuario, mensaje } = data
 
     const query = `INSERT INTO financiador_notas ( id_financiador, id_usuario,
       mensaje, dt_registro ) VALUES ( ?, ?, ?, ? )`

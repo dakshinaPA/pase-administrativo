@@ -213,8 +213,8 @@ class FinanciadoresServices {
     )
   }
 
-  static async crearNota(data: NotaFinanciador) {
-    const crearNota = await FinanciadorDB.crearNota(data)
+  static async crearNota(id_financiador: number, data: NotaFinanciador) {
+    const crearNota = await FinanciadorDB.crearNota(id_financiador, data)
 
     if (crearNota.error) {
       return RespuestaController.fallida(

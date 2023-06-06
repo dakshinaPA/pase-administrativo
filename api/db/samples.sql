@@ -53,6 +53,30 @@ VALUES ('Aguascalientes'),
   ( "Yucatán" ), 
   ( "Zacatecas" );
 
+CREATE TABLE `bancos` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `nombre` VARCHAR(30) NOT NULL,
+  `b_activo` TINYINT UNSIGNED NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id`));
+
+INSERT INTO `bancos` (`nombre`) VALUES
+('BANAMEX'),
+('BBVA'),
+('SANTANDER'),
+('BANREGIO');
+
+CREATE TABLE `rubros_presupuestales` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `nombre` VARCHAR(40) NOT NULL,
+  `b_activo` TINYINT UNSIGNED NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id`));
+
+INSERT INTO `rubros_presupuestales` (`nombre`) VALUES 
+('VIATICOS'),
+('VIAJES'),
+('GASOLINA'), 
+('SALARIOS');
+
 
 --------------------------------------------------------
 
@@ -226,14 +250,88 @@ CREATE TABLE `proyectos` (
   `id_coparte` INT UNSIGNED NOT NULL,
   `id_responsable` INT UNSIGNED NOT NULL COMMENT 'id usuario coparte',
   `id_alt` VARCHAR(20) NOT NULL,
-  `f_monto_total` FLOAT UNSIGNED NOT NULL,
+  `f_monto_total` VARCHAR(20) NOT NULL,
   `i_tipo_financiamiento` TINYINT UNSIGNED NOT NULL COMMENT '1.estipendio, 2.unica ministracion, 3.varias ministraciones, 4.multi anual',
+  `i_beneficiados` INT UNSIGNED NOT NULL,
   `b_activo` TINYINT UNSIGNED NOT NULL DEFAULT 1,
   `dt_registro` VARCHAR(10) NOT NULL,
   PRIMARY KEY (`id`),
   INDEX (`id_financiador`),
   INDEX (`id_coparte`),
   INDEX (`id_responsable`));
+
+  CREATE TABLE `proyecto_ministraciones` (
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `id_proyecto` INT UNSIGNED NOT NULL,
+    `i_numero` TINYINT UNSIGNED NOT NULL COMMENT 'numero de ministracion',
+    `f_monto` VARCHAR(20) NOT NULL,
+    `i_grupo` INT UNSIGNED NOT NULL,
+    `dt_recepcion` VARCHAR(10) NOT NULL,
+    `b_activo` TINYINT UNSIGNED NOT NULL DEFAULT 1,
+    `dt_registro` VARCHAR(10) NOT NULL,
+    PRIMARY KEY (`id`),
+    INDEX (`id_proyecto`));
+
+  CREATE TABLE `proyecto_rubros_presupuestales` (
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `id_proyecto` INT UNSIGNED NOT NULL,
+    `id_rubro` INT UNSIGNED NOT NULL,
+    `f_monto` VARCHAR(20) NOT NULL,
+    `b_activo` TINYINT UNSIGNED NOT NULL DEFAULT 1,
+    PRIMARY KEY (`id`),
+    INDEX (`id_proyecto`),
+    INDEX (`id_rubro`));
+
+  -- CREATE TABLE `proyecto_colaboradores` (
+  --   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  --   `id_proyecto` INT UNSIGNED NOT NULL,
+  --   `id_rcolaborador` INT UNSIGNED NOT NULL,
+  --   `alt_id` VARCHAR(20) NOT NULL DEFAULT '',
+  --   `b_activo` TINYINT UNSIGNED NOT NULL DEFAULT 1,
+  --   PRIMARY KEY (`id`),
+  --   INDEX (`id_proyecto`),
+  --   INDEX (`id_rcolaborador`));
+
+-----------------------------------------------------------
+
+  CREATE TABLE `colaboradores` (
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `id_proyecto` INT UNSIGNED NOT NULL,
+    `nombre` VARCHAR(50) NOT NULL,
+    `apellido_paterno` VARCHAR(50) NOT NULL,
+    `apellido_materno` VARCHAR(50) NOT NULL,
+    `i_tipo` TINYINT UNSIGNED NOT NULL COMMENT '1.asimilados, 2.honorarios',
+    `clabe` VARCHAR(18) NOT NULL,
+    `id_banco` TINYINT UNSIGNED NOT NULL,
+    `telefono` VARCHAR(10) NOT NULL,
+    `email` VARCHAR(50) NOT NULL,
+    `rfc` VARCHAR(20) NOT NULL,
+    `curp` VARCHAR(20) NOT NULL,
+    `cp` VARCHAR(5) NOT NULL COMMENT 'el que aparece en constancia de situacion fiscal',
+    `nombre_servicio` VARCHAR(40) NOT NULL,
+    `descripcion_servicio` VARCHAR(150) NOT NULL,
+    `f_monto_total` VARCHAR(20) NOT NULL COMMENT 'total a pagar durante el proyecto',
+    `dt_inicio_servicio` VARCHAR(10) NOT NULL,
+    `dt_fin_servicio` VARCHAR(10) NOT NULL,
+    `b_activo` TINYINT UNSIGNED NOT NULL DEFAULT 1,
+    `dt_registro` VARCHAR(10) NOT NULL,
+    PRIMARY KEY (`id`),
+    INDEX (`id_proyecto`),
+    INDEX (`id_banco`));
+
+  CREATE TABLE `colaborador_direccion` (
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `id_colaborador` INT UNSIGNED NOT NULL,
+    `calle` VARCHAR(30) NOT NULL,
+    `numero_ext` VARCHAR(10) NOT NULL,
+    `numero_int` VARCHAR(10) NOT NULL,
+    `colonia` VARCHAR(30) NOT NULL,
+    `municipio` VARCHAR(20) NOT NULL,
+    `cp` VARCHAR(5) NOT NULL,
+    `id_estado` INT UNSIGNED NOT NULL,
+    PRIMARY KEY (`id`),
+    INDEX (`id_colaborador`),
+    INDEX (`id_estado`));
 
 
 -----------------------------------------------------------
@@ -270,10 +368,20 @@ financiador_enlace
 TRUNCATE TABLE coparte_direccion;
 TRUNCATE TABLE coparte_usuarios;
 TRUNCATE TABLE copartes;
-TRUNCATE TABLE proyectos;
+
 TRUNCATE TABLE usuarios;
 
 TRUNCATE TABLE financiador_direccion;
 TRUNCATE TABLE financiador_enlace;
 TRUNCATE TABLE financiador_notas;
 TRUNCATE TABLE financiadores;
+
+TRUNCATE TABLE proyectos;
+TRUNCATE TABLE proyecto_ministraciones;
+TRUNCATE TABLE proyecto_rubros_presupuestales;
+TRUNCATE TABLE colaboradores;
+TRUNCATE TABLE colaborador_direccion;
+
+DROP TABLE proyectos;
+DROP TABLE proyecto_ministraciones;
+DROP TABLE proyecto_rubros_presupuestales;
