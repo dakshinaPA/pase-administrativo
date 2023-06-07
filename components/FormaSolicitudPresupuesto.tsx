@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/router"
 import { ChangeEvent } from "@assets/models/formEvents.model"
-import { SolicitudPresupuesto } from "@api/models/solicitudesPresupuestos.model"
+import { SolicitudPresupuesto } from "@api/models/solicitudes-presupuesto.model"
 import { Loader } from "@components/Loader"
 import { ApiCall } from "@assets/utils/apiCalls"
 

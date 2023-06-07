@@ -4,7 +4,7 @@ import { useRouter } from "next/router"
 import { Loader } from "@components/Loader"
 import { ModalEliminar } from "@components/ModalEliminar"
 import { aMinuscula } from "@assets/utils/common"
-import { SolicitudPresupuesto } from "@api/models/solicitudesPresupuestos.model"
+import { SolicitudPresupuesto } from "@api/models/solicitudes-presupuesto.model"
 
 const SolicitudesPresupuesto = () => {
   const router = useRouter()

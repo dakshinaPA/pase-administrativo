@@ -282,16 +282,6 @@ CREATE TABLE `proyectos` (
     INDEX (`id_proyecto`),
     INDEX (`id_rubro`));
 
-  -- CREATE TABLE `proyecto_colaboradores` (
-  --   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  --   `id_proyecto` INT UNSIGNED NOT NULL,
-  --   `id_rcolaborador` INT UNSIGNED NOT NULL,
-  --   `alt_id` VARCHAR(20) NOT NULL DEFAULT '',
-  --   `b_activo` TINYINT UNSIGNED NOT NULL DEFAULT 1,
-  --   PRIMARY KEY (`id`),
-  --   INDEX (`id_proyecto`),
-  --   INDEX (`id_rcolaborador`));
-
 -----------------------------------------------------------
 
   CREATE TABLE `colaboradores` (
@@ -337,32 +327,42 @@ CREATE TABLE `proyectos` (
 -----------------------------------------------------------
 
 
-CREATE TABLE `solicitudes_presupuestos` (
+CREATE TABLE `solicitudes_presupuesto` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `tipoGasto` TINYINT UNSIGNED NOT NULL DEFAULT 1,
-  `proveedor` VARCHAR(50) NOT NULL,
+  `id_proyecto` INT UNSIGNED NOT NULL,
+  `i_tipo_gasto` TINYINT UNSIGNED NOT NULL COMMENT '1.reembolso, 2.programacion, 3.asimilado a salarios, 4.honorarios profesionales, 5.gastos por comprobar',
   `clabe` VARCHAR(18) NOT NULL,
-  `banco` VARCHAR(50) NOT NULL,
-  `titular` VARCHAR(50) NOT NULL,
-  `rfc` VARCHAR(20) NOT NULL,
-  `email` VARCHAR(50) NOT NULL,
-  `email2` VARCHAR(50) NOT NULL DEFAULT '',
-  `partida` TINYINT UNSIGNED NOT NULL DEFAULT 1,
-  `descripcion` VARCHAR(300) NOT NULL,
-  `importe` FLOAT UNSIGNED NOT NULL DEFAULT 0,
-  `comprobante` TINYINT UNSIGNED NOT NULL DEFAULT 1,
+  `id_banco` INT UNSIGNED NOT NULL,
+  `titular_cuenta` VARCHAR(80) NOT NULL,
+  `rfc_titular` VARCHAR(20) NOT NULL,
+  `email_titular` VARCHAR(50) NOT NULL,
+  `proveedor` VARCHAR(50) NOT NULL DEFAULT '' COMMENT 'menos en gastos por comprobar',
+  `descripcion_gasto` VARCHAR(300) NOT NULL,
+  `id_partida_presupuestal` INT UNSIGNED NOT NULL COMMENT 'id proyecto_rubros_presupuestales',
+  `f_importe` VARCHAR(20) NOT NULL,
+  `f_monto_comprobar` VARCHAR(20) NOT NULL COMMENT 'diferencia entre importe y gastos comprobados',
+  `i_estatus` TINYINT UNSIGNED NOT NULL DEFAULT 1 COMMENT '1. revision, 2.aprobada, 3.procesada, 4.rechazada',
   `b_activo` TINYINT UNSIGNED NOT NULL DEFAULT 1,
-  PRIMARY KEY (`id`));
+  `dt_registro` VARCHAR(10) NOT NULL,
+  PRIMARY KEY (`id`),
+  INDEX (`id_proyecto`),
+  INDEX (`id_banco`),
+  INDEX (`id_partida_presupuestal`));
 
+CREATE TABLE `solicitud_presupuesto_comprobantes` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `id_solicitud_presupuesto` INT UNSIGNED NOT NULL,
+  `folio_fiscal` VARCHAR(40) NOT NULL,
+  `f_total` VARCHAR(20) NOT NULL,
+  `f_retenciones` VARCHAR(20) NOT NULL,
+  `i_regimen_fiscal` TINYINT UNSIGNED NOT NULL,
+  `i_forma_pago` TINYINT UNSIGNED NOT NULL,
+  `b_activo` TINYINT UNSIGNED NOT NULL DEFAULT 1,
+  `dt_registro` VARCHAR(10) NOT NULL,
+  PRIMARY KEY (`id`),
+  INDEX (`id_solicitud_presupuesto`));
 
-INSERT INTO `solicitudes_presupuestos` (`tipoGasto`, `proveedor`, `banco`, `clabe`, `titular`, `rfc`, `email`, `partida`, `descripcion`, `importe`, `comprobante`)
-VALUES (1, 'Yo que se', 'Azteca', '453454122323232323', 'felipe Calderón', 'CALDE123', 'felipillo@gmail.com', 1, 'Esto es una descripcion', '1234.23', 1 ),
-(2, 'Proveedor 2', 'Banamex', '129873674637283746', 'Juanillo Juaneles', 'JUANLES229876', 'juanelillo@gmail.com', 2, 'Esto es una descripcion mas', '123423', 2 )
-
-
--- INTERMEDIAS
-
-financiador_enlace
+------------------------------------------------------
 
 
 TRUNCATE TABLE coparte_direccion;
