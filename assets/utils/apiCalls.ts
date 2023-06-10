@@ -7,7 +7,7 @@ export interface ApiCallRes {
 class ApiCall {
   static async get(url: string): Promise<ApiCallRes> {
     try {
-      let res = await fetch(url)
+      let res = await fetch(`/api${url}`)
       return (await res.json()) as ApiCallRes
     } catch (error) {
       console.log(error)
@@ -20,7 +20,7 @@ class ApiCall {
 
   static async post(url: string, data: object): Promise<ApiCallRes> {
     try {
-      let res = await fetch(url, {
+      let res = await fetch(`/api${url}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -37,7 +37,7 @@ class ApiCall {
 
   static async put(url: string, data: object): Promise<ApiCallRes> {
     try {
-      let res = await fetch(url, {
+      let res = await fetch(`/api${url}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json " },
         body: JSON.stringify(data),
@@ -54,7 +54,7 @@ class ApiCall {
 
   static async delete(url: string): Promise<ApiCallRes> {
     try {
-      let res = await fetch(url, {
+      let res = await fetch(`/api${url}`, {
         method: "DELETE",
       })
       return (await res.json()) as ApiCallRes

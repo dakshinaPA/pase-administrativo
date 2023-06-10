@@ -80,7 +80,7 @@ const FormaFinanciador = () => {
   }, [estadoForma.direccion.id_pais])
 
   const obtenerPaises = async () => {
-    const { error, data } = await ApiCall.get(`/api/catalogos/paises`)
+    const { error, data } = await ApiCall.get(`/catalogos/paises`)
     if (error) {
       console.log("error")
     } else {
@@ -90,7 +90,7 @@ const FormaFinanciador = () => {
   }
 
   const obtenerEstados = async () => {
-    const { error, data } = await ApiCall.get(`/api/catalogos/estados`)
+    const { error, data } = await ApiCall.get(`/catalogos/estados`)
     if (error) {
       console.log("error")
     } else {
@@ -115,18 +115,18 @@ const FormaFinanciador = () => {
   }
 
   const obtener = async () => {
-    const res = await ApiCall.get(`/api/financiadores/${idFinanciador}`)
+    const res = await ApiCall.get(`/financiadores/${idFinanciador}`)
     return res
   }
 
   const registrar = async () => {
-    const res = await ApiCall.post("/api/financiadores", estadoForma)
+    const res = await ApiCall.post("/financiadores", estadoForma)
     return res
   }
 
   const editar = async () => {
     const res = await ApiCall.put(
-      `/api/financiadores/${idFinanciador}`,
+      `/financiadores/${idFinanciador}`,
       estadoForma
     )
     return res
@@ -189,7 +189,7 @@ const FormaFinanciador = () => {
       return
     }
 
-    const cr = await ApiCall.post(`/api/financiadores/${idFinanciador}/notas`, {
+    const cr = await ApiCall.post(`/financiadores/${idFinanciador}/notas`, {
       id_usuario: user.id,
       mensaje: mensajeNota,
     })
@@ -199,7 +199,7 @@ const FormaFinanciador = () => {
       //limpiar el input
       setMensajeNota("")
 
-      const re = await ApiCall.get(`/api/financiadores/${idFinanciador}/notas`)
+      const re = await ApiCall.get(`/financiadores/${idFinanciador}/notas`)
       if (re.error) {
         console.log(re.data)
       } else {
@@ -510,6 +510,7 @@ const FormaFinanciador = () => {
               className="form-control"
               value={mensajeNota}
               onChange={({ target }) => setMensajeNota(target.value)}
+              placeholder="mensaje de la nota"
               ref={inputNota}
             ></input>
             {/* <textarea className="form-control"></textarea> */}

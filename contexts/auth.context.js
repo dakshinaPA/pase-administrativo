@@ -26,7 +26,7 @@ const AuthProvider = ({ children }) => {
   const login = async (dataUsuario) => {
     try {
       const { error, data, mensaje } = await ApiCall.post(
-        "/api/login",
+        "/login",
         dataUsuario
       )
 

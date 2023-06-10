@@ -71,7 +71,7 @@ const FormaUsuario = () => {
   }
 
   const obtenerCopartes = async () => {
-    const { error, data } = await ApiCall.get(`/api/copartes?min=true`)
+    const { error, data } = await ApiCall.get(`/copartes?min=true`)
 
     if (error) {
       console.log(error)
@@ -82,17 +82,17 @@ const FormaUsuario = () => {
   }
 
   const obtener = async () => {
-    const res = await ApiCall.get(`/api/usuarios/${idUsuario}`)
+    const res = await ApiCall.get(`/usuarios/${idUsuario}`)
     return res
   }
 
   const registrar = async () => {
-    const res = await ApiCall.post("/api/usuarios", estadoForma)
+    const res = await ApiCall.post("/usuarios", estadoForma)
     return res
   }
 
   const editar = async () => {
-    const res = await ApiCall.put(`/api/usuarios/${idUsuario}`, estadoForma)
+    const res = await ApiCall.put(`/usuarios/${idUsuario}`, estadoForma)
     return res
   }
 

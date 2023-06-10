@@ -41,7 +41,7 @@ const Financiadores = () => {
   const obtenerTodos = async () => {
     setIsLoading(true)
 
-    let url = `/api/financiadores`
+    let url = `/financiadores`
     const res = await ApiCall.get(url)
     const { error, data, mensaje } = res
 
@@ -60,7 +60,7 @@ const Financiadores = () => {
     setIsLoading(true)
 
     const { error, data, mensaje } = await ApiCall.delete(
-      `/api/financiadores/${idAEliminar}`
+      `/financiadores/${idAEliminar}`
     )
 
     if (error) {

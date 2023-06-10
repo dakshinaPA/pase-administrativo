@@ -35,7 +35,7 @@ const Usuarios = () => {
   const obtenerUsuarios = async () => {
     setIsLoading(true)
 
-    let url = `/api/usuarios`
+    let url = `/usuarios`
     if (rolUsuarioSelect == 3) {
       url += `?id_coparte=${coparteSelect}`
     } else {
@@ -54,7 +54,7 @@ const Usuarios = () => {
   }
 
   const obtenerCopartes = async () => {
-    const res = await ApiCall.get(`/api/copartes?min=true`)
+    const res = await ApiCall.get(`/copartes?min=true`)
     const { error, data, mensaje } = res
     if (!error) {
       setCopartesDB(data as CoparteMin[])
@@ -67,7 +67,7 @@ const Usuarios = () => {
     setIsLoading(true)
 
     const { error, data, mensaje } = await ApiCall.delete(
-      `/api/usuarios/${usuarioAEliminar}`
+      `/usuarios/${usuarioAEliminar}`
     )
 
     if (error) {
