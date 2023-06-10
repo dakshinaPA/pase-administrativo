@@ -40,14 +40,15 @@ const FormaFinanciador = () => {
   }
 
   const { user } = useAuth()
+  const router = useRouter()
+  const idFinanciador = router.query.id
   const [estadoForma, setEstadoForma] =
     useState<Financiador>(estadoInicialForma)
   const [paisesDB, setPaisesDB] = useState<PaisDB[]>([])
   const [estadosDB, setEstadosDB] = useState<EstadoDB[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [mensajeNota, setMensajeNota] = useState<string>("")
-  const router = useRouter()
-  const idFinanciador = router.query.id
+  const [modoEditar, setModoEditar] = useState<boolean>(!idFinanciador)
   const modalidad = idFinanciador ? "EDITAR" : "CREAR"
   const inputNota = useRef(null)
 
@@ -133,7 +134,7 @@ const FormaFinanciador = () => {
   }
 
   const cancelar = () => {
-    router.push("/financiadores")
+    idFinanciador ? setModoEditar(false) : router.push("/financiadores")
   }
 
   const handleChange = (ev: ChangeEvent) => {
@@ -179,7 +180,7 @@ const FormaFinanciador = () => {
     if (res.error) {
       console.log(res)
     } else {
-      router.push("/financiadores")
+      setModoEditar(false)
     }
   }
 
@@ -219,11 +220,19 @@ const FormaFinanciador = () => {
   return (
     <RegistroContenedor>
       <div className="row mb-3">
-        <div className="col-12 d-flex align-items-center">
-          <BtnBack navLink="/financiadores" />
-          <h2 className="color1 mb-0">
-            {modalidad === "EDITAR" ? "Editar" : "Registrar"} financiador
-          </h2>
+        <div className="col-12 d-flex justify-content-between">
+          <div className="d-flex align-items-center">
+            <BtnBack navLink="/financiadores" />
+            {!idFinanciador && <h2 className="color1 mb-0">Registrar financiador</h2>}
+          </div>
+          {!modoEditar && idFinanciador && (
+            <button
+              className="btn btn-secondary"
+              onClick={() => setModoEditar(true)}
+            >
+              Editar
+            </button>
+          )}
         </div>
       </div>
       <FormaContenedor onSubmit={handleSubmit}>
@@ -235,6 +244,7 @@ const FormaFinanciador = () => {
             onChange={handleChange}
             name="nombre"
             value={estadoForma.nombre}
+            disabled={!modoEditar}
           />
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
@@ -245,6 +255,7 @@ const FormaFinanciador = () => {
             onChange={handleChange}
             name="folio_fiscal"
             value={estadoForma.folio_fiscal}
+            disabled={!modoEditar}
           />
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
@@ -254,6 +265,7 @@ const FormaFinanciador = () => {
             onChange={handleChange}
             name="i_tipo"
             value={estadoForma.i_tipo}
+            disabled={!modoEditar}
           >
             <option value="1">Aliado</option>
             <option value="2">Independiente</option>
@@ -267,6 +279,7 @@ const FormaFinanciador = () => {
             onChange={handleChange}
             name="actividad"
             value={estadoForma.actividad}
+            disabled={!modoEditar}
           />
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
@@ -277,6 +290,7 @@ const FormaFinanciador = () => {
             onChange={handleChange}
             name="representante_legal"
             value={estadoForma.representante_legal}
+            disabled={!modoEditar}
           />
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
@@ -287,6 +301,7 @@ const FormaFinanciador = () => {
             onChange={handleChange}
             name="pagina_web"
             value={estadoForma.pagina_web}
+            disabled={!modoEditar}
           />
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
@@ -297,6 +312,7 @@ const FormaFinanciador = () => {
             onChange={handleChange}
             name="dt_constitucion"
             value={estadoForma.dt_constitucion}
+            disabled={!modoEditar}
           />
         </div>
         <div className="col-12">
@@ -313,6 +329,7 @@ const FormaFinanciador = () => {
             onChange={handleChangeDireccion}
             name="calle"
             value={estadoForma.direccion.calle}
+            disabled={!modoEditar}
           />
         </div>
         <div className="col-6 col-lg-3 mb-3">
@@ -323,6 +340,7 @@ const FormaFinanciador = () => {
             onChange={handleChangeDireccion}
             name="numero_ext"
             value={estadoForma.direccion.numero_ext}
+            disabled={!modoEditar}
           />
         </div>
         <div className="col-6 col-lg-3 mb-3">
@@ -333,6 +351,7 @@ const FormaFinanciador = () => {
             onChange={handleChangeDireccion}
             name="numero_int"
             value={estadoForma.direccion.numero_int}
+            disabled={!modoEditar}
           />
         </div>
         <div className="col-12 col-lg-6 mb-3">
@@ -343,6 +362,7 @@ const FormaFinanciador = () => {
             onChange={handleChangeDireccion}
             name="colonia"
             value={estadoForma.direccion.colonia}
+            disabled={!modoEditar}
           />
         </div>
         <div className="col-12 col-md-6 col-lg-3 mb-3">
@@ -353,6 +373,7 @@ const FormaFinanciador = () => {
             onChange={handleChangeDireccion}
             name="municipio"
             value={estadoForma.direccion.municipio}
+            disabled={!modoEditar}
           />
         </div>
         <div className="col-12 col-md-6 col-lg-3 mb-3">
@@ -363,6 +384,7 @@ const FormaFinanciador = () => {
             onChange={handleChangeDireccion}
             name="cp"
             value={estadoForma.direccion.cp}
+            disabled={!modoEditar}
           />
         </div>
         {estadoForma.direccion.id_pais == 1 ? (
@@ -373,6 +395,7 @@ const FormaFinanciador = () => {
               onChange={handleChangeDireccion}
               name="id_estado"
               value={estadoForma.direccion.id_estado}
+              disabled={!modoEditar}
             >
               {estadosDB.map(({ id, nombre }) => (
                 <option key={id} value={id}>
@@ -390,6 +413,7 @@ const FormaFinanciador = () => {
               onChange={handleChangeDireccion}
               name="estado"
               value={estadoForma.direccion.estado}
+              disabled={!modoEditar}
             />
           </div>
         )}
@@ -400,6 +424,7 @@ const FormaFinanciador = () => {
             onChange={handleChangeDireccion}
             name="id_pais"
             value={estadoForma.direccion.id_pais}
+            disabled={!modoEditar}
           >
             {paisesDB.map(({ id, nombre }) => (
               <option key={id} value={id}>
@@ -422,6 +447,7 @@ const FormaFinanciador = () => {
             onChange={handleChangeEnlace}
             name="nombre"
             value={estadoForma.enlace.nombre}
+            disabled={!modoEditar}
           />
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
@@ -432,6 +458,7 @@ const FormaFinanciador = () => {
             onChange={handleChangeEnlace}
             name="apellido_paterno"
             value={estadoForma.enlace.apellido_paterno}
+            disabled={!modoEditar}
           />
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
@@ -442,6 +469,7 @@ const FormaFinanciador = () => {
             onChange={handleChangeEnlace}
             name="apellido_materno"
             value={estadoForma.enlace.apellido_materno}
+            disabled={!modoEditar}
           />
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
@@ -452,6 +480,7 @@ const FormaFinanciador = () => {
             onChange={handleChangeEnlace}
             name="email"
             value={estadoForma.enlace.email}
+            disabled={!modoEditar}
           />
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
@@ -462,20 +491,23 @@ const FormaFinanciador = () => {
             onChange={handleChangeEnlace}
             name="telefono"
             value={estadoForma.enlace.telefono}
+            disabled={!modoEditar}
           />
         </div>
-        <div className="col-12 text-end">
-          <button
-            className="btn btn-secondary me-2"
-            type="button"
-            onClick={cancelar}
-          >
-            Cancelar
-          </button>
-          <button className="btn btn-secondary" type="submit">
-            {modalidad === "EDITAR" ? "Guardar" : "Registrar"}
-          </button>
-        </div>
+        {modoEditar && (
+          <div className="col-12 text-end">
+            <button
+              className="btn btn-secondary me-2"
+              type="button"
+              onClick={cancelar}
+            >
+              Cancelar
+            </button>
+            <button className="btn btn-secondary" type="submit">
+              {idFinanciador ? "Guardar" : "Registrar"}
+            </button>
+          </div>
+        )}
       </FormaContenedor>
       {modalidad === "EDITAR" && (
         <div className="row my-3">

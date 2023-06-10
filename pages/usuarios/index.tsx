@@ -216,7 +216,7 @@ const Usuarios = () => {
                           className="btn btn-dark me-1"
                           onClick={() => router.push(`/usuarios/${id}`)}
                         >
-                          <i className="bi bi-pencil"></i>
+                          <i className="bi bi-eye-fill"></i>
                         </button>
                         <button
                           className="btn btn-dark"

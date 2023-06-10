@@ -28,11 +28,12 @@ const FormaUsuario = () => {
     ],
   }
 
+  const router = useRouter()
+  const idUsuario = router.query.id
   const [estadoForma, setEstadoForma] = useState<Usuario>(estadoInicialForma)
   const [copartesDB, setCopartesDB] = useState<CoparteMin[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(false)
-  const router = useRouter()
-  const idUsuario = router.query.id
+  const [modoEditar, setModoEditar] = useState<boolean>(!idUsuario)
 
   useEffect(() => {
     obtenerCopartes()
@@ -97,7 +98,7 @@ const FormaUsuario = () => {
   }
 
   const cancelar = () => {
-    router.push("/usuarios")
+    idUsuario ? setModoEditar(false) : router.push("/usuarios")
   }
 
   const handleChange = (ev: ChangeEvent) => {
@@ -138,14 +139,15 @@ const FormaUsuario = () => {
     ev.preventDefault()
 
     setIsLoading(true)
-    const {error, data, mensaje} = idUsuario ? await editar() : await registrar()
+    const { error, data, mensaje } = idUsuario
+      ? await editar()
+      : await registrar()
     setIsLoading(false)
 
     if (error) {
       console.log(data)
     } else {
-      console.log(mensaje)
-      // router.push("/usuarios")
+      setModoEditar(false)
     }
   }
 
@@ -156,11 +158,19 @@ const FormaUsuario = () => {
   return (
     <RegistroContenedor>
       <div className="row mb-3">
-        <div className="col-12 d-flex align-items-center">
-          <BtnBack navLink="/usuarios" />
-          <h2 className="color1 mb-0">
-            {idUsuario ? "Editar" : "Registrar"} usuario
-          </h2>
+        <div className="col-12 d-flex justify-content-between">
+          <div className="d-flex align-items-center">
+            <BtnBack navLink="/usuarios" />
+            {!idUsuario && <h2 className="color1 mb-0">Registrar usuario</h2>}
+          </div>
+          {!modoEditar && idUsuario && (
+            <button
+              className="btn btn-secondary"
+              onClick={() => setModoEditar(true)}
+            >
+              Editar
+            </button>
+          )}
         </div>
       </div>
       <FormaContenedor onSubmit={handleSubmit}>
@@ -172,6 +182,7 @@ const FormaUsuario = () => {
             onChange={handleChange}
             name="nombre"
             value={estadoForma.nombre}
+            disabled={!modoEditar}
           />
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
@@ -182,6 +193,7 @@ const FormaUsuario = () => {
             onChange={handleChange}
             name="apellido_paterno"
             value={estadoForma.apellido_paterno}
+            disabled={!modoEditar}
           />
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
@@ -192,6 +204,7 @@ const FormaUsuario = () => {
             onChange={handleChange}
             name="apellido_materno"
             value={estadoForma.apellido_materno}
+            disabled={!modoEditar}
           />
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
@@ -202,6 +215,7 @@ const FormaUsuario = () => {
             onChange={handleChange}
             name="email"
             value={estadoForma.email}
+            disabled={!modoEditar}
           />
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
@@ -212,6 +226,7 @@ const FormaUsuario = () => {
             onChange={handleChange}
             name="telefono"
             value={estadoForma.telefono}
+            disabled={!modoEditar}
           />
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
@@ -222,6 +237,7 @@ const FormaUsuario = () => {
             onChange={handleChange}
             name="password"
             value={estadoForma.password}
+            disabled={!modoEditar}
           />
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
@@ -263,22 +279,25 @@ const FormaUsuario = () => {
                 onChange={handleChangeCoparte}
                 name="cargo"
                 value={estadoForma.copartes[0].cargo}
+                disabled={!modoEditar}
               />
             </div>
           </>
         )}
-        <div className="col-12 text-end">
-          <button
-            className="btn btn-secondary me-2"
-            type="button"
-            onClick={cancelar}
-          >
-            Cancelar
-          </button>
-          <button className="btn btn-secondary" type="submit">
-            {idUsuario ? "Guardar" : "Registrar"}
-          </button>
-        </div>
+        {modoEditar && (
+          <div className="col-12 text-end">
+            <button
+              className="btn btn-secondary me-2"
+              type="button"
+              onClick={cancelar}
+            >
+              Cancelar
+            </button>
+            <button className="btn btn-secondary" type="submit">
+              {idUsuario ? "Guardar" : "Registrar"}
+            </button>
+          </div>
+        )}
       </FormaContenedor>
     </RegistroContenedor>
   )
