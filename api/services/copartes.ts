@@ -23,12 +23,26 @@ class CopartesServices {
     }
   }
 
-  static async obtener(id_coparte?: number) {
-    try {
-      const obtener = await CoparteDB.obtener(id_coparte)
-      if (obtener.error) throw obtener.data
+  static async obtenerVmin() {
+    const re = await CoparteDB.obtenerVmin()
 
-      const copartesDB = obtener.data as ResCoparteDB[]
+    if (re.error) {
+      return RespuestaController.fallida(
+        400,
+        "Error al obtener copartes",
+        re.data
+      )
+    }
+    return RespuestaController.exitosa(200, "Consulta exitosa", re.data)
+  }
+
+  static async obtener(id_coparte: number, min = false) {
+    if (min) return await this.obtenerVmin()
+    try {
+      const re = await CoparteDB.obtener(id_coparte)
+      if (re.error) throw re.data
+
+      const copartesDB = re.data as ResCoparteDB[]
 
       const copartesHidratadas: Coparte[] = await Promise.all(
         copartesDB.map(async (coparte) => {
@@ -51,7 +65,7 @@ class CopartesServices {
             municipio,
             cp,
             id_estado,
-            estado
+            estado,
           } = coparte
 
           let usuarios: UsuarioCoparte[] = null
@@ -123,7 +137,7 @@ class CopartesServices {
               municipio,
               cp,
               id_estado,
-              estado
+              estado,
             },
             administrador: {
               id: id_administrador,
@@ -193,7 +207,12 @@ class CopartesServices {
       const dlEnlace = CoparteDB.limpiarEnlace(id_coparte)
       const upEnlace = CoparteDB.actualizarEnlace(enlace.id_usuario)
 
-      const resCombinadas = await Promise.all([upCoparte, upADireccion, dlEnlace, upEnlace])
+      const resCombinadas = await Promise.all([
+        upCoparte,
+        upADireccion,
+        dlEnlace,
+        upEnlace,
+      ])
 
       for (const rc of resCombinadas) {
         if (rc.error) throw rc.data

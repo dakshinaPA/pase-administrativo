@@ -14,12 +14,8 @@ const Home = () => {
   if (!user) return null
 
   return (
-    <div className="container">
-      <div className="row">
-        {user.rol.secciones.map((seccion) => (
-          <AccionCard key={seccion.id} {...seccion} />
-        ))}
-      </div>
+    <div>
+      <h1>contenido</h1>
     </div>
   )
 }

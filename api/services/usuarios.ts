@@ -2,7 +2,9 @@ import { UsuarioDB } from "@api/db/usuarios"
 import { CoparteDB } from "@api/db/copartes"
 import { RespuestaController } from "@api/utils/response"
 import { LoginUsuario, ResUsuarioDB } from "@api/models/usuario.model"
-import { Usuario, UsuarioCoparte } from "@models/usuario.model"
+import { Usuario } from "@models/usuario.model"
+import { CoparteUsuario } from "@models/coparte.model"
+import { ResDB } from "@api/models/respuestas.model"
 
 class UsuariosServices {
   static async login(dataUsuario: LoginUsuario) {
@@ -39,9 +41,13 @@ class UsuariosServices {
   //     return res
   // }
 
-  static async obtener(id_usuario: number, id_rol: number) {
+  static async obtener(id_rol: number, id_coparte: number, id_usuario: number) {
     try {
-      const resUsuariosDB = await UsuarioDB.obtener(id_usuario, id_rol)
+      const resUsuariosDB = await UsuarioDB.obtener(
+        id_rol,
+        id_coparte,
+        id_usuario
+      )
       if (resUsuariosDB.error) throw resUsuariosDB.data
 
       const usuariosDB = resUsuariosDB.data as ResUsuarioDB[]
@@ -55,21 +61,23 @@ class UsuariosServices {
             apellido_materno,
             email,
             telefono,
+            password,
             id_rol,
             rol,
+            b_enlace,
           } = usuario
 
-          let copartes: UsuarioCoparte[] = null
+          let copartes: CoparteUsuario[] = null
 
           if (id_usuario && id_rol !== 1) {
             const obtenerCoUs =
               id_rol === 3
-                ? await UsuarioDB.obtenerCoparteCoparte(id_usuario)
-                : await UsuarioDB.obtenerCopartesAdministrador(id_usuario)
+                ? await UsuarioDB.obtenerCoparteCoparte(id)
+                : await UsuarioDB.obtenerCopartesAdministrador(id)
 
             if (obtenerCoUs.error) throw obtenerCoUs.data
 
-            const copartesCoUS = obtenerCoUs.data as UsuarioCoparte[]
+            const copartesCoUS = obtenerCoUs.data as CoparteUsuario[]
 
             copartes =
               id_rol === 3
@@ -87,9 +95,11 @@ class UsuariosServices {
             apellido_materno,
             email,
             telefono,
+            password: id_usuario ? password : "",
             rol: {
               id: id_rol,
               nombre: rol,
+              b_enlace: Boolean(b_enlace),
             },
             copartes,
           }
@@ -144,8 +154,18 @@ class UsuariosServices {
 
   static async actualizar(id_usuario: number, data: Usuario) {
     try {
-      const usuarioActualizado = await UsuarioDB.actualizar(id_usuario, data)
-      if (usuarioActualizado.error) throw usuarioActualizado.data
+      const promesas: Promise<ResDB>[] = []
+
+      promesas.push(UsuarioDB.actualizar(id_usuario, data))
+      if (data.rol.id === 3) {
+        promesas.push(CoparteDB.actualizarUsuario(data.copartes[0]))
+      }
+
+      const resCombinadas = await Promise.all(promesas)
+
+      for (const rc of resCombinadas) {
+        if (rc.error) throw rc.data
+      }
 
       return RespuestaController.exitosa(
         200,

@@ -1,5 +1,5 @@
 import { queryDB, queryDBPlaceHolder } from "./query"
-import { Usuario, UsuarioCoparte } from "@models/usuario.model"
+import { Usuario } from "@models/usuario.model"
 import { LoginUsuario } from "@api/models/usuario.model"
 import { RespuestaDB } from "@api/utils/response"
 import { fechaActualAEpoch } from "@assets/utils/common"
@@ -30,18 +30,25 @@ class UsuarioDB {
   //     }
   // }
 
-  static async obtener(id: number, id_rol: number) {
-    let query = `SELECT u.id, u.nombre, u.apellido_paterno, u.apellido_materno, u.email, u.telefono, u.id_rol,
-    r.nombre rol
-    FROM usuarios u JOIN roles r ON u.id_rol = r.id
-    WHERE u.b_activo=1`
+  static async obtener(id_rol: number, id_coparte: number, id_usuario: number) {
+    let query = `SELECT u.id, u.nombre, u.apellido_paterno, u.apellido_materno, u.email, u.telefono, u.password, u.id_rol,
+      r.nombre rol,
+      cu.b_enlace
+      FROM usuarios u
+      JOIN roles r ON u.id_rol = r.id
+      LEFT JOIN coparte_usuarios cu ON u.id = cu.id_usuario
+      WHERE u.b_activo=1`
 
-    if (id) {
-      query += ` AND u.id=${id} LIMIT 1`
+    if (id_usuario) {
+      query += ` AND u.id=${id_usuario} LIMIT 1`
     }
 
     if (id_rol) {
       query += ` AND u.id_rol=${id_rol}`
+    }
+
+    if (id_coparte) {
+      query += ` AND cu.id_coparte=${id_coparte}`
     }
 
     try {
@@ -93,10 +100,9 @@ class UsuarioDB {
       email,
       telefono,
       password,
-      rol,
     } = data
 
-    const query = `UPDATE usuarios SET nombre=?, apellido_paterno=?, apellido_materno=?, email=?, telefono=?, password=?, id_rol=? WHERE id=? LIMIT 1`
+    const query = `UPDATE usuarios SET nombre=?, apellido_paterno=?, apellido_materno=?, email=?, telefono=?, password=? WHERE id=? LIMIT 1`
     const placeHolders = [
       nombre,
       apellido_paterno,
@@ -104,7 +110,6 @@ class UsuarioDB {
       email,
       telefono,
       password,
-      rol.id,
       id,
     ]
 
@@ -128,7 +133,7 @@ class UsuarioDB {
   }
 
   static async obtenerCoparteCoparte(id: number) {
-    let query = `SELECT cu.id, cu.id_coparte, c.nombre, cu.b_enlace
+    let query = `SELECT cu.id, cu.id_coparte, c.nombre, cu.cargo, cu.b_enlace
     FROM coparte_usuarios cu JOIN copartes c ON cu.id_coparte = c.id
     WHERE id_usuario=${id} LIMIT 1`
 

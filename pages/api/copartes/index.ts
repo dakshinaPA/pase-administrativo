@@ -2,9 +2,12 @@ import { CopartesServices } from "@api/services/copartes"
 import { NextApiRequest, NextApiResponse } from "next"
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
+
+  const min = Boolean(req.query.min)
+
   switch (req.method) {
     case "GET":
-      var { status, ...data } = await CopartesServices.obtener()
+      var { status, ...data } = await CopartesServices.obtener(0, min)
       res.status(status).json(data)
       break
     case "POST":

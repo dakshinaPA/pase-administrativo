@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/router"
 import { ChangeEvent } from "@assets/models/formEvents.model"
-import { Usuario } from "@api/models/usuario.model"
+import { Usuario } from "@models/usuario.model"
+import { CoparteMin } from "@models/coparte.model"
 import { Loader } from "@components/Loader"
+import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
+import { BtnBack } from "@components/BtnBack"
 import { ApiCall } from "@assets/utils/apiCalls"
 
 const FormaUsuario = () => {
@@ -11,48 +14,84 @@ const FormaUsuario = () => {
     apellido_paterno: "",
     apellido_materno: "",
     email: "",
-    email2: "",
+    telefono: "",
     password: "",
-    i_rol: 1,
+    rol: {
+      id: 3,
+    },
+    copartes: [
+      {
+        id_coparte: 1,
+        cargo: "",
+        b_enlace: false,
+      },
+    ],
   }
 
   const [estadoForma, setEstadoForma] = useState<Usuario>(estadoInicialForma)
+  const [copartesDB, setCopartesDB] = useState<CoparteMin[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const router = useRouter()
   const idUsuario = router.query.id
 
   useEffect(() => {
+    obtenerCopartes()
     if (idUsuario) {
-      cargarDataUsuario()
+      cargarData()
     }
   }, [])
 
-  const cargarDataUsuario = async () => {
+  useEffect(() => {
+    //limpiar campos de coparte si se cambia de rol
+    setEstadoForma({
+      ...estadoForma,
+      copartes: [
+        {
+          id_coparte: 1,
+          cargo: "",
+          b_enlace: false,
+        },
+      ],
+    })
+  }, [estadoForma.rol.id])
+
+  const cargarData = async () => {
     setIsLoading(true)
 
-    const { error, data } = await obtenerUsuario()
+    const { error, data } = await obtener()
 
     if (error) {
       console.log(error)
     } else {
-      const dataUsuario = data[0] as Usuario
-      setEstadoForma(dataUsuario)
+      const dataFinanciador = data[0] as Usuario
+      setEstadoForma(dataFinanciador)
     }
 
     setIsLoading(false)
   }
 
-  const obtenerUsuario = async () => {
+  const obtenerCopartes = async () => {
+    const { error, data } = await ApiCall.get(`/api/copartes?min=true`)
+
+    if (error) {
+      console.log(error)
+    } else {
+      const copartes = data as CoparteMin[]
+      setCopartesDB(copartes)
+    }
+  }
+
+  const obtener = async () => {
     const res = await ApiCall.get(`/api/usuarios/${idUsuario}`)
     return res
   }
 
-  const registrarUsuario = async () => {
+  const registrar = async () => {
     const res = await ApiCall.post("/api/usuarios", estadoForma)
     return res
   }
 
-  const editarUsuario = async () => {
+  const editar = async () => {
     const res = await ApiCall.put(`/api/usuarios/${idUsuario}`, estadoForma)
     return res
   }
@@ -70,17 +109,43 @@ const FormaUsuario = () => {
     })
   }
 
+  const handleChangeRol = (ev: ChangeEvent) => {
+    const { value } = ev.target
+
+    setEstadoForma({
+      ...estadoForma,
+      rol: {
+        id: Number(value),
+      },
+    })
+  }
+
+  const handleChangeCoparte = (ev: ChangeEvent) => {
+    const { name, value } = ev.target
+
+    setEstadoForma({
+      ...estadoForma,
+      copartes: [
+        {
+          ...estadoForma.copartes[0],
+          [name]: value,
+        },
+      ],
+    })
+  }
+
   const handleSubmit = async (ev: React.SyntheticEvent) => {
     ev.preventDefault()
 
     setIsLoading(true)
-    const res = idUsuario ? await editarUsuario() : await registrarUsuario()
+    const {error, data, mensaje} = idUsuario ? await editar() : await registrar()
     setIsLoading(false)
 
-    if (res.error) {
-      console.log(res)
+    if (error) {
+      console.log(data)
     } else {
-      router.push("/usuarios")
+      console.log(mensaje)
+      // router.push("/usuarios")
     }
   }
 
@@ -89,8 +154,16 @@ const FormaUsuario = () => {
   }
 
   return (
-    <div className="container">
-      <form className="row py-3 border" onSubmit={handleSubmit}>
+    <RegistroContenedor>
+      <div className="row mb-3">
+        <div className="col-12 d-flex align-items-center">
+          <BtnBack navLink="/usuarios" />
+          <h2 className="color1 mb-0">
+            {idUsuario ? "Editar" : "Registrar"} usuario
+          </h2>
+        </div>
+      </div>
+      <FormaContenedor onSubmit={handleSubmit}>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Nombre</label>
           <input
@@ -132,13 +205,13 @@ const FormaUsuario = () => {
           />
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
-          <label className="form-label">Email alterno</label>
+          <label className="form-label">Teléfono</label>
           <input
             className="form-control"
             type="text"
             onChange={handleChange}
-            name="email2"
-            value={estadoForma.email2}
+            name="telefono"
+            value={estadoForma.telefono}
           />
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
@@ -155,15 +228,45 @@ const FormaUsuario = () => {
           <label className="form-label">Rol</label>
           <select
             className="form-control"
-            onChange={handleChange}
-            name="i_rol"
-            value={estadoForma.i_rol}
+            onChange={handleChangeRol}
+            value={estadoForma.rol.id}
+            disabled={Boolean(idUsuario)}
           >
             <option value="1">Super usuario</option>
             <option value="2">Administrador</option>
             <option value="3">Coparte</option>
           </select>
         </div>
+        {estadoForma.rol.id === 3 && (
+          <>
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label">Coparte</label>
+              <select
+                className="form-control"
+                onChange={handleChangeCoparte}
+                name="id_coparte"
+                value={estadoForma.copartes[0].id_coparte}
+                disabled={Boolean(idUsuario)}
+              >
+                {copartesDB.map(({ id, nombre }) => (
+                  <option key={id} value={id}>
+                    {nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label">Cargo</label>
+              <input
+                className="form-control"
+                type="text"
+                onChange={handleChangeCoparte}
+                name="cargo"
+                value={estadoForma.copartes[0].cargo}
+              />
+            </div>
+          </>
+        )}
         <div className="col-12 text-end">
           <button
             className="btn btn-secondary me-2"
@@ -173,11 +276,11 @@ const FormaUsuario = () => {
             Cancelar
           </button>
           <button className="btn btn-secondary" type="submit">
-            {idUsuario ? "Editar" : "Registrar"}
+            {idUsuario ? "Guardar" : "Registrar"}
           </button>
         </div>
-      </form>
-    </div>
+      </FormaContenedor>
+    </RegistroContenedor>
   )
 }
 

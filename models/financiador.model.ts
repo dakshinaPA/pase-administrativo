@@ -39,7 +39,8 @@ export interface Financiador {
   folio_fiscal: string
   actividad: string
   dt_constitucion: string
-  i_tipo: 1 | 2
+  dt_constitucion_format?: string // formato dd/mm/aaaa
+  i_tipo: number // 1.aliado, 2.indeéndiente
   tipo?: string 
   dt_registro?: string
   enlace: EnlaceFinanciador

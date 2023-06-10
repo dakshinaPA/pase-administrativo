@@ -1,7 +1,8 @@
 // usuario tipo coparte
-export interface UsuarioCoparte {
+export interface CoparteUsuario {
   id?: number
-  id_usuario: number
+  id_usuario?: number
+  id_coparte: number
   nombre?: string
   cargo: string
   b_enlace: boolean
@@ -54,5 +55,10 @@ export interface Coparte {
   direccion: DireccionCoparte
   administrador: AdministradorCoparte
   enlace?: EnlaceCoparte
-  usuarios?: UsuarioCoparte[]
+  usuarios?: CoparteUsuario[]
+}
+
+export interface CoparteMin {
+  id: number
+  nombre: string
 }

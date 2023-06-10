@@ -341,7 +341,7 @@ CREATE TABLE `solicitudes_presupuesto` (
   `id_partida_presupuestal` INT UNSIGNED NOT NULL COMMENT 'id proyecto_rubros_presupuestales',
   `f_importe` VARCHAR(20) NOT NULL,
   `f_monto_comprobar` VARCHAR(20) NOT NULL COMMENT 'diferencia entre importe y gastos comprobados',
-  `i_estatus` TINYINT UNSIGNED NOT NULL DEFAULT 1 COMMENT '1. revision, 2.aprobada, 3.procesada, 4.rechazada',
+  `i_estatus` TINYINT UNSIGNED NOT NULL DEFAULT 1 COMMENT '1. revision, 2.autorizada, 3.rechazada, 4.procesada, 5.devolucion',
   `b_activo` TINYINT UNSIGNED NOT NULL DEFAULT 1,
   `dt_registro` VARCHAR(10) NOT NULL,
   PRIMARY KEY (`id`),

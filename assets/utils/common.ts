@@ -26,6 +26,11 @@ const epochAFecha = (epoch: string): string => {
   })
 }
 
+const inputDateAformato = (fecha: string): string => {
+  const [anio, mes, dia] = fecha.split("-")
+  return `${dia}/${mes}/${anio}`
+}
+
 const fechaActualAEpoch = () => {
   const fechaHoyEpoch = Date.now()
   const fechaEpoch = (fechaHoyEpoch / 1000).toFixed()
@@ -73,4 +78,5 @@ export {
   aMinuscula,
   epochAFecha,
   fechaActualAEpoch,
+  inputDateAformato,
 }

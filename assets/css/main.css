@@ -25,3 +25,26 @@
   overflow-x: auto;
   white-space: nowrap;
 }
+
+.main_contenedor {
+  display: flex;
+  height: calc(100vh - 50px);
+}
+
+.main_contenedor > div:nth-child(1){
+  flex: 0 0 250px;
+  border: 1px solid gray;
+}
+
+.main_contenedor > div:nth-child(2){
+  flex: 1;
+  overflow-y: auto;
+  position: relative;
+}
+
+/* @media only screen and (max-width: 992px) {
+
+  .main_contenedor > div:nth-child(1){
+    display: none;
+  }
+} */

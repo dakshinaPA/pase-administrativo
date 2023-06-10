@@ -2,7 +2,7 @@ import { FinanciadorDB } from "@api/db/financiadores"
 import { RespuestaController } from "@api/utils/response"
 import { Financiador, NotaFinanciador } from "@models/financiador.model"
 import { ResFinanciadorDB } from "@api/models/financiador.model"
-import { epochAFecha } from "@assets/utils/common"
+import { epochAFecha, inputDateAformato } from "@assets/utils/common"
 
 class FinanciadoresServices {
   static obtenerTipo(id_tipo: 1 | 2) {
@@ -73,15 +73,19 @@ class FinanciadoresServices {
           //obtener notas solo si se trata de un financiador
           //no saturar tiempo de respuesta al obtener todos
           if (id_financiador) {
-            const notasDB = await FinanciadorDB.obtenerNotas(id)
-            if (notasDB.error) throw notasDB.data
-            notas = notasDB.data as NotaFinanciador[]
-            notas = notas.map((nota) => {
-              return {
-                ...nota,
-                dt_registro: epochAFecha(nota.dt_registro),
-              }
-            })
+            // const notasDB = await FinanciadorDB.obtenerNotas(id)
+            // if (notasDB.error) throw notasDB.data
+            // notas = notasDB.data as NotaFinanciador[]
+            // notas = notas.map((nota) => {
+            //   return {
+            //     ...nota,
+            //     dt_registro: epochAFecha(nota.dt_registro),
+            //   }
+            // })
+            const notasDB = await this.obtenerNotas(id)
+            if(notasDB.error) throw notasDB.data
+
+            notas = notasDB.data
           }
 
           return {
@@ -93,8 +97,9 @@ class FinanciadoresServices {
             actividad,
             i_tipo,
             tipo: this.obtenerTipo(i_tipo),
-            dt_constitucion: epochAFecha(dt_constitucion),
-            dt_registro: epochAFecha(dt_registro),
+            dt_constitucion: dt_constitucion,
+            dt_constitucion_format: inputDateAformato(dt_constitucion),
+            dt_registro: dt_registro,
             enlace: {
               id: id_enlace,
               nombre: nombre_enlace,
@@ -231,6 +236,32 @@ class FinanciadoresServices {
       201,
       "Nota de financiador creada con éxito",
       { idInsertado }
+    )
+  }
+
+  static async obtenerNotas(id_financiador: number) {
+    const re = await FinanciadorDB.obtenerNotas(id_financiador)
+
+    if (re.error) {
+      return RespuestaController.fallida(
+        400,
+        "Error al obtener notas del financiador",
+        re.data
+      )
+    }
+
+    let notas = re.data as NotaFinanciador[]
+    notas = notas.map((nota) => {
+      return {
+        ...nota,
+        dt_registro: epochAFecha(nota.dt_registro),
+      }
+    })
+
+    return RespuestaController.exitosa(
+      200,
+      "consulta exitosa",
+      notas
     )
   }
 }

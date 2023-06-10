@@ -7,6 +7,7 @@ export interface ResUsuarioDB {
   telefono: string
   password?: string
   id_rol: number
+  b_enlace: null | 1 | 0
   rol: string
 }
 

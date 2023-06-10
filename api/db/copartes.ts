@@ -1,9 +1,25 @@
 import { RespuestaDB } from "@api/utils/response"
 import { queryDB, queryDBPlaceHolder } from "./query"
-import { Coparte, EnlaceCoparte, DireccionCoparte } from "@models/coparte.model"
+import {
+  Coparte,
+  EnlaceCoparte,
+  DireccionCoparte,
+  CoparteUsuario,
+} from "@models/coparte.model"
 import { fechaActualAEpoch } from "@assets/utils/common"
 
 class CoparteDB {
+  static async obtenerVmin() {
+    let query = `SELECT id, nombre FROM copartes WHERE b_activo = 1`
+
+    try {
+      const res = await queryDB(query)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
+
   static async obtener(id: number) {
     let query = `
       SELECT c.id, c.id_administrador, c.id_alt, c.nombre, c.i_estatus, c.i_estatus_legal, c.representante_legal, c.rfc, c.id_tema_social, c.dt_registro,
@@ -122,6 +138,39 @@ class CoparteDB {
     }
   }
 
+  static async crearUsuario(
+    id_coparte: number,
+    id_usuario: number,
+    cargo: string
+  ) {
+    const query = `INSERT INTO coparte_usuarios ( id_coparte, id_usuario,
+      cargo, b_enlace ) VALUES ( ?, ?, ?, ? )`
+
+    const placeHolders = [id_coparte, id_usuario, cargo, Number(false)]
+
+    try {
+      const res = await queryDBPlaceHolder(query, placeHolders)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
+
+  static async actualizarUsuario(data: CoparteUsuario) {
+    const { id, cargo, b_enlace } = data
+
+    const query = `UPDATE coparte_usuarios SET cargo=? WHERE id=? LIMIT 1`
+
+    const placeHolders = [cargo, id]
+
+    try {
+      const res = await queryDBPlaceHolder(query, placeHolders)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
+
   static async crearDireccion(id_coparte: number, data: DireccionCoparte) {
     const { calle, numero_ext, numero_int, colonia, municipio, cp, id_estado } =
       data
@@ -204,25 +253,6 @@ class CoparteDB {
       password,
       fechaActualAEpoch(),
     ]
-
-    try {
-      const res = await queryDBPlaceHolder(query, placeHolders)
-      return RespuestaDB.exitosa(res)
-    } catch (error) {
-      return RespuestaDB.fallida(error)
-    }
-  }
-
-  static async crearUsuario(
-    id_coparte: number,
-    id_usuario: number,
-    cargo: string,
-    b_enlace = false
-  ) {
-    const query = `INSERT INTO coparte_usuarios ( id_coparte, id_usuario,
-      cargo, b_enlace ) VALUES ( ?, ?, ?, ? )`
-
-    const placeHolders = [id_coparte, id_usuario, cargo, Number(b_enlace)]
 
     try {
       const res = await queryDBPlaceHolder(query, placeHolders)
