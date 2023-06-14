@@ -3,169 +3,164 @@ import { ApiCall } from "@assets/utils/apiCalls"
 import { useRouter } from "next/router"
 import { Loader } from "@components/Loader"
 import { ModalEliminar } from "@components/ModalEliminar"
+import { TablaContenedor } from "@components/Contenedores"
 import { aMinuscula } from "@assets/utils/common"
-import { Coparte } from "@api/models/coparte.model"
+import { Coparte } from "@models/coparte.model"
 
-const Copartes = () => {
+const Financiadores = () => {
   const router = useRouter()
-  const [copartesDB, setcopartesDB] = useState<Coparte[]>([])
-  const [coparteAEliminar, setCoparteAEliminar] = useState<number>(0)
+  const [resultadosDB, setResultadosDB] = useState<Coparte[]>([])
+  const [idAEliminar, setIdAEliminar] = useState<number>(0)
   const [showModalEliminar, setShowModalEliminar] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [inputBusqueda, setInputBusqueda] = useState<string>("")
 
   useEffect(() => {
-    obtenercopartes()
+    obtenerTodos()
   }, [])
 
-  const abrirModalEliminarCoparte = (id: number) => {
-    setCoparteAEliminar(id)
+  const abrirModalEliminar = (id: number) => {
+    setIdAEliminar(id)
     setShowModalEliminar(true)
   }
 
-  // const resetModalEliminar = () => {
-  //   setModalEliminar(estadoInicialModalEliminar)
-  // }
-
-  const obtenercopartes = async () => {
+  const obtenerTodos = async () => {
     setIsLoading(true)
-    const res = await ApiCall.get("/api/copartes")
-    const { error, data, mensaje } = res
+
+    const { error, data, mensaje } = await ApiCall.get("/copartes")
 
     if (error) {
       console.log(error)
     } else {
-      setcopartesDB(data as Coparte[])
+      setResultadosDB(data as Coparte[])
     }
     setIsLoading(false)
   }
 
-  const eliminarCoparte = async () => {
-    setCoparteAEliminar(0)
+  const eliminarFinanciador = async () => {
+    setIdAEliminar(0)
     setShowModalEliminar(false)
     setIsLoading(true)
 
     const { error, data, mensaje } = await ApiCall.delete(
-      `/api/copartes/${coparteAEliminar}`
+      `/copartes/${idAEliminar}`
     )
 
     if (error) {
-      console.log(error)
+      console.log(data)
     } else {
-      await obtenercopartes()
+      await obtenerTodos()
     }
 
     setIsLoading(false)
   }
 
-  const determinarNombreCoparteAEliminar = (): string => {
-    const coparte = copartesDB.find(
-      (coparte) => coparte.id === coparteAEliminar
-    )
-    return coparte ? coparte.vc_id : ""
-  }
-
-  const cancelarEliminarUsuario = () => {
-    setCoparteAEliminar(0)
+  const cancelarEliminar = () => {
+    setIdAEliminar(0)
     setShowModalEliminar(false)
   }
 
-  const copartesFiltradas = copartesDB.filter(({ nombre, vc_id }) => {
-    const query = inputBusqueda.toLocaleLowerCase()
-    return (
-      aMinuscula(nombre).includes(query) || aMinuscula(vc_id).includes(query)
-    )
+  const busquedaFiltrados = resultadosDB.filter(({ nombre }) => {
+    const query = aMinuscula(inputBusqueda)
+    return aMinuscula(nombre).includes(query)
   })
 
+  const determinarNombreAEliminar = (): string => {
+    const coparte = resultadosDB.find((coparte) => coparte.id === idAEliminar)
+    return coparte ? coparte.nombre : ""
+  }
+
   return (
-    <>
-      <div className="container">
-        <div className="row mb-4">
-          <div className="col-12 col-md-7">
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => router.push("/copartes/registro")}
-            >
-              Registrar +
-            </button>
-          </div>
-          <div className="col-12 col-md-5">
-            <div className="input-group">
-              <input
-                type="text"
-                name="busqueda"
-                className="form-control"
-                placeholder="Buscar registro"
-                value={inputBusqueda}
-                onChange={({ target: { value } }) => setInputBusqueda(value)}
-              />
-              <span className="input-group-text">
-                <i className="bi bi-search"></i>
-              </span>
-            </div>
+    <TablaContenedor>
+      <div className="row mb-3">
+        <div className="col-12 col-md-2 mb-2">
+          <button
+            type="button"
+            className="btn btn-secondary w-100"
+            onClick={() => router.push("/copartes/registro")}
+          >
+            Registrar +
+          </button>
+        </div>
+        <div className="d-none d-md-block col-md-6 mb-2"></div>
+        <div className="col-12 col-md-4 mb-2">
+          <div className="input-group">
+            <input
+              type="text"
+              name="busqueda"
+              className="form-control"
+              placeholder="Buscar registro"
+              value={inputBusqueda}
+              onChange={({ target: { value } }) => setInputBusqueda(value)}
+            />
+            <span className="input-group-text">
+              <i className="bi bi-search"></i>
+            </span>
           </div>
         </div>
-        {isLoading ? (
-          <Loader />
-        ) : (
-          <div className="row">
-            <div className="col-12 tablaNoWrap">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>#id</th>
-                    <th>Nombre</th>
-                    <th>Id</th>
-                    <th>Tipo</th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {copartesFiltradas.map((coparte) => {
-                    const { id, nombre, vc_id, tipo } = coparte
+      </div>
+      {isLoading ? (
+        <Loader />
+      ) : (
+        <div className="row">
+          <div className="col-12 table-responsive">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>#id</th>
+                  <th>Alt id</th>
+                  <th>Nombre</th>
+                  <th>Estatus</th>
+                  <th>Estatus legal</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {busquedaFiltrados.map((coparte) => {
+                  const { id, id_alt, nombre, estatus, estatus_legal } = coparte
 
-                    return (
-                      <tr key={`coparte_${id}`}>
-                        <td>{id}</td>
-                        <td>{nombre}</td>
-                        <td>{vc_id}</td>
-                        <td>{tipo}</td>
-                        <td className="d-flex">
+                  return (
+                    <tr key={id}>
+                      <td>{id}</td>
+                      <td>{id_alt}</td>
+                      <td>{nombre}</td>
+                      <td>{estatus}</td>
+                      <td>{estatus_legal}</td>
+                      <td>
+                        <div className="d-flex">
                           <button
                             className="btn btn-dark me-1"
                             onClick={() => router.push(`/copartes/${id}`)}
                           >
-                            <i className="bi bi-pencil"></i>
+                            <i className="bi bi-eye-fill"></i>
                           </button>
                           <button
                             className="btn btn-dark"
-                            onClick={() => abrirModalEliminarCoparte(id)}
+                            onClick={() => abrirModalEliminar(id)}
                           >
                             <i className="bi bi-x-circle"></i>
                           </button>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
           </div>
-        )}
-      </div>
+        </div>
+      )}
       <ModalEliminar
         show={showModalEliminar}
-        aceptar={eliminarCoparte}
-        cancelar={cancelarEliminarUsuario}
+        aceptar={eliminarFinanciador}
+        cancelar={cancelarEliminar}
       >
         <p className="mb-0">
-          ¿Estás segur@ de eliminar la coparte{" "}
-          {determinarNombreCoparteAEliminar()}?
+          ¿Estás segur@ de eliminar a la coparte {determinarNombreAEliminar()}?
         </p>
       </ModalEliminar>
-    </>
+    </TablaContenedor>
   )
 }
 
-export default Copartes
+export default Financiadores

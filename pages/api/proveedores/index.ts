@@ -1,19 +1,16 @@
-import { UsuariosServices } from "@api/services/usuarios"
+import { ProveedorServices } from "@api/services/proveedores"
 import { NextApiRequest, NextApiResponse } from "next"
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
-
-  const id_rol = Number(req.query.id_rol)
-  const id_coparte = Number(req.query.id_coparte)
-  const min = Boolean(req.query.min)
+  const idProyecto = Number(req.query.id_proyecto)
 
   switch (req.method) {
     case "GET":
-      var { status, ...data } = await UsuariosServices.obtener(id_rol, id_coparte, 0)
+      var { status, ...data } = await ProveedorServices.obtener(idProyecto, 0)
       res.status(status).json(data)
       break
     case "POST":
-      var { status, ...data } = await UsuariosServices.crear(req.body)
+      var { status, ...data } = await ProveedorServices.crear(req.body)
       res.status(status).json(data)
       break
     default:

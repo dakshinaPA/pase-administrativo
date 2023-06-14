@@ -7,3 +7,8 @@ export interface EstadoDB {
   id: number
   nombre: string
 }
+
+export interface TemasSocialesDB {
+  id: number
+  nombre: string
+}

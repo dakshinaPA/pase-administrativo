@@ -6,8 +6,8 @@ import { Loader } from "@components/Loader"
 import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
 import { BtnBack } from "@components/BtnBack"
 import { ApiCall } from "@assets/utils/apiCalls"
-import { PaisDB, EstadoDB } from "@api/models/catalogos.model"
 import { useAuth } from "@contexts/auth.context"
+import { useCatalogos } from "@contexts/catalogos.context"
 
 const FormaFinanciador = () => {
   const estadoInicialForma = {
@@ -40,12 +40,11 @@ const FormaFinanciador = () => {
   }
 
   const { user } = useAuth()
+  const { catalogos } = useCatalogos()
   const router = useRouter()
   const idFinanciador = router.query.id
   const [estadoForma, setEstadoForma] =
     useState<Financiador>(estadoInicialForma)
-  const [paisesDB, setPaisesDB] = useState<PaisDB[]>([])
-  const [estadosDB, setEstadosDB] = useState<EstadoDB[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [mensajeNota, setMensajeNota] = useState<string>("")
   const [modoEditar, setModoEditar] = useState<boolean>(!idFinanciador)
@@ -53,8 +52,6 @@ const FormaFinanciador = () => {
   const inputNota = useRef(null)
 
   useEffect(() => {
-    obtenerPaises()
-    obtenerEstados()
     if (modalidad === "EDITAR") {
       cargarData()
     }
@@ -79,26 +76,6 @@ const FormaFinanciador = () => {
       })
     }
   }, [estadoForma.direccion.id_pais])
-
-  const obtenerPaises = async () => {
-    const { error, data } = await ApiCall.get(`/catalogos/paises`)
-    if (error) {
-      console.log("error")
-    } else {
-      const paises = data as PaisDB[]
-      setPaisesDB(paises)
-    }
-  }
-
-  const obtenerEstados = async () => {
-    const { error, data } = await ApiCall.get(`/catalogos/estados`)
-    if (error) {
-      console.log("error")
-    } else {
-      const estados = data as EstadoDB[]
-      setEstadosDB(estados)
-    }
-  }
 
   const cargarData = async () => {
     setIsLoading(true)
@@ -223,7 +200,9 @@ const FormaFinanciador = () => {
         <div className="col-12 d-flex justify-content-between">
           <div className="d-flex align-items-center">
             <BtnBack navLink="/financiadores" />
-            {!idFinanciador && <h2 className="color1 mb-0">Registrar financiador</h2>}
+            {!idFinanciador && (
+              <h2 className="color1 mb-0">Registrar financiador</h2>
+            )}
           </div>
           {!modoEditar && idFinanciador && (
             <button
@@ -397,7 +376,7 @@ const FormaFinanciador = () => {
               value={estadoForma.direccion.id_estado}
               disabled={!modoEditar}
             >
-              {estadosDB.map(({ id, nombre }) => (
+              {catalogos.estados.map(({ id, nombre }) => (
                 <option key={id} value={id}>
                   {nombre}
                 </option>
@@ -426,7 +405,7 @@ const FormaFinanciador = () => {
             value={estadoForma.direccion.id_pais}
             disabled={!modoEditar}
           >
-            {paisesDB.map(({ id, nombre }) => (
+            {catalogos.paises.map(({ id, nombre }) => (
               <option key={id} value={id}>
                 {nombre}
               </option>

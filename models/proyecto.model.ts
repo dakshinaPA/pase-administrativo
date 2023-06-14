@@ -26,6 +26,23 @@ export interface ColaboradorProyecto {
   direccion: Direccion
 }
 
+export interface ProveedorProyecto {
+  id?: number
+  id_proyecto?: number
+  nombre: string
+  i_tipo: number
+  tipo?: string
+  clabe: string
+  id_banco: number
+  banco?: string
+  telefono: string
+  email: string
+  rfc: string
+  descripcion_servicio: string
+  dt_registro?: string
+  direccion: Direccion
+}
+
 export interface RubroProyecto {
   id?: number
   id_proyecto?: number
@@ -61,4 +78,5 @@ export interface Proyecto {
   rubros: RubroProyecto[]
   ministraciones: MinistracionProyecto[]
   colaboradores?: ColaboradorProyecto[]
+  proveedores?: ProveedorProyecto[]
 }

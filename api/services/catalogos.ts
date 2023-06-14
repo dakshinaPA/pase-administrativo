@@ -21,6 +21,15 @@ class CatalogosServices {
     }
     return RespuestaController.exitosa(200, "Consulta exitosa", data)
   }
+
+  static async obtenerTemasSociales() {
+    const { error, data } = await CatalogosDB.obtenerTemasSociales()
+
+    if (error) {
+      return RespuestaController.fallida(400, "Error al obtener temas sociales", data)
+    }
+    return RespuestaController.exitosa(200, "Consulta exitosa", data)
+  }
 }
 
 export { CatalogosServices }

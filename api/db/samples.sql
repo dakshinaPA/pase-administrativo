@@ -242,6 +242,14 @@ CREATE TABLE `coparte_usuarios` (
 -- (3, 4),
 -- (3, 6);
 
+CREATE TABLE `temas_sociales` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `nombre` VARCHAR(30) NOT NULL,
+  `b_activo` TINYINT UNSIGNED NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id`));
+
+INSERT INTO `temas_sociales` (`nombre`) VALUES ('Apoyo a la comunidad'), ('Lucha social');
+
 -----------------------------------------------------------
 
 CREATE TABLE `proyectos` (
@@ -323,6 +331,40 @@ CREATE TABLE `proyectos` (
     INDEX (`id_colaborador`),
     INDEX (`id_estado`));
 
+
+-----------------------------------------------------------
+
+  CREATE TABLE `proveedores` (
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `id_proyecto` INT UNSIGNED NOT NULL,
+    `nombre` VARCHAR(50) NOT NULL COMMENT 'nombre o razon social',
+    `i_tipo` TINYINT UNSIGNED NOT NULL COMMENT '1.persona fisica, 2.persona moral',
+    `clabe` VARCHAR(18) NOT NULL,
+    `id_banco` TINYINT UNSIGNED NOT NULL,
+    `telefono` VARCHAR(10) NOT NULL,
+    `email` VARCHAR(50) NOT NULL,
+    `rfc` VARCHAR(20) NOT NULL,
+    `descripcion_servicio` VARCHAR(150) NOT NULL,
+    `b_activo` TINYINT UNSIGNED NOT NULL DEFAULT 1,
+    `dt_registro` VARCHAR(10) NOT NULL,
+    PRIMARY KEY (`id`),
+    INDEX (`id_proyecto`),
+    INDEX (`id_banco`));
+
+  
+  CREATE TABLE `proveedor_direccion` (
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `id_proveedor` INT UNSIGNED NOT NULL,
+    `calle` VARCHAR(30) NOT NULL,
+    `numero_ext` VARCHAR(10) NOT NULL,
+    `numero_int` VARCHAR(10) NOT NULL,
+    `colonia` VARCHAR(30) NOT NULL,
+    `municipio` VARCHAR(20) NOT NULL,
+    `cp` VARCHAR(5) NOT NULL,
+    `id_estado` INT UNSIGNED NOT NULL,
+    PRIMARY KEY (`id`),
+    INDEX (`id_proveedor`),
+    INDEX (`id_estado`));
 
 -----------------------------------------------------------
 

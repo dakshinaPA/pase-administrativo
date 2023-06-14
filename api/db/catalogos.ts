@@ -23,6 +23,17 @@ class CatalogosDB {
       return RespuestaDB.fallida(error)
     }
   }
+
+  static async obtenerTemasSociales() {
+    let query = `SELECT id, nombre FROM temas_sociales`
+
+    try {
+      const res = await queryDB(query)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
 }
 
 export { CatalogosDB }

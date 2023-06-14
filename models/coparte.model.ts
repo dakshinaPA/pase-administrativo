@@ -19,7 +19,7 @@ export interface EnlaceCoparte {
   telefono: string
   password?: string
   cargo: string
-  b_enlace: boolean
+  b_enlace?: boolean
 }
 
 export interface DireccionCoparte {

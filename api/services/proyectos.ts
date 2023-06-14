@@ -1,12 +1,13 @@
 import { ProyectoDB } from "@api/db/proyectos"
-// import { ColaboradorDB } from "@api/db/colaboradores"
 import { ColaboradorServices } from "@api/services/colaboradores"
+import { ProveedorServices } from "@api/services/proveedores"
 import { RespuestaController } from "@api/utils/response"
 import {
   Proyecto,
   RubroProyecto,
   MinistracionProyecto,
   ColaboradorProyecto,
+  ProveedorProyecto,
 } from "@models/proyecto.model"
 import { ResProyectoDB } from "@api/models/proyecto.model"
 import { epochAFecha } from "@assets/utils/common"
@@ -53,24 +54,47 @@ class ProyectosServices {
           let rubros: RubroProyecto[] = null
           let ministraciones: MinistracionProyecto[] = null
           let colaboradores: ColaboradorProyecto[] = null
+          let proveedores: ProveedorProyecto[] = null
 
           if (id_proyecto) {
-            const reRubros = await ProyectoDB.obtenerRubros(id_proyecto)
-            if (reRubros.error) throw reRubros.data
-            rubros = reRubros.data as RubroProyecto[]
+            // const reRubros = await ProyectoDB.obtenerRubros(id_proyecto)
+            // if (reRubros.error) throw reRubros.data
+            // rubros = reRubros.data as RubroProyecto[]
 
-            const reMinistraciones = await ProyectoDB.obtenerMinistraciones(
-              id_proyecto
-            )
-            if (reMinistraciones.error) throw reMinistraciones.data
-            ministraciones = reMinistraciones.data as MinistracionProyecto[]
+            // const reMinistraciones = await ProyectoDB.obtenerMinistraciones(
+            //   id_proyecto
+            // )
+            // if (reMinistraciones.error) throw reMinistraciones.data
+            // ministraciones = reMinistraciones.data as MinistracionProyecto[]
 
-            const reColaboradores = await ColaboradorServices.obtener(
-              id_proyecto,
-              0
-            )
-            if (reColaboradores.error) throw reColaboradores.data
-            colaboradores = reColaboradores.data as ColaboradorProyecto[]
+            // const reColaboradores = await ColaboradorServices.obtener(
+            //   id_proyecto,
+            //   0
+            // )
+            // if (reColaboradores.error) throw reColaboradores.data
+            // colaboradores = reColaboradores.data as ColaboradorProyecto[]
+
+            const reRubros = ProyectoDB.obtenerRubros(id_proyecto)
+            const reMinistraciones =
+              ProyectoDB.obtenerMinistraciones(id_proyecto)
+            const reColaboradores = ColaboradorServices.obtener(id_proyecto, 0)
+            const reProveedores = ProveedorServices.obtener(id_proyecto, 0)
+
+            const resCombinadas = await Promise.all([
+              reRubros,
+              reMinistraciones,
+              reColaboradores,
+              reProveedores,
+            ])
+
+            for (const rc of resCombinadas) {
+              if(rc.error) throw rc.data
+            }
+
+            rubros = resCombinadas[0].data as RubroProyecto[]
+            ministraciones = resCombinadas[1].data as MinistracionProyecto[]
+            colaboradores = resCombinadas[2].data as ColaboradorProyecto[]
+            proveedores = resCombinadas[3].data as ProveedorProyecto[]
           }
 
           return {
@@ -90,6 +114,7 @@ class ProyectosServices {
             rubros,
             ministraciones,
             colaboradores,
+            proveedores
           }
         })
       )

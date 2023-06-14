@@ -169,18 +169,20 @@ const Financiadores = () => {
                       <td>{representante_legal}</td>
                       <td>{dt_constitucion_format}</td>
                       <td>
-                        <button
-                          className="btn btn-dark me-1"
-                          onClick={() => router.push(`/financiadores/${id}`)}
-                        >
-                          <i className="bi bi-eye-fill"></i>
-                        </button>
-                        <button
-                          className="btn btn-dark"
-                          onClick={() => abrirModalEliminar(id)}
-                        >
-                          <i className="bi bi-x-circle"></i>
-                        </button>
+                        <div className="d-flex">
+                          <button
+                            className="btn btn-dark me-1"
+                            onClick={() => router.push(`/financiadores/${id}`)}
+                          >
+                            <i className="bi bi-eye-fill"></i>
+                          </button>
+                          <button
+                            className="btn btn-dark"
+                            onClick={() => abrirModalEliminar(id)}
+                          >
+                            <i className="bi bi-x-circle"></i>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   )
