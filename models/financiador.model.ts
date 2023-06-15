@@ -36,7 +36,7 @@ export interface Financiador {
   nombre: string
   representante_legal: string
   pagina_web: string
-  folio_fiscal: string
+  rfc: string
   actividad: string
   dt_constitucion: string
   dt_constitucion_format?: string // formato dd/mm/aaaa

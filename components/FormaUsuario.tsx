@@ -34,10 +34,11 @@ const FormaUsuario = () => {
   const [copartesDB, setCopartesDB] = useState<CoparteMin[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [modoEditar, setModoEditar] = useState<boolean>(!idUsuario)
+  const modalidad = idUsuario ? "EDITAR" : "CREAR"
 
   useEffect(() => {
     obtenerCopartes()
-    if (idUsuario) {
+    if (modalidad === "EDITAR") {
       cargarData()
     }
   }, [])
@@ -98,7 +99,7 @@ const FormaUsuario = () => {
   }
 
   const cancelar = () => {
-    idUsuario ? setModoEditar(false) : router.push("/usuarios")
+    modalidad === "EDITAR" ? setModoEditar(false) : router.push("/usuarios")
   }
 
   const handleChange = (ev: ChangeEvent) => {
@@ -139,7 +140,7 @@ const FormaUsuario = () => {
     ev.preventDefault()
 
     setIsLoading(true)
-    const { error, data, mensaje } = idUsuario
+    const { error, data, mensaje } = modalidad === "EDITAR"
       ? await editar()
       : await registrar()
     setIsLoading(false)
@@ -147,7 +148,11 @@ const FormaUsuario = () => {
     if (error) {
       console.log(data)
     } else {
-      setModoEditar(false)
+      if(modalidad === "CREAR"){
+        router.push('/usuarios')
+      } else {
+        setModoEditar(false)
+      }
     }
   }
 
@@ -294,7 +299,7 @@ const FormaUsuario = () => {
               Cancelar
             </button>
             <button className="btn btn-secondary" type="submit">
-              {idUsuario ? "Guardar" : "Registrar"}
+              {modalidad === "EDITAR" ? "Guardar" : "Registrar"}
             </button>
           </div>
         )}

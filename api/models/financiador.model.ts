@@ -3,7 +3,7 @@ export interface ResFinanciadorDB {
   nombre: string
   representante_legal: string
   pagina_web: string
-  folio_fiscal: string
+  rfc: string
   actividad: string
   dt_constitucion: string
   i_tipo: 1 | 2

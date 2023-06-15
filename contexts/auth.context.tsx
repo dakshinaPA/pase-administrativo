@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react"
 import { useRouter } from "next/router"
-import { ROLES } from "@assets/utils/seccionesusuario"
+// import { ROLES } from "@assets/utils/seccionesusuario"
 import { ApiCall } from "@assets/utils/apiCalls"
 
 const AuthContext = createContext(null)
@@ -35,8 +35,8 @@ const AuthProvider = ({ children }) => {
         setError({ hay: true, mensaje })
       } else {
         const usuario = data[0]
-        const usuarioSecciones = agregarSeccionesUsuario(usuario)
-        setUser(usuarioSecciones)
+        // const usuarioSecciones = agregarSeccionesUsuario(usuario)
+        setUser(usuario)
         router.push("/")
       }
     } catch (error) {
@@ -51,12 +51,12 @@ const AuthProvider = ({ children }) => {
 
   const limpiarError = () => setError(estadoInicialError)
 
-  const agregarSeccionesUsuario = ({ i_rol, ...usuario }) => {
-    return {
-      ...usuario,
-      rol: ROLES.find((rol) => rol.id == i_rol),
-    }
-  }
+  // const agregarSeccionesUsuario = ({ i_rol, ...usuario }) => {
+  //   return {
+  //     ...usuario,
+  //     rol: ROLES.find((rol) => rol.id == i_rol),
+  //   }
+  // }
 
   const auth = { user, login, logOut, error, limpiarError }
 

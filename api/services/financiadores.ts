@@ -44,7 +44,7 @@ class FinanciadoresServices {
             nombre,
             representante_legal,
             pagina_web,
-            folio_fiscal,
+            rfc,
             actividad,
             i_tipo,
             dt_constitucion,
@@ -73,15 +73,6 @@ class FinanciadoresServices {
           //obtener notas solo si se trata de un financiador
           //no saturar tiempo de respuesta al obtener todos
           if (id_financiador) {
-            // const notasDB = await FinanciadorDB.obtenerNotas(id)
-            // if (notasDB.error) throw notasDB.data
-            // notas = notasDB.data as NotaFinanciador[]
-            // notas = notas.map((nota) => {
-            //   return {
-            //     ...nota,
-            //     dt_registro: epochAFecha(nota.dt_registro),
-            //   }
-            // })
             const notasDB = await this.obtenerNotas(id)
             if(notasDB.error) throw notasDB.data
 
@@ -93,7 +84,7 @@ class FinanciadoresServices {
             nombre,
             representante_legal,
             pagina_web,
-            folio_fiscal,
+            rfc,
             actividad,
             i_tipo,
             tipo: this.obtenerTipo(i_tipo),

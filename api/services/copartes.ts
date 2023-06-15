@@ -1,25 +1,16 @@
 import { CoparteDB } from "@api/db/copartes"
 import { RespuestaController } from "@api/utils/response"
-import { Coparte, UsuarioCoparte, EnlaceCoparte } from "@models/coparte.model"
+import { Coparte, CoparteUsuario, EnlaceCoparte } from "@models/coparte.model"
 import { ResCoparteDB } from "@api/models/coparte.model"
 import { epochAFecha } from "@assets/utils/common"
 
 class CopartesServices {
-  static obetnerStatus(i_estatus: 1 | 2) {
-    switch (i_estatus) {
-      case 1:
-        return "ACTIVA"
-      case 2:
-        return "FINALIZADA"
-    }
-  }
-
   static obetnerStatusLegal(i_estatus_legal: 1 | 2) {
     switch (i_estatus_legal) {
       case 1:
-        return "CONSTITUIDA"
+        return "Constituida"
       case 2:
-        return "NO CONSTITUIDA"
+        return "No constituida"
     }
   }
 
@@ -49,13 +40,14 @@ class CopartesServices {
           const {
             id,
             id_administrador,
+            nombre_administrador,
             id_alt,
             nombre,
-            i_estatus,
             i_estatus_legal,
             representante_legal,
             rfc,
             id_tema_social,
+            tema_social,
             dt_registro,
             id_coparte_direccion,
             calle,
@@ -68,7 +60,7 @@ class CopartesServices {
             estado,
           } = coparte
 
-          let usuarios: UsuarioCoparte[] = null
+          let usuarios: CoparteUsuario[] = null
           let enlace: EnlaceCoparte = null
 
           if (id_coparte) {
@@ -119,14 +111,12 @@ class CopartesServices {
             id,
             id_alt,
             nombre,
-            i_estatus,
             i_estatus_legal,
-            estatus: this.obetnerStatus(i_estatus),
             estatus_legal: this.obetnerStatusLegal(i_estatus_legal),
             representante_legal,
             rfc,
             id_tema_social,
-            tema_social: "",
+            tema_social,
             dt_registro: epochAFecha(dt_registro),
             direccion: {
               id: id_coparte_direccion,
@@ -141,6 +131,7 @@ class CopartesServices {
             },
             administrador: {
               id: id_administrador,
+              nombre: nombre_administrador
             },
             enlace,
             usuarios,
@@ -204,14 +195,14 @@ class CopartesServices {
       const { direccion, enlace } = data
       const upCoparte = CoparteDB.actualizar(id_coparte, data)
       const upADireccion = CoparteDB.actualizarDireccion(direccion)
-      const dlEnlace = CoparteDB.limpiarEnlace(id_coparte)
-      const upEnlace = CoparteDB.actualizarEnlace(enlace.id_usuario)
+      // const dlEnlace = CoparteDB.limpiarEnlace(id_coparte)
+      // const upEnlace = CoparteDB.actualizarEnlace(enlace.id_usuario)
 
       const resCombinadas = await Promise.all([
         upCoparte,
         upADireccion,
-        dlEnlace,
-        upEnlace,
+        // dlEnlace,
+        // upEnlace,
       ])
 
       for (const rc of resCombinadas) {

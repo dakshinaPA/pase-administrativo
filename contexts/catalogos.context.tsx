@@ -48,10 +48,6 @@ const CatalogosProvider = ({ children }) => {
     }
   }
 
-  // const obtenerEstados = async () => {
-  //   return await ApiCall.get("/catalogos/estados")
-  // }
-
   const auth = { catalogos }
 
   return (

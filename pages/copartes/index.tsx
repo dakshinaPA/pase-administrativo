@@ -110,22 +110,39 @@ const Financiadores = () => {
                   <th>#id</th>
                   <th>Alt id</th>
                   <th>Nombre</th>
-                  <th>Estatus</th>
                   <th>Estatus legal</th>
+                  <th>RFC</th>
+                  <th>Representante legal</th>
+                  <th>Administrador</th>
+                  <th>Proyectos activos</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
               <tbody>
                 {busquedaFiltrados.map((coparte) => {
-                  const { id, id_alt, nombre, estatus, estatus_legal } = coparte
+                  const {
+                    id,
+                    id_alt,
+                    nombre,
+                    i_estatus_legal,
+                    estatus_legal,
+                    rfc,
+                    representante_legal,
+                    administrador,
+                  } = coparte
 
                   return (
                     <tr key={id}>
                       <td>{id}</td>
                       <td>{id_alt}</td>
                       <td>{nombre}</td>
-                      <td>{estatus}</td>
                       <td>{estatus_legal}</td>
+                      <td>{i_estatus_legal === 1 ? rfc : "NA"}</td>
+                      <td>
+                        {i_estatus_legal === 1 ? representante_legal : "NA"}
+                      </td>
+                      <td>{administrador.nombre}</td>
+                      <td>...</td>
                       <td>
                         <div className="d-flex">
                           <button

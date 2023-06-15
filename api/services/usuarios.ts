@@ -40,8 +40,26 @@ class UsuariosServices {
   //     console.log( `usuario loggeado ${!res.error}` )
   //     return res
   // }
+  static async obtenerVmin(id_rol: number) {
+    const re = await UsuarioDB.obtenerVmin(id_rol)
 
-  static async obtener(id_rol: number, id_coparte: number, id_usuario: number) {
+    if (re.error) {
+      return RespuestaController.fallida(
+        400,
+        "Error al obtener usuarios",
+        re.data
+      )
+    }
+    return RespuestaController.exitosa(200, "Consulta exitosa", re.data)
+  }
+
+  static async obtener(
+    id_rol: number,
+    id_coparte: number,
+    id_usuario: number,
+    min: boolean
+  ) {
+    if (min) return await this.obtenerVmin(id_rol)
     try {
       const resUsuariosDB = await UsuarioDB.obtener(
         id_rol,
@@ -136,7 +154,8 @@ class UsuariosServices {
         const crearCoparteUsuario = await CoparteDB.crearUsuario(
           id_coparte,
           idInsertado,
-          cargo
+          cargo,
+          false
         )
         if (crearCoparteUsuario.error) throw crearCoparteUsuario.data
         // @ts-ignore

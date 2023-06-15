@@ -2,7 +2,7 @@
 export interface CoparteUsuario {
   id?: number
   id_usuario?: number
-  id_coparte: number
+  id_coparte?: number
   nombre?: string
   cargo: string
   b_enlace: boolean
@@ -44,9 +44,7 @@ export interface Coparte {
   id_administrador?: number 
   id_alt: string
   nombre: string
-  i_estatus: 1 | 2 // activa | finalizada
   i_estatus_legal: 1 | 2 // constituida | no constituida
-  estatus?: string
   estatus_legal?: string
   representante_legal: string // solo constituidas
   rfc: string // solo constituidas

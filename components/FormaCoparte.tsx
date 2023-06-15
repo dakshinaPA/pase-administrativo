@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/router"
 import { ChangeEvent } from "@assets/models/formEvents.model"
 import { Coparte } from "@models/coparte.model"
+import { UsuarioMin } from "@models/usuario.model"
 import { Loader } from "@components/Loader"
 import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
 import { BtnBack } from "@components/BtnBack"
@@ -12,7 +13,6 @@ const FormaCoparte = () => {
   const estadoInicialForma: Coparte = {
     nombre: "",
     id_alt: "",
-    i_estatus: 1,
     i_estatus_legal: 1,
     representante_legal: "",
     rfc: "",
@@ -38,21 +38,34 @@ const FormaCoparte = () => {
       password: "",
       cargo: "",
     },
+    usuarios: [],
   }
 
   const { catalogos } = useCatalogos()
   const router = useRouter()
   const idCoparte = router.query.id
   const [estadoForma, setEstadoForma] = useState(estadoInicialForma)
+  const [administardoresDB, setAdministardoresDB] = useState<UsuarioMin[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [modoEditar, setModoEditar] = useState<boolean>(!idCoparte)
   const modalidad = idCoparte ? "EDITAR" : "CREAR"
 
   useEffect(() => {
+    cargarAdministradores()
     if (modalidad === "EDITAR") {
       cargarData()
     }
   }, [])
+
+  const cargarAdministradores = async () => {
+    const { error, data } = await ApiCall.get(`/usuarios?id_rol=2&min=true`)
+
+    if (error) {
+      console.log(data)
+    } else {
+      setAdministardoresDB(data as UsuarioMin[])
+    }
+  }
 
   const cargarData = async () => {
     setIsLoading(true)
@@ -97,6 +110,17 @@ const FormaCoparte = () => {
     })
   }
 
+  const handleChangeAdmin = (ev: ChangeEvent) => {
+    const { value } = ev.target
+
+    setEstadoForma({
+      ...estadoForma,
+      administrador: {
+        id: Number(value),
+      },
+    })
+  }
+
   const handleChangeDireccion = (ev: ChangeEvent) => {
     const { name, value } = ev.target
 
@@ -131,7 +155,11 @@ const FormaCoparte = () => {
     if (res.error) {
       console.log(res)
     } else {
-      setModoEditar(false)
+      if (modalidad === "CREAR") {
+        router.push("/copartes")
+      } else {
+        setModoEditar(false)
+      }
     }
   }
 
@@ -181,19 +209,6 @@ const FormaCoparte = () => {
           />
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
-          <label className="form-label">Estatus</label>
-          <select
-            className="form-control"
-            onChange={handleChange}
-            name="i_estatus"
-            value={estadoForma.i_estatus}
-            disabled={!modoEditar}
-          >
-            <option value="1">Activa</option>
-            <option value="2">Finalizada</option>
-          </select>
-        </div>
-        <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Estatus legal</label>
           <select
             className="form-control"
@@ -214,7 +229,7 @@ const FormaCoparte = () => {
             onChange={handleChange}
             name="representante_legal"
             value={estadoForma.representante_legal}
-            disabled={!modoEditar}
+            disabled={!modoEditar || estadoForma.i_estatus_legal != 1}
           />
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
@@ -224,8 +239,9 @@ const FormaCoparte = () => {
             type="text"
             onChange={handleChange}
             name="rfc"
+            placeholder="de la organización"
             value={estadoForma.rfc}
-            disabled={!modoEditar}
+            disabled={!modoEditar || estadoForma.i_estatus_legal != 1}
           />
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
@@ -248,10 +264,16 @@ const FormaCoparte = () => {
           <label className="form-label">Administrador</label>
           <select
             className="form-control"
-            onChange={handleChange}
+            onChange={handleChangeAdmin}
             value={estadoForma.administrador.id}
             disabled={!modoEditar}
-          ></select>
+          >
+            {administardoresDB.map(({ id, nombre, apellido_paterno }) => (
+              <option key={id} value={id}>
+                {nombre} {apellido_paterno}
+              </option>
+            ))}
+          </select>
         </div>
         <div className="col-12">
           <hr />
@@ -341,89 +363,86 @@ const FormaCoparte = () => {
             ))}
           </select>
         </div>
-        <div className="col-12">
-          <hr />
-        </div>
-        <div className="col-12 mb-3">
-          <h4 className="color1 mb-0">Enlace</h4>
-        </div>
-        <div className="col-12 col-md-6 col-lg-4 mb-3">
-          <label className="form-label">Nombre</label>
-          <input
-            className="form-control"
-            type="text"
-            onChange={handleChangeEnlace}
-            name="nombre"
-            value={estadoForma.enlace.nombre}
-            disabled={!modoEditar}
-          />
-        </div>
-        <div className="col-12 col-md-6 col-lg-4 mb-3">
-          <label className="form-label">Apellido paterno</label>
-          <input
-            className="form-control"
-            type="text"
-            onChange={handleChangeEnlace}
-            name="apellido_paterno"
-            value={estadoForma.enlace.apellido_paterno}
-            disabled={!modoEditar}
-          />
-        </div>
-        <div className="col-12 col-md-6 col-lg-4 mb-3">
-          <label className="form-label">Apellido materno</label>
-          <input
-            className="form-control"
-            type="text"
-            onChange={handleChangeEnlace}
-            name="apellido_materno"
-            value={estadoForma.enlace.apellido_materno}
-            disabled={!modoEditar}
-          />
-        </div>
-        <div className="col-12 col-md-6 col-lg-4 mb-3">
-          <label className="form-label">Email</label>
-          <input
-            className="form-control"
-            type="text"
-            onChange={handleChangeEnlace}
-            name="email"
-            value={estadoForma.enlace.email}
-            disabled={!modoEditar}
-          />
-        </div>
-        <div className="col-12 col-md-6 col-lg-4 mb-3">
-          <label className="form-label">Teléfono</label>
-          <input
-            className="form-control"
-            type="text"
-            onChange={handleChangeEnlace}
-            name="telefono"
-            value={estadoForma.enlace.telefono}
-            disabled={!modoEditar}
-          />
-        </div>
-        <div className="col-12 col-md-6 col-lg-4 mb-3">
-          <label className="form-label">Password</label>
-          <input
-            className="form-control"
-            type="text"
-            onChange={handleChangeEnlace}
-            name="password"
-            value={estadoForma.enlace.password}
-            disabled={!modoEditar}
-          />
-        </div>
-        <div className="col-12 col-md-6 col-lg-4 mb-3">
-          <label className="form-label">Cargo</label>
-          <input
-            className="form-control"
-            type="text"
-            onChange={handleChangeEnlace}
-            name="cargo"
-            value={estadoForma.enlace.cargo}
-            disabled={!modoEditar}
-          />
-        </div>
+        {modalidad === "CREAR" && (
+          <>
+            <div className="col-12">
+              <hr />
+            </div>
+            <div className="col-12 mb-3">
+              <h4 className="color1 mb-0">Enlace</h4>
+            </div>
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label">Nombre</label>
+              <input
+                className="form-control"
+                type="text"
+                onChange={handleChangeEnlace}
+                name="nombre"
+                value={estadoForma.enlace.nombre}
+              />
+            </div>
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label">Apellido paterno</label>
+              <input
+                className="form-control"
+                type="text"
+                onChange={handleChangeEnlace}
+                name="apellido_paterno"
+                value={estadoForma.enlace.apellido_paterno}
+              />
+            </div>
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label">Apellido materno</label>
+              <input
+                className="form-control"
+                type="text"
+                onChange={handleChangeEnlace}
+                name="apellido_materno"
+                value={estadoForma.enlace.apellido_materno}
+              />
+            </div>
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label">Email</label>
+              <input
+                className="form-control"
+                type="text"
+                onChange={handleChangeEnlace}
+                name="email"
+                value={estadoForma.enlace.email}
+              />
+            </div>
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label">Teléfono</label>
+              <input
+                className="form-control"
+                type="text"
+                onChange={handleChangeEnlace}
+                name="telefono"
+                value={estadoForma.enlace.telefono}
+              />
+            </div>
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label">Password</label>
+              <input
+                className="form-control"
+                type="text"
+                onChange={handleChangeEnlace}
+                name="password"
+                value={estadoForma.enlace.password}
+              />
+            </div>
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label">Cargo</label>
+              <input
+                className="form-control"
+                type="text"
+                onChange={handleChangeEnlace}
+                name="cargo"
+                value={estadoForma.enlace.cargo}
+              />
+            </div>
+          </>
+        )}
         {modoEditar && (
           <div className="col-12 text-end">
             <button
@@ -439,6 +458,35 @@ const FormaCoparte = () => {
           </div>
         )}
       </FormaContenedor>
+      {modalidad === "EDITAR" && (
+        <div className="row my-3">
+          <div className="col-12 mb-3">
+            <h2 className="color1 mb-0">Usuarios</h2>
+          </div>
+          <div className="col-12 table-responsive mb-3">
+            <table className="table">
+              <thead className="table-light">
+                <tr>
+                  <th>Nombre</th>
+                  <th>Cargo</th>
+                  <th>Enlace</th>
+                </tr>
+              </thead>
+              <tbody>
+                {estadoForma.usuarios.map(({ id, nombre, cargo, b_enlace }) => (
+                  <tr key={id}>
+                    <td>{nombre}</td>
+                    <td>{cargo}</td>
+                    <td>
+                      <i className={b_enlace ? 'bi bi-check' : 'bi bi-x'}></i>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </RegistroContenedor>
   )
 }

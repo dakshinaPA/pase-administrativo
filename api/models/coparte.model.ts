@@ -1,9 +1,9 @@
 export interface ResCoparteDB {
   id: number
   id_administrador: number
+  nombre_administrador: string
   id_alt: string
   nombre: string
-  i_estatus: 1 | 2
   i_estatus_legal: 1 | 2
   representante_legal: string
   rfc: string

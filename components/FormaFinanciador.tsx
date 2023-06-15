@@ -12,7 +12,7 @@ import { useCatalogos } from "@contexts/catalogos.context"
 const FormaFinanciador = () => {
   const estadoInicialForma = {
     nombre: "",
-    folio_fiscal: "",
+    rfc: "",
     i_tipo: 1,
     actividad: "",
     representante_legal: "",
@@ -227,13 +227,13 @@ const FormaFinanciador = () => {
           />
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
-          <label className="form-label">Folio fiscal</label>
+          <label className="form-label">RFC</label>
           <input
             className="form-control"
             type="text"
             onChange={handleChange}
-            name="folio_fiscal"
-            value={estadoForma.folio_fiscal}
+            name="rfc"
+            value={estadoForma.rfc}
             disabled={!modoEditar}
           />
         </div>

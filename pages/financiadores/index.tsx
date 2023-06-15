@@ -17,21 +17,21 @@ const Financiadores = () => {
   const [showModalEliminar, setShowModalEliminar] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [inputBusqueda, setInputBusqueda] = useState<string>("")
-  const [tipoSelect, setTipoSelect] = useState<number>(0)
+  // const [tipoSelect, setTipoSelect] = useState<number>(0)
 
   useEffect(() => {
     obtenerTodos()
   }, [])
 
-  useEffect(() => {
-    let tiposFiltrados = resultadosDB
-    if (tipoSelect !== 0) {
-      tiposFiltrados = resultadosDB.filter(
-        ({ i_tipo }) => i_tipo === tipoSelect
-      )
-    }
-    setResultadosFiltrados(tiposFiltrados)
-  }, [tipoSelect])
+  // useEffect(() => {
+  //   let tiposFiltrados = resultadosDB
+  //   if (tipoSelect !== 0) {
+  //     tiposFiltrados = resultadosDB.filter(
+  //       ({ i_tipo }) => i_tipo === tipoSelect
+  //     )
+  //   }
+  //   setResultadosFiltrados(tiposFiltrados)
+  // }, [tipoSelect])
 
   const abrirModalEliminar = (id: number) => {
     setIdAEliminar(id)
@@ -77,9 +77,9 @@ const Financiadores = () => {
     setShowModalEliminar(false)
   }
 
-  const busquedaFiltrados = resultadosFiltrados.filter(({ nombre, folio_fiscal }) => {
+  const busquedaFiltrados = resultadosFiltrados.filter(({ nombre, rfc }) => {
     const query = aMinuscula(inputBusqueda)
-    return aMinuscula(nombre).includes(query) || aMinuscula(folio_fiscal).includes(query)
+    return aMinuscula(nombre).includes(query) || aMinuscula(rfc).includes(query)
   })
 
   const determinarNombreAEliminar = (): string => {
@@ -101,7 +101,7 @@ const Financiadores = () => {
             Registrar +
           </button>
         </div>
-        <div className="col-12 col-md-2 mb-2">
+        {/* <div className="col-12 col-md-2 mb-2">
           <select
             className="form-control"
             value={tipoSelect}
@@ -111,8 +111,8 @@ const Financiadores = () => {
             <option value="1">Aliado</option>
             <option value="2">Idependiente</option>
           </select>
-        </div>
-        <div className="d-none d-md-block col-md-4 mb-2"></div>
+        </div> */}
+        <div className="d-none d-md-block col-md-6 mb-2"></div>
         <div className="col-12 col-md-4 mb-2">
           <div className="input-group">
             <input
@@ -139,11 +139,12 @@ const Financiadores = () => {
                 <tr>
                   <th>#id</th>
                   <th>Nombre</th>
-                  <th>Folio fiscal</th>
                   <th>Tipo</th>
+                  <th>Enlace</th>
+                  <th>Email</th>
+                  <th>Teléfono</th>
                   <th>Página web</th>
-                  <th>Repepresentante legal</th>
-                  <th>Fecha constitución</th>
+                  <th>Proyectos activos</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
@@ -152,22 +153,23 @@ const Financiadores = () => {
                   const {
                     id,
                     nombre,
-                    folio_fiscal,
                     tipo,
                     pagina_web,
-                    representante_legal,
-                    dt_constitucion_format,
+                    enlace,
                   } = financiador
+
+                  const nombreEnlace = `${enlace.nombre} ${enlace.apellido_paterno} ${enlace.apellido_materno}`
 
                   return (
                     <tr key={id}>
                       <td>{id}</td>
                       <td>{nombre}</td>
-                      <td>{folio_fiscal}</td>
                       <td>{tipo}</td>
+                      <td>{nombreEnlace}</td>
+                      <td>{enlace.email}</td>
+                      <td>{enlace.telefono}</td>
                       <td>{pagina_web}</td>
-                      <td>{representante_legal}</td>
-                      <td>{dt_constitucion_format}</td>
+                      <td>...</td>
                       <td>
                         <div className="d-flex">
                           <button

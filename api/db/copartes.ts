@@ -22,11 +22,15 @@ class CoparteDB {
 
   static async obtener(id: number) {
     let query = `
-      SELECT c.id, c.id_administrador, c.id_alt, c.nombre, c.i_estatus, c.i_estatus_legal, c.representante_legal, c.rfc, c.id_tema_social, c.dt_registro,
+      SELECT c.id, c.id_administrador, c.id_alt, c.nombre, c.i_estatus_legal, c.representante_legal, c.rfc, c.id_tema_social, c.dt_registro,
       cd.id id_coparte_direccion, cd.calle, cd.numero_ext, cd.numero_int, cd.colonia, cd.municipio, cd.cp, cd.id_estado,
+      CONCAT(u.nombre, ' ', u.apellido_paterno) nombre_administrador,
+      ts.nombre tema_social,
       e.nombre estado
       FROM copartes c
       JOIN coparte_direccion cd ON c.id = cd.id_coparte
+      JOIN usuarios u ON c.id_administrador = u.id
+      JOIN temas_sociales ts ON c.id_tema_social = ts.id
       JOIN estados e ON cd.id_estado = e.id
       WHERE c.b_activo=1`
 
@@ -47,21 +51,19 @@ class CoparteDB {
       administrador,
       id_alt,
       nombre,
-      i_estatus,
       i_estatus_legal,
       representante_legal,
       rfc,
       id_tema_social,
     } = data
 
-    const query = `INSERT INTO copartes ( id_administrador, id_alt, nombre, i_estatus, i_estatus_legal,
-      representante_legal, rfc, id_tema_social, dt_registro) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ? )`
+    const query = `INSERT INTO copartes ( id_administrador, id_alt, nombre, i_estatus_legal,
+      representante_legal, rfc, id_tema_social, dt_registro) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )`
 
     const placeHolders = [
       administrador.id,
       id_alt,
       nombre,
-      i_estatus,
       i_estatus_legal,
       representante_legal,
       rfc,
@@ -82,21 +84,19 @@ class CoparteDB {
       administrador,
       id_alt,
       nombre,
-      i_estatus,
       i_estatus_legal,
       representante_legal,
       rfc,
       id_tema_social,
     } = data
 
-    const query = `UPDATE copartes SET id_administrador=?, id_alt=?, nombre=?, i_estatus=?,
+    const query = `UPDATE copartes SET id_administrador=?, id_alt=?, nombre=?,
       i_estatus_legal=?, representante_legal=?, rfc=?, id_tema_social=? WHERE id=? LIMIT 1`
 
     const placeHolders = [
       administrador.id,
       id_alt,
       nombre,
-      i_estatus,
       i_estatus_legal,
       representante_legal,
       rfc,
@@ -141,12 +141,13 @@ class CoparteDB {
   static async crearUsuario(
     id_coparte: number,
     id_usuario: number,
-    cargo: string
+    cargo: string,
+    b_enlace: boolean
   ) {
     const query = `INSERT INTO coparte_usuarios ( id_coparte, id_usuario,
       cargo, b_enlace ) VALUES ( ?, ?, ?, ? )`
 
-    const placeHolders = [id_coparte, id_usuario, cargo, Number(false)]
+    const placeHolders = [id_coparte, id_usuario, cargo, Number(b_enlace)]
 
     try {
       const res = await queryDBPlaceHolder(query, placeHolders)

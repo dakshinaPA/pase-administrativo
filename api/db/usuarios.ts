@@ -29,6 +29,17 @@ class UsuarioDB {
   //         return RespuestaDB.fallida( error )
   //     }
   // }
+  static async obtenerVmin(id_rol: number) {
+    let query = `SELECT id, nombre, apellido_paterno, apellido_materno
+      FROM usuarios WHERE id_rol=${id_rol} AND b_activo = 1`
+
+    try {
+      const res = await queryDB(query)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
 
   static async obtener(id_rol: number, id_coparte: number, id_usuario: number) {
     let query = `SELECT u.id, u.nombre, u.apellido_paterno, u.apellido_materno, u.email, u.telefono, u.password, u.id_rol,

@@ -196,7 +196,7 @@ const Usuarios = () => {
                     rol,
                   } = usuario
 
-                  const icono = rol.b_enlace ? "bi-check-lg" : "bi-x-lg"
+                  const icono = rol.b_enlace ? "bi-check" : "bi-x"
 
                   return (
                     <tr key={`coparte_${id}`}>
