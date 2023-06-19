@@ -9,8 +9,12 @@ import {
 import { fechaActualAEpoch } from "@assets/utils/common"
 
 class CoparteDB {
-  static async obtenerVmin() {
+  static async obtenerVmin(id_admin: number) {
     let query = `SELECT id, nombre FROM copartes WHERE b_activo = 1`
+
+    if(id_admin){
+      query += ` AND id_administrador = ${id_admin}`
+    }
 
     try {
       const res = await queryDB(query)

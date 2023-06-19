@@ -1,6 +1,7 @@
 export interface ResProyectoDB {
   id: number
   id_financiador: number
+  financiador?: string
   id_coparte: number
   id_responsable: number
   id_alt: string

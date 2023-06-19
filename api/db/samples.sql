@@ -422,7 +422,6 @@ TRUNCATE TABLE proyecto_ministraciones;
 TRUNCATE TABLE proyecto_rubros_presupuestales;
 TRUNCATE TABLE colaboradores;
 TRUNCATE TABLE colaborador_direccion;
+TRUNCATE TABLE proveedores;
+TRUNCATE TABLE proveedor_direccion;
 
-DROP TABLE proyectos;
-DROP TABLE proyecto_ministraciones;
-DROP TABLE proyecto_rubros_presupuestales;

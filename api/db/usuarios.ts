@@ -6,8 +6,8 @@ import { fechaActualAEpoch } from "@assets/utils/common"
 
 class UsuarioDB {
   static async login({ email, password }: LoginUsuario) {
-    const query =
-      "SELECT * FROM usuarios WHERE email=? AND password=? AND b_activo=1"
+    const query = `SELECT id, nombre, apellido_paterno, apellido_materno, id_rol
+      FROM usuarios WHERE email=? AND password=? AND b_activo=1`
     const placeHolders = [email, password]
 
     try {

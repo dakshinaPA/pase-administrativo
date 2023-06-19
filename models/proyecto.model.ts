@@ -48,14 +48,14 @@ export interface RubroProyecto {
   id_proyecto?: number
   id_rubro: number
   rubro?: string
-  f_monto: number
+  f_monto: string
 }
 
 export interface MinistracionProyecto {
   id?: number
   id_proyecto?: number
   i_numero: number
-  f_monto: number
+  f_monto: string
   i_grupo: number
   dt_recepcion: string
   dt_registro?: string
@@ -63,14 +63,17 @@ export interface MinistracionProyecto {
 
 export interface Proyecto {
   id?: number
-  id_financiador: number
   id_coparte: number
   id_alt: string
   f_monto_total: string
   i_tipo_financiamiento: number
   i_beneficiados: number
-  dt_registro: string
+  dt_registro?: string
   dt_registro_epoch?: string
+  financiador: {
+    id: number
+    nombre?: string
+  }
   responsable: {
     id: number
     nombre?: string

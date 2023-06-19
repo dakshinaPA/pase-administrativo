@@ -469,19 +469,46 @@ const FormaCoparte = () => {
                 <tr>
                   <th>Nombre</th>
                   <th>Cargo</th>
+                  <th>Email</th>
+                  <th>Teléfono</th>
                   <th>Enlace</th>
+                  <th>Ver</th>
                 </tr>
               </thead>
               <tbody>
-                {estadoForma.usuarios.map(({ id, nombre, cargo, b_enlace }) => (
-                  <tr key={id}>
-                    <td>{nombre}</td>
-                    <td>{cargo}</td>
-                    <td>
-                      <i className={b_enlace ? 'bi bi-check' : 'bi bi-x'}></i>
-                    </td>
-                  </tr>
-                ))}
+                {estadoForma.usuarios.map(
+                  ({
+                    id,
+                    id_usuario,
+                    nombre,
+                    apellido_paterno,
+                    apellido_materno,
+                    email,
+                    telefono,
+                    cargo,
+                    b_enlace,
+                  }) => (
+                    <tr key={id}>
+                      <td>
+                        {nombre} {apellido_paterno} {apellido_materno}
+                      </td>
+                      <td>{cargo}</td>
+                      <td>{email}</td>
+                      <td>{telefono}</td>
+                      <td>
+                        <i className={b_enlace ? "bi bi-check" : "bi bi-x"}></i>
+                      </td>
+                      <td>
+                        <button
+                          className="btn btn-dark"
+                          onClick={() => router.push(`/usuarios/${id_usuario}`)}
+                        >
+                          <i className="bi bi-eye-fill"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                )}
               </tbody>
             </table>
           </div>

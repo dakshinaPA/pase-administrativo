@@ -12,6 +12,9 @@ const MenuPrincipal = () => {
       <Link href="/copartes" className="list-group-item list-group-item-action">
         Copartes
       </Link>
+      <Link href="/proyectos" className="list-group-item list-group-item-action">
+        Proyectos
+      </Link>
     </div>
   )
 }

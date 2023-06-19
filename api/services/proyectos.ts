@@ -41,6 +41,7 @@ class ProyectosServices {
           const {
             id,
             id_financiador,
+            financiador,
             id_coparte,
             id_responsable,
             id_alt,
@@ -99,7 +100,6 @@ class ProyectosServices {
 
           return {
             id,
-            id_financiador,
             id_coparte,
             id_alt,
             f_monto_total,
@@ -107,6 +107,10 @@ class ProyectosServices {
             i_beneficiados,
             dt_registro_epoch: dt_registro,
             dt_registro: epochAFecha(dt_registro),
+            financiador: {
+              id: id_financiador,
+              nombre: financiador
+            },
             responsable: {
               id: id_responsable,
               nombre: nombre_responsable,

@@ -1,26 +1,34 @@
 // usuario tipo coparte
-export interface CoparteUsuario {
+export interface CoparteUsuarioVmin {
   id?: number
   id_usuario?: number
   id_coparte?: number
   nombre?: string
-  cargo: string
-  b_enlace: boolean
+  apellido_paterno?: string
+  apellido_materno?: string
 }
 
-//usuario tipo coparte
-export interface EnlaceCoparte {
-  id?: number
-  id_usuario?: number
-  nombre: string
-  apellido_paterno: string
-  apellido_materno: string
+export interface CoparteUsuario extends CoparteUsuarioVmin {
   email: string
   telefono: string
   password?: string
   cargo: string
   b_enlace?: boolean
 }
+
+//usuario tipo coparte
+// export interface EnlaceCoparte {
+//   id?: number
+//   id_usuario?: number
+//   nombre: string
+//   apellido_paterno: string
+//   apellido_materno: string
+//   email: string
+//   telefono: string
+//   password?: string
+//   cargo: string
+//   b_enlace?: boolean
+// }
 
 export interface DireccionCoparte {
   id?: number
@@ -52,7 +60,7 @@ export interface Coparte {
   dt_registro?: string
   direccion: DireccionCoparte
   administrador: AdministradorCoparte
-  enlace?: EnlaceCoparte
+  enlace?: CoparteUsuario
   usuarios?: CoparteUsuario[]
 }
 

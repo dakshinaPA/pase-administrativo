@@ -1,8 +1,14 @@
 import { CoparteDB } from "@api/db/copartes"
 import { RespuestaController } from "@api/utils/response"
-import { Coparte, CoparteUsuario, EnlaceCoparte } from "@models/coparte.model"
+import {
+  Coparte,
+  CoparteUsuario,
+  CoparteUsuarioVmin,
+  // EnlaceCoparte,
+} from "@models/coparte.model"
 import { ResCoparteDB } from "@api/models/coparte.model"
 import { epochAFecha } from "@assets/utils/common"
+import { Queries } from "@models/common.model"
 
 class CopartesServices {
   static obetnerStatusLegal(i_estatus_legal: 1 | 2) {
@@ -14,8 +20,8 @@ class CopartesServices {
     }
   }
 
-  static async obtenerVmin() {
-    const re = await CoparteDB.obtenerVmin()
+  static async obtenerVmin(id_admin: number) {
+    const re = await CoparteDB.obtenerVmin(id_admin)
 
     if (re.error) {
       return RespuestaController.fallida(
@@ -27,10 +33,11 @@ class CopartesServices {
     return RespuestaController.exitosa(200, "Consulta exitosa", re.data)
   }
 
-  static async obtener(id_coparte: number, min = false) {
-    if (min) return await this.obtenerVmin()
+  static async obtener(queries: Queries) {
+    const { id: id_coparte, id_admin, min } = queries
+    if (min) return await this.obtenerVmin(Number(id_admin))
     try {
-      const re = await CoparteDB.obtener(id_coparte)
+      const re = await CoparteDB.obtener(Number(id_coparte))
       if (re.error) throw re.data
 
       const copartesDB = re.data as ResCoparteDB[]
@@ -61,50 +68,15 @@ class CopartesServices {
           } = coparte
 
           let usuarios: CoparteUsuario[] = null
-          let enlace: EnlaceCoparte = null
 
           if (id_coparte) {
-            const obtenerUsuarios = await CoparteDB.obtenerUsuarios(id_coparte)
-            if (obtenerUsuarios.error) throw obtenerUsuarios.data
+            const reUsuarios = await this.obtenerUsuarios(
+              Number(id_coparte),
+              false
+            )
+            if (reUsuarios.error) throw reUsuarios.data
 
-            const coparteUsuarioDB = obtenerUsuarios.data as EnlaceCoparte[]
-
-            usuarios = coparteUsuarioDB.map((usuario) => {
-              const {
-                id,
-                id_usuario,
-                nombre,
-                apellido_materno,
-                apellido_paterno,
-                email,
-                telefono,
-                cargo,
-                b_enlace,
-              } = usuario
-
-              const esEnlace = Boolean(b_enlace)
-
-              if (esEnlace) {
-                enlace = {
-                  id_usuario,
-                  nombre,
-                  apellido_paterno,
-                  apellido_materno,
-                  email,
-                  telefono,
-                  cargo,
-                  b_enlace: esEnlace,
-                }
-              }
-
-              return {
-                id,
-                id_usuario,
-                nombre: `${nombre} ${apellido_paterno} ${apellido_materno}`,
-                cargo,
-                b_enlace: esEnlace,
-              }
-            })
+            usuarios = reUsuarios.data as CoparteUsuario[]
           }
 
           return {
@@ -131,9 +103,8 @@ class CopartesServices {
             },
             administrador: {
               id: id_administrador,
-              nombre: nombre_administrador
+              nombre: nombre_administrador,
             },
-            enlace,
             usuarios,
           }
         })
@@ -238,6 +209,38 @@ class CopartesServices {
       "Coparte borrada con éxito",
       res.data
     )
+  }
+
+  static async obtenerUsuarios(id_coparte: number, min: boolean) {
+    const re = await CoparteDB.obtenerUsuarios(id_coparte)
+    if (re.error) {
+      return RespuestaController.fallida(
+        400,
+        "Error al obtener usuarios de coparte",
+        re.data
+      )
+    }
+
+    const coparteUsuarioDB = re.data as CoparteUsuario[]
+
+    let usuariosCoparte: CoparteUsuarioVmin[] | CoparteUsuario[] =
+      coparteUsuarioDB
+
+    if (min) {
+      usuariosCoparte = coparteUsuarioDB.map((cu) => {
+        const { id, id_usuario, nombre, apellido_paterno, apellido_materno } =
+          cu
+        return {
+          id,
+          id_usuario,
+          nombre,
+          apellido_paterno,
+          apellido_materno,
+        }
+      })
+    }
+
+    return RespuestaController.exitosa(200, "Consulta exitosa", usuariosCoparte)
   }
 }
 

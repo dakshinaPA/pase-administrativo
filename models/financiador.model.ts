@@ -47,3 +47,8 @@ export interface Financiador {
   direccion: DireccionFinanciador
   notas?: NotaFinanciador[]
 }
+
+export interface FinanciadorMin {
+  id: number
+  nombre: string
+}

@@ -3,18 +3,11 @@ import { NextApiRequest, NextApiResponse } from "next"
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   const id = Number(req.query.id)
+  const min = Boolean(req.query.min)
 
   switch (req.method) {
     case "GET":
-      var { status, ...data } = await CopartesServices.obtener(id)
-      res.status(status).json(data)
-      break
-    case "PUT":
-      var { status, ...data } = await CopartesServices.actualizar(id, req.body)
-      res.status(status).json(data)
-      break
-    case "DELETE":
-      var { status, ...data } = await CopartesServices.borrar(id)
+      var { status, ...data } = await CopartesServices.obtenerUsuarios(id, min)
       res.status(status).json(data)
       break
     default:

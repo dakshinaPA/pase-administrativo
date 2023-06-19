@@ -21,9 +21,11 @@ class ProyectoDB {
 
   static async obtener(id_coparte: number, id_proyecto: number) {
     let query = `SELECT p.id, p.id_financiador, p.id_coparte, p.id_responsable, p.id_alt, p.f_monto_total, p.i_tipo_financiamiento, p.i_beneficiados, p.dt_registro,
-      CONCAT(u.nombre, ' ', u.apellido_paterno, ' ', u.apellido_materno) nombre_responsable
+      CONCAT(u.nombre, ' ', u.apellido_paterno) nombre_responsable,
+      f.nombre financiador
       FROM proyectos p
       JOIN usuarios u ON p.id_responsable = u.id
+      JOIN financiadores f ON p.id_financiador = f.id
       WHERE p.b_activo = 1`
 
     if (id_coparte) {
@@ -45,7 +47,7 @@ class ProyectoDB {
   static async crear(data: Proyecto) {
     const {
       id_coparte,
-      id_financiador,
+      financiador,
       responsable,
       id_alt,
       f_monto_total,
@@ -57,7 +59,7 @@ class ProyectoDB {
       f_monto_total, i_tipo_financiamiento, i_beneficiados, dt_registro) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )`
 
     const placeHolders = [
-      id_financiador,
+      financiador.id,
       id_coparte,
       responsable.id,
       id_alt,
@@ -77,7 +79,7 @@ class ProyectoDB {
 
   static async actualizar(id_proyecto: number, data: Proyecto) {
     const {
-      id_financiador,
+      financiador,
       responsable,
       id_alt,
       f_monto_total,
@@ -89,7 +91,7 @@ class ProyectoDB {
     id_alt=?, f_monto_total=?, i_tipo_financiamiento=?, i_beneficiados=? WHERE id=? LIMIT 1`
 
     const placeHolders = [
-      id_financiador,
+      financiador.id,
       responsable.id,
       id_alt,
       f_monto_total,

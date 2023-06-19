@@ -8,30 +8,46 @@ import { ResDB } from "@api/models/respuestas.model"
 
 class UsuariosServices {
   static async login(dataUsuario: LoginUsuario) {
-    const { data, error } = await UsuarioDB.login(dataUsuario)
+    try {
+      const { data, error } = await UsuarioDB.login(dataUsuario)
+      if (error) throw data
 
-    if (error) {
-      return RespuestaController.fallida(
-        500,
-        "Error al acceder a la base de datos",
-        data
-      )
+      const [usuario] = data as ResUsuarioDB[]
+      // encontró match con usuario
+      if (usuario) {
+        let copartes: CoparteUsuario[] = null
+
+        const obtenerCoUs =
+          usuario.id_rol === 3
+            ? await UsuarioDB.obtenerCoparteCoparte(usuario.id)
+            : await UsuarioDB.obtenerCopartesAdministrador(usuario.id)
+
+        if (obtenerCoUs.error) throw obtenerCoUs.data
+
+        copartes = obtenerCoUs.data as CoparteUsuario[]
+
+        const dataTransformada: Usuario = {
+          ...usuario,
+          rol: {
+            id: usuario.id_rol,
+          },
+          copartes,
+        }
+
+        return RespuestaController.exitosa(200, "Usuario encontrado", [
+          dataTransformada,
+        ])
+      } else {
+        // no hubo error pero no hay match con usuario
+        return RespuestaController.fallida(
+          400,
+          "Usuario o contraseña no válidos",
+          null
+        )
+      }
+    } catch (error) {
+      return RespuestaController.fallida(400, "Error al hacer login", null)
     }
-
-    const [usuario] = data as Usuario[]
-
-    // encontró match con usuario
-    if (usuario) {
-      // const res = await this.loggear( usuario.id_usuario )
-      return RespuestaController.exitosa(200, "Usuario encontrado", data)
-    }
-
-    // no hubo error pero no hay match con usuario
-    return RespuestaController.fallida(
-      200,
-      "Usuario o contraseña no válidos",
-      null
-    )
   }
 
   // static async loggear( id: number ){
