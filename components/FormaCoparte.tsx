@@ -41,7 +41,7 @@ const FormaCoparte = () => {
     usuarios: [],
   }
 
-  const { catalogos } = useCatalogos()
+  const { temas_sociales, estados } = useCatalogos()
   const router = useRouter()
   const idCoparte = router.query.id
   const [estadoForma, setEstadoForma] = useState(estadoInicialForma)
@@ -253,7 +253,7 @@ const FormaCoparte = () => {
             value={estadoForma.id_tema_social}
             disabled={!modoEditar}
           >
-            {catalogos.temas_sociales.map(({ id, nombre }) => (
+            {temas_sociales.map(({ id, nombre }) => (
               <option key={id} value={id}>
                 {nombre}
               </option>
@@ -356,7 +356,7 @@ const FormaCoparte = () => {
             value={estadoForma.direccion.id_estado}
             disabled={!modoEditar}
           >
-            {catalogos.estados.map(({ id, nombre }) => (
+            {estados.map(({ id, nombre }) => (
               <option key={id} value={id}>
                 {nombre}
               </option>

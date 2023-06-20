@@ -25,7 +25,18 @@ class CatalogosDB {
   }
 
   static async obtenerTemasSociales() {
-    let query = `SELECT id, nombre FROM temas_sociales`
+    let query = `SELECT id, nombre FROM temas_sociales WHERE b_activo=1`
+
+    try {
+      const res = await queryDB(query)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
+
+  static async obtenerRubrosPresupuestales() {
+    let query = `SELECT id, nombre FROM rubros_presupuestales WHERE b_activo=1`
 
     try {
       const res = await queryDB(query)

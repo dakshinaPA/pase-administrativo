@@ -30,6 +30,15 @@ class CatalogosServices {
     }
     return RespuestaController.exitosa(200, "Consulta exitosa", data)
   }
+
+  static async obtenerRubrosPresupuestales() {
+    const { error, data } = await CatalogosDB.obtenerRubrosPresupuestales()
+
+    if (error) {
+      return RespuestaController.fallida(400, "Error al obtener rubros presupuestales", data)
+    }
+    return RespuestaController.exitosa(200, "Consulta exitosa", data)
+  }
 }
 
 export { CatalogosServices }

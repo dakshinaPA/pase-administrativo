@@ -40,7 +40,7 @@ const FormaFinanciador = () => {
   }
 
   const { user } = useAuth()
-  const { catalogos } = useCatalogos()
+  const { estados, paises } = useCatalogos()
   const router = useRouter()
   const idFinanciador = router.query.id
   const [estadoForma, setEstadoForma] =
@@ -381,7 +381,7 @@ const FormaFinanciador = () => {
               value={estadoForma.direccion.id_estado}
               disabled={!modoEditar}
             >
-              {catalogos.estados.map(({ id, nombre }) => (
+              {estados.map(({ id, nombre }) => (
                 <option key={id} value={id}>
                   {nombre}
                 </option>
@@ -410,7 +410,7 @@ const FormaFinanciador = () => {
             value={estadoForma.direccion.id_pais}
             disabled={!modoEditar}
           >
-            {catalogos.paises.map(({ id, nombre }) => (
+            {paises.map(({ id, nombre }) => (
               <option key={id} value={id}>
                 {nombre}
               </option>

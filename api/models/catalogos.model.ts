@@ -12,3 +12,8 @@ export interface TemasSocialesDB {
   id: number
   nombre: string
 }
+
+export interface RubrosPresupuestalesDB {
+  id: number
+  nombre: string
+}
