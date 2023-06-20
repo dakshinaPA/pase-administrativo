@@ -157,7 +157,12 @@ const FormaFinanciador = () => {
     if (res.error) {
       console.log(res)
     } else {
-      setModoEditar(false)
+      if(modalidad === "EDITAR"){
+        setModoEditar(false)
+      } else {
+        //@ts-ignore
+        router.push(`/financiadores/${res.data.idInsertado}`)
+      }
     }
   }
 

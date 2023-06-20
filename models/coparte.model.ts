@@ -1,5 +1,5 @@
 // usuario tipo coparte
-export interface CoparteUsuarioVmin {
+export interface CoparteUsuarioMin {
   id?: number
   id_usuario?: number
   id_coparte?: number
@@ -8,7 +8,7 @@ export interface CoparteUsuarioVmin {
   apellido_materno?: string
 }
 
-export interface CoparteUsuario extends CoparteUsuarioVmin {
+export interface CoparteUsuario extends CoparteUsuarioMin {
   email: string
   telefono: string
   password?: string

@@ -2,22 +2,22 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/router"
 import { ChangeEvent } from "@assets/models/formEvents.model"
 import { Proyecto } from "@models/proyecto.model"
-// import { CoparteMin } from "@models/coparte.model"
 import { FinanciadorMin } from "@models/financiador.model"
 import { Loader } from "@components/Loader"
 import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
 import { BtnBack } from "@components/BtnBack"
 import { ApiCall } from "@assets/utils/apiCalls"
 import { useAuth } from "@contexts/auth.context"
+import { CoparteUsuarioMin } from "@models/coparte.model"
 
 const FormaProyecto = () => {
   const { user } = useAuth()
-  if(!user) return null
+  if (!user) return null
 
   const estadoInicialForma: Proyecto = {
     id_coparte: user.copartes[0].id_coparte,
     id_alt: "",
-    f_monto_total: "",
+    f_monto_total: "0",
     i_tipo_financiamiento: 1,
     i_beneficiados: 0,
     responsable: {
@@ -33,56 +33,83 @@ const FormaProyecto = () => {
   const router = useRouter()
   const idProyecto = router.query.id
   const [estadoForma, setEstadoForma] = useState(estadoInicialForma)
-  // const [copartesDB, setCopartesDB] = useState<CoparteMin[]>([])
   const [financiadoresDB, setFinanciadoresDB] = useState<FinanciadorMin[]>([])
+  const [usuariosCoparteDB, setUsuariosCoparteDB] = useState<
+    CoparteUsuarioMin[]
+  >([])
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [modoEditar, setModoEditar] = useState<boolean>(!idProyecto)
   const modalidad = idProyecto ? "EDITAR" : "CREAR"
 
   useEffect(() => {
-    // obtenerCopartes()
-    obtenerFinanciadores()
-    if (modalidad === "EDITAR") {
-      cargarData()
-    }
+    cargarData()
   }, [])
+
+  useEffect(() => {
+    //limpiar responsable
+    setEstadoForma({
+      ...estadoForma,
+      responsable: {
+        id: 0
+      }
+    })
+
+    cargarUsuariosCoparte(estadoForma.id_coparte)
+
+  }, [estadoForma.id_coparte])
 
   const cargarData = async () => {
     setIsLoading(true)
 
-    const { error, data } = await obtener()
+    const financiadoresDB = obtenerFinanciadores()
+    const usuariosCoparte = obtenerUsuariosCoparte(estadoForma.id_coparte)
 
-    if (error) {
-      console.log(error)
-    } else {
-      const dataProyecto = data[0] as Proyecto
-      setEstadoForma(dataProyecto)
+    const resCombinadas = await Promise.all([financiadoresDB, usuariosCoparte])
+
+    let error = false
+
+    for (const rc of resCombinadas) {
+      if (rc.error) {
+        console.log(rc.data)
+        error = true
+      }
     }
+
+    if (!error) {
+      setFinanciadoresDB(resCombinadas[0].data as FinanciadorMin[])
+      setUsuariosCoparteDB(resCombinadas[1].data as CoparteUsuarioMin[])
+    }
+
+    // const { error, data } = await obtener()
+
+    // if (error) {
+    //   console.log(error)
+    // } else {
+    //   const dataProyecto = data[0] as Proyecto
+    //   setEstadoForma(dataProyecto)
+    // }
 
     setIsLoading(false)
   }
 
-  const obtenerFinanciadores = async () => {
-    const { error, data } = await ApiCall.get(`/financiadores?min=true`)
+  const cargarUsuariosCoparte = async (id_coparte: number) => {
 
-    if (error) {
-      console.log(error)
+    const reUsCoDB = await obtenerUsuariosCoparte(id_coparte)
+
+    if(reUsCoDB.error){
+      console.log(reUsCoDB.data)
     } else {
-      const financiadores = data as FinanciadorMin[]
-      setFinanciadoresDB(financiadores)
+      setUsuariosCoparteDB(reUsCoDB.data as CoparteUsuarioMin[])
     }
   }
 
-  // const obtenerCopartes = async () => {
-  //   const { error, data } = await ApiCall.get(`/copartes?min=true`)
+  const obtenerFinanciadores = async () => {
+    return await ApiCall.get(`/financiadores?min=true`)
+  }
 
-  //   if (error) {
-  //     console.log(error)
-  //   } else {
-  //     const copartes = data as CoparteMin[]
-  //     setCopartesDB(copartes)
-  //   }
-  // }
+  const obtenerUsuariosCoparte = async (id_coparte: number) => {
+    return await ApiCall.get(`/copartes/${id_coparte}/usuarios?min=true`)
+  }
 
   const obtener = async () => {
     const res = await ApiCall.get(`/proyectos/${idProyecto}`)
@@ -109,6 +136,28 @@ const FormaProyecto = () => {
     setEstadoForma({
       ...estadoForma,
       [name]: value,
+    })
+  }
+
+  const handleChangeResponsable = (ev: ChangeEvent) => {
+    const { value } = ev.target
+
+    setEstadoForma({
+      ...estadoForma,
+      responsable: {
+        id: Number(value)
+      }
+    })
+  }
+
+  const handleChangeFinanciador = (ev: ChangeEvent) => {
+    const { value } = ev.target
+
+    setEstadoForma({
+      ...estadoForma,
+      financiador: {
+        id: Number(value)
+      }
     })
   }
 
@@ -161,7 +210,7 @@ const FormaProyecto = () => {
             onChange={handleChange}
             value={estadoForma.id_coparte}
             name="id_coparte"
-            disabled={Boolean(idProyecto)}
+            disabled={!modoEditar}
           >
             {user.copartes.map(({ id_coparte, nombre }) => (
               <option key={id_coparte} value={id_coparte}>
@@ -174,9 +223,9 @@ const FormaProyecto = () => {
           <label className="form-label">Financiador</label>
           <select
             className="form-control"
-            onChange={handleChange}
+            onChange={handleChangeFinanciador}
             value={estadoForma.financiador.id}
-            disabled={Boolean(idProyecto)}
+            disabled={!modoEditar}
           >
             {financiadoresDB.map(({ id, nombre }) => (
               <option key={id} value={id}>
@@ -189,15 +238,33 @@ const FormaProyecto = () => {
           <label className="form-label">Responsable</label>
           <select
             className="form-control"
-            onChange={handleChange}
-            value={estadoForma.financiador.id}
-            disabled={Boolean(idProyecto)}
+            onChange={handleChangeResponsable}
+            value={estadoForma.responsable.id}
+            disabled={!modoEditar}
           >
-            {financiadoresDB.map(({ id, nombre }) => (
-              <option key={id} value={id}>
-                {nombre}
-              </option>
-            ))}
+            <option value="0" disabled>Selecciona usuario</option>
+            {usuariosCoparteDB.map(
+              ({ id, id_usuario, nombre, apellido_paterno }) => (
+                <option key={id} value={id_usuario}>
+                  {nombre} {apellido_paterno}
+                </option>
+              )
+            )}
+          </select>
+        </div>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label">Tipo de financiamiento</label>
+          <select
+            className="form-control"
+            onChange={handleChange}
+            name="i_tipo_financiamiento"
+            value={estadoForma.i_tipo_financiamiento}
+            disabled={!modoEditar}
+          >
+            <option value="1">Estipendio</option>
+            <option value="2">Única ministración</option>
+            <option value="3">Varias Ministraciones</option>
+            <option value="4">Multi anual</option>
           </select>
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
@@ -208,6 +275,28 @@ const FormaProyecto = () => {
             onChange={handleChange}
             name="id_alt"
             value={estadoForma.id_alt}
+            disabled
+          />
+        </div>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label">Monto total</label>
+          <input
+            className="form-control"
+            type="text"
+            onChange={handleChange}
+            name="f_monto_total"
+            value={estadoForma.f_monto_total}
+            disabled={!modoEditar}
+          />
+        </div>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label">Beneficiados</label>
+          <input
+            className="form-control"
+            type="text"
+            onChange={handleChange}
+            name="i_beneficiados"
+            value={estadoForma.i_beneficiados}
             disabled={!modoEditar}
           />
         </div>

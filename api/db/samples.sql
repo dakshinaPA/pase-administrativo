@@ -173,13 +173,13 @@ CREATE TABLE `usuarios` (
   PRIMARY KEY (`id`), UNIQUE (`email`),
   INDEX (`id_rol`));
 
--- INSERT INTO `usuarios` (`nombre`, `apellido_paterno`, `apellido_materno`, `email`, `telefono`, `password`, `id_rol`, `dt_registro`) 
--- VALUES ('Omar', 'Maldonado', 'Villanueva', 'omar.maldo.vi@gmail.com', '7221223344', '123', 2, '1685385164'),
--- ('Isabel', 'Flores', 'Alarcon', 'iflores@dakshina.org.mx', '7223445566', '123', 1, '1685385164'),
--- ('Gabriel', 'Mendez', 'Alarcon', 'gabome@gmail.com', '7224556677', '123', 3, '1685385164'),
--- ('Elisa', 'Martínez', 'chavez', 'elimacha@gmail.com', '9887654456', '123', 2, '1685385164'),
--- ('Mónica', 'López', 'Tellez', 'molote@gmail.com', '8776548976', '123', 3, '1685385164'),
--- ('Carlos', 'Viramontes', 'Vacas', 'vacavi@gmail.com', '9453872478', '123', 3, '1685385164');
+INSERT INTO `usuarios` (`nombre`, `apellido_paterno`, `apellido_materno`, `email`, `telefono`, `password`, `id_rol`, `dt_registro`) 
+VALUES ('Omar', 'Maldonado', 'Villanueva', 'omar.maldo.vi@gmail.com', '7221223344', '123', 2, '1685385164'),
+('Isabel', 'Flores', 'Alarcon', 'iflores@dakshina.org.mx', '7223445566', '123', 1, '1685385164'),
+('Gabriel', 'Mendez', 'Alarcon', 'gabome@gmail.com', '7224556677', '123', 3, '1685385164'),
+('Elisa', 'Martínez', 'chavez', 'elimacha@gmail.com', '9887654456', '123', 2, '1685385164'),
+('Mónica', 'López', 'Tellez', 'molote@gmail.com', '8776548976', '123', 3, '1685385164'),
+('Carlos', 'Viramontes', 'Vacas', 'vacavi@gmail.com', '9453872478', '123', 3, '1685385164');
 
 -------------------------------------------------------
 
