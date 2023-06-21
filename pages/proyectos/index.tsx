@@ -123,13 +123,23 @@ const Financiadores = () => {
                   const {
                     id,
                     id_alt,
-
+                    financiador,
+                    tipo_financiamiento,
+                    f_monto_total,
+                    i_beneficiados,
+                    responsable,
                   } = proyecto
 
                   return (
                     <tr key={id}>
                       <td>{id}</td>
                       <td>{id_alt}</td>
+                      <td>{financiador.nombre}</td>
+                      <td>{tipo_financiamiento}</td>
+                      <td>{f_monto_total}</td>
+                      <td>{i_beneficiados}</td>
+                      <td>{responsable.nombre}</td>
+                      <td>...</td>
                       <td>
                         <div className="d-flex">
                           <button
@@ -160,7 +170,7 @@ const Financiadores = () => {
         cancelar={cancelarEliminar}
       >
         <p className="mb-0">
-          ¿Estás segur@ de eliminar a la coparte {determinarNombreAEliminar()}?
+          ¿Estás segur@ de eliminar al proyecto {determinarNombreAEliminar()}?
         </p>
       </ModalEliminar>
     </TablaContenedor>

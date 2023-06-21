@@ -87,15 +87,17 @@ class ProyectoDB {
       i_beneficiados,
     } = data
 
-    const query = `UPDATE proyectos SET id_financiador=?, id_responsable=?,
-    id_alt=?, f_monto_total=?, i_tipo_financiamiento=?, i_beneficiados=? WHERE id=? LIMIT 1`
+    // const query = `UPDATE proyectos SET id_financiador=?, id_responsable=?,
+    // id_alt=?, f_monto_total=?, i_tipo_financiamiento=?, i_beneficiados=? WHERE id=? LIMIT 1`
+    const query = `UPDATE proyectos SET id_responsable=?,
+    f_monto_total=?, i_beneficiados=? WHERE id=? LIMIT 1`
 
     const placeHolders = [
-      financiador.id,
+      // financiador.id,
       responsable.id,
-      id_alt,
+      // id_alt,
       f_monto_total,
-      i_tipo_financiamiento,
+      // i_tipo_financiamiento,
       i_beneficiados,
       id_proyecto,
     ]

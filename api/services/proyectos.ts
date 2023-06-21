@@ -28,6 +28,19 @@ class ProyectosServices {
   //   return RespuestaController.exitosa(200, "Consulta exitosa", obtener.data)
   // }
 
+  static obtenerTipoFinanciamiento(i_tipo: number) {
+    switch (i_tipo) {
+      case 1:
+        return "Estipendio"
+      case 1:
+        return "Única ministración"
+      case 1:
+        return "Varias ministraciones"
+      case 1:
+        return "Multi anual"
+    }
+  }
+
   static async obtener(id_coparte: number, id_proyecto?: number, min = false) {
     // if (min) return await this.obtebnerVminimalista()
     try {
@@ -58,23 +71,6 @@ class ProyectosServices {
           let proveedores: ProveedorProyecto[] = null
 
           if (id_proyecto) {
-            // const reRubros = await ProyectoDB.obtenerRubros(id_proyecto)
-            // if (reRubros.error) throw reRubros.data
-            // rubros = reRubros.data as RubroProyecto[]
-
-            // const reMinistraciones = await ProyectoDB.obtenerMinistraciones(
-            //   id_proyecto
-            // )
-            // if (reMinistraciones.error) throw reMinistraciones.data
-            // ministraciones = reMinistraciones.data as MinistracionProyecto[]
-
-            // const reColaboradores = await ColaboradorServices.obtener(
-            //   id_proyecto,
-            //   0
-            // )
-            // if (reColaboradores.error) throw reColaboradores.data
-            // colaboradores = reColaboradores.data as ColaboradorProyecto[]
-
             const reRubros = ProyectoDB.obtenerRubros(id_proyecto)
             const reMinistraciones =
               ProyectoDB.obtenerMinistraciones(id_proyecto)
@@ -89,7 +85,7 @@ class ProyectosServices {
             ])
 
             for (const rc of resCombinadas) {
-              if(rc.error) throw rc.data
+              if (rc.error) throw rc.data
             }
 
             rubros = resCombinadas[0].data as RubroProyecto[]
@@ -104,12 +100,15 @@ class ProyectosServices {
             id_alt,
             f_monto_total,
             i_tipo_financiamiento,
+            tipo_financiamiento: this.obtenerTipoFinanciamiento(
+              i_tipo_financiamiento
+            ),
             i_beneficiados,
             dt_registro_epoch: dt_registro,
             dt_registro: epochAFecha(dt_registro),
             financiador: {
               id: id_financiador,
-              nombre: financiador
+              nombre: financiador,
             },
             responsable: {
               id: id_responsable,
@@ -118,7 +117,7 @@ class ProyectosServices {
             rubros,
             ministraciones,
             colaboradores,
-            proveedores
+            proveedores,
           }
         })
       )
@@ -176,11 +175,11 @@ class ProyectosServices {
       const promesas: Promise<ResDB>[] = []
 
       promesas.push(ProyectoDB.actualizar(id_proyecto, data))
-      promesas.push(ProyectoDB.limpiarRubros(id_proyecto))
+      // promesas.push(ProyectoDB.limpiarRubros(id_proyecto))
 
       for (const rubro of rubros) {
         if (rubro.id) {
-          promesas.push(ProyectoDB.actualizarRubro(rubro))
+          // promesas.push(ProyectoDB.actualizarRubro(rubro))
         } else {
           promesas.push(ProyectoDB.crearRubro(id_proyecto, rubro))
         }
@@ -188,7 +187,7 @@ class ProyectosServices {
 
       for (const minis of ministraciones) {
         if (minis.id) {
-          promesas.push(ProyectoDB.actualizarMinistracion(minis))
+          // promesas.push(ProyectoDB.actualizarMinistracion(minis))
         } else {
           promesas.push(ProyectoDB.crearMinistracion(id_proyecto, minis))
         }

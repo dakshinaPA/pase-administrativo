@@ -47,7 +47,7 @@ export interface RubroProyecto {
   id?: number
   id_proyecto?: number
   id_rubro: number
-  rubro?: string
+  nombre?: string
   f_monto: string
 }
 
@@ -67,6 +67,7 @@ export interface Proyecto {
   id_alt: string
   f_monto_total: string
   i_tipo_financiamiento: number
+  tipo_financiamiento?: string
   i_beneficiados: number
   dt_registro?: string
   dt_registro_epoch?: string

@@ -157,7 +157,7 @@ const FormaFinanciador = () => {
     if (res.error) {
       console.log(res)
     } else {
-      if(modalidad === "EDITAR"){
+      if (modalidad === "EDITAR") {
         setModoEditar(false)
       } else {
         //@ts-ignore
