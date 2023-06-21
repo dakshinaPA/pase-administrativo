@@ -3,12 +3,14 @@ import { RespuestaController } from "@api/utils/response"
 import {
   Coparte,
   CoparteUsuario,
-  CoparteUsuarioVmin,
+  CoparteUsuarioMin,
   // EnlaceCoparte,
 } from "@models/coparte.model"
 import { ResCoparteDB } from "@api/models/coparte.model"
 import { epochAFecha } from "@assets/utils/common"
 import { Queries } from "@models/common.model"
+import { Proyecto } from "@models/proyecto.model"
+import { ProyectosServices } from "./proyectos"
 
 class CopartesServices {
   static obetnerStatusLegal(i_estatus_legal: 1 | 2) {
@@ -68,15 +70,20 @@ class CopartesServices {
           } = coparte
 
           let usuarios: CoparteUsuario[] = null
+          let proyectos: Proyecto[] = null
 
           if (id_coparte) {
-            const reUsuarios = await this.obtenerUsuarios(
-              Number(id_coparte),
-              false
-            )
-            if (reUsuarios.error) throw reUsuarios.data
+            const reUsuarios = this.obtenerUsuarios(Number(id_coparte), false)
+            const reProyectos = ProyectosServices.obtener(id, 0, false)
 
-            usuarios = reUsuarios.data as CoparteUsuario[]
+            const resCombinadas = await Promise.all([reUsuarios, reProyectos])
+
+            for (const rc of resCombinadas) {
+              if (rc.error) throw rc.data
+            }
+
+            usuarios = resCombinadas[0].data as CoparteUsuario[]
+            proyectos = resCombinadas[1].data as Proyecto[]
           }
 
           return {
@@ -106,6 +113,7 @@ class CopartesServices {
               nombre: nombre_administrador,
             },
             usuarios,
+            proyectos,
           }
         })
       )
@@ -223,7 +231,7 @@ class CopartesServices {
 
     const coparteUsuarioDB = re.data as CoparteUsuario[]
 
-    let usuariosCoparte: CoparteUsuarioVmin[] | CoparteUsuario[] =
+    let usuariosCoparte: CoparteUsuarioMin[] | CoparteUsuario[] =
       coparteUsuarioDB
 
     if (min) {

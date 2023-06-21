@@ -116,32 +116,29 @@ const FormaProyecto = () => {
   const cargarData = async () => {
     setIsLoading(true)
 
-    const promesas: Promise<ApiCallRes>[] = [
-      obtenerFinanciadores(),
-      obtenerUsuariosCoparte(estadoForma.id_coparte),
-    ]
+    try {
+      const promesas: Promise<ApiCallRes>[] = [
+        obtenerFinanciadores(),
+        obtenerUsuariosCoparte(estadoForma.id_coparte),
+      ]
 
-    if (modalidad === "EDITAR") {
-      promesas.push(obtener())
-    }
-
-    const resCombinadas = await Promise.all(promesas)
-
-    let error = false
-
-    for (const rc of resCombinadas) {
-      if (rc.error) {
-        console.log(rc.data)
-        error = true
+      if (modalidad === "EDITAR") {
+        promesas.push(obtener())
       }
-    }
 
-    if (!error) {
+      const resCombinadas = await Promise.all(promesas)
+
+      for (const rc of resCombinadas) {
+        if (rc.error) throw rc.data
+      }
+
       setFinanciadoresDB(resCombinadas[0].data as FinanciadorMin[])
       setUsuariosCoparteDB(resCombinadas[1].data as CoparteUsuarioMin[])
       if (modalidad === "EDITAR") {
         setEstadoForma(resCombinadas[2].data[0] as Proyecto)
       }
+    } catch (error) {
+      console.log(error)
     }
 
     setIsLoading(false)
@@ -454,6 +451,7 @@ const FormaProyecto = () => {
         <div className="col-12">
           <hr />
         </div>
+        {/* Seccion Rubros */}
         <div className="col-12 mb-3">
           <h4 className="color1 mb-0">Rubros presupuestales</h4>
         </div>
@@ -542,6 +540,7 @@ const FormaProyecto = () => {
         <div className="col-12">
           <hr />
         </div>
+        {/* Seccion Ministraciones */}
         <div className="col-12 mb-3">
           <h4 className="color1 mb-0">Ministraciones</h4>
         </div>

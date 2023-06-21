@@ -39,11 +39,12 @@ const FormaCoparte = () => {
       cargo: "",
     },
     usuarios: [],
+    proyectos: [],
   }
 
   const { temas_sociales, estados } = useCatalogos()
   const router = useRouter()
-  const idCoparte = router.query.id
+  const idCoparte = router.query.idC
   const [estadoForma, setEstadoForma] = useState(estadoInicialForma)
   const [administardoresDB, setAdministardoresDB] = useState<UsuarioMin[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(false)
@@ -51,32 +52,34 @@ const FormaCoparte = () => {
   const modalidad = idCoparte ? "EDITAR" : "CREAR"
 
   useEffect(() => {
-    cargarAdministradores()
-    if (modalidad === "EDITAR") {
-      cargarData()
-    }
+    cargarData()
   }, [])
 
   const cargarAdministradores = async () => {
-    const { error, data } = await ApiCall.get(`/usuarios?id_rol=2&min=true`)
-
-    if (error) {
-      console.log(data)
-    } else {
-      setAdministardoresDB(data as UsuarioMin[])
-    }
+    return await ApiCall.get(`/usuarios?id_rol=2&min=true`)
   }
 
   const cargarData = async () => {
     setIsLoading(true)
 
-    const { error, data } = await obtener()
+    try {
+      const promesas = [cargarAdministradores()]
+      if (modalidad === "EDITAR") {
+        promesas.push(obtener())
+      }
 
-    if (error) {
+      const resCombinadas = await Promise.all(promesas)
+
+      for (const rc of resCombinadas) {
+        if (rc.error) throw rc.data
+      }
+
+      setAdministardoresDB(resCombinadas[0].data as UsuarioMin[])
+      if (modalidad === "EDITAR") {
+        setEstadoForma(resCombinadas[1].data[0] as Coparte)
+      }
+    } catch (error) {
       console.log(error)
-    } else {
-      const dataCoparte = data[0] as Coparte
-      setEstadoForma(dataCoparte)
     }
 
     setIsLoading(false)
@@ -459,60 +462,129 @@ const FormaCoparte = () => {
         )}
       </FormaContenedor>
       {modalidad === "EDITAR" && (
-        <div className="row my-3">
-          <div className="col-12 mb-3">
-            <h2 className="color1 mb-0">Usuarios</h2>
+        <>
+          {/* Seccion usuarios */}
+          <div className="row mb-3">
+            <div className="col-12 mb-3 d-flex justify-content-between">
+              <h2 className="color1 mb-0">Usuarios</h2>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() =>
+                  router.push(`/copartes/${idCoparte}/usuarios/registro`)
+                }
+              >
+                Registrar +
+              </button>
+            </div>
+            <div className="col-12 table-responsive">
+              <table className="table">
+                <thead className="table-light">
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Cargo</th>
+                    <th>Email</th>
+                    <th>Teléfono</th>
+                    <th>Enlace</th>
+                    <th>Ver</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {estadoForma.usuarios.map(
+                    ({
+                      id,
+                      id_usuario,
+                      nombre,
+                      apellido_paterno,
+                      apellido_materno,
+                      email,
+                      telefono,
+                      cargo,
+                      b_enlace,
+                    }) => (
+                      <tr key={id}>
+                        <td>
+                          {nombre} {apellido_paterno} {apellido_materno}
+                        </td>
+                        <td>{cargo}</td>
+                        <td>{email}</td>
+                        <td>{telefono}</td>
+                        <td>
+                          <i
+                            className={b_enlace ? "bi bi-check" : "bi bi-x"}
+                          ></i>
+                        </td>
+                        <td>
+                          <button
+                            className="btn btn-dark"
+                            onClick={() =>
+                              router.push(`/usuarios/${id_usuario}`)
+                            }
+                          >
+                            <i className="bi bi-eye-fill"></i>
+                          </button>
+                        </td>
+                      </tr>
+                    )
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-          <div className="col-12 table-responsive mb-3">
-            <table className="table">
-              <thead className="table-light">
-                <tr>
-                  <th>Nombre</th>
-                  <th>Cargo</th>
-                  <th>Email</th>
-                  <th>Teléfono</th>
-                  <th>Enlace</th>
-                  <th>Ver</th>
-                </tr>
-              </thead>
-              <tbody>
-                {estadoForma.usuarios.map(
-                  ({
-                    id,
-                    id_usuario,
-                    nombre,
-                    apellido_paterno,
-                    apellido_materno,
-                    email,
-                    telefono,
-                    cargo,
-                    b_enlace,
-                  }) => (
-                    <tr key={id}>
-                      <td>
-                        {nombre} {apellido_paterno} {apellido_materno}
-                      </td>
-                      <td>{cargo}</td>
-                      <td>{email}</td>
-                      <td>{telefono}</td>
-                      <td>
-                        <i className={b_enlace ? "bi bi-check" : "bi bi-x"}></i>
-                      </td>
-                      <td>
-                        <button
-                          className="btn btn-dark"
-                          onClick={() => router.push(`/usuarios/${id_usuario}`)}
-                        >
-                          <i className="bi bi-eye-fill"></i>
-                        </button>
-                      </td>
-                    </tr>
-                  )
-                )}
-              </tbody>
-            </table>
+          {/* Seccion Proyectos */}
+          <div className="row mb-3">
+            <div className="col-12 mb-3">
+              <h2 className="color1 mb-0">Proyectos</h2>
+            </div>
+            <div className="col-12 table-responsive">
+              <table className="table">
+                <thead className="table-light">
+                  <tr>
+                    <th>#Id</th>
+                    <th>Alt Id</th>
+                    <th>Tipo de financiamiento</th>
+                    <th>Financiador</th>
+                    <th>Monto total</th>
+                    <th># Beneficiados</th>
+                    <th>Responsable</th>
+                    <th>Ver</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {estadoForma.proyectos.map(
+                    ({
+                      id,
+                      id_alt,
+                      tipo_financiamiento,
+                      financiador,
+                      f_monto_total,
+                      i_beneficiados,
+                      responsable,
+                    }) => (
+                      <tr key={id}>
+                        <td>{id}</td>
+                        <td>{id_alt}</td>
+                        <td>{tipo_financiamiento}</td>
+                        <td>{financiador.nombre}</td>
+                        <td>{f_monto_total}</td>
+                        <td>{i_beneficiados}</td>
+                        <td>{responsable.nombre}</td>
+                        <td>
+                          <button
+                            className="btn btn-dark"
+                            onClick={() => router.push(`/proyectos/${id}`)}
+                          >
+                            <i className="bi bi-eye-fill"></i>
+                          </button>
+                        </td>
+                      </tr>
+                    )
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        </>
       )}
     </RegistroContenedor>
   )

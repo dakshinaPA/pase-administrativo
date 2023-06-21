@@ -2,7 +2,6 @@ import { RespuestaDB } from "@api/utils/response"
 import { queryDB, queryDBPlaceHolder } from "./query"
 import {
   Coparte,
-  EnlaceCoparte,
   DireccionCoparte,
   CoparteUsuario,
 } from "@models/coparte.model"
@@ -236,7 +235,7 @@ class CoparteDB {
     }
   }
 
-  static async crearEnlace(data: EnlaceCoparte) {
+  static async crearEnlace(data: CoparteUsuario) {
     const {
       nombre,
       apellido_paterno,

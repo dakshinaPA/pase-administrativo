@@ -1,3 +1,5 @@
+import { Proyecto } from "./proyecto.model"
+
 // usuario tipo coparte
 export interface CoparteUsuarioMin {
   id?: number
@@ -9,8 +11,8 @@ export interface CoparteUsuarioMin {
 }
 
 export interface CoparteUsuario extends CoparteUsuarioMin {
-  email: string
-  telefono: string
+  email?: string
+  telefono?: string
   password?: string
   cargo: string
   b_enlace?: boolean
@@ -48,6 +50,10 @@ export interface AdministradorCoparte {
 }
 
 export interface Coparte {
+  
+}
+
+export interface Coparte {
   id?: number
   id_administrador?: number 
   id_alt: string
@@ -62,6 +68,7 @@ export interface Coparte {
   administrador: AdministradorCoparte
   enlace?: CoparteUsuario
   usuarios?: CoparteUsuario[]
+  proyectos?: Proyecto[]
 }
 
 export interface CoparteMin {

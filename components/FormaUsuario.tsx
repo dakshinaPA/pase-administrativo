@@ -9,7 +9,7 @@ import { BtnBack } from "@components/BtnBack"
 import { ApiCall } from "@assets/utils/apiCalls"
 
 const FormaUsuario = () => {
-  const estadoInicialForma = {
+  const estadoInicialForma: Usuario = {
     nombre: "",
     apellido_paterno: "",
     apellido_materno: "",
@@ -23,24 +23,21 @@ const FormaUsuario = () => {
       {
         id_coparte: 1,
         cargo: "",
-        b_enlace: false,
       },
     ],
   }
 
   const router = useRouter()
+  const idCoparte = router.query.idC
   const idUsuario = router.query.id
-  const [estadoForma, setEstadoForma] = useState<Usuario>(estadoInicialForma)
+  const [estadoForma, setEstadoForma] = useState(estadoInicialForma)
   const [copartesDB, setCopartesDB] = useState<CoparteMin[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [modoEditar, setModoEditar] = useState<boolean>(!idUsuario)
   const modalidad = idUsuario ? "EDITAR" : "CREAR"
 
   useEffect(() => {
-    obtenerCopartes()
-    if (modalidad === "EDITAR") {
-      cargarData()
-    }
+    cargarData()
   }, [])
 
   useEffect(() => {
@@ -51,7 +48,6 @@ const FormaUsuario = () => {
         {
           id_coparte: 1,
           cargo: "",
-          b_enlace: false,
         },
       ],
     })
@@ -60,27 +56,47 @@ const FormaUsuario = () => {
   const cargarData = async () => {
     setIsLoading(true)
 
-    const { error, data } = await obtener()
+    try {
+      const promesas = [obtenerCopartes()]
+      if (modalidad === "EDITAR") {
+        promesas.push(obtener())
+      }
 
-    if (error) {
+      const resCombinadas = await Promise.all(promesas)
+
+      for (const rc of resCombinadas) {
+        if (rc.error) throw rc.data
+      }
+
+      setCopartesDB(resCombinadas[0].data as CoparteMin[])
+
+      if (modalidad === "EDITAR") {
+        setEstadoForma(resCombinadas[1].data[0] as Usuario)
+      }
+
+      if (idCoparte) {
+        setEstadoForma({
+          ...estadoForma,
+          rol: {
+            id: 3,
+          },
+          copartes: [
+            {
+              id_coparte: Number(idCoparte),
+              cargo: "",
+            },
+          ],
+        })
+      }
+    } catch (error) {
       console.log(error)
-    } else {
-      const dataFinanciador = data[0] as Usuario
-      setEstadoForma(dataFinanciador)
     }
 
     setIsLoading(false)
   }
 
   const obtenerCopartes = async () => {
-    const { error, data } = await ApiCall.get(`/copartes?min=true`)
-
-    if (error) {
-      console.log(error)
-    } else {
-      const copartes = data as CoparteMin[]
-      setCopartesDB(copartes)
-    }
+    return await ApiCall.get(`/copartes?min=true`)
   }
 
   const obtener = async () => {
@@ -140,16 +156,15 @@ const FormaUsuario = () => {
     ev.preventDefault()
 
     setIsLoading(true)
-    const { error, data, mensaje } = modalidad === "EDITAR"
-      ? await editar()
-      : await registrar()
+    const { error, data, mensaje } =
+      modalidad === "EDITAR" ? await editar() : await registrar()
     setIsLoading(false)
 
     if (error) {
       console.log(data)
     } else {
-      if(modalidad === "CREAR"){
-        router.push('/usuarios')
+      if (modalidad === "CREAR") {
+        router.push("/usuarios")
       } else {
         setModoEditar(false)
       }
@@ -251,7 +266,7 @@ const FormaUsuario = () => {
             className="form-control"
             onChange={handleChangeRol}
             value={estadoForma.rol.id}
-            disabled={Boolean(idUsuario)}
+            disabled={Boolean(idUsuario) || Boolean(idCoparte)}
           >
             <option value="1">Super usuario</option>
             <option value="2">Administrador</option>
@@ -267,7 +282,7 @@ const FormaUsuario = () => {
                 onChange={handleChangeCoparte}
                 name="id_coparte"
                 value={estadoForma.copartes[0].id_coparte}
-                disabled={Boolean(idUsuario)}
+                disabled={Boolean(idUsuario) || Boolean(idCoparte)}
               >
                 {copartesDB.map(({ id, nombre }) => (
                   <option key={id} value={id}>
