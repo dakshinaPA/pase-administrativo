@@ -680,7 +680,8 @@ const FormaProyecto = () => {
       </FormaContenedor>
       {modalidad === "EDITAR" && (
         <>
-          <div className="row mb-3">
+          {/* Seccion Colaboradores */}
+          <div className="row mb-5">
             <div className="col-12 mb-3 d-flex justify-content-between">
               <h2 className="color1 mb-0">Colaboradores</h2>
               <button
@@ -739,6 +740,72 @@ const FormaProyecto = () => {
                             onClick={() =>
                               router.push(
                                 `/proyectos/${idProyecto}/colaboradores/${id}`
+                              )
+                            }
+                          >
+                            <i className="bi bi-eye-fill"></i>
+                          </button>
+                        </td>
+                      </tr>
+                    )
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div className="row mb-3">
+            <div className="col-12 mb-3 d-flex justify-content-between">
+              <h2 className="color1 mb-0">Proveedores</h2>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() =>
+                  router.push(`/proyectos/${idProyecto}/proveedores/registro`)
+                }
+              >
+                Registrar +
+              </button>
+            </div>
+            <div className="col-12 table-responsive">
+              <table className="table">
+                <thead className="table-light">
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Tipo</th>
+                    <th>Servicio</th>
+                    <th>Teléfono</th>
+                    <th>RFC</th>
+                    <th>CLABE</th>
+                    <th>Banco</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {estadoForma.proveedores.map(
+                    ({
+                      id,
+                      nombre,
+                      tipo,
+                      descripcion_servicio,
+                      telefono,
+                      rfc,
+                      clabe,
+                      banco,
+                    }) => (
+                      <tr key={id}>
+                        <td>{nombre}</td>
+                        <td>{tipo}</td>
+                        <td>{descripcion_servicio}</td>
+                        <td>{telefono}</td>
+                        <td>{rfc}</td>
+                        <td>{clabe}</td>
+                        <td>{banco}</td>
+                        <td>
+                          <button
+                            className="btn btn-dark"
+                            onClick={() =>
+                              router.push(
+                                `/proyectos/${idProyecto}/proveedores/${id}`
                               )
                             }
                           >

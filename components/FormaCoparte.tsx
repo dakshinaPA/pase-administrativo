@@ -465,7 +465,7 @@ const FormaCoparte = () => {
       {modalidad === "EDITAR" && (
         <>
           {/* Seccion usuarios */}
-          <div className="row mb-3">
+          <div className="row mb-5">
             <div className="col-12 mb-3 d-flex justify-content-between">
               <h2 className="color1 mb-0">Usuarios</h2>
               <button

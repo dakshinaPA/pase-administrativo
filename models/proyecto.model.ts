@@ -30,7 +30,7 @@ export interface ProveedorProyecto {
   id?: number
   id_proyecto?: number
   nombre: string
-  i_tipo: number
+  i_tipo: 1 | 2 // 1.persona fisica, 2. persona moral
   tipo?: string
   clabe: string
   id_banco: number

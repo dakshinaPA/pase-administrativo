@@ -8,7 +8,7 @@ const TablaContenedor = ({ children }) => {
 
 const FormaContenedor = ({ children, onSubmit }) => {
   return (
-    <form className="row py-3 mb-3 border" onSubmit={onSubmit} autoComplete="off">
+    <form className="row py-3 mb-5 border" onSubmit={onSubmit} autoComplete="off">
       {children}
     </form>
   )
