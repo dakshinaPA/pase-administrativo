@@ -123,6 +123,7 @@ const Financiadores = () => {
                   const {
                     id,
                     id_alt,
+                    id_coparte,
                     financiador,
                     tipo_financiamiento,
                     f_monto_total,
@@ -144,7 +145,7 @@ const Financiadores = () => {
                         <div className="d-flex">
                           <button
                             className="btn btn-dark me-1"
-                            onClick={() => router.push(`/proyectos/${id}`)}
+                            onClick={() => router.push(`/copartes/${id_coparte}/proyectos/${id}`)}
                           >
                             <i className="bi bi-eye-fill"></i>
                           </button>

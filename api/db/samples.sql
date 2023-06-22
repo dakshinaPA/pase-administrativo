@@ -272,7 +272,7 @@ CREATE TABLE `proyectos` (
     `id_proyecto` INT UNSIGNED NOT NULL,
     `i_numero` TINYINT UNSIGNED NOT NULL COMMENT 'numero de ministracion',
     `f_monto` VARCHAR(20) NOT NULL,
-    `i_grupo` INT UNSIGNED NOT NULL,
+    `i_grupo` VARCHAR(10) NOT NULL,
     `dt_recepcion` VARCHAR(10) NOT NULL,
     `b_activo` TINYINT UNSIGNED NOT NULL DEFAULT 1,
     `dt_registro` VARCHAR(10) NOT NULL,

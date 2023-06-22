@@ -50,7 +50,7 @@ const FormaProyecto = () => {
   const estaInicialdFormaMinistracion: MinistracionProyecto = {
     i_numero: 1,
     f_monto: "0",
-    i_grupo: 0,
+    i_grupo: "0",
     dt_recepcion: "",
   }
 
@@ -112,10 +112,12 @@ const FormaProyecto = () => {
     }
 
     //limpiar lista ministraciones si hay un cambio de tipo financiamiento
-    setEstadoForma({
-      ...estadoForma,
-      ministraciones: [],
-    })
+    if(modalidad === "CREAR"){
+      setEstadoForma({
+        ...estadoForma,
+        ministraciones: [],
+      })
+    }
   }, [estadoForma.i_tipo_financiamiento])
 
   const cargarData = async () => {
@@ -308,7 +310,7 @@ const FormaProyecto = () => {
     } else {
       if (modalidad === "CREAR") {
         //@ts-ignore
-        router.push(`/proyectos/${data.idInsertado}`)
+        router.push(`/copartes/${estadoForma.id_coparte}/proyectos/${data.idInsertado}`)
       } else {
         setModoEditar(false)
       }

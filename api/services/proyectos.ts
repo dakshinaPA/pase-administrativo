@@ -32,11 +32,11 @@ class ProyectosServices {
     switch (i_tipo) {
       case 1:
         return "Estipendio"
-      case 1:
+      case 2:
         return "Única ministración"
-      case 1:
+      case 3:
         return "Varias ministraciones"
-      case 1:
+      case 4:
         return "Multi anual"
     }
   }
