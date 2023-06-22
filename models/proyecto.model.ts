@@ -7,8 +7,8 @@ export interface ColaboradorProyecto {
   nombre: string
   apellido_paterno: string
   apellido_materno: string
-  i_tipo: number
-  tipo: string
+  i_tipo: 1 | 2
+  tipo?: string
   clabe: string
   id_banco: number
   banco?: string
@@ -56,7 +56,7 @@ export interface MinistracionProyecto {
   id_proyecto?: number
   i_numero: number
   f_monto: string
-  i_grupo: number
+  i_grupo: string
   dt_recepcion: string
   dt_registro?: string
 }

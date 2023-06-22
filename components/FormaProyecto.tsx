@@ -40,6 +40,8 @@ const FormaProyecto = () => {
     },
     rubros: [],
     ministraciones: [],
+    colaboradores: [],
+    proveedores: [],
   }
 
   const estadoInicialFormaRubros: RubroProyecto = {
@@ -112,7 +114,7 @@ const FormaProyecto = () => {
     }
 
     //limpiar lista ministraciones si hay un cambio de tipo financiamiento
-    if(modalidad === "CREAR"){
+    if (modalidad === "CREAR") {
       setEstadoForma({
         ...estadoForma,
         ministraciones: [],
@@ -309,8 +311,10 @@ const FormaProyecto = () => {
       console.log(data)
     } else {
       if (modalidad === "CREAR") {
-        //@ts-ignore
-        router.push(`/copartes/${estadoForma.id_coparte}/proyectos/${data.idInsertado}`)
+        router.push(
+          //@ts-ignore
+          `/copartes/${estadoForma.id_coparte}/proyectos/${data.idInsertado}`
+        )
       } else {
         setModoEditar(false)
       }
@@ -674,6 +678,58 @@ const FormaProyecto = () => {
           </div>
         )}
       </FormaContenedor>
+      {modalidad === "EDITAR" && (
+        <>
+          <div className="row mb-3">
+            <div className="col-12 mb-3 d-flex justify-content-between">
+              <h2 className="color1 mb-0">Colaboradores</h2>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() =>
+                  router.push(`/proyectos/${idProyecto}/colaboradores/registro`)
+                }
+              >
+                Registrar +
+              </button>
+            </div>
+            <div className="col-12 table-responsive">
+              <table className="table">
+                <thead className="table-light">
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Ver</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {estadoForma.colaboradores.map(
+                    ({
+                      id,
+                      nombre
+                    }) => (
+                      <tr key={id}>
+                        <td>
+                          {nombre}
+                        </td>
+                        <td>
+                          <button
+                            className="btn btn-dark"
+                            onClick={() =>
+                              router.push(`/proyectos/${idProyecto}/colaboradores/${id}`)
+                            }
+                          >
+                            <i className="bi bi-eye-fill"></i>
+                          </button>
+                        </td>
+                      </tr>
+                    )
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
     </RegistroContenedor>
   )
 }

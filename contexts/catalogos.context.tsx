@@ -66,8 +66,6 @@ const CatalogosProvider = ({ children }) => {
     }
   }
 
-  // const auth = { catalogos }
-
   return (
     <CatalogosContext.Provider value={catalogos}>
       {children}
