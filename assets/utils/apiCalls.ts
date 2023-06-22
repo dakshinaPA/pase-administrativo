@@ -1,6 +1,6 @@
 export interface ApiCallRes {
   error: boolean
-  data: object[]
+  data: object[] | object
   mensaje?: string
 }
 

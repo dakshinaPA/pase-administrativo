@@ -39,7 +39,7 @@ const FormaColaborador = () => {
   }
 
   const router = useRouter()
-  const { estados } = useCatalogos()
+  const { estados, bancos } = useCatalogos()
   const idProyecto = Number(router.query.id)
   const idColaborador = Number(router.query.idC)
   const [estadoForma, setEstadoForma] = useState(estadoInicialForma)
@@ -124,6 +124,9 @@ const FormaColaborador = () => {
 
   const handleSubmit = async (ev: React.SyntheticEvent) => {
     ev.preventDefault()
+
+    console.log(estadoForma)
+    return
 
     setIsLoading(true)
     const { error, data, mensaje } =
@@ -249,7 +252,13 @@ const FormaColaborador = () => {
                 onChange={handleChange}
                 name="id_banco"
                 value={estadoForma.id_banco}
-              ></select>
+              >
+                {bancos.map(({ id, nombre }) => (
+                  <option key={id} value={id}>
+                    {nombre}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="col-5 col-lg-2 mb-3">
               <label className="form-label">Monto total</label>

@@ -45,6 +45,17 @@ class CatalogosDB {
       return RespuestaDB.fallida(error)
     }
   }
+
+  static async obtenerBancos() {
+    let query = `SELECT id, nombre FROM bancos WHERE b_activo=1`
+
+    try {
+      const res = await queryDB(query)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
 }
 
 export { CatalogosDB }

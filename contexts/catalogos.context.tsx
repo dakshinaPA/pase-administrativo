@@ -6,6 +6,7 @@ import {
   EstadoDB,
   TemasSocialesDB,
   RubrosPresupuestalesDB,
+  BancosDB,
 } from "@api/models/catalogos.model"
 
 const CatalogosContext = createContext(null)
@@ -15,6 +16,7 @@ interface CatalogosDB {
   paises: PaisDB[]
   temas_sociales: TemasSocialesDB[]
   rubros_presupuestales: RubrosPresupuestalesDB[]
+  bancos: BancosDB[]
 }
 
 const CatalogosProvider = ({ children }) => {
@@ -23,6 +25,7 @@ const CatalogosProvider = ({ children }) => {
     paises: [],
     temas_sociales: [],
     rubros_presupuestales: [],
+    bancos: [],
   }
 
   const [catalogos, setCatalogos] = useState(estadoInicialCatalogos)
@@ -32,37 +35,11 @@ const CatalogosProvider = ({ children }) => {
   }, [])
 
   const obtenerTodos = async () => {
-    const estados = ApiCall.get("/catalogos/estados")
-    const paises = ApiCall.get("/catalogos/paises")
-    const temas_sociales = ApiCall.get("/catalogos/temas_sociales")
-    const rubros_presupuestales = ApiCall.get(
-      "/catalogos/rubros_presupuestales"
-    )
-
-    const resCombinadas = await Promise.all([
-      estados,
-      paises,
-      temas_sociales,
-      rubros_presupuestales,
-    ])
-
-    let error = false
-
-    for (const rc of resCombinadas) {
-      if (rc.error) {
-        error = true
-        console.log(rc.data)
-      }
-    }
-
-    if (!error) {
-      setCatalogos({
-        estados: resCombinadas[0].data as EstadoDB[],
-        paises: resCombinadas[1].data as PaisDB[],
-        temas_sociales: resCombinadas[2].data as TemasSocialesDB[],
-        rubros_presupuestales: resCombinadas[3]
-          .data as RubrosPresupuestalesDB[],
-      })
+    const catalogos = await ApiCall.get("/catalogos")
+    if (catalogos.error) {
+      console.log(catalogos.data)
+    } else {
+      setCatalogos(catalogos.data as CatalogosDB)
     }
   }
 
@@ -74,7 +51,7 @@ const CatalogosProvider = ({ children }) => {
 }
 
 const useCatalogos = () => {
-  const catalogos = useContext(CatalogosContext)
+  const catalogos: CatalogosDB = useContext(CatalogosContext)
   return catalogos
 }
 
