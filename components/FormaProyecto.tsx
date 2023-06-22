@@ -21,8 +21,13 @@ const FormaProyecto = () => {
   const { user } = useAuth()
   if (!user) return null
 
+  const { rubros_presupuestales } = useCatalogos()
+  const router = useRouter()
+  const idProyecto = router.query.id
+  const idCoparte = router.query.idC
+
   const estadoInicialForma: Proyecto = {
-    id_coparte: user.copartes[0].id_coparte,
+    id_coparte: Number(idCoparte) || user.copartes[0].id_coparte,
     id_alt: "",
     f_monto_total: "0",
     i_tipo_financiamiento: 1,
@@ -49,9 +54,10 @@ const FormaProyecto = () => {
     dt_recepcion: "",
   }
 
-  const router = useRouter()
-  const { rubros_presupuestales } = useCatalogos()
-  const idProyecto = router.query.id
+  // const { rubros_presupuestales } = useCatalogos()
+  // const router = useRouter()
+  // const idProyecto = router.query.id
+  // const idCoparte = router.query.idC
   const [estadoForma, setEstadoForma] = useState(estadoInicialForma)
   const [formaRubros, setFormaRubros] = useState(estadoInicialFormaRubros)
   const [formaMinistracion, setFormaMinistracion] = useState(
@@ -69,17 +75,17 @@ const FormaProyecto = () => {
     cargarData()
   }, [])
 
-  useEffect(() => {
-    //limpiar responsable
-    setEstadoForma({
-      ...estadoForma,
-      responsable: {
-        id: 0,
-      },
-    })
+  // useEffect(() => {
+  //   //limpiar responsable
+  //   setEstadoForma({
+  //     ...estadoForma,
+  //     responsable: {
+  //       id: 0,
+  //     },
+  //   })
 
-    cargarUsuariosCoparte(estadoForma.id_coparte)
-  }, [estadoForma.id_coparte])
+  //   cargarUsuariosCoparte(estadoForma.id_coparte)
+  // }, [estadoForma.id_coparte])
 
   useEffect(() => {
     setFormaMinistracion({
@@ -116,15 +122,21 @@ const FormaProyecto = () => {
   const cargarData = async () => {
     setIsLoading(true)
 
+    let idCoparte = estadoForma.id_coparte
+    let dataProyecto: Proyecto = null
+
     try {
+      if (modalidad === "EDITAR") {
+        const reProyecto = await obtener()
+        if (reProyecto.error) throw reProyecto.data
+        dataProyecto = reProyecto.data[0] as Proyecto
+        idCoparte = dataProyecto.id_coparte
+      }
+
       const promesas: Promise<ApiCallRes>[] = [
         obtenerFinanciadores(),
-        obtenerUsuariosCoparte(estadoForma.id_coparte),
+        obtenerUsuariosCoparte(idCoparte),
       ]
-
-      if (modalidad === "EDITAR") {
-        promesas.push(obtener())
-      }
 
       const resCombinadas = await Promise.all(promesas)
 
@@ -135,7 +147,7 @@ const FormaProyecto = () => {
       setFinanciadoresDB(resCombinadas[0].data as FinanciadorMin[])
       setUsuariosCoparteDB(resCombinadas[1].data as CoparteUsuarioMin[])
       if (modalidad === "EDITAR") {
-        setEstadoForma(resCombinadas[2].data[0] as Proyecto)
+        setEstadoForma(dataProyecto)
       }
     } catch (error) {
       console.log(error)
@@ -382,7 +394,7 @@ const FormaProyecto = () => {
             onChange={handleChange}
             value={estadoForma.id_coparte}
             name="id_coparte"
-            disabled={Boolean(idProyecto)}
+            disabled={Boolean(idProyecto) || Boolean(idCoparte)}
           >
             {user.copartes.map(({ id_coparte, nombre }) => (
               <option key={id_coparte} value={id_coparte}>

@@ -159,7 +159,8 @@ const FormaCoparte = () => {
       console.log(res)
     } else {
       if (modalidad === "CREAR") {
-        router.push("/copartes")
+        //@ts-ignore
+        router.push(`/copartes/${res.data.idInsertado}`)
       } else {
         setModoEditar(false)
       }
@@ -533,8 +534,17 @@ const FormaCoparte = () => {
           </div>
           {/* Seccion Proyectos */}
           <div className="row mb-3">
-            <div className="col-12 mb-3">
+            <div className="col-12 mb-3 d-flex justify-content-between">
               <h2 className="color1 mb-0">Proyectos</h2>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() =>
+                  router.push(`/copartes/${idCoparte}/proyectos/registro`)
+                }
+              >
+                Registrar +
+              </button>
             </div>
             <div className="col-12 table-responsive">
               <table className="table">

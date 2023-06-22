@@ -53,6 +53,23 @@ const FormaUsuario = () => {
     })
   }, [estadoForma.rol.id])
 
+  useEffect(() => {
+    if (idCoparte) {
+      setEstadoForma({
+        ...estadoForma,
+        rol: {
+          id: 3,
+        },
+        copartes: [
+          {
+            id_coparte: Number(idCoparte),
+            cargo: "",
+          },
+        ],
+      })
+    }
+  }, [copartesDB])
+
   const cargarData = async () => {
     setIsLoading(true)
 
@@ -72,21 +89,6 @@ const FormaUsuario = () => {
 
       if (modalidad === "EDITAR") {
         setEstadoForma(resCombinadas[1].data[0] as Usuario)
-      }
-
-      if (idCoparte) {
-        setEstadoForma({
-          ...estadoForma,
-          rol: {
-            id: 3,
-          },
-          copartes: [
-            {
-              id_coparte: Number(idCoparte),
-              cargo: "",
-            },
-          ],
-        })
       }
     } catch (error) {
       console.log(error)
@@ -164,7 +166,8 @@ const FormaUsuario = () => {
       console.log(data)
     } else {
       if (modalidad === "CREAR") {
-        router.push("/usuarios")
+        //@ts-ignore
+        router.push(`/usuarios/${data.idInsertado}`)
       } else {
         setModoEditar(false)
       }

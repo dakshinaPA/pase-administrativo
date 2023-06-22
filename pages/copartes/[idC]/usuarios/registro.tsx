@@ -1,7 +1,7 @@
 import { FormaUsuario } from "@components/FormaUsuario"
 
-const RegistroUsuario = () => {
+const RegistroUsuarioCoparte = () => {
   return <FormaUsuario />
 }
 
-export default RegistroUsuario
+export default RegistroUsuarioCoparte
