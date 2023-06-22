@@ -14,19 +14,19 @@ import { epochAFecha } from "@assets/utils/common"
 import { ResDB } from "@api/models/respuestas.model"
 
 class ProyectosServices {
-  // static async obtebnerVminimalista() {
-  //   const obtener = await FinanciadorDB.obtenerVminimalista()
+  static async obtenerVMin(id_proyecto?: number) {
+    const re = await ProyectoDB.obtenerVMin(id_proyecto)
 
-  //   if (obtener.error) {
-  //     return RespuestaController.fallida(
-  //       400,
-  //       "Error al obtener financiadores",
-  //       obtener.error
-  //     )
-  //   }
+    if (re.error) {
+      return RespuestaController.fallida(
+        400,
+        "Error al obtener financiadores",
+        re.data
+      )
+    }
 
-  //   return RespuestaController.exitosa(200, "Consulta exitosa", obtener.data)
-  // }
+    return RespuestaController.exitosa(200, "Consulta exitosa", re.data)
+  }
 
   static obtenerTipoFinanciamiento(i_tipo: number) {
     switch (i_tipo) {
@@ -42,7 +42,7 @@ class ProyectosServices {
   }
 
   static async obtener(id_coparte: number, id_proyecto?: number, min = false) {
-    // if (min) return await this.obtebnerVminimalista()
+    if (min) return await this.obtenerVMin(id_proyecto)
     try {
       const obtenerDB = await ProyectoDB.obtener(id_coparte, id_proyecto)
       if (obtenerDB.error) throw obtenerDB.data

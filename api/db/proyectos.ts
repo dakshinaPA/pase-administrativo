@@ -8,16 +8,20 @@ import {
 import { fechaActualAEpoch } from "@assets/utils/common"
 
 class ProyectoDB {
-  // static async obtenerVminimalista() {
-  //   let query = `SELECT id, nombre from financiadores`
+  static async obtenerVMin(id_proyecto?: number) {
+    let query = `SELECT id, id_alt from proyectos WHERE b_activo=1`
 
-  //   try {
-  //     const res = await queryDB(query)
-  //     return RespuestaDB.exitosa(res)
-  //   } catch (error) {
-  //     return RespuestaDB.fallida(error)
-  //   }
-  // }
+    if(id_proyecto){
+      query += ` AND id=${id_proyecto}`
+    }
+
+    try {
+      const res = await queryDB(query)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
 
   static async obtener(id_coparte: number, id_proyecto: number) {
     let query = `SELECT p.id, p.id_financiador, p.id_coparte, p.id_responsable, p.id_alt, p.f_monto_total, p.i_tipo_financiamiento, p.i_beneficiados, p.dt_registro,

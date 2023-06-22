@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/router"
 import { ChangeEvent } from "@assets/models/formEvents.model"
-import { ColaboradorProyecto } from "@models/proyecto.model"
+import { ColaboradorProyecto, ProyectoMin } from "@models/proyecto.model"
 import { Loader } from "@components/Loader"
 import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
 import { BtnBack } from "@components/BtnBack"
@@ -9,8 +9,12 @@ import { ApiCall } from "@assets/utils/apiCalls"
 import { useCatalogos } from "@contexts/catalogos.context"
 
 const FormaColaborador = () => {
+
+  const router = useRouter()
+  const idProyecto = Number(router.query.id)
+
   const estadoInicialForma: ColaboradorProyecto = {
-    id_proyecto: 0,
+    id_proyecto: idProyecto || 0,
     nombre: "",
     apellido_paterno: "",
     apellido_materno: "",
@@ -38,12 +42,10 @@ const FormaColaborador = () => {
     },
   }
 
-  const router = useRouter()
   const { estados, bancos } = useCatalogos()
-  const idProyecto = Number(router.query.id)
   const idColaborador = Number(router.query.idC)
   const [estadoForma, setEstadoForma] = useState(estadoInicialForma)
-  // const [copartesDB, setCopartesDB] = useState<CoparteMin[]>([])
+  const [proyectosDB, setProyectosDB] = useState<ProyectoMin[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [modoEditar, setModoEditar] = useState<boolean>(!idColaborador)
   const modalidad = idColaborador ? "EDITAR" : "CREAR"
@@ -56,7 +58,7 @@ const FormaColaborador = () => {
     setIsLoading(true)
 
     try {
-      const promesas = []
+      const promesas = [obtenerProyectos()]
       if (modalidad === "EDITAR") {
         promesas.push(obtener())
       }
@@ -67,6 +69,8 @@ const FormaColaborador = () => {
         if (rc.error) throw rc.data
       }
 
+      setProyectosDB(resCombinadas[0].data as ProyectoMin[])
+
       if (modalidad === "EDITAR") {
         setEstadoForma(resCombinadas[1].data[0] as ColaboradorProyecto)
       }
@@ -75,6 +79,11 @@ const FormaColaborador = () => {
     }
 
     setIsLoading(false)
+  }
+
+  const obtenerProyectos = async () => {
+    const url = `/proyectos/${idProyecto}?min=true`
+    return await ApiCall.get(url)
   }
 
   const obtener = async () => {
@@ -179,7 +188,14 @@ const FormaColaborador = () => {
                 onChange={handleChange}
                 name="id_proyecto"
                 value={estadoForma.id_proyecto}
-              ></select>
+                disabled
+              >
+                {proyectosDB.map(({ id, id_alt }) => (
+                  <option key={id} value={id}>
+                    {id_alt}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </div>

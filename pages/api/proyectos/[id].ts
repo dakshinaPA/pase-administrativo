@@ -4,10 +4,11 @@ import { NextApiRequest, NextApiResponse } from "next"
 export default async (req: NextApiRequest, res: NextApiResponse) => {
 
   const id_proyecto = Number(req.query.id)
+  const min = Boolean(req.query.min)
 
   switch (req.method) {
     case "GET":
-      var { status, ...data } = await ProyectosServices.obtener(0, id_proyecto)
+      var { status, ...data } = await ProyectosServices.obtener(0, id_proyecto, min)
       res.status(status).json(data)
       break
     case "PUT":

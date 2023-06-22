@@ -61,10 +61,13 @@ export interface MinistracionProyecto {
   dt_registro?: string
 }
 
-export interface Proyecto {
+export interface ProyectoMin {
   id?: number
-  id_coparte: number
   id_alt: string
+}
+
+export interface Proyecto extends ProyectoMin {
+  id_coparte: number
   f_monto_total: string
   i_tipo_financiamiento: number
   tipo_financiamiento?: string
