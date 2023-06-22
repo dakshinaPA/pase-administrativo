@@ -105,9 +105,9 @@ const FormaColaborador = () => {
   }
 
   const cancelar = () => {
-    // modalidad === "EDITAR"
-    //   ? setModoEditar(false)
-    //   : router.push("/colaboradores")
+    modalidad === "EDITAR"
+      ? setModoEditar(false)
+      : router.push("/proyectos")
   }
 
   const handleChange = (ev: ChangeEvent) => {
@@ -133,9 +133,7 @@ const FormaColaborador = () => {
 
   const handleSubmit = async (ev: React.SyntheticEvent) => {
     ev.preventDefault()
-
     console.log(estadoForma)
-    return
 
     setIsLoading(true)
     const { error, data, mensaje } =
@@ -147,7 +145,7 @@ const FormaColaborador = () => {
     } else {
       if (modalidad === "CREAR") {
         //@ts-ignore
-        router.push(`/colaboradores/${data.idInsertado}`)
+        router.push(`/proyectos/${idProyecto}/colaboradores/${data.idInsertado}`)
       } else {
         setModoEditar(false)
       }
@@ -245,6 +243,7 @@ const FormaColaborador = () => {
                 onChange={handleChange}
                 name="i_tipo"
                 value={estadoForma.i_tipo}
+                disabled={!modoEditar}
               >
                 <option value="1">Asimilado</option>
                 <option value="2">Honorarios</option>
@@ -268,6 +267,7 @@ const FormaColaborador = () => {
                 onChange={handleChange}
                 name="id_banco"
                 value={estadoForma.id_banco}
+                disabled={!modoEditar}
               >
                 {bancos.map(({ id, nombre }) => (
                   <option key={id} value={id}>

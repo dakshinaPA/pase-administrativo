@@ -698,24 +698,48 @@ const FormaProyecto = () => {
                 <thead className="table-light">
                   <tr>
                     <th>Nombre</th>
-                    <th>Ver</th>
+                    <th>Tipo</th>
+                    <th>Servicio</th>
+                    <th>Teléfono</th>
+                    <th>RFC</th>
+                    <th>CLABE</th>
+                    <th>Banco</th>
+                    <th>Monto total</th>
+                    <th>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   {estadoForma.colaboradores.map(
                     ({
                       id,
-                      nombre
+                      nombre,
+                      apellido_paterno,
+                      tipo,
+                      nombre_servicio,
+                      telefono,
+                      rfc,
+                      clabe,
+                      banco,
+                      f_monto_total,
                     }) => (
                       <tr key={id}>
                         <td>
-                          {nombre}
+                          {nombre} {apellido_paterno}
                         </td>
+                        <td>{tipo}</td>
+                        <td>{nombre_servicio}</td>
+                        <td>{telefono}</td>
+                        <td>{rfc}</td>
+                        <td>{clabe}</td>
+                        <td>{banco}</td>
+                        <td>{f_monto_total}</td>
                         <td>
                           <button
                             className="btn btn-dark"
                             onClick={() =>
-                              router.push(`/proyectos/${idProyecto}/colaboradores/${id}`)
+                              router.push(
+                                `/proyectos/${idProyecto}/colaboradores/${id}`
+                              )
                             }
                           >
                             <i className="bi bi-eye-fill"></i>

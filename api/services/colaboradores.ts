@@ -25,6 +25,7 @@ class ColaboradorServices {
         colaboradoresDB.map(async (colaborador) => {
           const {
             id,
+            id_proyecto,
             nombre,
             apellido_paterno,
             apellido_materno,
@@ -55,6 +56,7 @@ class ColaboradorServices {
 
           return {
             id,
+            id_proyecto,
             nombre,
             apellido_paterno,
             apellido_materno,
