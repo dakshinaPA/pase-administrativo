@@ -21,7 +21,7 @@ class FinanciadorDB {
   }
 
   static async obtener(id: number) {
-    let query = `SELECT f.id, f.nombre, f.representante_legal, f.pagina_web, f.rfc, f.actividad, f.i_tipo, f.dt_constitucion, f.dt_registro,
+    let query = `SELECT f.id, f.id_alt, f.nombre, f.representante_legal, f.pagina_web, f.rfc, f.actividad, f.i_tipo, f.dt_constitucion, f.dt_registro,
       fe.id id_enlace, fe.nombre nombre_enlace, fe.apellido_paterno, fe.apellido_materno, fe.email, fe.telefono,
       fd.id id_direccion, fd.calle, fd.numero_ext, fd.numero_int, fd.colonia, fd.municipio, fd.cp, fd.id_estado, fd.estado, fd.id_pais,
       p.nombre pais
@@ -45,6 +45,7 @@ class FinanciadorDB {
 
   static async crear(data: Financiador) {
     const {
+      id_alt,
       nombre,
       representante_legal,
       pagina_web,
@@ -54,10 +55,11 @@ class FinanciadorDB {
       dt_constitucion,
     } = data
 
-    const query = `INSERT INTO financiadores ( nombre, representante_legal, pagina_web,
-      rfc, actividad, i_tipo, dt_constitucion, dt_registro) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )`
+    const query = `INSERT INTO financiadores ( id_alt, nombre, representante_legal, pagina_web,
+      rfc, actividad, i_tipo, dt_constitucion, dt_registro) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ? )`
 
     const placeHolders = [
+      id_alt,
       nombre,
       representante_legal,
       pagina_web,
@@ -78,6 +80,7 @@ class FinanciadorDB {
 
   static async actualizar(id: number, data: Financiador) {
     const {
+      id_alt,
       nombre,
       representante_legal,
       pagina_web,
@@ -87,10 +90,11 @@ class FinanciadorDB {
       dt_constitucion,
     } = data
 
-    const query = `UPDATE financiadores SET nombre=?, representante_legal=?,
+    const query = `UPDATE financiadores SET id_alt=?, nombre=?, representante_legal=?,
       pagina_web=?, rfc=?, actividad=?, i_tipo=?, dt_constitucion=? WHERE id=? LIMIT 1`
 
     const placeHolders = [
+      id_alt,
       nombre,
       representante_legal,
       pagina_web,

@@ -5,6 +5,16 @@
     --color-forma: #ececec;
 }
 
+ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
+a {
+  text-decoration: none;
+}
+
 .colorForma {
     background-color: var(--color-forma);
 }
@@ -41,6 +51,8 @@
   overflow-y: auto;
   position: relative;
 }
+
+
 
 /* @media only screen and (max-width: 992px) {
 

@@ -621,7 +621,10 @@ const FormaProyecto = () => {
           </div>
         )}
         <div className="col-12 col-md table-responsive mb-3">
-          <label className="form-label">Ministraciones a registrar</label>
+          <label className="form-label">
+            Ministraciones{" "}
+            {modalidad === "CREAR" ? "a registrar" : "registradas"}
+          </label>
           <table className="table">
             <thead className="table-light">
               <tr>

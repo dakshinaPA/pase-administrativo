@@ -138,8 +138,36 @@ class ProyectosServices {
 
   static async crear(data: Proyecto) {
     try {
-      const { rubros, ministraciones } = data
-      const cr = await ProyectoDB.crear(data)
+      const { rubros, ministraciones, id_coparte, financiador } = data
+
+      const reIdAltFinanciador = ProyectoDB.obtenerIdAltFinanciador(
+        financiador.id
+      )
+      const reIdAltCoparte = ProyectoDB.obtenerIdAltCoparte(id_coparte)
+      const reIdUltimoProyecto = ProyectoDB.obtenerUltimoId()
+
+      const promesasIds = await Promise.all([
+        reIdAltFinanciador,
+        reIdAltCoparte,
+        reIdUltimoProyecto,
+      ])
+
+      for (const pid of promesasIds) {
+        if (pid.error) throw pid.data
+      }
+
+      const idAltFinanciador = promesasIds[0].data[0].id_alt as string
+      const idAltCoparte = promesasIds[1].data[0].id_alt as string
+      const ultimoId = promesasIds[2].data[0].id
+        ? promesasIds[2].data[0].id + 1
+        : "1"
+
+      const dataActualizada: Proyecto = {
+        ...data,
+        id_alt: `${idAltFinanciador}_${idAltCoparte}_${ultimoId}`,
+      }
+
+      const cr = await ProyectoDB.crear(dataActualizada)
       if (cr.error) throw cr.data
 
       // @ts-ignore

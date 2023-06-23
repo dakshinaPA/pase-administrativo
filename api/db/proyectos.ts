@@ -233,6 +233,39 @@ class ProyectoDB {
       return RespuestaDB.fallida(error)
     }
   }
+
+  static async obtenerIdAltFinanciador(id_financiador: number) {
+    let query = `SELECT id_alt FROM financiadores WHERE id=${id_financiador} LIMIT 1`
+
+    try {
+      const res = await queryDB(query)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
+
+  static async obtenerIdAltCoparte(id_coparte: number) {
+    let query = `SELECT id_alt FROM copartes WHERE id=${id_coparte} LIMIT 1`
+
+    try {
+      const res = await queryDB(query)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
+
+  static async obtenerUltimoId() {
+    let query = `SELECT id FROM proyectos ORDER BY id DESC LIMIT 1`
+
+    try {
+      const res = await queryDB(query)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
 }
 
 export { ProyectoDB }

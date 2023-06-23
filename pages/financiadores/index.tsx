@@ -137,7 +137,8 @@ const Financiadores = () => {
             <table className="table">
               <thead>
                 <tr>
-                  <th>#id</th>
+                  <th>#Dd</th>
+                  <th>Id Alt</th>
                   <th>Nombre</th>
                   <th>Tipo</th>
                   <th>Enlace</th>
@@ -152,6 +153,7 @@ const Financiadores = () => {
                 {busquedaFiltrados.map((financiador) => {
                   const {
                     id,
+                    id_alt,
                     nombre,
                     tipo,
                     pagina_web,
@@ -163,6 +165,7 @@ const Financiadores = () => {
                   return (
                     <tr key={id}>
                       <td>{id}</td>
+                      <td>{id_alt}</td>
                       <td>{nombre}</td>
                       <td>{tipo}</td>
                       <td>{nombreEnlace}</td>

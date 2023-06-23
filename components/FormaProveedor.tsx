@@ -197,7 +197,7 @@ const FormaProveedor = () => {
             onChange={handleChange}
             name="i_tipo"
             value={estadoForma.i_tipo}
-            disabled={!modoEditar}
+            disabled={Boolean(idProveedor)}
           >
             <option value="1">Persona física</option>
             <option value="2">Persona moral</option>

@@ -1,5 +1,6 @@
 export interface ResFinanciadorDB {
   id: number
+  id_alt: string
   nombre: string
   representante_legal: string
   pagina_web: string

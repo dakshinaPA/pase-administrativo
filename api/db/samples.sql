@@ -82,6 +82,7 @@ INSERT INTO `rubros_presupuestales` (`nombre`) VALUES
 
 CREATE TABLE `financiadores` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `id_alt` VARCHAR(20) NOT NULL,
   `nombre` VARCHAR(30) NOT NULL COMMENT 'Denominacion social',
   `representante_legal` VARCHAR(80) NOT NULL,
   `pagina_web` VARCHAR(100) NOT NULL DEFAULT '',

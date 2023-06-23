@@ -33,6 +33,7 @@ export interface NotaFinanciador {
 
 export interface Financiador {
   id?: number
+  id_alt: string
   nombre: string
   representante_legal: string
   pagina_web: string
@@ -40,7 +41,7 @@ export interface Financiador {
   actividad: string
   dt_constitucion: string
   dt_constitucion_format?: string // formato dd/mm/aaaa
-  i_tipo: number // 1.aliado, 2.indeéndiente
+  i_tipo: 1 | 2 // 1.aliado, 2.indeéndiente
   tipo?: string 
   dt_registro?: string
   enlace: EnlaceFinanciador

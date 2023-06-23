@@ -10,7 +10,8 @@ import { useAuth } from "@contexts/auth.context"
 import { useCatalogos } from "@contexts/catalogos.context"
 
 const FormaFinanciador = () => {
-  const estadoInicialForma = {
+  const estadoInicialForma: Financiador = {
+    id_alt: "",
     nombre: "",
     rfc: "",
     i_tipo: 1,
@@ -43,8 +44,7 @@ const FormaFinanciador = () => {
   const { estados, paises } = useCatalogos()
   const router = useRouter()
   const idFinanciador = router.query.id
-  const [estadoForma, setEstadoForma] =
-    useState<Financiador>(estadoInicialForma)
+  const [estadoForma, setEstadoForma] = useState(estadoInicialForma)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [mensajeNota, setMensajeNota] = useState<string>("")
   const [modoEditar, setModoEditar] = useState<boolean>(!idFinanciador)
@@ -220,6 +220,17 @@ const FormaFinanciador = () => {
         </div>
       </div>
       <FormaContenedor onSubmit={handleSubmit}>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label">ID alterno</label>
+          <input
+            className="form-control"
+            type="text"
+            onChange={handleChange}
+            name="id_alt"
+            value={estadoForma.id_alt}
+            disabled={!modoEditar}
+          />
+        </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Nombre</label>
           <input

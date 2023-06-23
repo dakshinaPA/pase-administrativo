@@ -8,9 +8,9 @@ class FinanciadoresServices {
   static obtenerTipo(id_tipo: 1 | 2) {
     switch (id_tipo) {
       case 1:
-        return "ALIADO"
+        return "Aliado"
       case 2:
-        return "INDEPENDIENTE"
+        return "Independiente"
     }
   }
 
@@ -41,6 +41,7 @@ class FinanciadoresServices {
         financiadoresDB.map(async (financiador) => {
           const {
             id,
+            id_alt,
             nombre,
             representante_legal,
             pagina_web,
@@ -81,6 +82,7 @@ class FinanciadoresServices {
 
           return {
             id,
+            id_alt,
             nombre,
             representante_legal,
             pagina_web,
