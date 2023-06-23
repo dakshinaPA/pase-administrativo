@@ -16,6 +16,7 @@ import { CoparteUsuarioMin } from "@models/coparte.model"
 import { useCatalogos } from "@contexts/catalogos.context"
 import { RubrosPresupuestalesDB } from "@api/models/catalogos.model"
 import { inputDateAformato } from "@assets/utils/common"
+import { BtnEditar } from "./Botones"
 
 const FormaProyecto = () => {
   const { user } = useAuth()
@@ -42,6 +43,7 @@ const FormaProyecto = () => {
     ministraciones: [],
     colaboradores: [],
     proveedores: [],
+    solicitudes_presupuesto: []
   }
 
   const estadoInicialFormaRubros: RubroProyecto = {
@@ -128,6 +130,7 @@ const FormaProyecto = () => {
     try {
       const promesas = [obtenerFinanciadores()]
 
+      //evitar doble llamado a api
       if (idCoparte) {
         promesas.push(obtenerUsuariosCoparte(idCoparte))
       }
@@ -143,7 +146,9 @@ const FormaProyecto = () => {
       }
 
       setFinanciadoresDB(resCombinadas[0].data as FinanciadorMin[])
-      setUsuariosCoparteDB(resCombinadas[1].data as CoparteUsuarioMin[])
+      if (idCoparte) {
+        setUsuariosCoparteDB(resCombinadas[1].data as CoparteUsuarioMin[])
+      }
       if (modalidad === "EDITAR") {
         setEstadoForma(resCombinadas[2].data[0] as Proyecto)
       }
@@ -349,12 +354,7 @@ const FormaProyecto = () => {
             {!idProyecto && <h2 className="color1 mb-0">Registrar proyecto</h2>}
           </div>
           {!modoEditar && idProyecto && (
-            <button
-              className="btn btn-secondary"
-              onClick={() => setModoEditar(true)}
-            >
-              Editar
-            </button>
+            <BtnEditar onClick={() => setModoEditar(true)} />
           )}
         </div>
       </div>
@@ -686,7 +686,7 @@ const FormaProyecto = () => {
           {/* Seccion Colaboradores */}
           <div className="row mb-5">
             <div className="col-12 mb-3 d-flex justify-content-between">
-              <h2 className="color1 mb-0">Colaboradores</h2>
+              <h3 className="color1 mb-0">Colaboradores</h3>
               <button
                 type="button"
                 className="btn btn-secondary"
@@ -756,14 +756,84 @@ const FormaProyecto = () => {
               </table>
             </div>
           </div>
-          <div className="row mb-3">
+          {/* Seccion Proveedores */}
+          <div className="row mb-5">
             <div className="col-12 mb-3 d-flex justify-content-between">
-              <h2 className="color1 mb-0">Proveedores</h2>
+              <h3 className="color1 mb-0">Proveedores</h3>
               <button
                 type="button"
                 className="btn btn-secondary"
                 onClick={() =>
                   router.push(`/proyectos/${idProyecto}/proveedores/registro`)
+                }
+              >
+                Registrar +
+              </button>
+            </div>
+            <div className="col-12 table-responsive">
+              <table className="table">
+                <thead className="table-light">
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Tipo</th>
+                    <th>Servicio</th>
+                    <th>Teléfono</th>
+                    <th>RFC</th>
+                    <th>CLABE</th>
+                    <th>Banco</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {estadoForma.proveedores.map(
+                    ({
+                      id,
+                      nombre,
+                      tipo,
+                      descripcion_servicio,
+                      telefono,
+                      rfc,
+                      clabe,
+                      banco,
+                    }) => (
+                      <tr key={id}>
+                        <td>{nombre}</td>
+                        <td>{tipo}</td>
+                        <td>{descripcion_servicio}</td>
+                        <td>{telefono}</td>
+                        <td>{rfc}</td>
+                        <td>{clabe}</td>
+                        <td>{banco}</td>
+                        <td>
+                          <button
+                            className="btn btn-dark"
+                            onClick={() =>
+                              router.push(
+                                `/proyectos/${idProyecto}/proveedores/${id}`
+                              )
+                            }
+                          >
+                            <i className="bi bi-eye-fill"></i>
+                          </button>
+                        </td>
+                      </tr>
+                    )
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          {/* Seccion solicitudes */}
+          <div className="row mb-3">
+            <div className="col-12 mb-3 d-flex justify-content-between">
+              <h3 className="color1 mb-0">Solicitudes de presupuesto</h3>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() =>
+                  router.push(
+                    `/proyectos/${idProyecto}/solicitudes-presupuesto/registro`
+                  )
                 }
               >
                 Registrar +

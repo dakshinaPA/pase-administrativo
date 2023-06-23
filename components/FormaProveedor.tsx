@@ -7,6 +7,7 @@ import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
 import { BtnBack } from "@components/BtnBack"
 import { ApiCall } from "@assets/utils/apiCalls"
 import { useCatalogos } from "@contexts/catalogos.context"
+import { BtnEditar } from "./Botones"
 
 const FormaProveedor = () => {
   const router = useRouter()
@@ -147,18 +148,13 @@ const FormaProveedor = () => {
       <div className="row mb-3">
         <div className="col-12 d-flex justify-content-between">
           <div className="d-flex align-items-center">
-            <BtnBack navLink="/proveedores" />
+            {/* <BtnBack navLink="/proveedores" /> */}
             {modalidad === "CREAR" && (
               <h2 className="color1 mb-0">Registrar Proveedor</h2>
             )}
           </div>
           {!modoEditar && idProveedor && (
-            <button
-              className="btn btn-secondary"
-              onClick={() => setModoEditar(true)}
-            >
-              Editar
-            </button>
+            <BtnEditar onClick={() => setModoEditar(true)} />
           )}
         </div>
       </div>

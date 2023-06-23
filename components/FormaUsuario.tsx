@@ -7,6 +7,7 @@ import { Loader } from "@components/Loader"
 import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
 import { BtnBack } from "@components/BtnBack"
 import { ApiCall } from "@assets/utils/apiCalls"
+import { BtnEditar } from "./Botones"
 
 const FormaUsuario = () => {
   const estadoInicialForma: Usuario = {
@@ -187,12 +188,7 @@ const FormaUsuario = () => {
             {!idUsuario && <h2 className="color1 mb-0">Registrar usuario</h2>}
           </div>
           {!modoEditar && idUsuario && (
-            <button
-              className="btn btn-secondary"
-              onClick={() => setModoEditar(true)}
-            >
-              Editar
-            </button>
+            <BtnEditar onClick={() => setModoEditar(true)} />
           )}
         </div>
       </div>

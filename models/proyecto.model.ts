@@ -1,5 +1,6 @@
 // import { Colaborador } from "./colaborador.model"
 import { Direccion } from "./direccion.model"
+import { SolicitudPresupuesto } from "./solicitud-presupuesto.model"
 
 export interface ColaboradorProyecto {
   id?: number
@@ -86,4 +87,5 @@ export interface Proyecto extends ProyectoMin {
   ministraciones: MinistracionProyecto[]
   colaboradores?: ColaboradorProyecto[]
   proveedores?: ProveedorProyecto[]
+  solicitudes_presupuesto?: SolicitudPresupuesto[]
 }

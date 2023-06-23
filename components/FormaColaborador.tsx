@@ -7,9 +7,9 @@ import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
 import { BtnBack } from "@components/BtnBack"
 import { ApiCall } from "@assets/utils/apiCalls"
 import { useCatalogos } from "@contexts/catalogos.context"
+import { BtnEditar } from "./Botones"
 
 const FormaColaborador = () => {
-
   const router = useRouter()
   const idProyecto = Number(router.query.id)
 
@@ -105,9 +105,7 @@ const FormaColaborador = () => {
   }
 
   const cancelar = () => {
-    modalidad === "EDITAR"
-      ? setModoEditar(false)
-      : router.push("/proyectos")
+    modalidad === "EDITAR" ? setModoEditar(false) : router.push("/proyectos")
   }
 
   const handleChange = (ev: ChangeEvent) => {
@@ -144,8 +142,10 @@ const FormaColaborador = () => {
       console.log(data)
     } else {
       if (modalidad === "CREAR") {
-        //@ts-ignore
-        router.push(`/proyectos/${idProyecto}/colaboradores/${data.idInsertado}`)
+        router.push(
+          //@ts-ignore
+          `/proyectos/${idProyecto}/colaboradores/${data.idInsertado}`
+        )
       } else {
         setModoEditar(false)
       }
@@ -160,19 +160,14 @@ const FormaColaborador = () => {
     <RegistroContenedor>
       <div className="row mb-3">
         <div className="col-12 d-flex justify-content-between">
-          <div className="d-flex align-items-center">
-            <BtnBack navLink="/colaboradores" />
+          <div>
+            {/* <BtnBack navLink="/colaboradores" /> */}
             {modalidad === "CREAR" && (
               <h2 className="color1 mb-0">Registrar Colaborador</h2>
             )}
           </div>
           {!modoEditar && idColaborador && (
-            <button
-              className="btn btn-secondary"
-              onClick={() => setModoEditar(true)}
-            >
-              Editar
-            </button>
+            <BtnEditar onClick={() => setModoEditar(true)} />
           )}
         </div>
       </div>

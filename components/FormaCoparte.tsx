@@ -8,6 +8,7 @@ import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
 import { BtnBack } from "@components/BtnBack"
 import { ApiCall } from "@assets/utils/apiCalls"
 import { useCatalogos } from "@contexts/catalogos.context"
+import { BtnEditar } from "./Botones"
 
 const FormaCoparte = () => {
   const estadoInicialForma: Coparte = {
@@ -180,12 +181,7 @@ const FormaCoparte = () => {
             {!idCoparte && <h2 className="color1 mb-0">Registrar coparte</h2>}
           </div>
           {!modoEditar && idCoparte && (
-            <button
-              className="btn btn-secondary"
-              onClick={() => setModoEditar(true)}
-            >
-              Editar
-            </button>
+            <BtnEditar onClick={() => setModoEditar(true)} />
           )}
         </div>
       </div>

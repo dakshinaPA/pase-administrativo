@@ -29,7 +29,7 @@ export interface SolicitudPresupuesto {
   id_partida_presupuestal: number //id rubro
   f_importe: string
   f_monto_comprobar: string
-  i_estatus: EstatusSolicitud
+  i_estatus?: EstatusSolicitud
   estatus?: string
   cuenta: CuentaSolicitud
   comprobantes?: ComprobanteSolicitud[]

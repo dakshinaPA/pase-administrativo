@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, useReducer } from "react"
 import { useRouter } from "next/router"
 import { ChangeEvent } from "@assets/models/formEvents.model"
 import { Financiador, NotaFinanciador } from "@models/financiador.model"
@@ -8,43 +8,97 @@ import { BtnBack } from "@components/BtnBack"
 import { ApiCall } from "@assets/utils/apiCalls"
 import { useAuth } from "@contexts/auth.context"
 import { useCatalogos } from "@contexts/catalogos.context"
+import { BtnEditar } from "./Botones"
+
+const reducer = (state: Financiador, action) => {
+  const { type, value } = action
+
+  switch (type) {
+    case "CARGA_INICIAL":
+      return value
+    case "BASE":
+      return {
+        ...state,
+        [value[0]]: value[1],
+      }
+    case "DIRECCION":
+      return {
+        ...state,
+        direccion: {
+          ...state.direccion,
+          [value[0]]: value[1],
+        },
+      }
+    case "ENLACE":
+      return {
+        ...state,
+        enlace: {
+          ...state.enlace,
+          [value[0]]: value[1],
+        },
+      }
+    case "RECARGAR_NOTAS":
+      return {
+        ...state,
+        notas: value,
+      }
+    case "CAMBIO_PAIS":
+      let llave = "id_estado"
+      let valor: string | number = 1
+
+      if (value == 1) {
+        llave = "estado"
+        valor = ""
+      }
+
+      return {
+        ...state,
+        direccion: {
+          ...state.direccion,
+          [llave]: valor,
+        },
+      }
+    default:
+      return state
+  }
+}
+
+const estadoInicialForma: Financiador = {
+  id_alt: "",
+  nombre: "",
+  rfc: "",
+  i_tipo: 1,
+  actividad: "",
+  representante_legal: "",
+  pagina_web: "",
+  dt_constitucion: "",
+  enlace: {
+    nombre: "",
+    apellido_paterno: "",
+    apellido_materno: "",
+    email: "",
+    telefono: "",
+  },
+  direccion: {
+    calle: "",
+    numero_ext: "",
+    numero_int: "",
+    colonia: "",
+    municipio: "",
+    cp: "",
+    id_estado: 1,
+    estado: "",
+    id_pais: 1,
+  },
+  notas: [],
+}
 
 const FormaFinanciador = () => {
-  const estadoInicialForma: Financiador = {
-    id_alt: "",
-    nombre: "",
-    rfc: "",
-    i_tipo: 1,
-    actividad: "",
-    representante_legal: "",
-    pagina_web: "",
-    dt_constitucion: "",
-    enlace: {
-      nombre: "",
-      apellido_paterno: "",
-      apellido_materno: "",
-      email: "",
-      telefono: "",
-    },
-    direccion: {
-      calle: "",
-      numero_ext: "",
-      numero_int: "",
-      colonia: "",
-      municipio: "",
-      cp: "",
-      id_estado: 1,
-      estado: "",
-      id_pais: 1,
-    },
-    notas: [],
-  }
-
   const { user } = useAuth()
   const { estados, paises } = useCatalogos()
   const router = useRouter()
   const idFinanciador = router.query.id
-  const [estadoForma, setEstadoForma] = useState(estadoInicialForma)
+  const [estadoForma, dispatch] = useReducer(reducer, estadoInicialForma)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [mensajeNota, setMensajeNota] = useState<string>("")
   const [modoEditar, setModoEditar] = useState<boolean>(!idFinanciador)
@@ -58,23 +112,10 @@ const FormaFinanciador = () => {
   }, [])
 
   useEffect(() => {
-    if (estadoForma.direccion.id_pais == 1) {
-      setEstadoForma({
-        ...estadoForma,
-        direccion: {
-          ...estadoForma.direccion,
-          estado: "",
-        },
-      })
-    } else {
-      setEstadoForma({
-        ...estadoForma,
-        direccion: {
-          ...estadoForma.direccion,
-          id_estado: 1,
-        },
-      })
-    }
+    dispatch({
+      type: "CAMBIO_PAIS",
+      value: estadoForma.direccion.id_pais,
+    })
   }, [estadoForma.direccion.id_pais])
 
   const cargarData = async () => {
@@ -86,7 +127,10 @@ const FormaFinanciador = () => {
       console.log(error)
     } else {
       const dataFinanciador = data[0] as Financiador
-      setEstadoForma(dataFinanciador)
+      dispatch({
+        type: "CARGA_INICIAL",
+        value: dataFinanciador,
+      })
     }
 
     setIsLoading(false)
@@ -114,36 +158,12 @@ const FormaFinanciador = () => {
     idFinanciador ? setModoEditar(false) : router.push("/financiadores")
   }
 
-  const handleChange = (ev: ChangeEvent) => {
+  const handleChange = (ev: ChangeEvent, type: string) => {
     const { name, value } = ev.target
 
-    setEstadoForma({
-      ...estadoForma,
-      [name]: value,
-    })
-  }
-
-  const handleChangeDireccion = (ev: ChangeEvent) => {
-    const { name, value } = ev.target
-
-    setEstadoForma({
-      ...estadoForma,
-      direccion: {
-        ...estadoForma.direccion,
-        [name]: value,
-      },
-    })
-  }
-
-  const handleChangeEnlace = (ev: ChangeEvent) => {
-    const { name, value } = ev.target
-
-    setEstadoForma({
-      ...estadoForma,
-      enlace: {
-        ...estadoForma.enlace,
-        [name]: value,
-      },
+    dispatch({
+      type,
+      value: [name, value],
     })
   }
 
@@ -187,9 +207,9 @@ const FormaFinanciador = () => {
         console.log(re.data)
       } else {
         const notasDB = re.data as NotaFinanciador[]
-        setEstadoForma({
-          ...estadoForma,
-          notas: notasDB,
+        dispatch({
+          type: "RECARGAR_NOTAS",
+          value: notasDB,
         })
       }
     }
@@ -210,12 +230,7 @@ const FormaFinanciador = () => {
             )}
           </div>
           {!modoEditar && idFinanciador && (
-            <button
-              className="btn btn-secondary"
-              onClick={() => setModoEditar(true)}
-            >
-              Editar
-            </button>
+            <BtnEditar onClick={() => setModoEditar(true)} />
           )}
         </div>
       </div>
@@ -225,7 +240,7 @@ const FormaFinanciador = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChange}
+            onChange={(e) => handleChange(e, "BASE")}
             name="id_alt"
             value={estadoForma.id_alt}
             disabled={!modoEditar}
@@ -236,7 +251,7 @@ const FormaFinanciador = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChange}
+            onChange={(e) => handleChange(e, "BASE")}
             name="nombre"
             value={estadoForma.nombre}
             disabled={!modoEditar}
@@ -247,7 +262,7 @@ const FormaFinanciador = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChange}
+            onChange={(e) => handleChange(e, "BASE")}
             name="rfc"
             value={estadoForma.rfc}
             disabled={!modoEditar}
@@ -257,7 +272,7 @@ const FormaFinanciador = () => {
           <label className="form-label">Tipo</label>
           <select
             className="form-control"
-            onChange={handleChange}
+            onChange={(e) => handleChange(e, "BASE")}
             name="i_tipo"
             value={estadoForma.i_tipo}
             disabled={!modoEditar}
@@ -271,7 +286,7 @@ const FormaFinanciador = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChange}
+            onChange={(e) => handleChange(e, "BASE")}
             name="actividad"
             value={estadoForma.actividad}
             disabled={!modoEditar}
@@ -282,7 +297,7 @@ const FormaFinanciador = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChange}
+            onChange={(e) => handleChange(e, "BASE")}
             name="representante_legal"
             value={estadoForma.representante_legal}
             disabled={!modoEditar}
@@ -293,7 +308,7 @@ const FormaFinanciador = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChange}
+            onChange={(e) => handleChange(e, "BASE")}
             name="pagina_web"
             value={estadoForma.pagina_web}
             disabled={!modoEditar}
@@ -304,7 +319,7 @@ const FormaFinanciador = () => {
           <input
             className="form-control"
             type="date"
-            onChange={handleChange}
+            onChange={(e) => handleChange(e, "BASE")}
             name="dt_constitucion"
             value={estadoForma.dt_constitucion}
             disabled={!modoEditar}
@@ -321,7 +336,7 @@ const FormaFinanciador = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChangeDireccion}
+            onChange={(e) => handleChange(e, "DIRECCION")}
             name="calle"
             value={estadoForma.direccion.calle}
             disabled={!modoEditar}
@@ -332,7 +347,7 @@ const FormaFinanciador = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChangeDireccion}
+            onChange={(e) => handleChange(e, "DIRECCION")}
             name="numero_ext"
             value={estadoForma.direccion.numero_ext}
             disabled={!modoEditar}
@@ -343,7 +358,7 @@ const FormaFinanciador = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChangeDireccion}
+            onChange={(e) => handleChange(e, "DIRECCION")}
             name="numero_int"
             value={estadoForma.direccion.numero_int}
             disabled={!modoEditar}
@@ -354,7 +369,7 @@ const FormaFinanciador = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChangeDireccion}
+            onChange={(e) => handleChange(e, "DIRECCION")}
             name="colonia"
             value={estadoForma.direccion.colonia}
             disabled={!modoEditar}
@@ -365,7 +380,7 @@ const FormaFinanciador = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChangeDireccion}
+            onChange={(e) => handleChange(e, "DIRECCION")}
             name="municipio"
             value={estadoForma.direccion.municipio}
             disabled={!modoEditar}
@@ -376,7 +391,7 @@ const FormaFinanciador = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChangeDireccion}
+            onChange={(e) => handleChange(e, "DIRECCION")}
             name="cp"
             value={estadoForma.direccion.cp}
             disabled={!modoEditar}
@@ -387,7 +402,7 @@ const FormaFinanciador = () => {
             <label className="form-label">Estado</label>
             <select
               className="form-control"
-              onChange={handleChangeDireccion}
+              onChange={(e) => handleChange(e, "DIRECCION")}
               name="id_estado"
               value={estadoForma.direccion.id_estado}
               disabled={!modoEditar}
@@ -405,7 +420,7 @@ const FormaFinanciador = () => {
             <input
               className="form-control"
               type="text"
-              onChange={handleChangeDireccion}
+              onChange={(e) => handleChange(e, "DIRECCION")}
               name="estado"
               value={estadoForma.direccion.estado}
               disabled={!modoEditar}
@@ -416,7 +431,7 @@ const FormaFinanciador = () => {
           <label className="form-label">País</label>
           <select
             className="form-control"
-            onChange={handleChangeDireccion}
+            onChange={(e) => handleChange(e, "DIRECCION")}
             name="id_pais"
             value={estadoForma.direccion.id_pais}
             disabled={!modoEditar}
@@ -439,7 +454,7 @@ const FormaFinanciador = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChangeEnlace}
+            onChange={(e) => handleChange(e, "ENLACE")}
             name="nombre"
             value={estadoForma.enlace.nombre}
             disabled={!modoEditar}
@@ -450,7 +465,7 @@ const FormaFinanciador = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChangeEnlace}
+            onChange={(e) => handleChange(e, "ENLACE")}
             name="apellido_paterno"
             value={estadoForma.enlace.apellido_paterno}
             disabled={!modoEditar}
@@ -461,7 +476,7 @@ const FormaFinanciador = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChangeEnlace}
+            onChange={(e) => handleChange(e, "ENLACE")}
             name="apellido_materno"
             value={estadoForma.enlace.apellido_materno}
             disabled={!modoEditar}
@@ -472,7 +487,7 @@ const FormaFinanciador = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChangeEnlace}
+            onChange={(e) => handleChange(e, "ENLACE")}
             name="email"
             value={estadoForma.enlace.email}
             disabled={!modoEditar}
@@ -483,7 +498,7 @@ const FormaFinanciador = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChangeEnlace}
+            onChange={(e) => handleChange(e, "ENLACE")}
             name="telefono"
             value={estadoForma.enlace.telefono}
             disabled={!modoEditar}
