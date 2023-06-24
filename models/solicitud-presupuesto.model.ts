@@ -13,11 +13,12 @@ export interface ComprobanteSolicitud {
   f_retenciones: string
   i_regimen_fiscal: number
   i_forma_pago: number
+  i_metodo_pago: number
 }
 
 export type TipoGastoSolicitud = 1 | 2 | 3 | 4 | 5
 
-export type EstatusSolicitud = 1 | 2 | 3 | 4
+export type EstatusSolicitud = 1 | 2 | 3 | 4 | 5
 
 export interface SolicitudPresupuesto {
   id?: number 
@@ -28,7 +29,7 @@ export interface SolicitudPresupuesto {
   descripcion_gasto: string
   id_partida_presupuestal: number //id rubro
   f_importe: string
-  f_monto_comprobar: string
+  // f_monto_comprobar: string
   i_estatus?: EstatusSolicitud
   estatus?: string
   cuenta: CuentaSolicitud

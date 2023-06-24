@@ -77,9 +77,9 @@ const Financiadores = () => {
     setShowModalEliminar(false)
   }
 
-  const busquedaFiltrados = resultadosFiltrados.filter(({ nombre, rfc }) => {
+  const busquedaFiltrados = resultadosFiltrados.filter(({ nombre, id_alt }) => {
     const query = aMinuscula(inputBusqueda)
-    return aMinuscula(nombre).includes(query) || aMinuscula(rfc).includes(query)
+    return aMinuscula(nombre).includes(query) || aMinuscula(id_alt).includes(query)
   })
 
   const determinarNombreAEliminar = (): string => {
@@ -141,6 +141,7 @@ const Financiadores = () => {
                   <th>Id Alt</th>
                   <th>Nombre</th>
                   <th>Tipo</th>
+                  <th>País</th>
                   <th>Enlace</th>
                   <th>Email</th>
                   <th>Teléfono</th>
@@ -158,6 +159,7 @@ const Financiadores = () => {
                     tipo,
                     pagina_web,
                     enlace,
+                    direccion
                   } = financiador
 
                   const nombreEnlace = `${enlace.nombre} ${enlace.apellido_paterno} ${enlace.apellido_materno}`
@@ -168,6 +170,7 @@ const Financiadores = () => {
                       <td>{id_alt}</td>
                       <td>{nombre}</td>
                       <td>{tipo}</td>
+                      <td>{direccion.pais}</td>
                       <td>{nombreEnlace}</td>
                       <td>{enlace.email}</td>
                       <td>{enlace.telefono}</td>

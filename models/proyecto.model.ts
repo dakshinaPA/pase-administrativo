@@ -2,6 +2,13 @@
 import { Direccion } from "./direccion.model"
 import { SolicitudPresupuesto } from "./solicitud-presupuesto.model"
 
+export interface QueriesProyecto {
+  id_coparte: number
+  id: number
+  min: boolean
+  registro_solicitud: boolean
+}
+
 export interface ColaboradorProyecto {
   id?: number
   id_proyecto?: number
@@ -65,6 +72,7 @@ export interface MinistracionProyecto {
 export interface ProyectoMin {
   id?: number
   id_alt: string
+  rubros?: RubroProyecto[]
 }
 
 export interface Proyecto extends ProyectoMin {

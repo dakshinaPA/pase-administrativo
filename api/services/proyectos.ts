@@ -1,6 +1,7 @@
 import { ProyectoDB } from "@api/db/proyectos"
-import { ColaboradorServices } from "@api/services/colaboradores"
-import { ProveedorServices } from "@api/services/proveedores"
+import { ColaboradorServices } from "./colaboradores"
+import { ProveedorServices } from "./proveedores"
+import { SolicitudesPresupuestoServices } from "./solicitudes-presupuesto"
 import { RespuestaController } from "@api/utils/response"
 import {
   Proyecto,
@@ -8,24 +9,43 @@ import {
   MinistracionProyecto,
   ColaboradorProyecto,
   ProveedorProyecto,
+  ProyectoMin,
+  QueriesProyecto,
 } from "@models/proyecto.model"
+import { SolicitudPresupuesto } from "@models/solicitud-presupuesto.model"
 import { ResProyectoDB } from "@api/models/proyecto.model"
 import { epochAFecha } from "@assets/utils/common"
 import { ResDB } from "@api/models/respuestas.model"
 
+
 class ProyectosServices {
   static async obtenerVMin(id_proyecto?: number) {
-    const re = await ProyectoDB.obtenerVMin(id_proyecto)
+    try {
+      const re = await ProyectoDB.obtenerVMin(id_proyecto)
+      if (re.error) throw re.data
 
-    if (re.error) {
+      // const proyectos = re.data as Proyecto[]
+
+      // const reRubrosProyectos = await Promise.all(
+      //   proyectos.map(async (proyecto) => {
+      //     const reRubros = await ProyectoDB.obtenerRubros(proyecto.id)
+      //     if (reRubros.error) throw reRubros.data
+
+      //     return {
+      //       ...proyecto,
+      //       rubros: reRubros.data as RubroProyecto[],
+      //     }
+      //   })
+      // )
+
+      return RespuestaController.exitosa(200, "Consulta exitosa", re.data)
+    } catch (error) {
       return RespuestaController.fallida(
         400,
         "Error al obtener financiadores",
-        re.data
+        error
       )
     }
-
-    return RespuestaController.exitosa(200, "Consulta exitosa", re.data)
   }
 
   static obtenerTipoFinanciamiento(i_tipo: number) {
@@ -41,7 +61,14 @@ class ProyectosServices {
     }
   }
 
-  static async obtener(id_coparte: number, id_proyecto?: number, min = false) {
+  static async obtener(queries) {
+    const {
+      id_coparte,
+      id: id_proyecto,
+      min,
+      registro_solicitud,
+    } = queries as QueriesProyecto
+
     if (min) return await this.obtenerVMin(id_proyecto)
     try {
       const obtenerDB = await ProyectoDB.obtener(id_coparte, id_proyecto)
@@ -69,29 +96,37 @@ class ProyectosServices {
           let ministraciones: MinistracionProyecto[] = null
           let colaboradores: ColaboradorProyecto[] = null
           let proveedores: ProveedorProyecto[] = null
+          let solicitudes: SolicitudPresupuesto[] = null
 
           if (id_proyecto) {
+
             const reRubros = ProyectoDB.obtenerRubros(id_proyecto)
-            const reMinistraciones =
-              ProyectoDB.obtenerMinistraciones(id_proyecto)
             const reColaboradores = ColaboradorServices.obtener(id_proyecto, 0)
             const reProveedores = ProveedorServices.obtener(id_proyecto, 0)
+            
+            const promesas = [reRubros, reColaboradores, reProveedores]
 
-            const resCombinadas = await Promise.all([
-              reRubros,
-              reMinistraciones,
-              reColaboradores,
-              reProveedores,
-            ])
+            if(!registro_solicitud){
+              const reMinistraciones =
+                ProyectoDB.obtenerMinistraciones(id_proyecto)
+              const reSolicitudes = SolicitudesPresupuestoServices.obtener(id_proyecto, 0)
+
+              promesas.push(reMinistraciones, reSolicitudes)
+            }
+
+            const resCombinadas = await Promise.all(promesas)
 
             for (const rc of resCombinadas) {
               if (rc.error) throw rc.data
             }
 
             rubros = resCombinadas[0].data as RubroProyecto[]
-            ministraciones = resCombinadas[1].data as MinistracionProyecto[]
-            colaboradores = resCombinadas[2].data as ColaboradorProyecto[]
-            proveedores = resCombinadas[3].data as ProveedorProyecto[]
+            colaboradores = resCombinadas[1].data as ColaboradorProyecto[]
+            proveedores = resCombinadas[2].data as ProveedorProyecto[]
+            if(!registro_solicitud){
+              ministraciones = resCombinadas[3].data as MinistracionProyecto[]
+              solicitudes = resCombinadas[4].data as SolicitudPresupuesto[]
+            }
           }
 
           return {
@@ -118,6 +153,7 @@ class ProyectosServices {
             ministraciones,
             colaboradores,
             proveedores,
+            solicitudes
           }
         })
       )

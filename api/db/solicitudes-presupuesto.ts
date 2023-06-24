@@ -9,7 +9,7 @@ import { fechaActualAEpoch } from "@assets/utils/common"
 class SolicitudesPresupuestoDB {
   static async obtener(id_proyecto: number, id_solicitud: number) {
     let query = `SELECT sp.id, sp.id_proyecto, sp.i_tipo_gasto, sp.clabe, sp.id_banco, sp.titular_cuenta, sp.rfc_titular, sp.email_titular, sp.proveedor,
-    sp.descripcion_gasto, sp.id_partida_presupuestal, sp.f_importe, sp.f_monto_comprobar, sp.i_estatus, sp.dt_registro FROM solicitudes_presupuesto sp WHERE sp.b_activo=1`
+    sp.descripcion_gasto, sp.id_partida_presupuestal, sp.f_importe, sp.i_estatus, sp.dt_registro FROM solicitudes_presupuesto sp WHERE sp.b_activo=1`
 
     if (id_proyecto) {
       query += ` AND sp.id_proyecto=${id_proyecto}`
@@ -36,11 +36,11 @@ class SolicitudesPresupuestoDB {
       descripcion_gasto,
       id_partida_presupuestal,
       f_importe,
-      f_monto_comprobar,
+      // f_monto_comprobar,
     } = data
 
     const query = `INSERT INTO solicitudes_presupuesto (id_proyecto, i_tipo_gasto, clabe, id_banco, titular_cuenta, rfc_titular, email_titular, proveedor,
-      descripcion_gasto, id_partida_presupuestal, f_importe, f_monto_comprobar, i_estatus, dt_registro ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      descripcion_gasto, id_partida_presupuestal, f_importe, i_estatus, dt_registro ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
     const placeHolders = [
       id_proyecto,
@@ -54,7 +54,7 @@ class SolicitudesPresupuestoDB {
       descripcion_gasto,
       id_partida_presupuestal,
       f_importe,
-      f_monto_comprobar,
+      // f_monto_comprobar,
       1,
       fechaActualAEpoch(),
     ]
@@ -70,8 +70,7 @@ class SolicitudesPresupuestoDB {
   static async actualizar(id: number, data: SolicitudPresupuesto) {
     const {} = data
 
-    const query =
-      "UPDATE solicitudes_presupuestos SET tipoGasto=?, proveedor=?, clabe=?, banco=?, titular=?, rfc=?, email=?, email2=?, partida=?, descripcion=?, importe=?, comprobante=? WHERE id=? LIMIT 1"
+    const query = ``
 
     const placeHolders = []
 

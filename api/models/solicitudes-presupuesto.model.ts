@@ -16,7 +16,7 @@ export interface ResSolicitudPresupuestoDB {
   descripcion_gasto: string
   id_partida_presupuestal: number
   f_importe: string
-  f_monto_comprobar: string
+  // f_monto_comprobar: string
   i_estatus: EstatusSolicitud
   dt_registro: string
 }

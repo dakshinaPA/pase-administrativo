@@ -176,8 +176,6 @@ const Usuarios = () => {
                 <tr>
                   <th>#id</th>
                   <th>Nombre</th>
-                  <th>Apellido paterno</th>
-                  <th>Apellido materno</th>
                   <th>Email</th>
                   <th>Telefono</th>
                   {rolUsuarioSelect == 3 && <th>Enlace</th>}
@@ -201,9 +199,7 @@ const Usuarios = () => {
                   return (
                     <tr key={`coparte_${id}`}>
                       <td>{id}</td>
-                      <td>{nombre}</td>
-                      <td>{apellido_paterno}</td>
-                      <td>{apellido_materno}</td>
+                      <td>{nombre} {apellido_paterno} {apellido_materno}</td>
                       <td>{email}</td>
                       <td>{telefono}</td>
                       {rolUsuarioSelect == 3 && (

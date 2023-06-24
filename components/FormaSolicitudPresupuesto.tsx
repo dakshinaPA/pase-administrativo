@@ -1,7 +1,7 @@
 import { useEffect, useState, useReducer } from "react"
 import { useRouter } from "next/router"
 import { ChangeEvent } from "@assets/models/formEvents.model"
-import { ColaboradorProyecto, ProyectoMin } from "@models/proyecto.model"
+import { ProyectoMin } from "@models/proyecto.model"
 import { Loader } from "@components/Loader"
 import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
 import { BtnBack } from "@components/BtnBack"
@@ -54,8 +54,7 @@ const FormaSolicitudPresupuesto = () => {
     proveedor: "",
     descripcion_gasto: "",
     id_partida_presupuestal: 1,
-    f_importe: "",
-    f_monto_comprobar: "",
+    f_importe: "0",
     comprobantes: [
       // {
       //     folio_fiscal: "F34982",
@@ -107,7 +106,7 @@ const FormaSolicitudPresupuesto = () => {
   }
 
   const obtenerProyectos = async () => {
-    const url = `/proyectos/${idProyecto}?min=true`
+    const url = `/proyectos/${idProyecto}?registro_solicitud=true`
     return await ApiCall.get(url)
   }
 
@@ -164,6 +163,10 @@ const FormaSolicitudPresupuesto = () => {
       }
     }
   }
+
+  const rubrosProyecto =
+    proyectosDB.find((proyecto) => proyecto.id == estadoForma.id_proyecto)
+      ?.rubros || []
 
   if (isLoading) {
     return <Loader />
@@ -225,7 +228,13 @@ const FormaSolicitudPresupuesto = () => {
             onChange={(e) => handleChange(e, "BASE")}
             name="id_partida_presupuestal"
             value={estadoForma.id_partida_presupuestal}
-          ></select>
+          >
+            {rubrosProyecto.map(({ id_rubro, nombre }) => (
+              <option key={id_rubro} value={id_rubro}>
+                {nombre}
+              </option>
+            ))}
+          </select>
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Titular</label>
@@ -327,9 +336,76 @@ const FormaSolicitudPresupuesto = () => {
             type="text"
             onChange={(e) => handleChange(e, "BASE")}
             name="f_monto_comprobar"
-            value={estadoForma.f_monto_comprobar}
-            disabled={!modoEditar}
+            value={0}
+            disabled
           />
+        </div>
+        <div className="col-12">
+          <hr />
+        </div>
+        {/* Seccion comprobantes */}
+        <div className="col-12 mb-3">
+          <h4 className="color1 mb-0">Comprobantes</h4>
+        </div>
+        <div className="col-12 col-lg-4 mb-3">
+          <label className="form-label">Agregar factura</label>
+          <input
+            className="form-control"
+            type="file"
+            onChange={(e) => handleChange(e, "AGREGAR_FACTURA")}
+            name="comprobante"
+            accept=".xml"
+            // value={0}
+            // disabled
+          />
+        </div>
+        <div className="col-12 mb-3">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Folio fiscal</th>
+                <th>Método de pago</th>
+                <th>Forma de pago</th>
+                <th>Régimen fiscal</th>
+                <th>Total</th>
+                <th>Impuestos retenedios</th>
+                <th>
+                  <i className="bi bi-trash"></i>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {estadoForma.comprobantes.map((comprobante) => {
+                const {
+                  folio_fiscal,
+                  i_metodo_pago,
+                  i_forma_pago,
+                  i_regimen_fiscal,
+                  f_total,
+                  f_retenciones,
+                } = comprobante
+                return (
+                  <tr>
+                    <td>{folio_fiscal}</td>
+                    <td>{i_metodo_pago}</td>
+                    <td>{i_forma_pago}</td>
+                    <td>{i_regimen_fiscal}</td>
+                    <td>{f_total}</td>
+                    <td>{f_retenciones}</td>
+                    <td>
+                      <button
+                        type="button"
+                        className="btn btn-dark"
+                        onClick={() => {}}
+                      >
+                        <i className="bi bi-x-circle"></i>
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
         </div>
         {modoEditar && (
           <div className="col-12 text-end">

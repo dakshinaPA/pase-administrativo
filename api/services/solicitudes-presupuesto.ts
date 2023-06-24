@@ -12,28 +12,30 @@ class SolicitudesPresupuestoServices {
   static obtenerTipoGasto(i_tipo_gasto: TipoGastoSolicitud) {
     switch (i_tipo_gasto) {
       case 1:
-        return "REEMBOLSO"
+        return "Reembolso"
       case 2:
-        return "PROGRAMACIÓN"
+        return "Programación"
       case 3:
-        return "ASIMILADOS A SALARIOS"
+        return "Asimilados a salarios"
       case 4:
-        return "HONORARIOS PROFESIONALES"
+        return "Honorarios Profesionales"
       case 5:
-        return "GASTOS POR COMPROBAR"
+        return "Gastos por comprobar"
     }
   }
 
   static obtenerEstatus(i_estatus: EstatusSolicitud) {
     switch (i_estatus) {
       case 1:
-        return "REVISIÓN"
+        return "Revisión"
       case 2:
-        return "APROBADA"
+        return "Autorizada"
       case 3:
-        return "PROCESADA"
+        return "Rechazada"
       case 4:
-        return "RECHAZADA"
+        return "Procesada"
+      case 5:
+        return "Devolución"
     }
   }
 
@@ -62,7 +64,7 @@ class SolicitudesPresupuestoServices {
             descripcion_gasto,
             id_partida_presupuestal,
             f_importe,
-            f_monto_comprobar,
+            // f_monto_comprobar,
             i_estatus,
             dt_registro,
           } = solicitud
@@ -91,7 +93,7 @@ class SolicitudesPresupuestoServices {
             descripcion_gasto,
             id_partida_presupuestal,
             f_importe,
-            f_monto_comprobar,
+            // f_monto_comprobar: "0",
             i_estatus,
             estatus: this.obtenerEstatus(i_estatus),
             dt_registro,
