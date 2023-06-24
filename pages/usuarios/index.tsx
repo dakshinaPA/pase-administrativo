@@ -7,8 +7,10 @@ import { ModalEliminar } from "@components/ModalEliminar"
 import { aMinuscula } from "@assets/utils/common"
 import { Usuario } from "@models/usuario.model"
 import { CoparteMin } from "@models/coparte.model"
+import { useAuth } from "@contexts/auth.context"
 
 const Usuarios = () => {
+  const { user } = useAuth()
   const router = useRouter()
   const [copartesDB, setCopartesDB] = useState<CoparteMin[]>([])
   const [usuariosDB, setUsuariosDB] = useState<Usuario[]>([])
@@ -46,7 +48,7 @@ const Usuarios = () => {
     const { error, data, mensaje } = res
 
     if (error) {
-      console.log(error)
+      console.log(data)
     } else {
       setUsuariosDB(data as Usuario[])
     }
@@ -199,7 +201,9 @@ const Usuarios = () => {
                   return (
                     <tr key={`coparte_${id}`}>
                       <td>{id}</td>
-                      <td>{nombre} {apellido_paterno} {apellido_materno}</td>
+                      <td>
+                        {nombre} {apellido_paterno} {apellido_materno}
+                      </td>
                       <td>{email}</td>
                       <td>{telefono}</td>
                       {rolUsuarioSelect == 3 && (
@@ -214,12 +218,14 @@ const Usuarios = () => {
                         >
                           <i className="bi bi-eye-fill"></i>
                         </button>
-                        <button
-                          className="btn btn-dark btn-sm"
-                          onClick={() => abrirModalEliminarUsuario(id)}
-                        >
-                          <i className="bi bi-x-circle"></i>
-                        </button>
+                        {user.id_rol == 1 && (
+                          <button
+                            className="btn btn-dark btn-sm"
+                            onClick={() => abrirModalEliminarUsuario(id)}
+                          >
+                            <i className="bi bi-x-circle"></i>
+                          </button>
+                        )}
                       </td>
                     </tr>
                   )

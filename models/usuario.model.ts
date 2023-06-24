@@ -20,3 +20,7 @@ export interface Usuario extends UsuarioMin {
   rol: RolUsuario
   copartes?: CoparteUsuario[]
 }
+
+export interface UsuarioLogin extends UsuarioMin {
+  id_rol: number
+}

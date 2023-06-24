@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React, { use, useEffect, useState } from "react"
 import { ApiCall } from "@assets/utils/apiCalls"
 import { useRouter } from "next/router"
 import { Loader } from "@components/Loader"
@@ -6,35 +6,77 @@ import { ModalEliminar } from "@components/ModalEliminar"
 import { TablaContenedor } from "@components/Contenedores"
 import { aMinuscula } from "@assets/utils/common"
 import { Proyecto } from "@models/proyecto.model"
+import { useAuth } from "@contexts/auth.context"
+import { CoparteMin } from "@models/coparte.model"
 
 const Financiadores = () => {
+  const { user } = useAuth()
   const router = useRouter()
-  const [resultadosDB, setResultadosDB] = useState<Proyecto[]>([])
+  const [proyectosDB, setProyectosDB] = useState<Proyecto[]>([])
+  const [copartesDB, setCopartesDB] = useState<CoparteMin[]>([])
   const [idAEliminar, setIdAEliminar] = useState<number>(0)
   const [showModalEliminar, setShowModalEliminar] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [inputBusqueda, setInputBusqueda] = useState<string>("")
+  const [selectCoparte, setSelectCoparte] = useState<number>(0)
 
   useEffect(() => {
-    obtenerTodos()
+    cargarData()
   }, [])
+
+  useEffect(() => {
+    if (selectCoparte) {
+      cargarProyectosCoparte(selectCoparte)
+    }
+  }, [selectCoparte])
 
   const abrirModalEliminar = (id: number) => {
     setIdAEliminar(id)
     setShowModalEliminar(true)
   }
 
-  const obtenerTodos = async () => {
+  const cargarData = async () => {
     setIsLoading(true)
 
-    const { error, data, mensaje } = await ApiCall.get("/proyectos")
+    try {
+      //setear copartes para filtrar si es admin o superu usuario
+      if (user.id_rol != 3) {
+        let url = "/copartes?min=true"
 
-    if (error) {
+        if (user.id_rol == 2) {
+          url += `&id_admin=${user.id}`
+        }
+
+        const reCopartes = await ApiCall.get(url)
+        if (reCopartes.error) throw reCopartes.data
+
+        const resCopartes = reCopartes.data as CoparteMin[]
+
+        setCopartesDB(resCopartes)
+        setSelectCoparte(resCopartes[0].id)
+      } else {
+        //cargar proyecto de usuario coparte
+        const reProyectos = await ApiCall.get(
+          `/proyectos?id_usuario=${user.id}`
+        )
+        if (reProyectos.error) throw reProyectos.data
+
+        setProyectosDB(reProyectos.data as Proyecto[])
+      }
+    } catch (error) {
       console.log(error)
-    } else {
-      setResultadosDB(data as Proyecto[])
     }
+
     setIsLoading(false)
+  }
+
+  const cargarProyectosCoparte = async (id_coparte: number) => {
+    const reProyectos = await ApiCall.get(`/proyectos?id_coparte=${id_coparte}`)
+    if (reProyectos.error) {
+      console.log(reProyectos.data)
+    } else {
+      setProyectosDB(reProyectos.data as Proyecto[])
+    }
   }
 
   const eliminarFinanciador = async () => {
@@ -49,7 +91,7 @@ const Financiadores = () => {
     if (error) {
       console.log(data)
     } else {
-      await obtenerTodos()
+      // await cargarData()
     }
 
     setIsLoading(false)
@@ -60,22 +102,20 @@ const Financiadores = () => {
     setShowModalEliminar(false)
   }
 
-  const busquedaFiltrados = resultadosDB.filter(({ id_alt }) => {
+  const busquedaFiltrados = proyectosDB.filter(({ id_alt }) => {
     const query = aMinuscula(inputBusqueda)
     return aMinuscula(id_alt).includes(query)
   })
 
   const determinarNombreAEliminar = (): string => {
-    const proyecto = resultadosDB.find(
-      (proyecto) => proyecto.id === idAEliminar
-    )
+    const proyecto = proyectosDB.find((proyecto) => proyecto.id === idAEliminar)
     return proyecto ? proyecto.id_alt : ""
   }
 
   return (
     <TablaContenedor>
-      <div className="row mb-3">
-        <div className="col-12 col-md-2 mb-2">
+      <div className="row mb-2">
+        <div className="col-12 col-md-6 col-lg-2 mb-3">
           <button
             type="button"
             className="btn btn-secondary w-100"
@@ -84,8 +124,23 @@ const Financiadores = () => {
             Registrar +
           </button>
         </div>
-        <div className="d-none d-md-block col-md-6 mb-2"></div>
-        <div className="col-12 col-md-4 mb-2">
+        {copartesDB.length > 0 && (
+          <div className="col-12 col-md-6 col-lg-3 mb-3">
+            <select
+              className="form-control"
+              value={selectCoparte}
+              onChange={({ target }) => setSelectCoparte(Number(target.value))}
+            >
+              {copartesDB.map(({ id, nombre }) => (
+                <option key={id} value={id}>
+                  {nombre}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+        <div className="d-none d-lg-block col mb-3"></div>
+        <div className="col-12 col-lg-4 mb-2">
           <div className="input-group">
             <input
               type="text"
@@ -156,24 +211,52 @@ const Financiadores = () => {
                           >
                             <i className="bi bi-eye-fill"></i>
                           </button>
-                          <button
-                            className="btn btn-dark btn-sm ms-1"
-                            onClick={() =>
-                              router.push(
-                                `/proyectos/${id}/solicitudes-presupuesto/registro`
-                              )
-                            }
-                            title="registrar solicitud"
-                          >
-                            <i className="bi bi-file-earmark-text"></i>
-                          </button>
-                          <button
-                            className="btn btn-dark btn-sm ms-1"
-                            onClick={() => abrirModalEliminar(id)}
-                            title="eliminar"
-                          >
-                            <i className="bi bi-x-circle"></i>
-                          </button>
+                          {user.id_rol == 3 && (
+                            <>
+                              <button
+                                className="btn btn-dark btn-sm ms-1"
+                                onClick={() =>
+                                  router.push(
+                                    `/proyectos/${id}/solicitudes-presupuesto/registro`
+                                  )
+                                }
+                                title="registrar solicitud"
+                              >
+                                <i className="bi bi-file-earmark-text"></i>
+                              </button>
+                              <button
+                                className="btn btn-dark btn-sm ms-1"
+                                onClick={() =>
+                                  router.push(
+                                    `/proyectos/${id}/colaboradores/registro`
+                                  )
+                                }
+                                title="registrar colaborador"
+                              >
+                                <i className="bi bi-person-plus"></i>
+                              </button>
+                              <button
+                                className="btn btn-dark btn-sm ms-1"
+                                onClick={() =>
+                                  router.push(
+                                    `/proyectos/${id}/proveedores/registro`
+                                  )
+                                }
+                                title="registrar proveedor"
+                              >
+                                <i className="bi bi-person-plus-fill"></i>
+                              </button>
+                            </>
+                          )}
+                          {user.id_rol == 1 && (
+                            <button
+                              className="btn btn-dark btn-sm ms-1"
+                              onClick={() => abrirModalEliminar(id)}
+                              title="eliminar"
+                            >
+                              <i className="bi bi-x-circle"></i>
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

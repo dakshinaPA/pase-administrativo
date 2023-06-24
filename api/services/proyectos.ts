@@ -64,6 +64,7 @@ class ProyectosServices {
   static async obtener(queries) {
     const {
       id_coparte,
+      id_usuario,
       id: id_proyecto,
       min,
       registro_solicitud,
@@ -71,7 +72,7 @@ class ProyectosServices {
 
     if (min) return await this.obtenerVMin(id_proyecto)
     try {
-      const obtenerDB = await ProyectoDB.obtener(id_coparte, id_proyecto)
+      const obtenerDB = await ProyectoDB.obtener(id_coparte, id_proyecto, id_usuario)
       if (obtenerDB.error) throw obtenerDB.data
 
       const proyectosDB = obtenerDB.data as ResProyectoDB[]

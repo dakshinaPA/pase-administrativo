@@ -1,3 +1,5 @@
+import { ApiCall } from "./apiCalls"
+
 const determinarNombreArchivo = (archivo) => {
   if (!archivo) {
     return { nombre: "" }
@@ -36,6 +38,23 @@ const fechaActualAEpoch = () => {
   const fechaEpoch = (fechaHoyEpoch / 1000).toFixed()
   return fechaEpoch
 }
+
+const obtenerCopartesAdmin = async (id_admin: number, min = true) => {
+  let url = `/copartes?id_admin=${id_admin}`
+  if(min){
+    url += "&min=true"
+  }
+  return await ApiCall.get(url)
+}
+
+const obtenerFinanciadores = async (min = true) => {
+  let url = '/financiadores'
+  if(min){
+    url += "?min=true"
+  }
+  return await ApiCall.get(url)
+}
+
 
 const estadosRepublica = [
   { id: 1, nombre: "Aguascalientes" },
@@ -79,4 +98,6 @@ export {
   epochAFecha,
   fechaActualAEpoch,
   inputDateAformato,
+  obtenerCopartesAdmin,
+  obtenerFinanciadores,
 }

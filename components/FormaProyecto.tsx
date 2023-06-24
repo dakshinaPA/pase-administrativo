@@ -12,10 +12,14 @@ import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
 import { BtnBack } from "@components/BtnBack"
 import { ApiCall, ApiCallRes } from "@assets/utils/apiCalls"
 import { useAuth } from "@contexts/auth.context"
-import { CoparteUsuarioMin } from "@models/coparte.model"
+import { CoparteMin, CoparteUsuarioMin } from "@models/coparte.model"
 import { useCatalogos } from "@contexts/catalogos.context"
 import { RubrosPresupuestalesDB } from "@api/models/catalogos.model"
-import { inputDateAformato } from "@assets/utils/common"
+import {
+  inputDateAformato,
+  obtenerCopartesAdmin,
+  obtenerFinanciadores,
+} from "@assets/utils/common"
 import { BtnEditar } from "./Botones"
 
 const FormaProyecto = () => {
@@ -28,7 +32,7 @@ const FormaProyecto = () => {
   const idProyecto = Number(router.query.idP)
 
   const estadoInicialForma: Proyecto = {
-    id_coparte: idCoparte || user.copartes[0].id_coparte,
+    id_coparte: idCoparte || 0,
     id_alt: "",
     f_monto_total: "0",
     i_tipo_financiamiento: 1,
@@ -43,7 +47,7 @@ const FormaProyecto = () => {
     ministraciones: [],
     colaboradores: [],
     proveedores: [],
-    solicitudes_presupuesto: []
+    solicitudes_presupuesto: [],
   }
 
   const estadoInicialFormaRubros: RubroProyecto = {
@@ -64,6 +68,7 @@ const FormaProyecto = () => {
     estaInicialdFormaMinistracion
   )
   const [financiadoresDB, setFinanciadoresDB] = useState<FinanciadorMin[]>([])
+  const [copartesDB, setCopartesDB] = useState<CoparteMin[]>([])
   const [usuariosCoparteDB, setUsuariosCoparteDB] = useState<
     CoparteUsuarioMin[]
   >([])
@@ -76,16 +81,7 @@ const FormaProyecto = () => {
   }, [])
 
   useEffect(() => {
-    if (!idCoparte) {
-      //limpiar responsable
-      setEstadoForma({
-        ...estadoForma,
-        responsable: {
-          id: 0,
-        },
-      })
-
-      //evitar doble renderizado en el primer llamado
+    if (estadoForma.id_coparte) {
       cargarUsuariosCoparte(estadoForma.id_coparte)
     }
   }, [estadoForma.id_coparte])
@@ -128,12 +124,7 @@ const FormaProyecto = () => {
     setIsLoading(true)
 
     try {
-      const promesas = [obtenerFinanciadores()]
-
-      //evitar doble llamado a api
-      if (idCoparte) {
-        promesas.push(obtenerUsuariosCoparte(idCoparte))
-      }
+      const promesas = [obtenerFinanciadores(), obtenerCopartesAdmin(user.id)]
 
       if (modalidad === "EDITAR") {
         promesas.push(obtener())
@@ -145,10 +136,19 @@ const FormaProyecto = () => {
         if (rc.error) throw rc.data
       }
 
-      setFinanciadoresDB(resCombinadas[0].data as FinanciadorMin[])
-      if (idCoparte) {
-        setUsuariosCoparteDB(resCombinadas[1].data as CoparteUsuarioMin[])
+      const financiaodresDB = resCombinadas[0].data as FinanciadorMin[]
+      const copartesAdminDB = resCombinadas[1].data as CoparteMin[]
+
+      setFinanciadoresDB(financiaodresDB)
+      setCopartesDB(copartesAdminDB)
+
+      if(!idCoparte){
+        setEstadoForma({
+          ...estadoForma,
+          id_coparte: copartesAdminDB[0].id
+        })
       }
+      
       if (modalidad === "EDITAR") {
         setEstadoForma(resCombinadas[2].data[0] as Proyecto)
       }
@@ -167,10 +167,6 @@ const FormaProyecto = () => {
     } else {
       setUsuariosCoparteDB(reUsCoDB.data as CoparteUsuarioMin[])
     }
-  }
-
-  const obtenerFinanciadores = async () => {
-    return await ApiCall.get(`/financiadores?min=true`)
   }
 
   const obtenerUsuariosCoparte = async (id_coparte: number) => {
@@ -396,8 +392,8 @@ const FormaProyecto = () => {
             name="id_coparte"
             disabled={Boolean(idProyecto) || Boolean(idCoparte)}
           >
-            {user.copartes.map(({ id_coparte, nombre }) => (
-              <option key={id_coparte} value={id_coparte}>
+            {copartesDB.map(({ id, nombre }) => (
+              <option key={id} value={id}>
                 {nombre}
               </option>
             ))}
@@ -536,7 +532,7 @@ const FormaProyecto = () => {
                       {!id && (
                         <button
                           type="button"
-                          className="btn btn-dark"
+                          className="btn btn-dark btn-sm"
                           onClick={() => quitarRubro(id_rubro)}
                         >
                           <i className="bi bi-x-circle"></i>
@@ -652,7 +648,7 @@ const FormaProyecto = () => {
                         {!id && (
                           <button
                             type="button"
-                            className="btn btn-dark"
+                            className="btn btn-dark btn-sm"
                             onClick={() => quitarMinistracion(i_numero)}
                           >
                             <i className="bi bi-x-circle"></i>
@@ -739,7 +735,7 @@ const FormaProyecto = () => {
                         <td>{f_monto_total}</td>
                         <td>
                           <button
-                            className="btn btn-dark"
+                            className="btn btn-dark btn-sm"
                             onClick={() =>
                               router.push(
                                 `/proyectos/${idProyecto}/colaboradores/${id}`
@@ -806,7 +802,7 @@ const FormaProyecto = () => {
                         <td>{banco}</td>
                         <td>
                           <button
-                            className="btn btn-dark"
+                            className="btn btn-dark btn-sm"
                             onClick={() =>
                               router.push(
                                 `/proyectos/${idProyecto}/proveedores/${id}`
@@ -875,7 +871,7 @@ const FormaProyecto = () => {
                         <td>{banco}</td>
                         <td>
                           <button
-                            className="btn btn-dark"
+                            className="btn btn-dark btn-sm"
                             onClick={() =>
                               router.push(
                                 `/proyectos/${idProyecto}/proveedores/${id}`

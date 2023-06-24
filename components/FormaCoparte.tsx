@@ -513,7 +513,7 @@ const FormaCoparte = () => {
                         </td>
                         <td>
                           <button
-                            className="btn btn-dark"
+                            className="btn btn-dark btn-sm"
                             onClick={() =>
                               router.push(`/usuarios/${id_usuario}`)
                             }
@@ -577,7 +577,7 @@ const FormaCoparte = () => {
                         <td>{responsable.nombre}</td>
                         <td>
                           <button
-                            className="btn btn-dark"
+                            className="btn btn-dark btn-sm"
                             onClick={() => router.push(`/copartes/${idCoparte}/proyectos/${id}`)}
                           >
                             <i className="bi bi-eye-fill"></i>

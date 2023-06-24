@@ -6,8 +6,10 @@ import { ModalEliminar } from "@components/ModalEliminar"
 import { TablaContenedor } from "@components/Contenedores"
 import { aMinuscula } from "@assets/utils/common"
 import { Financiador } from "@models/financiador.model"
+import { useAuth } from "@contexts/auth.context"
 
 const Financiadores = () => {
+  const { user } = useAuth()
   const router = useRouter()
   const [resultadosDB, setResultadosDB] = useState<Financiador[]>([])
   const [resultadosFiltrados, setResultadosFiltrados] = useState<Financiador[]>(
@@ -46,7 +48,7 @@ const Financiadores = () => {
     const { error, data, mensaje } = res
 
     if (error) {
-      console.log(error)
+      console.log(data)
     } else {
       setResultadosDB(data as Financiador[])
       setResultadosFiltrados(data as Financiador[])
@@ -191,13 +193,15 @@ const Financiadores = () => {
                           >
                             <i className="bi bi-eye-fill"></i>
                           </button>
-                          <button
-                            className="btn btn-dark btn-sm ms-1"
-                            onClick={() => abrirModalEliminar(id)}
-                            title="eliminar"
-                          >
-                            <i className="bi bi-x-circle"></i>
-                          </button>
+                          {user.id_rol == 1 && (
+                            <button
+                              className="btn btn-dark btn-sm ms-1"
+                              onClick={() => abrirModalEliminar(id)}
+                              title="eliminar"
+                            >
+                              <i className="bi bi-x-circle"></i>
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

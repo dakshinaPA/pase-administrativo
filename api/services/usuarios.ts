@@ -2,7 +2,7 @@ import { UsuarioDB } from "@api/db/usuarios"
 import { CoparteDB } from "@api/db/copartes"
 import { RespuestaController } from "@api/utils/response"
 import { LoginUsuario, ResUsuarioDB } from "@api/models/usuario.model"
-import { Usuario } from "@models/usuario.model"
+import { Usuario, UsuarioLogin } from "@models/usuario.model"
 import { CoparteUsuario } from "@models/coparte.model"
 import { ResDB } from "@api/models/respuestas.model"
 
@@ -15,27 +15,21 @@ class UsuariosServices {
       const [usuario] = data as ResUsuarioDB[]
       // encontró match con usuario
       if (usuario) {
-        let copartes: CoparteUsuario[] = null
+        // let copartes: CoparteUsuario[] = null
 
-        const obtenerCoUs =
-          usuario.id_rol === 3
-            ? await UsuarioDB.obtenerCoparteCoparte(usuario.id)
-            : await UsuarioDB.obtenerCopartesAdministrador(usuario.id)
+        // const obtenerCoUs =
+        //   usuario.id_rol === 3
+        //     ? await UsuarioDB.obtenerCoparteCoparte(usuario.id)
+        //     : await UsuarioDB.obtenerCopartesAdministrador(usuario.id)
 
-        if (obtenerCoUs.error) throw obtenerCoUs.data
+        // if (obtenerCoUs.error) throw obtenerCoUs.data
 
-        copartes = obtenerCoUs.data as CoparteUsuario[]
+        // copartes = obtenerCoUs.data as CoparteUsuario[]
 
-        const dataTransformada: Usuario = {
-          ...usuario,
-          rol: {
-            id: usuario.id_rol,
-          },
-          copartes,
-        }
+
 
         return RespuestaController.exitosa(200, "Usuario encontrado", [
-          dataTransformada,
+          usuario,
         ])
       } else {
         // no hubo error pero no hay match con usuario

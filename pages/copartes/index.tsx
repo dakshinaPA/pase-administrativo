@@ -6,8 +6,10 @@ import { ModalEliminar } from "@components/ModalEliminar"
 import { TablaContenedor } from "@components/Contenedores"
 import { aMinuscula } from "@assets/utils/common"
 import { Coparte } from "@models/coparte.model"
+import { useAuth } from "@contexts/auth.context"
 
 const Financiadores = () => {
+  const { user } = useAuth()
   const router = useRouter()
   const [resultadosDB, setResultadosDB] = useState<Coparte[]>([])
   const [idAEliminar, setIdAEliminar] = useState<number>(0)
@@ -30,7 +32,7 @@ const Financiadores = () => {
     const { error, data, mensaje } = await ApiCall.get("/copartes")
 
     if (error) {
-      console.log(error)
+      console.log(data)
     } else {
       setResultadosDB(data as Coparte[])
     }
@@ -146,17 +148,43 @@ const Financiadores = () => {
                       <td>
                         <div className="d-flex">
                           <button
-                            className="btn btn-dark btn-sm me-1"
+                            className="btn btn-dark btn-sm"
                             onClick={() => router.push(`/copartes/${id}`)}
+                            title="ver detalle"
                           >
                             <i className="bi bi-eye-fill"></i>
                           </button>
                           <button
-                            className="btn btn-dark btn-sm"
-                            onClick={() => abrirModalEliminar(id)}
+                            className="btn btn-dark btn-sm ms-1"
+                            onClick={() =>
+                              router.push(`/copartes/${id}/usuarios/registro`)
+                            }
+                            title="registrar usuario"
                           >
-                            <i className="bi bi-x-circle"></i>
+                            <i className="bi bi-person-plus"></i>
                           </button>
+                          {administrador.id == user.id && (
+                            <button
+                              className="btn btn-dark btn-sm ms-1"
+                              onClick={() =>
+                                router.push(
+                                  `/copartes/${id}/proyectos/registro`
+                                )
+                              }
+                              title="registrar proyecto"
+                            >
+                              <i className="bi bi-file-earmark-text"></i>
+                            </button>
+                          )}
+                          {user.id_rol == 1 && (
+                            <button
+                              className="btn btn-dark btn-sm ms-1"
+                              onClick={() => abrirModalEliminar(id)}
+                              title="eliminar usuario"
+                            >
+                              <i className="bi bi-x-circle"></i>
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

@@ -11,7 +11,7 @@ class ProyectoDB {
   static async obtenerVMin(id_proyecto?: number) {
     let query = `SELECT id, id_alt from proyectos WHERE b_activo=1`
 
-    if(id_proyecto){
+    if (id_proyecto) {
       query += ` AND id=${id_proyecto}`
     }
 
@@ -23,7 +23,11 @@ class ProyectoDB {
     }
   }
 
-  static async obtener(id_coparte: number, id_proyecto: number) {
+  static async obtener(
+    id_coparte: number,
+    id_proyecto: number,
+    id_usuario: number
+  ) {
     let query = `SELECT p.id, p.id_financiador, p.id_coparte, p.id_responsable, p.id_alt, p.f_monto_total, p.i_tipo_financiamiento, p.i_beneficiados, p.dt_registro,
       CONCAT(u.nombre, ' ', u.apellido_paterno) nombre_responsable,
       f.nombre financiador
@@ -38,6 +42,10 @@ class ProyectoDB {
 
     if (id_proyecto) {
       query += ` AND p.id=${id_proyecto} LIMIT 1`
+    }
+
+    if (id_usuario) {
+      query += ` AND p.id_responsable=${id_usuario}`
     }
 
     try {

@@ -1,11 +1,10 @@
 import { createContext, useContext, useEffect, useState } from "react"
 import { useRouter } from "next/router"
-// import { ROLES } from "@assets/utils/seccionesusuario"
 import { ApiCall } from "@assets/utils/apiCalls"
-import { Usuario } from "@models/usuario.model"
+import { Usuario, UsuarioLogin } from "@models/usuario.model"
 
 interface AuthProvider {
-  user: Usuario
+  user: UsuarioLogin
   login: (dataUsuario: any) => Promise<void>
   logOut: () => void
   error: {
@@ -20,7 +19,7 @@ const AuthContext = createContext(null)
 const AuthProvider = ({ children }) => {
   const estadoInicialError = { hay: false, mensaje: "" }
 
-  const [user, setUser] = useState<Usuario>(null)
+  const [user, setUser] = useState<UsuarioLogin>(null)
   const [error, setError] = useState(estadoInicialError)
   const router = useRouter()
 
@@ -43,9 +42,13 @@ const AuthProvider = ({ children }) => {
         console.log(data)
         setError({ hay: true, mensaje })
       } else {
-        // const usuario = data[0]
-        // const usuarioSecciones = agregarSeccionesUsuario(usuario)
-        setUser(data[0] as Usuario)
+        const usuario = data[0] as UsuarioLogin
+        const userTest: UsuarioLogin = {
+          ...usuario,
+          // id_rol: 1,
+          // id: 9
+        }
+        setUser(userTest)
         router.push("/")
       }
     } catch (error) {
@@ -59,13 +62,6 @@ const AuthProvider = ({ children }) => {
   }
 
   const limpiarError = () => setError(estadoInicialError)
-
-  // const agregarSeccionesUsuario = ({ i_rol, ...usuario }) => {
-  //   return {
-  //     ...usuario,
-  //     rol: ROLES.find((rol) => rol.id == i_rol),
-  //   }
-  // }
 
   const auth = { user, login, logOut, error, limpiarError }
 
