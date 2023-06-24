@@ -187,12 +187,14 @@ const Financiadores = () => {
                           <button
                             className="btn btn-dark btn-sm"
                             onClick={() => router.push(`/financiadores/${id}`)}
+                            title="ver detalle"
                           >
                             <i className="bi bi-eye-fill"></i>
                           </button>
                           <button
                             className="btn btn-dark btn-sm ms-1"
                             onClick={() => abrirModalEliminar(id)}
+                            title="eliminar"
                           >
                             <i className="bi bi-x-circle"></i>
                           </button>

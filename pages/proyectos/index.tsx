@@ -152,6 +152,7 @@ const Financiadores = () => {
                                 `/copartes/${id_coparte}/proyectos/${id}`
                               )
                             }
+                            title="ver detalle"
                           >
                             <i className="bi bi-eye-fill"></i>
                           </button>
@@ -162,12 +163,14 @@ const Financiadores = () => {
                                 `/proyectos/${id}/solicitudes-presupuesto/registro`
                               )
                             }
+                            title="registrar solicitud"
                           >
                             <i className="bi bi-file-earmark-text"></i>
                           </button>
                           <button
                             className="btn btn-dark btn-sm ms-1"
                             onClick={() => abrirModalEliminar(id)}
+                            title="eliminar"
                           >
                             <i className="bi bi-x-circle"></i>
                           </button>
