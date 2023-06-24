@@ -4,7 +4,11 @@ import { useRouter } from "next/router"
 import { Loader } from "@components/Loader"
 import { TablaContenedor } from "@components/Contenedores"
 import { ModalEliminar } from "@components/ModalEliminar"
-import { aMinuscula } from "@assets/utils/common"
+import {
+  aMinuscula,
+  obtenerCopartes,
+  obtenerCopartesAdmin,
+} from "@assets/utils/common"
 import { Usuario } from "@models/usuario.model"
 import { CoparteMin } from "@models/coparte.model"
 import { useAuth } from "@contexts/auth.context"
@@ -19,14 +23,16 @@ const Usuarios = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [inputBusqueda, setInputBusqueda] = useState<string>("")
   const [rolUsuarioSelect, setRolUsuarioSelect] = useState<number>(3)
-  const [coparteSelect, setCoparteSelect] = useState<number>(1)
+  const [coparteSelect, setCoparteSelect] = useState<number>(0)
 
   useEffect(() => {
-    obtenerCopartes()
+    obtenerCopartesDB()
   }, [])
 
   useEffect(() => {
-    obtenerUsuarios()
+    if(rolUsuarioSelect != 3 || coparteSelect){
+      obtenerUsuarios()
+    }
   }, [rolUsuarioSelect, coparteSelect])
 
   const abrirModalEliminarUsuario = (id: number) => {
@@ -55,11 +61,20 @@ const Usuarios = () => {
     setIsLoading(false)
   }
 
-  const obtenerCopartes = async () => {
-    const res = await ApiCall.get(`/copartes?min=true`)
+  const obtenerCopartesDB = async () => {
+    const res =
+      user.id_rol == 2
+        ? await obtenerCopartesAdmin(user.id)
+        : await obtenerCopartes()
+
     const { error, data, mensaje } = res
-    if (!error) {
-      setCopartesDB(data as CoparteMin[])
+
+    if (error) {
+      console.log(data)
+    } else {
+      const copartesDB = data as CoparteMin[]
+      setCopartesDB(copartesDB)
+      setCoparteSelect(copartesDB[0].id)
     }
   }
 
@@ -115,8 +130,8 @@ const Usuarios = () => {
 
   return (
     <TablaContenedor>
-      <div className="row mb-3">
-        <div className="col-12 col-md-2 mb-2">
+      <div className="row mb-2">
+        <div className="col-12 col-md-6 col-lg-2 mb-3">
           <button
             type="button"
             className="btn btn-secondary w-100"
@@ -125,18 +140,19 @@ const Usuarios = () => {
             Registrar +
           </button>
         </div>
-        <div className="col-12 col-md-2 mb-2">
+        <div className="col-12 col-md-6 col-lg-2 mb-3">
           <select
             className="form-control"
             onChange={handleCambioRol}
             value={rolUsuarioSelect}
+            disabled={user.id_rol == 2}
           >
             <option value="1">Super Usuario</option>
             <option value="2">Administrador</option>
             <option value="3">Coparte</option>
           </select>
         </div>
-        <div className="col-12 col-md-2 mb-2">
+        <div className="col-12 col-md-6 col-lg-2 mb-3">
           {rolUsuarioSelect == 3 && (
             <select
               className="form-control"
@@ -151,8 +167,8 @@ const Usuarios = () => {
             </select>
           )}
         </div>
-        <div className="d-none d-md-block col-md-2 mb-2"></div>
-        <div className="col-12 col-md-4 mb-2">
+        <div className="d-none d-lg-block col mb-3"></div>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
           <div className="input-group">
             <input
               type="text"
@@ -211,21 +227,23 @@ const Usuarios = () => {
                           <i className={`bi ${icono}`}></i>
                         </td>
                       )}
-                      <td className="d-flex">
-                        <button
-                          className="btn btn-dark btn-sm me-1"
-                          onClick={() => router.push(`/usuarios/${id}`)}
-                        >
-                          <i className="bi bi-eye-fill"></i>
-                        </button>
-                        {user.id_rol == 1 && (
+                      <td>
+                        <div className="d-flex">
                           <button
-                            className="btn btn-dark btn-sm"
-                            onClick={() => abrirModalEliminarUsuario(id)}
+                            className="btn btn-dark btn-sm me-1"
+                            onClick={() => router.push(`/usuarios/${id}`)}
                           >
-                            <i className="bi bi-x-circle"></i>
+                            <i className="bi bi-eye-fill"></i>
                           </button>
-                        )}
+                          {user.id_rol == 1 && (
+                            <button
+                              className="btn btn-dark btn-sm"
+                              onClick={() => abrirModalEliminarUsuario(id)}
+                            >
+                              <i className="bi bi-x-circle"></i>
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   )

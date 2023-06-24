@@ -8,6 +8,8 @@ import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
 import { BtnBack } from "@components/BtnBack"
 import { ApiCall } from "@assets/utils/apiCalls"
 import { BtnEditar } from "./Botones"
+import { obtenerCopartes, obtenerCopartesAdmin } from "@assets/utils/common"
+import { useAuth } from "@contexts/auth.context"
 
 const FormaUsuario = () => {
   const estadoInicialForma: Usuario = {
@@ -22,12 +24,13 @@ const FormaUsuario = () => {
     },
     copartes: [
       {
-        id_coparte: 1,
+        id_coparte: 0,
         cargo: "",
       },
     ],
   }
 
+  const { user } = useAuth()
   const router = useRouter()
   const idCoparte = router.query.idC
   const idUsuario = router.query.id
@@ -75,7 +78,10 @@ const FormaUsuario = () => {
     setIsLoading(true)
 
     try {
-      const promesas = [obtenerCopartes()]
+      const reCopartes =
+        user.id_rol == 2 ? obtenerCopartesAdmin(user.id) : obtenerCopartes()
+      const promesas = [reCopartes]
+
       if (modalidad === "EDITAR") {
         promesas.push(obtener())
       }
@@ -86,20 +92,27 @@ const FormaUsuario = () => {
         if (rc.error) throw rc.data
       }
 
-      setCopartesDB(resCombinadas[0].data as CoparteMin[])
+      const copartesDB = resCombinadas[0].data as CoparteMin[]
+      setCopartesDB(copartesDB)
 
       if (modalidad === "EDITAR") {
         setEstadoForma(resCombinadas[1].data[0] as Usuario)
+      } else {
+        setEstadoForma({
+          ...estadoForma,
+          copartes: [
+            {
+              ...estadoForma.copartes[0],
+              id_coparte: copartesDB[0].id,
+            },
+          ],
+        })
       }
     } catch (error) {
       console.log(error)
     }
 
     setIsLoading(false)
-  }
-
-  const obtenerCopartes = async () => {
-    return await ApiCall.get(`/copartes?min=true`)
   }
 
   const obtener = async () => {
@@ -265,7 +278,9 @@ const FormaUsuario = () => {
             className="form-control"
             onChange={handleChangeRol}
             value={estadoForma.rol.id}
-            disabled={Boolean(idUsuario) || Boolean(idCoparte)}
+            disabled={
+              Boolean(idUsuario) || Boolean(idCoparte) || user.id_rol == 2
+            }
           >
             <option value="1">Super usuario</option>
             <option value="2">Administrador</option>

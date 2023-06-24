@@ -41,20 +41,27 @@ const fechaActualAEpoch = () => {
 
 const obtenerCopartesAdmin = async (id_admin: number, min = true) => {
   let url = `/copartes?id_admin=${id_admin}`
-  if(min){
+  if (min) {
     url += "&min=true"
   }
   return await ApiCall.get(url)
 }
 
-const obtenerFinanciadores = async (min = true) => {
-  let url = '/financiadores'
-  if(min){
+const obtenerCopartes = async (min = true) => {
+  let url = "/copartes"
+  if (min) {
     url += "?min=true"
   }
   return await ApiCall.get(url)
 }
 
+const obtenerFinanciadores = async (min = true) => {
+  let url = "/financiadores"
+  if (min) {
+    url += "?min=true"
+  }
+  return await ApiCall.get(url)
+}
 
 const estadosRepublica = [
   { id: 1, nombre: "Aguascalientes" },
@@ -100,4 +107,5 @@ export {
   inputDateAformato,
   obtenerCopartesAdmin,
   obtenerFinanciadores,
+  obtenerCopartes,
 }
