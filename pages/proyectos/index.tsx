@@ -66,7 +66,9 @@ const Financiadores = () => {
   })
 
   const determinarNombreAEliminar = (): string => {
-    const proyecto = resultadosDB.find((proyecto) => proyecto.id === idAEliminar)
+    const proyecto = resultadosDB.find(
+      (proyecto) => proyecto.id === idAEliminar
+    )
     return proyecto ? proyecto.id_alt : ""
   }
 
@@ -144,13 +146,27 @@ const Financiadores = () => {
                       <td>
                         <div className="d-flex">
                           <button
-                            className="btn btn-dark me-1"
-                            onClick={() => router.push(`/copartes/${id_coparte}/proyectos/${id}`)}
+                            className="btn btn-dark btn-sm"
+                            onClick={() =>
+                              router.push(
+                                `/copartes/${id_coparte}/proyectos/${id}`
+                              )
+                            }
                           >
                             <i className="bi bi-eye-fill"></i>
                           </button>
                           <button
-                            className="btn btn-dark"
+                            className="btn btn-dark btn-sm ms-1"
+                            onClick={() =>
+                              router.push(
+                                `/proyectos/${id}/solicitudes-presupuesto/registro`
+                              )
+                            }
+                          >
+                            <i className="bi bi-file-earmark-text"></i>
+                          </button>
+                          <button
+                            className="btn btn-dark btn-sm ms-1"
                             onClick={() => abrirModalEliminar(id)}
                           >
                             <i className="bi bi-x-circle"></i>

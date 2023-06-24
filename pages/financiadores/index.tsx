@@ -79,7 +79,9 @@ const Financiadores = () => {
 
   const busquedaFiltrados = resultadosFiltrados.filter(({ nombre, id_alt }) => {
     const query = aMinuscula(inputBusqueda)
-    return aMinuscula(nombre).includes(query) || aMinuscula(id_alt).includes(query)
+    return (
+      aMinuscula(nombre).includes(query) || aMinuscula(id_alt).includes(query)
+    )
   })
 
   const determinarNombreAEliminar = (): string => {
@@ -159,7 +161,7 @@ const Financiadores = () => {
                     tipo,
                     pagina_web,
                     enlace,
-                    direccion
+                    direccion,
                   } = financiador
 
                   const nombreEnlace = `${enlace.nombre} ${enlace.apellido_paterno} ${enlace.apellido_materno}`
@@ -174,18 +176,22 @@ const Financiadores = () => {
                       <td>{nombreEnlace}</td>
                       <td>{enlace.email}</td>
                       <td>{enlace.telefono}</td>
-                      <td>{pagina_web}</td>
+                      <td>
+                        <a href={`http://${pagina_web}`} target="_blank">
+                          {pagina_web}
+                        </a>
+                      </td>
                       <td>...</td>
                       <td>
                         <div className="d-flex">
                           <button
-                            className="btn btn-dark me-1"
+                            className="btn btn-dark btn-sm"
                             onClick={() => router.push(`/financiadores/${id}`)}
                           >
                             <i className="bi bi-eye-fill"></i>
                           </button>
                           <button
-                            className="btn btn-dark"
+                            className="btn btn-dark btn-sm ms-1"
                             onClick={() => abrirModalEliminar(id)}
                           >
                             <i className="bi bi-x-circle"></i>

@@ -146,13 +146,13 @@ const Financiadores = () => {
                       <td>
                         <div className="d-flex">
                           <button
-                            className="btn btn-dark me-1"
+                            className="btn btn-dark btn-sm me-1"
                             onClick={() => router.push(`/copartes/${id}`)}
                           >
                             <i className="bi bi-eye-fill"></i>
                           </button>
                           <button
-                            className="btn btn-dark"
+                            className="btn btn-dark btn-sm"
                             onClick={() => abrirModalEliminar(id)}
                           >
                             <i className="bi bi-x-circle"></i>
