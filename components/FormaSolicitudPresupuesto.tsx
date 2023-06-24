@@ -1,4 +1,4 @@
-import { useEffect, useState, useReducer } from "react"
+import { useEffect, useState, useReducer, useRef } from "react"
 import { useRouter } from "next/router"
 import { ChangeEvent } from "@assets/models/formEvents.model"
 import { ProyectoMin } from "@models/proyecto.model"
@@ -8,14 +8,12 @@ import { BtnBack } from "@components/BtnBack"
 import { ApiCall } from "@assets/utils/apiCalls"
 import { useCatalogos } from "@contexts/catalogos.context"
 import { BtnEditar } from "./Botones"
-import { SolicitudPresupuesto } from "@models/solicitud-presupuesto.model"
+import {
+  ComprobanteSolicitud,
+  SolicitudPresupuesto,
+} from "@models/solicitud-presupuesto.model"
 
-interface ActionReducer {
-  type: string
-  value: [string, string | number]
-}
-
-const reducer = (state: SolicitudPresupuesto, action: ActionReducer) => {
+const reducer = (state: SolicitudPresupuesto, action): SolicitudPresupuesto => {
   const { type, value } = action
 
   switch (type) {
@@ -31,6 +29,20 @@ const reducer = (state: SolicitudPresupuesto, action: ActionReducer) => {
           ...state.cuenta,
           [value[0]]: value[1],
         },
+      }
+    case "AGREGAR_COMPROBANTE":
+      return {
+        ...state,
+        comprobantes: [...state.comprobantes, value],
+      }
+    case "QUITAR_FACTURA":
+      const comprobantesFiltrados = state.comprobantes.filter(
+        (comp) => comp.folio_fiscal !== value
+      )
+
+      return {
+        ...state,
+        comprobantes: comprobantesFiltrados,
       }
     default:
       return state
@@ -55,15 +67,7 @@ const FormaSolicitudPresupuesto = () => {
     descripcion_gasto: "",
     id_partida_presupuestal: 1,
     f_importe: "0",
-    comprobantes: [
-      // {
-      //     folio_fiscal: "F34982",
-      //     f_total: "132.34",
-      //     f_retenciones: "12.34",
-      //     i_regimen_fiscal: 1,
-      //     i_forma_pago: 1
-      // }
-    ],
+    comprobantes: [],
   }
 
   const { bancos } = useCatalogos()
@@ -73,6 +77,7 @@ const FormaSolicitudPresupuesto = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [modoEditar, setModoEditar] = useState<boolean>(!idColaborador)
   const modalidad = idColaborador ? "EDITAR" : "CREAR"
+  const fileInput = useRef(null)
 
   useEffect(() => {
     cargarData()
@@ -141,6 +146,59 @@ const FormaSolicitudPresupuesto = () => {
     })
   }
 
+  const agregarFactura = (ev) => {
+    const [file] = ev.target.files
+
+    const reader = new FileReader()
+
+    reader.onload = () => {
+      const parser = new DOMParser()
+      const xml = parser.parseFromString(
+        reader.result as string,
+        "application/xml"
+      )
+
+      // console.log(xml)
+
+      const [comprobante] = xml.getElementsByTagName("cfdi:Comprobante")
+      const [emisor] = comprobante.getElementsByTagName("cfdi:Emisor")
+
+      // console.log(comprobante)
+      // console.log(emisor)
+
+      const folio_fiscal = comprobante.getAttribute("Folio")
+      const id_metodo_pago = comprobante.getAttribute("MetodoPago")
+      const f_subtotal = comprobante.getAttribute("SubTotal")
+      const f_retenciones = comprobante.getAttribute("Descuento")
+      const f_total = comprobante.getAttribute("Total")
+      const regimen_fiscal = emisor.getAttribute("RegimenFiscal")
+
+      const dataComprobante: ComprobanteSolicitud = {
+        folio_fiscal,
+        id_metodo_pago,
+        id_forma_pago: 1,
+        regimen_fiscal,
+        f_subtotal,
+        f_total,
+        f_retenciones,
+      }
+
+      dispatch({
+        type: "AGREGAR_COMPROBANTE",
+        value: dataComprobante,
+      })
+    }
+
+    reader.readAsText(file)
+  }
+
+  const quitarFactura = (folio: string) => {
+    dispatch({
+      type: "QUITAR_FACTURA",
+      value: folio,
+    })
+  }
+
   const handleSubmit = async (ev: React.SyntheticEvent) => {
     ev.preventDefault()
     console.log(estadoForma)
@@ -167,6 +225,16 @@ const FormaSolicitudPresupuesto = () => {
   const rubrosProyecto =
     proyectosDB.find((proyecto) => proyecto.id == estadoForma.id_proyecto)
       ?.rubros || []
+
+  const montoComprobar = () => {
+    const totalComprobaciones = estadoForma.comprobantes.reduce(
+      (acum, actual) => acum + Number(actual.f_total),
+      0
+    )
+
+    const totalAComprobar = Number(estadoForma.f_importe) - totalComprobaciones
+    return totalAComprobar.toFixed(2)
+  }
 
   if (isLoading) {
     return <Loader />
@@ -334,9 +402,8 @@ const FormaSolicitudPresupuesto = () => {
           <input
             className="form-control"
             type="text"
-            onChange={(e) => handleChange(e, "BASE")}
             name="f_monto_comprobar"
-            value={0}
+            value={montoComprobar()}
             disabled
           />
         </div>
@@ -352,14 +419,14 @@ const FormaSolicitudPresupuesto = () => {
           <input
             className="form-control"
             type="file"
-            onChange={(e) => handleChange(e, "AGREGAR_FACTURA")}
+            onChange={agregarFactura}
             name="comprobante"
             accept=".xml"
-            // value={0}
-            // disabled
+            ref={fileInput}
+            disabled={!Boolean(Number(estadoForma.f_importe))}
           />
         </div>
-        <div className="col-12 mb-3">
+        <div className="col-12 mb-3 table-responsive">
           <table className="table">
             <thead>
               <tr>
@@ -367,8 +434,9 @@ const FormaSolicitudPresupuesto = () => {
                 <th>Método de pago</th>
                 <th>Forma de pago</th>
                 <th>Régimen fiscal</th>
-                <th>Total</th>
+                <th>Subtotal</th>
                 <th>Impuestos retenedios</th>
+                <th>Total</th>
                 <th>
                   <i className="bi bi-trash"></i>
                 </th>
@@ -378,25 +446,27 @@ const FormaSolicitudPresupuesto = () => {
               {estadoForma.comprobantes.map((comprobante) => {
                 const {
                   folio_fiscal,
-                  i_metodo_pago,
-                  i_forma_pago,
-                  i_regimen_fiscal,
+                  id_metodo_pago,
+                  id_forma_pago,
+                  regimen_fiscal,
+                  f_subtotal,
                   f_total,
                   f_retenciones,
                 } = comprobante
                 return (
-                  <tr>
+                  <tr key={folio_fiscal}>
                     <td>{folio_fiscal}</td>
-                    <td>{i_metodo_pago}</td>
-                    <td>{i_forma_pago}</td>
-                    <td>{i_regimen_fiscal}</td>
-                    <td>{f_total}</td>
+                    <td>{id_metodo_pago}</td>
+                    <td>{id_forma_pago}</td>
+                    <td>{regimen_fiscal}</td>
+                    <td>{f_subtotal}</td>
                     <td>{f_retenciones}</td>
+                    <td>{f_total}</td>
                     <td>
                       <button
                         type="button"
-                        className="btn btn-dark"
-                        onClick={() => {}}
+                        className="btn btn-dark btn-sm"
+                        onClick={() => quitarFactura(folio_fiscal)}
                       >
                         <i className="bi bi-x-circle"></i>
                       </button>

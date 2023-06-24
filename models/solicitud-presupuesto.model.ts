@@ -9,11 +9,12 @@ export interface CuentaSolicitud {
 export interface ComprobanteSolicitud {
   id?: number
   folio_fiscal: string
+  f_subtotal: string
   f_total: string
   f_retenciones: string
-  i_regimen_fiscal: number
-  i_forma_pago: number
-  i_metodo_pago: number
+  regimen_fiscal: string
+  id_forma_pago: number
+  id_metodo_pago: string
 }
 
 export type TipoGastoSolicitud = 1 | 2 | 3 | 4 | 5
