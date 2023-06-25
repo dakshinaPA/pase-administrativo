@@ -22,7 +22,7 @@ const Login = () => {
   }
 
   return (
-    <form className={`p-3 colorForma ${styles.loginForm}`} onSubmit={onSubmit}>
+    <form className={`p-3 mt-5 colorForma ${styles.loginForm}`} onSubmit={onSubmit}>
       <div className="mb-3">
         <label className="form-label">Usuario</label>
         <input
