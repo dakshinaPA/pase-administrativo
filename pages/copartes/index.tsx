@@ -154,27 +154,31 @@ const Financiadores = () => {
                           >
                             <i className="bi bi-eye-fill"></i>
                           </button>
-                          <button
-                            className="btn btn-dark btn-sm ms-1"
-                            onClick={() =>
-                              router.push(`/copartes/${id}/usuarios/registro`)
-                            }
-                            title="registrar usuario"
-                          >
-                            <i className="bi bi-person-plus"></i>
-                          </button>
-                          {administrador.id == user.id && (
-                            <button
-                              className="btn btn-dark btn-sm ms-1"
-                              onClick={() =>
-                                router.push(
-                                  `/copartes/${id}/proyectos/registro`
-                                )
-                              }
-                              title="registrar proyecto"
-                            >
-                              <i className="bi bi-file-earmark-text"></i>
-                            </button>
+                          {administrador.id == user?.id && (
+                            <>
+                              <button
+                                className="btn btn-dark btn-sm ms-1"
+                                onClick={() =>
+                                  router.push(
+                                    `/copartes/${id}/usuarios/registro`
+                                  )
+                                }
+                                title="registrar usuario"
+                              >
+                                <i className="bi bi-person-plus"></i>
+                              </button>
+                              <button
+                                className="btn btn-dark btn-sm ms-1"
+                                onClick={() =>
+                                  router.push(
+                                    `/copartes/${id}/proyectos/registro`
+                                  )
+                                }
+                                title="registrar proyecto"
+                              >
+                                <i className="bi bi-file-earmark-text"></i>
+                              </button>
+                            </>
                           )}
                           {user.id_rol == 1 && (
                             <button

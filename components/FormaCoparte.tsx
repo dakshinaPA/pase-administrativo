@@ -9,40 +9,42 @@ import { BtnBack } from "@components/BtnBack"
 import { ApiCall } from "@assets/utils/apiCalls"
 import { useCatalogos } from "@contexts/catalogos.context"
 import { BtnEditar } from "./Botones"
+import { useAuth } from "@contexts/auth.context"
+
+const estadoInicialForma: Coparte = {
+  nombre: "",
+  id_alt: "",
+  i_estatus_legal: 1,
+  representante_legal: "",
+  rfc: "",
+  id_tema_social: 1,
+  administrador: {
+    id: 1,
+  },
+  direccion: {
+    calle: "",
+    numero_ext: "",
+    numero_int: "",
+    colonia: "",
+    municipio: "",
+    cp: "",
+    id_estado: 1,
+  },
+  enlace: {
+    nombre: "",
+    apellido_paterno: "",
+    apellido_materno: "",
+    email: "",
+    telefono: "",
+    password: "",
+    cargo: "",
+  },
+  usuarios: [],
+  proyectos: [],
+}
 
 const FormaCoparte = () => {
-  const estadoInicialForma: Coparte = {
-    nombre: "",
-    id_alt: "",
-    i_estatus_legal: 1,
-    representante_legal: "",
-    rfc: "",
-    id_tema_social: 1,
-    administrador: {
-      id: 1,
-    },
-    direccion: {
-      calle: "",
-      numero_ext: "",
-      numero_int: "",
-      colonia: "",
-      municipio: "",
-      cp: "",
-      id_estado: 1,
-    },
-    enlace: {
-      nombre: "",
-      apellido_paterno: "",
-      apellido_materno: "",
-      email: "",
-      telefono: "",
-      password: "",
-      cargo: "",
-    },
-    usuarios: [],
-    proyectos: [],
-  }
-
+  const { user } = useAuth()
   const { temas_sociales, estados } = useCatalogos()
   const router = useRouter()
   const idCoparte = router.query.idC
@@ -180,9 +182,11 @@ const FormaCoparte = () => {
             <BtnBack navLink="/copartes" />
             {!idCoparte && <h2 className="color1 mb-0">Registrar coparte</h2>}
           </div>
-          {!modoEditar && idCoparte && (
-            <BtnEditar onClick={() => setModoEditar(true)} />
-          )}
+          {!modoEditar &&
+            idCoparte &&
+            estadoForma.administrador.id == user.id && (
+              <BtnEditar onClick={() => setModoEditar(true)} />
+            )}
         </div>
       </div>
       <FormaContenedor onSubmit={handleSubmit}>
@@ -464,15 +468,17 @@ const FormaCoparte = () => {
           <div className="row mb-5">
             <div className="col-12 mb-3 d-flex justify-content-between">
               <h2 className="color1 mb-0">Usuarios</h2>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() =>
-                  router.push(`/copartes/${idCoparte}/usuarios/registro`)
-                }
-              >
-                Registrar +
-              </button>
+              {estadoForma.administrador.id == user.id && (
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() =>
+                    router.push(`/copartes/${idCoparte}/usuarios/registro`)
+                  }
+                >
+                  Registrar +
+                </button>
+              )}
             </div>
             <div className="col-12 table-responsive">
               <table className="table">
@@ -532,15 +538,17 @@ const FormaCoparte = () => {
           <div className="row mb-3">
             <div className="col-12 mb-3 d-flex justify-content-between">
               <h2 className="color1 mb-0">Proyectos</h2>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() =>
-                  router.push(`/copartes/${idCoparte}/proyectos/registro`)
-                }
-              >
-                Registrar +
-              </button>
+              {estadoForma.administrador.id == user.id && (
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() =>
+                    router.push(`/copartes/${idCoparte}/proyectos/registro`)
+                  }
+                >
+                  Registrar +
+                </button>
+              )}
             </div>
             <div className="col-12 table-responsive">
               <table className="table">
@@ -578,7 +586,11 @@ const FormaCoparte = () => {
                         <td>
                           <button
                             className="btn btn-dark btn-sm"
-                            onClick={() => router.push(`/copartes/${idCoparte}/proyectos/${id}`)}
+                            onClick={() =>
+                              router.push(
+                                `/copartes/${idCoparte}/proyectos/${id}`
+                              )
+                            }
                           >
                             <i className="bi bi-eye-fill"></i>
                           </button>
