@@ -12,6 +12,7 @@ import {
   ComprobanteSolicitud,
   SolicitudPresupuesto,
 } from "@models/solicitud-presupuesto.model"
+import { useAuth } from "@contexts/auth.context"
 
 const reducer = (state: SolicitudPresupuesto, action): SolicitudPresupuesto => {
   const { type, value } = action
@@ -50,6 +51,8 @@ const reducer = (state: SolicitudPresupuesto, action): SolicitudPresupuesto => {
 }
 
 const FormaSolicitudPresupuesto = () => {
+  const { user } = useAuth()
+  if(!user) return null
   const router = useRouter()
   const idProyecto = Number(router.query.id)
 

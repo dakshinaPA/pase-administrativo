@@ -15,6 +15,7 @@ import { useAuth } from "@contexts/auth.context"
 
 const Usuarios = () => {
   const { user } = useAuth()
+  if(!user) return null
   const router = useRouter()
   const [copartesDB, setCopartesDB] = useState<CoparteMin[]>([])
   const [usuariosDB, setUsuariosDB] = useState<Usuario[]>([])
@@ -63,7 +64,7 @@ const Usuarios = () => {
 
   const obtenerCopartesDB = async () => {
     const res =
-      user?.id_rol == 2
+      user.id_rol == 2
         ? await obtenerCopartesAdmin(user.id)
         : await obtenerCopartes(0)
 
@@ -145,7 +146,7 @@ const Usuarios = () => {
             className="form-control"
             onChange={handleCambioRol}
             value={rolUsuarioSelect}
-            disabled={user?.id_rol == 2}
+            disabled={user.id_rol == 2}
           >
             <option value="1">Super Usuario</option>
             <option value="2">Administrador</option>

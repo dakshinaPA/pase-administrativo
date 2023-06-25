@@ -84,6 +84,7 @@ const estadoInicialForma: Coparte = {
 
 const FormaCoparte = () => {
   const { user } = useAuth()
+  if(!user) return null
   const { temas_sociales, estados } = useCatalogos()
   const router = useRouter()
   const idCoparte = router.query.idC
@@ -200,7 +201,7 @@ const FormaCoparte = () => {
           </div>
           {!modoEditar &&
             idCoparte &&
-            (estadoForma.administrador.id == user?.id || user?.id_rol == 1) && (
+            (estadoForma.administrador.id == user.id || user.id_rol == 1) && (
               <BtnEditar onClick={() => setModoEditar(true)} />
             )}
         </div>
@@ -484,8 +485,8 @@ const FormaCoparte = () => {
           <div className="row mb-5">
             <div className="col-12 mb-3 d-flex justify-content-between">
               <h2 className="color1 mb-0">Usuarios</h2>
-              {(estadoForma.administrador.id == user?.id ||
-                user?.id_rol == 1) && (
+              {(estadoForma.administrador.id == user.id ||
+                user.id_rol == 1) && (
                 <button
                   type="button"
                   className="btn btn-secondary"
@@ -541,8 +542,8 @@ const FormaCoparte = () => {
                               router.push(`/usuarios/${id_usuario}`)
                             }
                             disabled={
-                              estadoForma.administrador.id != user?.id &&
-                              user?.id_rol != 1
+                              estadoForma.administrador.id != user.id &&
+                              user.id_rol != 1
                             }
                           >
                             <i className="bi bi-eye-fill"></i>
@@ -559,7 +560,7 @@ const FormaCoparte = () => {
           <div className="row mb-3">
             <div className="col-12 mb-3 d-flex justify-content-between">
               <h2 className="color1 mb-0">Proyectos</h2>
-              {estadoForma.administrador.id == user?.id && (
+              {estadoForma.administrador.id == user.id && (
                 <button
                   type="button"
                   className="btn btn-secondary"
@@ -612,7 +613,7 @@ const FormaCoparte = () => {
                                 `/copartes/${idCoparte}/proyectos/${id}`
                               )
                             }
-                            disabled={estadoForma.administrador.id != user?.id}
+                            disabled={estadoForma.administrador.id != user.id}
                           >
                             <i className="bi bi-eye-fill"></i>
                           </button>

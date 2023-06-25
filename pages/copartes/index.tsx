@@ -10,6 +10,7 @@ import { useAuth } from "@contexts/auth.context"
 
 const Financiadores = () => {
   const { user } = useAuth()
+  if(!user) return null
   const router = useRouter()
   const [resultadosDB, setResultadosDB] = useState<Coparte[]>([])
   const [idAEliminar, setIdAEliminar] = useState<number>(0)
@@ -154,7 +155,7 @@ const Financiadores = () => {
                           >
                             <i className="bi bi-eye-fill"></i>
                           </button>
-                          {administrador.id == user?.id && (
+                          {administrador.id == user.id && (
                             <>
                               <button
                                 className="btn btn-dark btn-sm ms-1"
@@ -180,7 +181,7 @@ const Financiadores = () => {
                               </button>
                             </>
                           )}
-                          {user?.id_rol == 1 && (
+                          {user.id_rol == 1 && (
                             <button
                               className="btn btn-dark btn-sm ms-1"
                               onClick={() => abrirModalEliminar(id)}

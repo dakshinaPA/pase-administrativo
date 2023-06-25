@@ -31,6 +31,7 @@ const FormaUsuario = () => {
   }
 
   const { user } = useAuth()
+  if(!user) return null
   const router = useRouter()
   const idCoparte = router.query.idC
   const idUsuario = router.query.id

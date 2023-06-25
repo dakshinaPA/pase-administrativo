@@ -8,8 +8,11 @@ import { BtnBack } from "@components/BtnBack"
 import { ApiCall } from "@assets/utils/apiCalls"
 import { useCatalogos } from "@contexts/catalogos.context"
 import { BtnEditar } from "./Botones"
+import { useAuth } from "@contexts/auth.context"
 
 const FormaProveedor = () => {
+  const { user } = useAuth()
+  if(!user) return null
   const router = useRouter()
   const idProyecto = Number(router.query.id)
 

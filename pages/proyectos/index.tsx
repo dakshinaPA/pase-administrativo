@@ -11,6 +11,7 @@ import { CoparteMin } from "@models/coparte.model"
 
 const Financiadores = () => {
   const { user } = useAuth()
+  if(!user) return null
   const router = useRouter()
   const [proyectosDB, setProyectosDB] = useState<Proyecto[]>([])
   const [copartesDB, setCopartesDB] = useState<CoparteMin[]>([])

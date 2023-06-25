@@ -10,6 +10,7 @@ import { useAuth } from "@contexts/auth.context"
 
 const Financiadores = () => {
   const { user } = useAuth()
+  if(!user) return null
   const router = useRouter()
   const [resultadosDB, setResultadosDB] = useState<Financiador[]>([])
   const [resultadosFiltrados, setResultadosFiltrados] = useState<Financiador[]>(
@@ -96,7 +97,7 @@ const Financiadores = () => {
   return (
     <TablaContenedor>
       <div className="row mb-2">
-        {user?.id_rol == 1 && (
+        {user.id_rol == 1 && (
           <div className="col-12 col-md-4 col-lg-2 mb-3">
             <button
               type="button"

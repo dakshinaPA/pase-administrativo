@@ -20,107 +20,111 @@ const MenuPrincipal = () => {
     //   </Link>
     // </div>
     <div className="accordion accordion-flush">
-      <div className="accordion-item">
-        <h2 className="accordion-header">
-          <button
-            className="accordion-button collapsed"
-            type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#flush-collapse1"
-            // aria-expanded="false"
-            // aria-controls="flush-collapse1"
-          >
-            Usuarios
-          </button>
-        </h2>
-        <div
-          id="flush-collapse1"
-          className="accordion-collapse collapse"
-          // data-bs-parent="#accordionFlush"
-        >
-          <div className="accordion-body">
-            <nav>
-              <ul>
-                <li>
-                  <Link href="/usuarios" className="">
-                    Listado
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/usuarios/registro" className="">
-                    Registrar
-                  </Link>
-                </li>
-              </ul>
-            </nav>
+      {user?.id_rol != 3 && (
+        <>
+          <div className="accordion-item">
+            <h2 className="accordion-header">
+              <button
+                className="accordion-button collapsed"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#flush-collapse1"
+                // aria-expanded="false"
+                // aria-controls="flush-collapse1"
+              >
+                Usuarios
+              </button>
+            </h2>
+            <div
+              id="flush-collapse1"
+              className="accordion-collapse collapse"
+              // data-bs-parent="#accordionFlush"
+            >
+              <div className="accordion-body">
+                <nav>
+                  <ul>
+                    <li>
+                      <Link href="/usuarios" className="">
+                        Listado
+                      </Link>
+                    </li>
+                    <li>
+                      <Link href="/usuarios/registro" className="">
+                        Registrar
+                      </Link>
+                    </li>
+                  </ul>
+                </nav>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
 
-      <div className="accordion-item">
-        <h2 className="accordion-header">
-          <button
-            className="accordion-button collapsed"
-            type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#flush-collapse2"
-          >
-            Financiadores
-          </button>
-        </h2>
-        <div id="flush-collapse2" className="accordion-collapse collapse">
-          <div className="accordion-body">
-            <nav>
-              <ul>
-                <li>
-                  <Link href="/financiadores" className="">
-                    Listado
-                  </Link>
-                </li>
-                {user?.id_rol == 1 && (
-                  <li>
-                    <Link href="/financiadores/registro" className="">
-                      Registrar
-                    </Link>
-                  </li>
-                )}
-              </ul>
-            </nav>
+          <div className="accordion-item">
+            <h2 className="accordion-header">
+              <button
+                className="accordion-button collapsed"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#flush-collapse2"
+              >
+                Financiadores
+              </button>
+            </h2>
+            <div id="flush-collapse2" className="accordion-collapse collapse">
+              <div className="accordion-body">
+                <nav>
+                  <ul>
+                    <li>
+                      <Link href="/financiadores" className="">
+                        Listado
+                      </Link>
+                    </li>
+                    {user?.id_rol == 1 && (
+                      <li>
+                        <Link href="/financiadores/registro" className="">
+                          Registrar
+                        </Link>
+                      </li>
+                    )}
+                  </ul>
+                </nav>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
 
-      <div className="accordion-item">
-        <h2 className="accordion-header">
-          <button
-            className="accordion-button collapsed"
-            type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#flush-collapse3"
-          >
-            Copartes
-          </button>
-        </h2>
-        <div id="flush-collapse3" className="accordion-collapse collapse">
-          <div className="accordion-body">
-            <nav>
-              <ul>
-                <li>
-                  <Link href="/copartes" className="">
-                    Listado
-                  </Link>
-                </li>
+          <div className="accordion-item">
+            <h2 className="accordion-header">
+              <button
+                className="accordion-button collapsed"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#flush-collapse3"
+              >
+                Copartes
+              </button>
+            </h2>
+            <div id="flush-collapse3" className="accordion-collapse collapse">
+              <div className="accordion-body">
+                <nav>
+                  <ul>
+                    <li>
+                      <Link href="/copartes" className="">
+                        Listado
+                      </Link>
+                    </li>
 
-                <li>
-                  <Link href="/copartes/registro" className="">
-                    Registrar
-                  </Link>
-                </li>
-              </ul>
-            </nav>
+                    <li>
+                      <Link href="/copartes/registro" className="">
+                        Registrar
+                      </Link>
+                    </li>
+                  </ul>
+                </nav>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        </>
+      )}
 
       <div className="accordion-item">
         <h2 className="accordion-header">
@@ -186,67 +190,71 @@ const MenuPrincipal = () => {
         </div>
       </div>
 
-      <div className="accordion-item">
-        <h2 className="accordion-header">
-          <button
-            className="accordion-button collapsed"
-            type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#flush-collapse6"
-          >
-            Colaboradores
-          </button>
-        </h2>
-        <div id="flush-collapse6" className="accordion-collapse collapse">
-          <div className="accordion-body">
-            <nav>
-              <ul>
-                <li>
-                  <Link href="/colaboradores" className="">
-                    Listado
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/colaboradores/registro" className="">
-                    Registrar
-                  </Link>
-                </li>
-              </ul>
-            </nav>
+      {user?.id_rol == 3 && (
+        <>
+          <div className="accordion-item">
+            <h2 className="accordion-header">
+              <button
+                className="accordion-button collapsed"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#flush-collapse6"
+              >
+                Colaboradores
+              </button>
+            </h2>
+            <div id="flush-collapse6" className="accordion-collapse collapse">
+              <div className="accordion-body">
+                <nav>
+                  <ul>
+                    <li>
+                      <Link href="/colaboradores" className="">
+                        Listado
+                      </Link>
+                    </li>
+                    <li>
+                      <Link href="/colaboradores/registro" className="">
+                        Registrar
+                      </Link>
+                    </li>
+                  </ul>
+                </nav>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
 
-      <div className="accordion-item">
-        <h2 className="accordion-header">
-          <button
-            className="accordion-button collapsed"
-            type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#flush-collapse7"
-          >
-            Proveedores
-          </button>
-        </h2>
-        <div id="flush-collapse7" className="accordion-collapse collapse">
-          <div className="accordion-body">
-            <nav>
-              <ul>
-                <li>
-                  <Link href="/proveedores" className="">
-                    Listado
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/proveedores/registro" className="">
-                    Registrar
-                  </Link>
-                </li>
-              </ul>
-            </nav>
+          <div className="accordion-item">
+            <h2 className="accordion-header">
+              <button
+                className="accordion-button collapsed"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#flush-collapse7"
+              >
+                Proveedores
+              </button>
+            </h2>
+            <div id="flush-collapse7" className="accordion-collapse collapse">
+              <div className="accordion-body">
+                <nav>
+                  <ul>
+                    <li>
+                      <Link href="/proveedores" className="">
+                        Listado
+                      </Link>
+                    </li>
+                    <li>
+                      <Link href="/proveedores/registro" className="">
+                        Registrar
+                      </Link>
+                    </li>
+                  </ul>
+                </nav>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        </>
+      )}
     </div>
   )
 }
