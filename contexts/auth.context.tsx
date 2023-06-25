@@ -56,7 +56,7 @@ const AuthProvider = ({ children }) => {
 
   const logOut = () => {
     setUser(null)
-    router.push("/Login")
+    router.push("/login")
   }
 
   const limpiarError = () => setError(estadoInicialError)
