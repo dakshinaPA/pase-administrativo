@@ -179,11 +179,13 @@ const MenuPrincipal = () => {
                     Listado
                   </Link>
                 </li>
-                <li>
-                  <Link href="/proyectos/registro" className="">
-                    Registrar
-                  </Link>
-                </li>
+                {user.id_rol == 3 && (
+                  <li>
+                    <Link href="/proyectos/registro" className="">
+                      Registrar
+                    </Link>
+                  </li>
+                )}
               </ul>
             </nav>
           </div>
