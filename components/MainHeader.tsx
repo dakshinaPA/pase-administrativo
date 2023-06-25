@@ -4,7 +4,7 @@ import { useAuth } from "../contexts/auth.context"
 // import logo from '../assets/img/logo.jpeg'
 
 const MainHeader = memo(() => {
-  const { user } = useAuth()
+  const { user, logOut } = useAuth()
 
   if (!user) {
     return <header className="colorHeader" style={{ height: "50px" }}></header>
@@ -23,9 +23,18 @@ const MainHeader = memo(() => {
           style={{ fontSize: "30px" }}
         ></i>
       </Link>
-      <span className="color3">
-        {nombre} {apellido_paterno} {apellido_materno}
-      </span>
+      <div>
+        <span className="color3">
+          {nombre} {apellido_paterno} {apellido_materno}
+        </span>
+        <button
+          type="button"
+          className="btn btn-sm"
+          onClick={logOut}
+        >
+          <i className="bi bi-box-arrow-right text-white"></i>
+        </button>
+      </div>
     </header>
   )
 })
