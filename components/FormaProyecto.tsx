@@ -17,6 +17,7 @@ import { useCatalogos } from "@contexts/catalogos.context"
 import { RubrosPresupuestalesDB } from "@api/models/catalogos.model"
 import {
   inputDateAformato,
+  obtenerCopartes,
   obtenerCopartesAdmin,
   obtenerFinanciadores,
 } from "@assets/utils/common"
@@ -123,8 +124,12 @@ const FormaProyecto = () => {
   const cargarData = async () => {
     setIsLoading(true)
 
+    const reCopartes = idCoparte
+      ? obtenerCopartes(idCoparte)
+      : obtenerCopartesAdmin(user.id)
+
     try {
-      const promesas = [obtenerFinanciadores(), obtenerCopartesAdmin(user.id)]
+      const promesas = [obtenerFinanciadores(), reCopartes]
 
       if (modalidad === "EDITAR") {
         promesas.push(obtener())
@@ -142,13 +147,13 @@ const FormaProyecto = () => {
       setFinanciadoresDB(financiaodresDB)
       setCopartesDB(copartesAdminDB)
 
-      if(!idCoparte){
+      if (!idCoparte) {
         setEstadoForma({
           ...estadoForma,
-          id_coparte: copartesAdminDB[0].id
+          id_coparte: copartesAdminDB[0].id,
         })
       }
-      
+
       if (modalidad === "EDITAR") {
         setEstadoForma(resCombinadas[2].data[0] as Proyecto)
       }

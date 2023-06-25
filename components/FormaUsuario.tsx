@@ -79,8 +79,9 @@ const FormaUsuario = () => {
 
     try {
       const reCopartes =
-        user.id_rol == 2 ? obtenerCopartesAdmin(user.id) : obtenerCopartes()
-      const promesas = [reCopartes]
+        user.id_rol == 2 ? obtenerCopartesAdmin(user.id) : obtenerCopartes(0)
+      
+        const promesas = [reCopartes]
 
       if (modalidad === "EDITAR") {
         promesas.push(obtener())

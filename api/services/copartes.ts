@@ -22,8 +22,8 @@ class CopartesServices {
     }
   }
 
-  static async obtenerVmin(id_admin: number) {
-    const re = await CoparteDB.obtenerVmin(id_admin)
+  static async obtenerVmin(id_coparte: number, id_admin: number) {
+    const re = await CoparteDB.obtenerVmin(id_coparte, id_admin)
 
     if (re.error) {
       return RespuestaController.fallida(
@@ -37,7 +37,7 @@ class CopartesServices {
 
   static async obtener(queries: Queries) {
     const { id: id_coparte, id_admin, min } = queries
-    if (min) return await this.obtenerVmin(Number(id_admin))
+    if (min) return await this.obtenerVmin(Number(id_coparte), Number(id_admin))
     try {
       const re = await CoparteDB.obtener(Number(id_coparte))
       if (re.error) throw re.data
@@ -74,7 +74,7 @@ class CopartesServices {
 
           if (id_coparte) {
             const reUsuarios = this.obtenerUsuarios(Number(id_coparte), false)
-            const reProyectos = ProyectosServices.obtener(id, 0, false)
+            const reProyectos = ProyectosServices.obtener(queries)
 
             const resCombinadas = await Promise.all([reUsuarios, reProyectos])
 

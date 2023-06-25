@@ -1,6 +1,9 @@
+import { useAuth } from "@contexts/auth.context"
 import Link from "next/link"
 
 const MenuPrincipal = () => {
+  const { user } = useAuth()
+
   return (
     // <div className="list-group">
     //   <Link href="/usuarios" className="list-group-item list-group-item-action">
@@ -65,10 +68,7 @@ const MenuPrincipal = () => {
             Financiadores
           </button>
         </h2>
-        <div
-          id="flush-collapse2"
-          className="accordion-collapse collapse"
-        >
+        <div id="flush-collapse2" className="accordion-collapse collapse">
           <div className="accordion-body">
             <nav>
               <ul>
@@ -77,11 +77,13 @@ const MenuPrincipal = () => {
                     Listado
                   </Link>
                 </li>
-                <li>
-                  <Link href="/financiadores/registro" className="">
-                    Registrar
-                  </Link>
-                </li>
+                {user?.id_rol == 1 && (
+                  <li>
+                    <Link href="/financiadores/registro" className="">
+                      Registrar
+                    </Link>
+                  </li>
+                )}
               </ul>
             </nav>
           </div>
@@ -99,10 +101,7 @@ const MenuPrincipal = () => {
             Copartes
           </button>
         </h2>
-        <div
-          id="flush-collapse3"
-          className="accordion-collapse collapse"
-        >
+        <div id="flush-collapse3" className="accordion-collapse collapse">
           <div className="accordion-body">
             <nav>
               <ul>
@@ -111,6 +110,7 @@ const MenuPrincipal = () => {
                     Listado
                   </Link>
                 </li>
+
                 <li>
                   <Link href="/copartes/registro" className="">
                     Registrar
@@ -133,10 +133,7 @@ const MenuPrincipal = () => {
             Proyectos
           </button>
         </h2>
-        <div
-          id="flush-collapse4"
-          className="accordion-collapse collapse"
-        >
+        <div id="flush-collapse4" className="accordion-collapse collapse">
           <div className="accordion-body">
             <nav>
               <ul>
@@ -145,11 +142,13 @@ const MenuPrincipal = () => {
                     Listado
                   </Link>
                 </li>
-                <li>
-                  <Link href="/proyectos/registro" className="">
-                    Registrar
-                  </Link>
-                </li>
+                {user?.id_rol == 2 && (
+                  <li>
+                    <Link href="/proyectos/registro" className="">
+                      Registrar
+                    </Link>
+                  </li>
+                )}
               </ul>
             </nav>
           </div>
@@ -167,10 +166,7 @@ const MenuPrincipal = () => {
             Solicitudes
           </button>
         </h2>
-        <div
-          id="flush-collapse5"
-          className="accordion-collapse collapse"
-        >
+        <div id="flush-collapse5" className="accordion-collapse collapse">
           <div className="accordion-body">
             <nav>
               <ul>
@@ -201,10 +197,7 @@ const MenuPrincipal = () => {
             Colaboradores
           </button>
         </h2>
-        <div
-          id="flush-collapse6"
-          className="accordion-collapse collapse"
-        >
+        <div id="flush-collapse6" className="accordion-collapse collapse">
           <div className="accordion-body">
             <nav>
               <ul>
@@ -235,10 +228,7 @@ const MenuPrincipal = () => {
             Proveedores
           </button>
         </h2>
-        <div
-          id="flush-collapse7"
-          className="accordion-collapse collapse"
-        >
+        <div id="flush-collapse7" className="accordion-collapse collapse">
           <div className="accordion-body">
             <nav>
               <ul>
@@ -257,7 +247,6 @@ const MenuPrincipal = () => {
           </div>
         </div>
       </div>
-
     </div>
   )
 }

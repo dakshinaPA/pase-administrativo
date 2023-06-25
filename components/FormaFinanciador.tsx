@@ -229,7 +229,7 @@ const FormaFinanciador = () => {
               <h2 className="color1 mb-0">Registrar financiador</h2>
             )}
           </div>
-          {!modoEditar && idFinanciador && (
+          {!modoEditar && idFinanciador && user.id_rol == 1 && (
             <BtnEditar onClick={() => setModoEditar(true)} />
           )}
         </div>

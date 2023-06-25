@@ -115,15 +115,17 @@ const Financiadores = () => {
   return (
     <TablaContenedor>
       <div className="row mb-2">
-        <div className="col-12 col-md-6 col-lg-2 mb-3">
-          <button
-            type="button"
-            className="btn btn-secondary w-100"
-            onClick={() => router.push("/proyectos/registro")}
-          >
-            Registrar +
-          </button>
-        </div>
+        {user.id_rol == 2 && (
+          <div className="col-12 col-md-6 col-lg-2 mb-3">
+            <button
+              type="button"
+              className="btn btn-secondary w-100"
+              onClick={() => router.push("/proyectos/registro")}
+            >
+              Registrar +
+            </button>
+          </div>
+        )}
         {copartesDB.length > 0 && (
           <div className="col-12 col-md-6 col-lg-3 mb-3">
             <select

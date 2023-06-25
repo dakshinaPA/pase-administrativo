@@ -95,16 +95,18 @@ const Financiadores = () => {
 
   return (
     <TablaContenedor>
-      <div className="row mb-3">
-        <div className="col-12 col-md-2 mb-2">
-          <button
-            type="button"
-            className="btn btn-secondary w-100"
-            onClick={() => router.push("/financiadores/registro")}
-          >
-            Registrar +
-          </button>
-        </div>
+      <div className="row mb-2">
+        {user?.id_rol == 1 && (
+          <div className="col-12 col-md-4 col-lg-2 mb-3">
+            <button
+              type="button"
+              className="btn btn-secondary w-100"
+              onClick={() => router.push("/financiadores/registro")}
+            >
+              Registrar +
+            </button>
+          </div>
+        )}
         {/* <div className="col-12 col-md-2 mb-2">
           <select
             className="form-control"
@@ -116,8 +118,8 @@ const Financiadores = () => {
             <option value="2">Idependiente</option>
           </select>
         </div> */}
-        <div className="d-none d-md-block col-md-6 mb-2"></div>
-        <div className="col-12 col-md-4 mb-2">
+        <div className="d-none d-md-block col mb-3"></div>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
           <div className="input-group">
             <input
               type="text"

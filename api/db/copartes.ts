@@ -8,11 +8,15 @@ import {
 import { fechaActualAEpoch } from "@assets/utils/common"
 
 class CoparteDB {
-  static async obtenerVmin(id_admin: number) {
+  static async obtenerVmin(id_coparte: number, id_admin: number) {
     let query = `SELECT id, nombre FROM copartes WHERE b_activo = 1`
 
-    if(id_admin){
+    if (id_admin) {
       query += ` AND id_administrador = ${id_admin}`
+    }
+
+    if (id_coparte) {
+      query += ` AND id = ${id_coparte}`
     }
 
     try {

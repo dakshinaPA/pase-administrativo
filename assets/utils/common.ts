@@ -47,8 +47,13 @@ const obtenerCopartesAdmin = async (id_admin: number, min = true) => {
   return await ApiCall.get(url)
 }
 
-const obtenerCopartes = async (min = true) => {
+const obtenerCopartes = async (id_coparte: number, min = true) => {
   let url = "/copartes"
+
+  if(id_coparte){
+    url += `/${id_coparte}`
+  }
+
   if (min) {
     url += "?min=true"
   }
