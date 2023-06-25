@@ -180,7 +180,7 @@ const Financiadores = () => {
                               </button>
                             </>
                           )}
-                          {user.id_rol == 1 && (
+                          {user?.id_rol == 1 && (
                             <button
                               className="btn btn-dark btn-sm ms-1"
                               onClick={() => abrirModalEliminar(id)}

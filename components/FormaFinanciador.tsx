@@ -175,7 +175,8 @@ const FormaFinanciador = () => {
     setIsLoading(false)
 
     if (res.error) {
-      console.log(res)
+      console.log(res.data)
+      console.log(res.mensaje)
     } else {
       if (modalidad === "EDITAR") {
         setModoEditar(false)

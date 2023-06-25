@@ -195,7 +195,7 @@ class ProyectosServices {
 
       const idAltFinanciador = promesasIds[0].data[0].id_alt as string
       const idAltCoparte = promesasIds[1].data[0].id_alt as string
-      const ultimoId = promesasIds[2].data[0].id
+      const ultimoId = promesasIds[2].data[0]?.id
         ? promesasIds[2].data[0].id + 1
         : "1"
 

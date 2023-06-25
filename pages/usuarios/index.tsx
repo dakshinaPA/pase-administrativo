@@ -63,9 +63,9 @@ const Usuarios = () => {
 
   const obtenerCopartesDB = async () => {
     const res =
-      user.id_rol == 2
+      user?.id_rol == 2
         ? await obtenerCopartesAdmin(user.id)
-        : await obtenerCopartes()
+        : await obtenerCopartes(0)
 
     const { error, data, mensaje } = res
 
@@ -74,7 +74,7 @@ const Usuarios = () => {
     } else {
       const copartesDB = data as CoparteMin[]
       setCopartesDB(copartesDB)
-      setCoparteSelect(copartesDB[0].id)
+      setCoparteSelect(copartesDB[0]?.id || 0)
     }
   }
 
@@ -145,7 +145,7 @@ const Usuarios = () => {
             className="form-control"
             onChange={handleCambioRol}
             value={rolUsuarioSelect}
-            disabled={user.id_rol == 2}
+            disabled={user?.id_rol == 2}
           >
             <option value="1">Super Usuario</option>
             <option value="2">Administrador</option>

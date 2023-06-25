@@ -27,9 +27,7 @@ const AuthProvider = ({ children }) => {
     login({
       email: "omar.maldo.vi@gmail.com",
       password: "123",
-      // email: "iflores@dakshina.org.mx",
-      // password: "123",
-      // email: 'gabome@gmail.com',
+      // email: 'ximepra@gmail.com',
       // password: '123'
     })
   }, [])
@@ -45,8 +43,8 @@ const AuthProvider = ({ children }) => {
         const usuario = data[0] as UsuarioLogin
         const userTest: UsuarioLogin = {
           ...usuario,
-          // id_rol: 1,
-          // id: 9
+          // id_rol: 3,
+          // id: 7
         }
         setUser(userTest)
         router.push("/")

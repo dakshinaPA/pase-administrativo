@@ -354,7 +354,7 @@ const FormaProyecto = () => {
             <BtnBack navLink="/proyectos" />
             {!idProyecto && <h2 className="color1 mb-0">Registrar proyecto</h2>}
           </div>
-          {!modoEditar && idProyecto && (
+          {!modoEditar && idProyecto && user.id_rol == 2 && (
             <BtnEditar onClick={() => setModoEditar(true)} />
           )}
         </div>
@@ -688,15 +688,19 @@ const FormaProyecto = () => {
           <div className="row mb-5">
             <div className="col-12 mb-3 d-flex justify-content-between">
               <h3 className="color1 mb-0">Colaboradores</h3>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() =>
-                  router.push(`/proyectos/${idProyecto}/colaboradores/registro`)
-                }
-              >
-                Registrar +
-              </button>
+              {user.id_rol == 3 && (
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() =>
+                    router.push(
+                      `/proyectos/${idProyecto}/colaboradores/registro`
+                    )
+                  }
+                >
+                  Registrar +
+                </button>
+              )}
             </div>
             <div className="col-12 table-responsive">
               <table className="table">
@@ -761,15 +765,17 @@ const FormaProyecto = () => {
           <div className="row mb-5">
             <div className="col-12 mb-3 d-flex justify-content-between">
               <h3 className="color1 mb-0">Proveedores</h3>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() =>
-                  router.push(`/proyectos/${idProyecto}/proveedores/registro`)
-                }
-              >
-                Registrar +
-              </button>
+              {user.id_rol == 3 && (
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() =>
+                    router.push(`/proyectos/${idProyecto}/proveedores/registro`)
+                  }
+                >
+                  Registrar +
+                </button>
+              )}
             </div>
             <div className="col-12 table-responsive">
               <table className="table">
@@ -828,17 +834,19 @@ const FormaProyecto = () => {
           <div className="row mb-3">
             <div className="col-12 mb-3 d-flex justify-content-between">
               <h3 className="color1 mb-0">Solicitudes de presupuesto</h3>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() =>
-                  router.push(
-                    `/proyectos/${idProyecto}/solicitudes-presupuesto/registro`
-                  )
-                }
-              >
-                Registrar +
-              </button>
+              {user.id_rol == 3 && (
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() =>
+                    router.push(
+                      `/proyectos/${idProyecto}/solicitudes-presupuesto/registro`
+                    )
+                  }
+                >
+                  Registrar +
+                </button>
+              )}
             </div>
             <div className="col-12 table-responsive">
               <table className="table">

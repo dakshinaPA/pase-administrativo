@@ -82,11 +82,11 @@ INSERT INTO `rubros_presupuestales` (`nombre`) VALUES
 
 CREATE TABLE `financiadores` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `id_alt` VARCHAR(20) NOT NULL,
+  `id_alt` VARCHAR(20) UNIQUE NOT NULL,
   `nombre` VARCHAR(30) NOT NULL COMMENT 'Denominacion social',
   `representante_legal` VARCHAR(80) NOT NULL,
   `pagina_web` VARCHAR(100) NOT NULL DEFAULT '',
-  `rfc` VARCHAR(50) NOT NULL COMMENT 'RFC o tax number',
+  `rfc` VARCHAR(50) UNIQUE NOT NULL COMMENT 'RFC o tax number',
   `actividad` VARCHAR(80) NOT NULL COMMENT 'actividad, giro mercantil u objeto social',
   `i_tipo` TINYINT UNSIGNED NOT NULL COMMENT '1.aliado, 2.independiente',
   `dt_constitucion` VARCHAR(10) NOT NULL,
@@ -122,7 +122,7 @@ CREATE TABLE `financiador_enlace` (
   `apellido_paterno` VARCHAR(50) NOT NULL,
   `apellido_materno` VARCHAR(50) NOT NULL,
   `email` VARCHAR(30) NOT NULL UNIQUE,
-  `telefono` VARCHAR(10) NOT NULL,
+  `telefono` VARCHAR(20) NOT NULL,
   PRIMARY KEY (`id`),
   INDEX (`id_financiador`));
 
@@ -175,19 +175,15 @@ CREATE TABLE `usuarios` (
   INDEX (`id_rol`));
 
 INSERT INTO `usuarios` (`nombre`, `apellido_paterno`, `apellido_materno`, `email`, `telefono`, `password`, `id_rol`, `dt_registro`) 
-VALUES ('Omar', 'Maldonado', 'Villanueva', 'omar.maldo.vi@gmail.com', '7221223344', '123', 2, '1685385164'),
-('Isabel', 'Flores', 'Alarcon', 'iflores@dakshina.org.mx', '7223445566', '123', 1, '1685385164'),
-('Gabriel', 'Mendez', 'Alarcon', 'gabome@gmail.com', '7224556677', '123', 3, '1685385164'),
-('Elisa', 'Martínez', 'chavez', 'elimacha@gmail.com', '9887654456', '123', 2, '1685385164'),
-('Mónica', 'López', 'Tellez', 'molote@gmail.com', '8776548976', '123', 3, '1685385164'),
-('Carlos', 'Viramontes', 'Vacas', 'vacavi@gmail.com', '9453872478', '123', 3, '1685385164');
+VALUES ('Omar', 'Maldonado', 'Villanueva', 'omar.maldo.vi@gmail.com', '7221223344', '123', 1, '1685385164');
+
 
 -------------------------------------------------------
 
 CREATE TABLE `copartes` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `id_administrador` INT UNSIGNED NOT NULL COMMENT 'administrador responsable',
-  `id_alt` VARCHAR(20) NOT NULL,
+  `id_alt` VARCHAR(20) UNIQUE NOT NULL,
   `nombre` VARCHAR(45) NOT NULL,
   `i_estatus_legal` TINYINT UNSIGNED NOT NULL DEFAULT 1 COMMENT '1.constituida, 2.no constituida',
   `representante_legal` VARCHAR(80) NOT NULL DEFAULT '' COMMENT 'solo constituidas',
@@ -227,7 +223,7 @@ CREATE TABLE `coparte_usuarios` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `id_coparte` INT UNSIGNED NOT NULL,
   `id_usuario` INT UNSIGNED NOT NULL,
-  `cargo` VARCHAR(20) NOT NULL,
+  `cargo` VARCHAR(40) NOT NULL,
   `b_enlace` TINYINT UNSIGNED NOT NULL DEFAULT 0,
   `b_activo` TINYINT UNSIGNED NOT NULL DEFAULT 1,
   PRIMARY KEY (`id`),
@@ -257,7 +253,7 @@ CREATE TABLE `proyectos` (
   `id_financiador` INT UNSIGNED NOT NULL,
   `id_coparte` INT UNSIGNED NOT NULL,
   `id_responsable` INT UNSIGNED NOT NULL COMMENT 'id usuario coparte',
-  `id_alt` VARCHAR(20) NOT NULL,
+  `id_alt` VARCHAR(20) UNIQUE NOT NULL,
   `f_monto_total` VARCHAR(20) NOT NULL,
   `i_tipo_financiamiento` TINYINT UNSIGNED NOT NULL COMMENT '1.estipendio, 2.unica ministracion, 3.varias ministraciones, 4.multi anual',
   `i_beneficiados` INT UNSIGNED NOT NULL,
@@ -425,4 +421,6 @@ TRUNCATE TABLE colaboradores;
 TRUNCATE TABLE colaborador_direccion;
 TRUNCATE TABLE proveedores;
 TRUNCATE TABLE proveedor_direccion;
+TRUNCATE TABLE solicitudes_presupuesto;
+TRUNCATE TABLE solicitud_presupuesto_comprobantes;
 

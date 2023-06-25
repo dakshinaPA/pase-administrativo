@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useReducer } from "react"
 import { useRouter } from "next/router"
 import { ChangeEvent } from "@assets/models/formEvents.model"
 import { Coparte } from "@models/coparte.model"
@@ -11,6 +11,45 @@ import { useCatalogos } from "@contexts/catalogos.context"
 import { BtnEditar } from "./Botones"
 import { useAuth } from "@contexts/auth.context"
 
+const reducer = (state: Coparte, action): Coparte => {
+  const { type, value } = action
+
+  switch (type) {
+    case "CARGAR_DATA":
+      return value
+    case "BASE":
+      return {
+        ...state,
+        [value[0]]: value[1],
+      }
+    case "ADMINISTRADOR":
+      return {
+        ...state,
+        administrador: {
+          id: value[1],
+        },
+      }
+    case "DIRECCION":
+      return {
+        ...state,
+        direccion: {
+          ...state.direccion,
+          [value[0]]: value[1],
+        },
+      }
+    case "ENLACE":
+      return {
+        ...state,
+        enlace: {
+          ...state.enlace,
+          [value[0]]: value[1],
+        },
+      }
+    default:
+      return state
+  }
+}
+
 const estadoInicialForma: Coparte = {
   nombre: "",
   id_alt: "",
@@ -19,7 +58,7 @@ const estadoInicialForma: Coparte = {
   rfc: "",
   id_tema_social: 1,
   administrador: {
-    id: 1,
+    id: 0,
   },
   direccion: {
     calle: "",
@@ -48,7 +87,7 @@ const FormaCoparte = () => {
   const { temas_sociales, estados } = useCatalogos()
   const router = useRouter()
   const idCoparte = router.query.idC
-  const [estadoForma, setEstadoForma] = useState(estadoInicialForma)
+  const [estadoForma, dispatch] = useReducer(reducer, estadoInicialForma)
   const [administardoresDB, setAdministardoresDB] = useState<UsuarioMin[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [modoEditar, setModoEditar] = useState<boolean>(!idCoparte)
@@ -77,9 +116,21 @@ const FormaCoparte = () => {
         if (rc.error) throw rc.data
       }
 
-      setAdministardoresDB(resCombinadas[0].data as UsuarioMin[])
+      const adminsDB = resCombinadas[0].data as UsuarioMin[]
+      setAdministardoresDB(adminsDB)
+
+      //setear en el select a primer admin en la lista
+      dispatch({
+        type: "ADMINISTRADOR",
+        value: [undefined, adminsDB[0].id],
+      })
+
       if (modalidad === "EDITAR") {
-        setEstadoForma(resCombinadas[1].data[0] as Coparte)
+        const dataCoparte = resCombinadas[1].data[0] as Coparte
+        dispatch({
+          type: "CARGAR_DATA",
+          value: dataCoparte,
+        })
       }
     } catch (error) {
       console.log(error)
@@ -107,47 +158,12 @@ const FormaCoparte = () => {
     idCoparte ? setModoEditar(false) : router.push("/copartes")
   }
 
-  const handleChange = (ev: ChangeEvent) => {
+  const handleChange = (ev: ChangeEvent, type: string) => {
     const { name, value } = ev.target
 
-    setEstadoForma({
-      ...estadoForma,
-      [name]: value,
-    })
-  }
-
-  const handleChangeAdmin = (ev: ChangeEvent) => {
-    const { value } = ev.target
-
-    setEstadoForma({
-      ...estadoForma,
-      administrador: {
-        id: Number(value),
-      },
-    })
-  }
-
-  const handleChangeDireccion = (ev: ChangeEvent) => {
-    const { name, value } = ev.target
-
-    setEstadoForma({
-      ...estadoForma,
-      direccion: {
-        ...estadoForma.direccion,
-        [name]: value,
-      },
-    })
-  }
-
-  const handleChangeEnlace = (ev: ChangeEvent) => {
-    const { name, value } = ev.target
-
-    setEstadoForma({
-      ...estadoForma,
-      enlace: {
-        ...estadoForma.enlace,
-        [name]: value,
-      },
+    dispatch({
+      type,
+      value: [name, value],
     })
   }
 
@@ -159,11 +175,11 @@ const FormaCoparte = () => {
     setIsLoading(false)
 
     if (res.error) {
-      console.log(res)
+      console.log(res.data)
     } else {
       if (modalidad === "CREAR") {
         //@ts-ignore
-        router.push(`/copartes/${res.data.idInsertado}`)
+        router.push(`/copartes/${res.data.idInsertadoCoparte}`)
       } else {
         setModoEditar(false)
       }
@@ -184,7 +200,7 @@ const FormaCoparte = () => {
           </div>
           {!modoEditar &&
             idCoparte &&
-            (estadoForma.administrador.id == user.id || user.id_rol == 1) && (
+            (estadoForma.administrador.id == user?.id || user?.id_rol == 1) && (
               <BtnEditar onClick={() => setModoEditar(true)} />
             )}
         </div>
@@ -195,7 +211,7 @@ const FormaCoparte = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChange}
+            onChange={(e) => handleChange(e, "BASE")}
             name="nombre"
             value={estadoForma.nombre}
             disabled={!modoEditar}
@@ -206,7 +222,7 @@ const FormaCoparte = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChange}
+            onChange={(e) => handleChange(e, "BASE")}
             name="id_alt"
             value={estadoForma.id_alt}
             disabled={!modoEditar}
@@ -216,7 +232,7 @@ const FormaCoparte = () => {
           <label className="form-label">Estatus legal</label>
           <select
             className="form-control"
-            onChange={handleChange}
+            onChange={(e) => handleChange(e, "BASE")}
             name="i_estatus_legal"
             value={estadoForma.i_estatus_legal}
             disabled={!modoEditar}
@@ -230,7 +246,7 @@ const FormaCoparte = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChange}
+            onChange={(e) => handleChange(e, "BASE")}
             name="representante_legal"
             value={estadoForma.representante_legal}
             disabled={!modoEditar || estadoForma.i_estatus_legal != 1}
@@ -241,7 +257,7 @@ const FormaCoparte = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChange}
+            onChange={(e) => handleChange(e, "BASE")}
             name="rfc"
             placeholder="de la organización"
             value={estadoForma.rfc}
@@ -252,7 +268,7 @@ const FormaCoparte = () => {
           <label className="form-label">Tema social</label>
           <select
             className="form-control"
-            onChange={handleChange}
+            onChange={(e) => handleChange(e, "BASE")}
             name="id_tema_social"
             value={estadoForma.id_tema_social}
             disabled={!modoEditar}
@@ -268,7 +284,7 @@ const FormaCoparte = () => {
           <label className="form-label">Administrador</label>
           <select
             className="form-control"
-            onChange={handleChangeAdmin}
+            onChange={(e) => handleChange(e, "ADMINISTRADOR")}
             value={estadoForma.administrador.id}
             disabled={!modoEditar}
           >
@@ -290,7 +306,7 @@ const FormaCoparte = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChangeDireccion}
+            onChange={(e) => handleChange(e, "DIRECCION")}
             name="calle"
             value={estadoForma.direccion.calle}
             disabled={!modoEditar}
@@ -301,7 +317,7 @@ const FormaCoparte = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChangeDireccion}
+            onChange={(e) => handleChange(e, "DIRECCION")}
             name="numero_ext"
             value={estadoForma.direccion.numero_ext}
             disabled={!modoEditar}
@@ -312,7 +328,7 @@ const FormaCoparte = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChangeDireccion}
+            onChange={(e) => handleChange(e, "DIRECCION")}
             name="numero_int"
             value={estadoForma.direccion.numero_int}
             disabled={!modoEditar}
@@ -323,7 +339,7 @@ const FormaCoparte = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChangeDireccion}
+            onChange={(e) => handleChange(e, "DIRECCION")}
             name="colonia"
             value={estadoForma.direccion.colonia}
             disabled={!modoEditar}
@@ -334,7 +350,7 @@ const FormaCoparte = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChangeDireccion}
+            onChange={(e) => handleChange(e, "DIRECCION")}
             name="municipio"
             value={estadoForma.direccion.municipio}
             disabled={!modoEditar}
@@ -345,7 +361,7 @@ const FormaCoparte = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChangeDireccion}
+            onChange={(e) => handleChange(e, "DIRECCION")}
             name="cp"
             value={estadoForma.direccion.cp}
             disabled={!modoEditar}
@@ -355,7 +371,7 @@ const FormaCoparte = () => {
           <label className="form-label">Estado</label>
           <select
             className="form-control"
-            onChange={handleChangeDireccion}
+            onChange={(e) => handleChange(e, "DIRECCION")}
             name="id_estado"
             value={estadoForma.direccion.id_estado}
             disabled={!modoEditar}
@@ -380,7 +396,7 @@ const FormaCoparte = () => {
               <input
                 className="form-control"
                 type="text"
-                onChange={handleChangeEnlace}
+                onChange={(e) => handleChange(e, "ENLACE")}
                 name="nombre"
                 value={estadoForma.enlace.nombre}
               />
@@ -390,7 +406,7 @@ const FormaCoparte = () => {
               <input
                 className="form-control"
                 type="text"
-                onChange={handleChangeEnlace}
+                onChange={(e) => handleChange(e, "ENLACE")}
                 name="apellido_paterno"
                 value={estadoForma.enlace.apellido_paterno}
               />
@@ -400,7 +416,7 @@ const FormaCoparte = () => {
               <input
                 className="form-control"
                 type="text"
-                onChange={handleChangeEnlace}
+                onChange={(e) => handleChange(e, "ENLACE")}
                 name="apellido_materno"
                 value={estadoForma.enlace.apellido_materno}
               />
@@ -410,7 +426,7 @@ const FormaCoparte = () => {
               <input
                 className="form-control"
                 type="text"
-                onChange={handleChangeEnlace}
+                onChange={(e) => handleChange(e, "ENLACE")}
                 name="email"
                 value={estadoForma.enlace.email}
               />
@@ -420,7 +436,7 @@ const FormaCoparte = () => {
               <input
                 className="form-control"
                 type="text"
-                onChange={handleChangeEnlace}
+                onChange={(e) => handleChange(e, "ENLACE")}
                 name="telefono"
                 value={estadoForma.enlace.telefono}
               />
@@ -430,7 +446,7 @@ const FormaCoparte = () => {
               <input
                 className="form-control"
                 type="text"
-                onChange={handleChangeEnlace}
+                onChange={(e) => handleChange(e, "ENLACE")}
                 name="password"
                 value={estadoForma.enlace.password}
               />
@@ -440,7 +456,7 @@ const FormaCoparte = () => {
               <input
                 className="form-control"
                 type="text"
-                onChange={handleChangeEnlace}
+                onChange={(e) => handleChange(e, "ENLACE")}
                 name="cargo"
                 value={estadoForma.enlace.cargo}
               />
@@ -468,8 +484,8 @@ const FormaCoparte = () => {
           <div className="row mb-5">
             <div className="col-12 mb-3 d-flex justify-content-between">
               <h2 className="color1 mb-0">Usuarios</h2>
-              {(estadoForma.administrador.id == user.id ||
-                user.id_rol == 1) && (
+              {(estadoForma.administrador.id == user?.id ||
+                user?.id_rol == 1) && (
                 <button
                   type="button"
                   className="btn btn-secondary"
@@ -524,7 +540,10 @@ const FormaCoparte = () => {
                             onClick={() =>
                               router.push(`/usuarios/${id_usuario}`)
                             }
-                            disabled={estadoForma.administrador.id != user.id && user.id_rol != 1}
+                            disabled={
+                              estadoForma.administrador.id != user?.id &&
+                              user?.id_rol != 1
+                            }
                           >
                             <i className="bi bi-eye-fill"></i>
                           </button>
@@ -540,7 +559,7 @@ const FormaCoparte = () => {
           <div className="row mb-3">
             <div className="col-12 mb-3 d-flex justify-content-between">
               <h2 className="color1 mb-0">Proyectos</h2>
-              {estadoForma.administrador.id == user.id && (
+              {estadoForma.administrador.id == user?.id && (
                 <button
                   type="button"
                   className="btn btn-secondary"
@@ -593,7 +612,7 @@ const FormaCoparte = () => {
                                 `/copartes/${idCoparte}/proyectos/${id}`
                               )
                             }
-                            disabled={estadoForma.administrador.id != user.id}
+                            disabled={estadoForma.administrador.id != user?.id}
                           >
                             <i className="bi bi-eye-fill"></i>
                           </button>
