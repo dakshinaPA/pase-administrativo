@@ -18,20 +18,14 @@ const reducer = (state: SolicitudPresupuesto, action): SolicitudPresupuesto => {
   const { type, value } = action
 
   switch (type) {
-    case "BASE":
+    case "CARGAR_DATA":
+      return value
+    case "HANDLE_CHANGE":
       return {
         ...state,
         [value[0]]: value[1],
       }
-    case "CUENTA":
-      return {
-        ...state,
-        cuenta: {
-          ...state.cuenta,
-          [value[0]]: value[1],
-        },
-      }
-    case "AGREGAR_COMPROBANTE":
+    case "AGREGAR_FACTURA":
       return {
         ...state,
         comprobantes: [...state.comprobantes, value],
@@ -52,20 +46,18 @@ const reducer = (state: SolicitudPresupuesto, action): SolicitudPresupuesto => {
 
 const FormaSolicitudPresupuesto = () => {
   const { user } = useAuth()
-  if(!user) return null
+  if (!user) return null
   const router = useRouter()
   const idProyecto = Number(router.query.id)
 
   const estadoInicialForma: SolicitudPresupuesto = {
     id_proyecto: idProyecto,
     i_tipo_gasto: 1,
-    cuenta: {
-      titular: "",
-      clabe: "",
-      id_banco: 1,
-      rfc: "",
-      email: "",
-    },
+    titular: "",
+    clabe: "",
+    id_banco: 1,
+    rfc: "",
+    email: "",
     proveedor: "",
     descripcion_gasto: "",
     id_partida_presupuestal: 1,
@@ -74,12 +66,12 @@ const FormaSolicitudPresupuesto = () => {
   }
 
   const { bancos } = useCatalogos()
-  const idColaborador = Number(router.query.idC)
+  const idSolicitud = Number(router.query.idS)
   const [estadoForma, dispatch] = useReducer(reducer, estadoInicialForma)
   const [proyectosDB, setProyectosDB] = useState<ProyectoMin[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(false)
-  const [modoEditar, setModoEditar] = useState<boolean>(!idColaborador)
-  const modalidad = idColaborador ? "EDITAR" : "CREAR"
+  const [modoEditar, setModoEditar] = useState<boolean>(!idSolicitud)
+  const modalidad = idSolicitud ? "EDITAR" : "CREAR"
   const fileInput = useRef(null)
 
   useEffect(() => {
@@ -104,7 +96,11 @@ const FormaSolicitudPresupuesto = () => {
       setProyectosDB(resCombinadas[0].data as ProyectoMin[])
 
       if (modalidad === "EDITAR") {
-        // setEstadoForma(resCombinadas[1].data[0] as SolicitudPresupuesto)
+        const solicitud = resCombinadas[1].data[0] as SolicitudPresupuesto
+        dispatch({
+          type: "CARGAR_DATA",
+          value: solicitud,
+        })
       }
     } catch (error) {
       console.log(error)
@@ -119,7 +115,7 @@ const FormaSolicitudPresupuesto = () => {
   }
 
   const obtener = async () => {
-    const res = await ApiCall.get(`/solicitudes-presupuesto/${idColaborador}`)
+    const res = await ApiCall.get(`/solicitudes-presupuesto/${idSolicitud}`)
     return res
   }
 
@@ -130,7 +126,7 @@ const FormaSolicitudPresupuesto = () => {
 
   const editar = async () => {
     const res = await ApiCall.put(
-      `/solicitudes-presupuesto/${idColaborador}`,
+      `/solicitudes-presupuesto/${idSolicitud}`,
       estadoForma
     )
     return res
@@ -170,7 +166,7 @@ const FormaSolicitudPresupuesto = () => {
       // console.log(emisor)
 
       const folio_fiscal = comprobante.getAttribute("Folio")
-      const id_metodo_pago = comprobante.getAttribute("MetodoPago")
+      const metodo_pago = comprobante.getAttribute("MetodoPago")
       const f_subtotal = comprobante.getAttribute("SubTotal")
       const f_retenciones = comprobante.getAttribute("Descuento")
       const f_total = comprobante.getAttribute("Total")
@@ -178,8 +174,8 @@ const FormaSolicitudPresupuesto = () => {
 
       const dataComprobante: ComprobanteSolicitud = {
         folio_fiscal,
-        id_metodo_pago,
-        id_forma_pago: 1,
+        metodo_pago,
+        forma_pago: "03",
         regimen_fiscal,
         f_subtotal,
         f_total,
@@ -187,7 +183,7 @@ const FormaSolicitudPresupuesto = () => {
       }
 
       dispatch({
-        type: "AGREGAR_COMPROBANTE",
+        type: "AGREGAR_FACTURA",
         value: dataComprobante,
       })
     }
@@ -255,35 +251,47 @@ const FormaSolicitudPresupuesto = () => {
               </h2>
             )}
           </div>
-          {!modoEditar && idColaborador && (
+          {!modoEditar && idSolicitud && (
             <BtnEditar onClick={() => setModoEditar(true)} />
           )}
         </div>
       </div>
       <FormaContenedor onSubmit={handleSubmit}>
-        <div className="col-12 col-md-6 col-lg-4 mb-3">
-          <label className="form-label">Proyecto</label>
-          <select
-            className="form-control"
-            // onChange={handleChange}
-            name="id_proyecto"
-            value={estadoForma.id_proyecto}
-            disabled
-          >
-            {proyectosDB.map(({ id, id_alt }) => (
-              <option key={id} value={id}>
-                {id_alt}
-              </option>
-            ))}
-          </select>
-        </div>
+        {modalidad === "CREAR" ? (
+          <div className="col-12 col-md-6 col-lg-4 mb-3">
+            <label className="form-label">Proyecto</label>
+            <select
+              className="form-control"
+              // onChange={handleChange}
+              name="id_proyecto"
+              value={estadoForma.id_proyecto}
+            >
+              {proyectosDB.map(({ id, id_alt }) => (
+                <option key={id} value={id}>
+                  {id_alt}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : (
+          <div className="col-12 col-md-6 col-lg-4 mb-3">
+            <label className="form-label">Proyecto</label>
+            <input
+              className="form-control"
+              type="text"
+              value={estadoForma.proyecto}
+              disabled
+            />
+          </div>
+        )}
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Tipo de gasto</label>
           <select
             className="form-control"
-            onChange={(e) => handleChange(e, "BASE")}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="i_tipo_gasto"
             value={estadoForma.i_tipo_gasto}
+            disabled={!modoEditar}
           >
             <option value="1">Reembolso</option>
             <option value="2">Programación</option>
@@ -296,9 +304,10 @@ const FormaSolicitudPresupuesto = () => {
           <label className="form-label">Partida presupuestal</label>
           <select
             className="form-control"
-            onChange={(e) => handleChange(e, "BASE")}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="id_partida_presupuestal"
             value={estadoForma.id_partida_presupuestal}
+            disabled={!modoEditar}
           >
             {rubrosProyecto.map(({ id_rubro, nombre }) => (
               <option key={id_rubro} value={id_rubro}>
@@ -312,9 +321,9 @@ const FormaSolicitudPresupuesto = () => {
           <input
             className="form-control"
             type="text"
-            onChange={(e) => handleChange(e, "CUENTA")}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="titular"
-            value={estadoForma.cuenta.titular}
+            value={estadoForma.titular}
             disabled={!modoEditar}
           />
         </div>
@@ -323,9 +332,9 @@ const FormaSolicitudPresupuesto = () => {
           <input
             className="form-control"
             type="text"
-            onChange={(e) => handleChange(e, "CUENTA")}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="clabe"
-            value={estadoForma.cuenta.clabe}
+            value={estadoForma.clabe}
             disabled={!modoEditar}
           />
         </div>
@@ -333,9 +342,9 @@ const FormaSolicitudPresupuesto = () => {
           <label className="form-label">Banco</label>
           <select
             className="form-control"
-            onChange={(e) => handleChange(e, "CUENTA")}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="id_banco"
-            value={estadoForma.cuenta.id_banco}
+            value={estadoForma.id_banco}
             disabled={!modoEditar}
           >
             {bancos.map(({ id, nombre }) => (
@@ -350,9 +359,9 @@ const FormaSolicitudPresupuesto = () => {
           <input
             className="form-control"
             type="text"
-            onChange={(e) => handleChange(e, "CUENTA")}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="email"
-            value={estadoForma.cuenta.email}
+            value={estadoForma.email}
             disabled={!modoEditar}
           />
         </div>
@@ -361,9 +370,9 @@ const FormaSolicitudPresupuesto = () => {
           <input
             className="form-control"
             type="text"
-            onChange={(e) => handleChange(e, "CUENTA")}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="rfc"
-            value={estadoForma.cuenta.rfc}
+            value={estadoForma.rfc}
             disabled={!modoEditar}
           />
         </div>
@@ -372,7 +381,7 @@ const FormaSolicitudPresupuesto = () => {
           <input
             className="form-control"
             type="text"
-            onChange={(e) => handleChange(e, "BASE")}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="proveedor"
             value={estadoForma.proveedor}
             disabled={!modoEditar}
@@ -383,7 +392,7 @@ const FormaSolicitudPresupuesto = () => {
           <input
             className="form-control"
             type="text"
-            onChange={(e) => handleChange(e, "BASE")}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="descripcion_gasto"
             value={estadoForma.descripcion_gasto}
             disabled={!modoEditar}
@@ -394,7 +403,7 @@ const FormaSolicitudPresupuesto = () => {
           <input
             className="form-control"
             type="text"
-            onChange={(e) => handleChange(e, "BASE")}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="f_importe"
             value={estadoForma.f_importe}
             disabled={!modoEditar}
@@ -426,7 +435,7 @@ const FormaSolicitudPresupuesto = () => {
             name="comprobante"
             accept=".xml"
             ref={fileInput}
-            disabled={!Boolean(Number(estadoForma.f_importe))}
+            disabled={!Boolean(Number(estadoForma.f_importe)) || !modoEditar }
           />
         </div>
         <div className="col-12 mb-3 table-responsive">
@@ -448,9 +457,10 @@ const FormaSolicitudPresupuesto = () => {
             <tbody>
               {estadoForma.comprobantes.map((comprobante) => {
                 const {
+                  id,
                   folio_fiscal,
-                  id_metodo_pago,
-                  id_forma_pago,
+                  metodo_pago,
+                  forma_pago,
                   regimen_fiscal,
                   f_subtotal,
                   f_total,
@@ -459,20 +469,22 @@ const FormaSolicitudPresupuesto = () => {
                 return (
                   <tr key={folio_fiscal}>
                     <td>{folio_fiscal}</td>
-                    <td>{id_metodo_pago}</td>
-                    <td>{id_forma_pago}</td>
+                    <td>{metodo_pago}</td>
+                    <td>{forma_pago}</td>
                     <td>{regimen_fiscal}</td>
                     <td>{f_subtotal}</td>
                     <td>{f_retenciones}</td>
                     <td>{f_total}</td>
                     <td>
-                      <button
-                        type="button"
-                        className="btn btn-dark btn-sm"
-                        onClick={() => quitarFactura(folio_fiscal)}
-                      >
-                        <i className="bi bi-x-circle"></i>
-                      </button>
+                      {!id && (
+                        <button
+                          type="button"
+                          className="btn btn-dark btn-sm"
+                          onClick={() => quitarFactura(folio_fiscal)}
+                        >
+                          <i className="bi bi-x-circle"></i>
+                        </button>
+                      )}
                     </td>
                   </tr>
                 )

@@ -61,14 +61,14 @@ class ProyectosServices {
     }
   }
 
-  static async obtener(queries) {
+  static async obtener(queries: QueriesProyecto) {
     const {
       id_coparte,
       id_usuario,
       id: id_proyecto,
       min,
       registro_solicitud,
-    } = queries as QueriesProyecto
+    } = queries
 
     if (min) return await this.obtenerVMin(id_proyecto)
     try {

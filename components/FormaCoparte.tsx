@@ -613,7 +613,6 @@ const FormaCoparte = () => {
                                 `/copartes/${idCoparte}/proyectos/${id}`
                               )
                             }
-                            disabled={estadoForma.administrador.id != user.id}
                           >
                             <i className="bi bi-eye-fill"></i>
                           </button>

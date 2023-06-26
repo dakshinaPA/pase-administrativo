@@ -7,7 +7,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
   switch (req.method) {
     case "GET":
-      var { status, ...data } = await SolicitudesPresupuestoServices.obtener(id_proyecto, 0)
+      var { status, ...data } = await SolicitudesPresupuestoServices.obtener(req.query)
       res.status(status).json(data)
       break
     case "POST":

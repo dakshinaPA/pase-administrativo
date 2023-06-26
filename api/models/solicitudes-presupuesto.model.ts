@@ -6,6 +6,7 @@ import {
 export interface ResSolicitudPresupuestoDB {
   id?: number
   id_proyecto: number
+  proyecto: string
   i_tipo_gasto: TipoGastoSolicitud
   clabe: string
   id_banco: number
@@ -15,6 +16,7 @@ export interface ResSolicitudPresupuestoDB {
   proveedor: string
   descripcion_gasto: string
   id_partida_presupuestal: number
+  rubro: string
   f_importe: string
   // f_monto_comprobar: string
   i_estatus: EstatusSolicitud

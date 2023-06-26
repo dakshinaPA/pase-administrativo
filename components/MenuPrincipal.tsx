@@ -175,7 +175,7 @@ const MenuPrincipal = () => {
             <nav>
               <ul>
                 <li>
-                  <Link href="/proyectos" className="">
+                  <Link href="/solicitudes-presupuesto" className="">
                     Listado
                   </Link>
                 </li>

@@ -5,7 +5,8 @@ import {
   SolicitudPresupuesto,
   TipoGastoSolicitud,
   EstatusSolicitud,
-  ComprobanteSolicitud
+  ComprobanteSolicitud,
+  QueriesSolicitud,
 } from "@models/solicitud-presupuesto.model"
 
 class SolicitudesPresupuestoServices {
@@ -39,12 +40,11 @@ class SolicitudesPresupuestoServices {
     }
   }
 
-  static async obtener(id_proyecto: number, id_solicitud: number) {
+  static async obtener(queries: QueriesSolicitud) {
+    const id_solicitud = Number(queries.id)
+
     try {
-      const re = await SolicitudesPresupuestoDB.obtener(
-        id_proyecto,
-        id_solicitud
-      )
+      const re = await SolicitudesPresupuestoDB.obtener(queries)
       if (re.error) throw re.data
 
       const solicitudesDB = re.data as ResSolicitudPresupuestoDB[]
@@ -54,6 +54,7 @@ class SolicitudesPresupuestoServices {
           const {
             id,
             id_proyecto,
+            proyecto,
             i_tipo_gasto,
             clabe,
             id_banco,
@@ -63,6 +64,7 @@ class SolicitudesPresupuestoServices {
             proveedor,
             descripcion_gasto,
             id_partida_presupuestal,
+            rubro,
             f_importe,
             // f_monto_comprobar,
             i_estatus,
@@ -72,26 +74,27 @@ class SolicitudesPresupuestoServices {
           let comprobantes: ComprobanteSolicitud[] = null
 
           if (id_solicitud) {
-            const reComprobantes = await SolicitudesPresupuestoDB.obtenerComprobantes(id_solicitud)
-            if(reComprobantes.error) throw reComprobantes.data
+            const reComprobantes =
+              await SolicitudesPresupuestoDB.obtenerComprobantes(id_solicitud)
+            if (reComprobantes.error) throw reComprobantes.data
             comprobantes = reComprobantes.data as ComprobanteSolicitud[]
           }
 
           return {
             id,
-            id_proyecto,
             i_tipo_gasto,
             tipo_gasto: this.obtenerTipoGasto(i_tipo_gasto),
-            cuenta: {
-              clabe,
-              id_banco,
-              titular: titular_cuenta,
-              rfc: rfc_titular,
-              email: email_titular,
-            },
+            id_proyecto,
+            proyecto,
+            clabe,
+            id_banco,
+            titular: titular_cuenta,
+            rfc: rfc_titular,
+            email: email_titular,
+            id_partida_presupuestal,
+            rubro,
             proveedor,
             descripcion_gasto,
-            id_partida_presupuestal,
             f_importe,
             // f_monto_comprobar: "0",
             i_estatus,

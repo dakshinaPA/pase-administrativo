@@ -36,10 +36,12 @@ class CopartesServices {
   }
 
   static async obtener(queries: Queries) {
-    const { id: id_coparte, id_admin, min } = queries
-    if (min) return await this.obtenerVmin(Number(id_coparte), Number(id_admin))
+    const { id, min } = queries
+    const id_coparte = Number(id)
+    const id_admin = Number(queries.id_admin)
+    if (min) return await this.obtenerVmin(id_coparte, id_admin)
     try {
-      const re = await CoparteDB.obtener(Number(id_coparte))
+      const re = await CoparteDB.obtener(id_coparte)
       if (re.error) throw re.data
 
       const copartesDB = re.data as ResCoparteDB[]
@@ -74,7 +76,7 @@ class CopartesServices {
 
           if (id_coparte) {
             const reUsuarios = this.obtenerUsuarios(Number(id_coparte), false)
-            const reProyectos = ProyectosServices.obtener(queries)
+            const reProyectos = ProyectosServices.obtener({id_coparte})
 
             const resCombinadas = await Promise.all([reUsuarios, reProyectos])
 
