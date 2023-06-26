@@ -26,7 +26,7 @@ class ProyectoDB {
   static async obtener(
     id_coparte: number,
     id_proyecto: number,
-    id_usuario: number
+    id_responsable: number
   ) {
     let query = `SELECT p.id, p.id_financiador, p.id_coparte, p.id_responsable, p.id_alt, p.f_monto_total, p.i_tipo_financiamiento, p.i_beneficiados, p.dt_registro,
       CONCAT(u.nombre, ' ', u.apellido_paterno) nombre_responsable,
@@ -44,8 +44,8 @@ class ProyectoDB {
       query += ` AND p.id=${id_proyecto} LIMIT 1`
     }
 
-    if (id_usuario) {
-      query += ` AND p.id_responsable=${id_usuario}`
+    if (id_responsable) {
+      query += ` AND p.id_responsable=${id_responsable}`
     }
 
     try {

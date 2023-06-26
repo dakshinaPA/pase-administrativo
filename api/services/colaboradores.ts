@@ -14,7 +14,7 @@ class ColaboradorServices {
     }
   }
 
-  static async obtener(id_proyecto: number, id_colaborador: number) {
+  static async obtener(id_proyecto: number, id_colaborador?: number) {
     try {
       const obtenerDB = await ColaboradorDB.obtener(id_proyecto, id_colaborador)
       if (obtenerDB.error) throw obtenerDB.data

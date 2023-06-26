@@ -4,7 +4,7 @@ import { SolicitudPresupuesto } from "./solicitud-presupuesto.model"
 
 export interface QueriesProyecto {
   id_coparte?: number
-  id_usuario?: number
+  id_responsable?: number
   id?: number
   min?: boolean
   registro_solicitud?: boolean

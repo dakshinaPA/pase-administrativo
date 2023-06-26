@@ -5,7 +5,7 @@ import { Direccion } from "@models/direccion.model"
 import { fechaActualAEpoch } from "@assets/utils/common"
 
 class ProveedorDB {
-  static async obtener(id_proyecto: number, id_proveedor: number) {
+  static async obtener(id_proyecto: number, id_proveedor?: number) {
     let query = `SELECT p.id, p.nombre, p.i_tipo, p.clabe, p.id_banco, p.telefono, p.email, p.rfc, p.descripcion_servicio, p.dt_registro,
       pd.id id_direccion, pd.calle, pd.numero_ext, pd.numero_int, pd.colonia, pd.municipio, pd.cp, pd.id_estado,
       e.nombre estado,

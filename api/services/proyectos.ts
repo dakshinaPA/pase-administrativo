@@ -17,26 +17,11 @@ import { ResProyectoDB } from "@api/models/proyecto.model"
 import { epochAFecha } from "@assets/utils/common"
 import { ResDB } from "@api/models/respuestas.model"
 
-
 class ProyectosServices {
   static async obtenerVMin(id_proyecto?: number) {
     try {
       const re = await ProyectoDB.obtenerVMin(id_proyecto)
       if (re.error) throw re.data
-
-      // const proyectos = re.data as Proyecto[]
-
-      // const reRubrosProyectos = await Promise.all(
-      //   proyectos.map(async (proyecto) => {
-      //     const reRubros = await ProyectoDB.obtenerRubros(proyecto.id)
-      //     if (reRubros.error) throw reRubros.data
-
-      //     return {
-      //       ...proyecto,
-      //       rubros: reRubros.data as RubroProyecto[],
-      //     }
-      //   })
-      // )
 
       return RespuestaController.exitosa(200, "Consulta exitosa", re.data)
     } catch (error) {
@@ -62,17 +47,15 @@ class ProyectosServices {
   }
 
   static async obtener(queries: QueriesProyecto) {
-    const {
-      id_coparte,
-      id_usuario,
-      id: id_proyecto,
-      min,
-      registro_solicitud,
-    } = queries
+    const { id_coparte, id_responsable, id: id_proyecto, min } = queries
 
     if (min) return await this.obtenerVMin(id_proyecto)
     try {
-      const obtenerDB = await ProyectoDB.obtener(id_coparte, id_proyecto, id_usuario)
+      const obtenerDB = await ProyectoDB.obtener(
+        id_coparte,
+        id_proyecto,
+        id_responsable
+      )
       if (obtenerDB.error) throw obtenerDB.data
 
       const proyectosDB = obtenerDB.data as ResProyectoDB[]
@@ -100,22 +83,22 @@ class ProyectosServices {
           let solicitudes: SolicitudPresupuesto[] = null
 
           if (id_proyecto) {
-
             const reRubros = ProyectoDB.obtenerRubros(id_proyecto)
-            const reColaboradores = ColaboradorServices.obtener(id_proyecto, 0)
-            const reProveedores = ProveedorServices.obtener(id_proyecto, 0)
-            
-            const promesas = [reRubros, reColaboradores, reProveedores]
+            const reColaboradores = ColaboradorServices.obtener(id_proyecto)
+            const reProveedores = ProveedorServices.obtener(id_proyecto)
+            const reMinistraciones =
+              ProyectoDB.obtenerMinistraciones(id_proyecto)
+            const reSolicitudes = SolicitudesPresupuestoServices.obtener({
+              id_proyecto,
+            })
 
-            if(!registro_solicitud){
-              const reMinistraciones =
-                ProyectoDB.obtenerMinistraciones(id_proyecto)
-              const reSolicitudes = SolicitudesPresupuestoServices.obtener(id_proyecto, 0)
-
-              promesas.push(reMinistraciones, reSolicitudes)
-            }
-
-            const resCombinadas = await Promise.all(promesas)
+            const resCombinadas = await Promise.all([
+              reRubros,
+              reColaboradores,
+              reProveedores,
+              reMinistraciones,
+              reSolicitudes,
+            ])
 
             for (const rc of resCombinadas) {
               if (rc.error) throw rc.data
@@ -124,10 +107,8 @@ class ProyectosServices {
             rubros = resCombinadas[0].data as RubroProyecto[]
             colaboradores = resCombinadas[1].data as ColaboradorProyecto[]
             proveedores = resCombinadas[2].data as ProveedorProyecto[]
-            if(!registro_solicitud){
-              ministraciones = resCombinadas[3].data as MinistracionProyecto[]
-              solicitudes = resCombinadas[4].data as SolicitudPresupuesto[]
-            }
+            ministraciones = resCombinadas[3].data as MinistracionProyecto[]
+            solicitudes = resCombinadas[4].data as SolicitudPresupuesto[]
           }
 
           return {
@@ -154,7 +135,7 @@ class ProyectosServices {
             ministraciones,
             colaboradores,
             proveedores,
-            solicitudes
+            solicitudes_presupuesto: solicitudes,
           }
         })
       )
@@ -168,6 +149,43 @@ class ProyectosServices {
       return RespuestaController.fallida(
         400,
         "Error al obtener financiadores",
+        error
+      )
+    }
+  }
+
+  static async obtenerData(id_proyecto: number) {
+    try {
+      const reRubros = ProyectoDB.obtenerRubros(id_proyecto)
+      const reColaboradores = ColaboradorServices.obtener(id_proyecto)
+      const reProveedores = ProveedorServices.obtener(id_proyecto)
+
+      const resCombinadas = await Promise.all([
+        reRubros,
+        reColaboradores,
+        reProveedores,
+      ])
+
+      for (const rc of resCombinadas) {
+        if (rc.error) throw rc.data
+      }
+
+      const rubros = resCombinadas[0].data as RubroProyecto[]
+      const colaboradores = resCombinadas[1].data as ColaboradorProyecto[]
+      const proveedores = resCombinadas[2].data as ProveedorProyecto[]
+
+      return RespuestaController.exitosa(200, "Consulta exitosa", {
+        rubros_presupuestales: rubros.map(({ id_rubro, nombre }) => ({
+          id_rubro,
+          nombre,
+        })),
+        colaboradores,
+        proveedores,
+      })
+    } catch (error) {
+      return RespuestaController.fallida(
+        400,
+        "Error al obtener colaboradores del proyecto",
         error
       )
     }

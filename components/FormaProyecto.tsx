@@ -852,42 +852,36 @@ const FormaProyecto = () => {
               <table className="table">
                 <thead className="table-light">
                   <tr>
-                    <th>Nombre</th>
+                    <th>Descripción gasto</th>
                     <th>Tipo</th>
-                    <th>Servicio</th>
-                    <th>Teléfono</th>
-                    <th>RFC</th>
-                    <th>CLABE</th>
-                    <th>Banco</th>
+                    <th>Rubro</th>
+                    <th>Proveedor</th>
+                    <th>Importe</th>
                     <th>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {estadoForma.proveedores.map(
+                  {estadoForma.solicitudes_presupuesto.map(
                     ({
                       id,
-                      nombre,
-                      tipo,
-                      descripcion_servicio,
-                      telefono,
-                      rfc,
-                      clabe,
-                      banco,
+                      descripcion_gasto,
+                      tipo_gasto,
+                      rubro,
+                      proveedor,
+                      f_importe,
                     }) => (
                       <tr key={id}>
-                        <td>{nombre}</td>
-                        <td>{tipo}</td>
-                        <td>{descripcion_servicio}</td>
-                        <td>{telefono}</td>
-                        <td>{rfc}</td>
-                        <td>{clabe}</td>
-                        <td>{banco}</td>
+                        <td>{descripcion_gasto}</td>
+                        <td>{tipo_gasto}</td>
+                        <td>{rubro}</td>
+                        <td>{proveedor}</td>
+                        <td>{f_importe}</td>
                         <td>
                           <button
                             className="btn btn-dark btn-sm"
                             onClick={() =>
                               router.push(
-                                `/proyectos/${idProyecto}/proveedores/${id}`
+                                `/proyectos/${idProyecto}/solicitudes-presupuesto/${id}`
                               )
                             }
                           >

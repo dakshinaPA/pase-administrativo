@@ -1,7 +1,12 @@
 import { useEffect, useState, useReducer, useRef } from "react"
 import { useRouter } from "next/router"
 import { ChangeEvent } from "@assets/models/formEvents.model"
-import { ProyectoMin } from "@models/proyecto.model"
+import {
+  ColaboradorProyecto,
+  ProveedorProyecto,
+  ProyectoMin,
+  RubroProyecto,
+} from "@models/proyecto.model"
 import { Loader } from "@components/Loader"
 import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
 import { BtnBack } from "@components/BtnBack"
@@ -13,6 +18,13 @@ import {
   SolicitudPresupuesto,
 } from "@models/solicitud-presupuesto.model"
 import { useAuth } from "@contexts/auth.context"
+import { obtenerProyectosUsuario } from "@assets/utils/common"
+
+interface ColaboradoresProyecto {
+  colaboradores: ColaboradorProyecto[]
+  proveedores: ProveedorProyecto[]
+  rubros_presupuestales: RubroProyecto[]
+}
 
 const reducer = (state: SolicitudPresupuesto, action): SolicitudPresupuesto => {
   const { type, value } = action
@@ -44,14 +56,21 @@ const reducer = (state: SolicitudPresupuesto, action): SolicitudPresupuesto => {
   }
 }
 
+const estadoInicialDataProyecto: ColaboradoresProyecto = {
+  colaboradores: [],
+  proveedores: [],
+  rubros_presupuestales: [],
+}
+
 const FormaSolicitudPresupuesto = () => {
   const { user } = useAuth()
   if (!user) return null
   const router = useRouter()
   const idProyecto = Number(router.query.id)
+  const idSolicitud = Number(router.query.idS)
 
   const estadoInicialForma: SolicitudPresupuesto = {
-    id_proyecto: idProyecto,
+    id_proyecto: idProyecto || 0,
     i_tipo_gasto: 1,
     titular: "",
     clabe: "",
@@ -60,15 +79,15 @@ const FormaSolicitudPresupuesto = () => {
     email: "",
     proveedor: "",
     descripcion_gasto: "",
-    id_partida_presupuestal: 1,
+    id_partida_presupuestal: 0,
     f_importe: "0",
     comprobantes: [],
   }
 
   const { bancos } = useCatalogos()
-  const idSolicitud = Number(router.query.idS)
   const [estadoForma, dispatch] = useReducer(reducer, estadoInicialForma)
   const [proyectosDB, setProyectosDB] = useState<ProyectoMin[]>([])
+  const [dataProyecto, setDataProyecto] = useState(estadoInicialDataProyecto)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [modoEditar, setModoEditar] = useState<boolean>(!idSolicitud)
   const modalidad = idSolicitud ? "EDITAR" : "CREAR"
@@ -78,25 +97,30 @@ const FormaSolicitudPresupuesto = () => {
     cargarData()
   }, [])
 
+  useEffect(() => {
+    if (estadoForma.id_proyecto) {
+      cargarDataProyecto(estadoForma.id_proyecto)
+    }
+  }, [estadoForma.id_proyecto])
+
   const cargarData = async () => {
     setIsLoading(true)
 
     try {
-      const promesas = [obtenerProyectos()]
-      if (modalidad === "EDITAR") {
-        promesas.push(obtener())
-      }
-
-      const resCombinadas = await Promise.all(promesas)
-
-      for (const rc of resCombinadas) {
-        if (rc.error) throw rc.data
-      }
-
-      setProyectosDB(resCombinadas[0].data as ProyectoMin[])
-
-      if (modalidad === "EDITAR") {
-        const solicitud = resCombinadas[1].data[0] as SolicitudPresupuesto
+      if (modalidad === "CREAR") {
+        const reProyectosUsuario = await obtenerProyectosUsuario(user.id)
+        if (reProyectosUsuario.error) throw reProyectosUsuario.data
+        const proyectosUsuarioDB = reProyectosUsuario.data as ProyectoMin[]
+        setProyectosDB(proyectosUsuarioDB)
+        //cambiar el id proyecto por default al primero de la lista
+        dispatch({
+          type: "HANDLE_CHANGE",
+          value: ["id_proyecto", idProyecto || proyectosUsuarioDB[0].id],
+        })
+      } else {
+        const reSolicitud = await obtener()
+        if (reSolicitud.error) throw reSolicitud.data
+        const solicitud = reSolicitud.data[0] as SolicitudPresupuesto
         dispatch({
           type: "CARGAR_DATA",
           value: solicitud,
@@ -109,9 +133,25 @@ const FormaSolicitudPresupuesto = () => {
     setIsLoading(false)
   }
 
-  const obtenerProyectos = async () => {
-    const url = `/proyectos/${idProyecto}?registro_solicitud=true`
-    return await ApiCall.get(url)
+  const cargarDataProyecto = async (id_proyecto: number) => {
+    const reDataProyecto = await ApiCall.get(`/proyectos/${id_proyecto}/data`)
+
+    if (reDataProyecto.error) {
+      console.log(reDataProyecto.data)
+    } else {
+      const dataProyecto = reDataProyecto.data as ColaboradoresProyecto
+      setDataProyecto(dataProyecto)
+      if (modalidad === "CREAR") {
+        //elegir el primer rubro por default
+        dispatch({
+          type: "HANDLE_CHANGE",
+          value: [
+            "id_partida_presupuestal",
+            dataProyecto.rubros_presupuestales[0].id_rubro,
+          ],
+        })
+      }
+    }
   }
 
   const obtener = async () => {
@@ -213,17 +253,13 @@ const FormaSolicitudPresupuesto = () => {
       if (modalidad === "CREAR") {
         router.push(
           //@ts-ignore
-          `/proyectos/${idProyecto}/solicitudes-presupuesto/${data.idInsertado}`
+          `/proyectos/${estadoForma.id_proyecto}/solicitudes-presupuesto/${data.idInsertado}`
         )
       } else {
         setModoEditar(false)
       }
     }
   }
-
-  const rubrosProyecto =
-    proyectosDB.find((proyecto) => proyecto.id == estadoForma.id_proyecto)
-      ?.rubros || []
 
   const montoComprobar = () => {
     const totalComprobaciones = estadoForma.comprobantes.reduce(
@@ -257,14 +293,22 @@ const FormaSolicitudPresupuesto = () => {
         </div>
       </div>
       <FormaContenedor onSubmit={handleSubmit}>
+        {modalidad === "EDITAR" && (
+          <div className="col-12 text-end mb-3">
+            <h5>
+              <span className="badge bg-info">{estadoForma.estatus}</span>
+            </h5>
+          </div>
+        )}
         {modalidad === "CREAR" ? (
           <div className="col-12 col-md-6 col-lg-4 mb-3">
             <label className="form-label">Proyecto</label>
             <select
               className="form-control"
-              // onChange={handleChange}
+              onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
               name="id_proyecto"
               value={estadoForma.id_proyecto}
+              disabled={Boolean(idProyecto)}
             >
               {proyectosDB.map(({ id, id_alt }) => (
                 <option key={id} value={id}>
@@ -309,7 +353,7 @@ const FormaSolicitudPresupuesto = () => {
             value={estadoForma.id_partida_presupuestal}
             disabled={!modoEditar}
           >
-            {rubrosProyecto.map(({ id_rubro, nombre }) => (
+            {dataProyecto.rubros_presupuestales.map(({ id_rubro, nombre }) => (
               <option key={id_rubro} value={id_rubro}>
                 {nombre}
               </option>
@@ -435,7 +479,7 @@ const FormaSolicitudPresupuesto = () => {
             name="comprobante"
             accept=".xml"
             ref={fileInput}
-            disabled={!Boolean(Number(estadoForma.f_importe)) || !modoEditar }
+            disabled={!Boolean(Number(estadoForma.f_importe)) || !modoEditar}
           />
         </div>
         <div className="col-12 mb-3 table-responsive">

@@ -14,7 +14,7 @@ class ProveedorServices {
     }
   }
 
-  static async obtener(id_proyecto: number, id_proveedor: number) {
+  static async obtener(id_proyecto: number, id_proveedor?: number) {
     try {
       const re = await ProveedorDB.obtener(id_proyecto, id_proveedor)
       if (re.error) throw re.data

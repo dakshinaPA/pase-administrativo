@@ -68,6 +68,14 @@ const obtenerFinanciadores = async (min = true) => {
   return await ApiCall.get(url)
 }
 
+const obtenerProyectosUsuario = async (id_responsable: number, min = true) => {
+  let url = `/proyectos?id_responsable=${id_responsable}`
+  if (min) {
+    url += "&min=true"
+  }
+  return await ApiCall.get(url)
+}
+
 const estadosRepublica = [
   { id: 1, nombre: "Aguascalientes" },
   { id: 2, nombre: "Baja California" },
@@ -113,4 +121,5 @@ export {
   obtenerCopartesAdmin,
   obtenerFinanciadores,
   obtenerCopartes,
+  obtenerProyectosUsuario
 }

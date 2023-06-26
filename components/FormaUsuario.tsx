@@ -33,8 +33,8 @@ const FormaUsuario = () => {
   const { user } = useAuth()
   if(!user) return null
   const router = useRouter()
-  const idCoparte = router.query.idC
-  const idUsuario = router.query.id
+  const idCoparte = Number(router.query.idC)
+  const idUsuario = Number(router.query.id)
   const [estadoForma, setEstadoForma] = useState(estadoInicialForma)
   const [copartesDB, setCopartesDB] = useState<CoparteMin[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(false)

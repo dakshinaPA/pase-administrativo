@@ -5,7 +5,7 @@ import { Direccion } from "@models/direccion.model"
 import { fechaActualAEpoch } from "@assets/utils/common"
 
 class ColaboradorDB {
-  static async obtener(id_proyecto: number, id_colaborador: number) {
+  static async obtener(id_proyecto: number, id_colaborador?: number) {
     let query = `SELECT c.id, c.id_proyecto, c.nombre, c.apellido_paterno, c.apellido_materno, c.i_tipo, c.clabe, c.id_banco, c.telefono, c.email, c.rfc,
       c.curp, c.cp, c.nombre_servicio, c.descripcion_servicio, c.f_monto_total, c.dt_inicio_servicio, c.dt_fin_servicio, c.dt_registro,
       cd.id id_direccion, cd.calle, cd.numero_ext, cd.numero_int, cd.colonia, cd.municipio, cd.cp cp_direccion, cd.id_estado,

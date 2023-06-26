@@ -181,7 +181,7 @@ const MenuPrincipal = () => {
                 </li>
                 {user.id_rol == 3 && (
                   <li>
-                    <Link href="/proyectos/registro" className="">
+                    <Link href="/solicitudes-presupuesto/registro" className="">
                       Registrar
                     </Link>
                   </li>
