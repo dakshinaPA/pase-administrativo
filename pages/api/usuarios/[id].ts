@@ -6,7 +6,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
   switch (req.method) {
     case "GET":
-      var { status, ...data } = await UsuariosServices.obtener(0, 0, idUsuario, false)
+      var { status, ...data } = await UsuariosServices.obtener(req.query)
       res.status(status).json(data)
       break
     case "PUT":

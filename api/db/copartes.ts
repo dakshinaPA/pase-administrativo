@@ -4,12 +4,13 @@ import {
   Coparte,
   DireccionCoparte,
   CoparteUsuario,
+  NotaCoparte,
 } from "@models/coparte.model"
 import { fechaActualAEpoch } from "@assets/utils/common"
 
 class CoparteDB {
   static async obtenerVmin(id_coparte: number, id_admin: number) {
-    let query = `SELECT id, nombre FROM copartes WHERE b_activo = 1`
+    let query = `SELECT id, nombre, nombre_corto FROM copartes WHERE b_activo = 1`
 
     if (id_admin) {
       query += ` AND id_administrador = ${id_admin}`
@@ -29,15 +30,13 @@ class CoparteDB {
 
   static async obtener(id: number, id_admin:number) {
     let query = `
-      SELECT c.id, c.id_administrador, c.id_alt, c.nombre, c.i_estatus_legal, c.representante_legal, c.rfc, c.id_tema_social, c.dt_registro,
+      SELECT c.id, c.id_administrador, c.id_alt, c.nombre, c.nombre_corto, c.i_estatus_legal, c.representante_legal, c.rfc, c.dt_registro,
       cd.id id_coparte_direccion, cd.calle, cd.numero_ext, cd.numero_int, cd.colonia, cd.municipio, cd.cp, cd.id_estado,
       CONCAT(u.nombre, ' ', u.apellido_paterno) nombre_administrador,
-      ts.nombre tema_social,
       e.nombre estado
       FROM copartes c
       JOIN coparte_direccion cd ON c.id = cd.id_coparte
       JOIN usuarios u ON c.id_administrador = u.id
-      JOIN temas_sociales ts ON c.id_tema_social = ts.id
       JOIN estados e ON cd.id_estado = e.id
       WHERE c.b_activo=1`
 
@@ -62,23 +61,23 @@ class CoparteDB {
       administrador,
       id_alt,
       nombre,
+      nombre_corto,
       i_estatus_legal,
       representante_legal,
       rfc,
-      id_tema_social,
     } = data
 
-    const query = `INSERT INTO copartes ( id_administrador, id_alt, nombre, i_estatus_legal,
-      representante_legal, rfc, id_tema_social, dt_registro) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )`
+    const query = `INSERT INTO copartes ( id_administrador, id_alt, nombre, nombre_corto, i_estatus_legal,
+      representante_legal, rfc, dt_registro) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )`
 
     const placeHolders = [
       administrador.id,
       id_alt,
       nombre,
+      nombre_corto,
       i_estatus_legal,
       representante_legal,
       rfc,
-      id_tema_social,
       fechaActualAEpoch(),
     ]
 
@@ -95,23 +94,23 @@ class CoparteDB {
       administrador,
       id_alt,
       nombre,
+      nombre_corto,
       i_estatus_legal,
       representante_legal,
       rfc,
-      id_tema_social,
     } = data
 
-    const query = `UPDATE copartes SET id_administrador=?, id_alt=?, nombre=?,
-      i_estatus_legal=?, representante_legal=?, rfc=?, id_tema_social=? WHERE id=? LIMIT 1`
+    const query = `UPDATE copartes SET id_administrador=?, id_alt=?, nombre=?, nombre_corto=?,
+      i_estatus_legal=?, representante_legal=?, rfc=? WHERE id=? LIMIT 1`
 
     const placeHolders = [
       administrador.id,
       id_alt,
       nombre,
+      nombre_corto,
       i_estatus_legal,
       representante_legal,
       rfc,
-      id_tema_social,
       id_coparte,
     ]
 
@@ -291,6 +290,41 @@ class CoparteDB {
     const query = `UPDATE coparte_usuarios SET b_enlace=1 WHERE id_usuario=? LIMIT 1`
 
     const placeHolders = [id_usuario]
+
+    try {
+      const res = await queryDBPlaceHolder(query, placeHolders)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
+
+  static async obtenerNotas(idCoparte: number) {
+    let query = `SELECT cn.id, cn.mensaje, cn.dt_registro,
+      CONCAT(u.nombre, ' ', u.apellido_paterno) usuario
+      FROM coparte_notas cn JOIN usuarios u ON cn.id_usuario = u.id
+      WHERE cn.id_coparte=${idCoparte} AND cn.b_activo=1`
+
+    try {
+      const res = await queryDB(query)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
+
+  static async crearNota(id_coparte: number, data: NotaCoparte) {
+    const { id_usuario, mensaje } = data
+
+    const query = `INSERT INTO coparte_notas ( id_coparte, id_usuario,
+      mensaje, dt_registro ) VALUES ( ?, ?, ?, ? )`
+
+    const placeHolders = [
+      id_coparte,
+      id_usuario,
+      mensaje,
+      fechaActualAEpoch(),
+    ]
 
     try {
       const res = await queryDBPlaceHolder(query, placeHolders)

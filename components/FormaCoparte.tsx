@@ -1,7 +1,7 @@
-import { useEffect, useState, useReducer } from "react"
+import { useEffect, useState, useReducer, useRef } from "react"
 import { useRouter } from "next/router"
 import { ChangeEvent } from "@assets/models/formEvents.model"
-import { Coparte } from "@models/coparte.model"
+import { Coparte, NotaCoparte } from "@models/coparte.model"
 import { UsuarioMin } from "@models/usuario.model"
 import { Loader } from "@components/Loader"
 import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
@@ -10,14 +10,28 @@ import { ApiCall } from "@assets/utils/apiCalls"
 import { useCatalogos } from "@contexts/catalogos.context"
 import { BtnEditar } from "./Botones"
 import { useAuth } from "@contexts/auth.context"
+import { obtenerUsuariosXRol } from "@assets/utils/common"
 
-const reducer = (state: Coparte, action): Coparte => {
+type ActionTypes =
+  | "CARGAR_DATA"
+  | "HANDLE_CHANGE"
+  | "ADMINISTRADOR"
+  | "DIRECCION"
+  | "ENLACE"
+  | "RECARGAR_NOTAS"
+
+interface ActionDispatch {
+  type: ActionTypes
+  value: any
+}
+
+const reducer = (state: Coparte, action: ActionDispatch): Coparte => {
   const { type, value } = action
 
   switch (type) {
     case "CARGAR_DATA":
       return value
-    case "BASE":
+    case "HANDLE_CHANGE":
       return {
         ...state,
         [value[0]]: value[1],
@@ -45,6 +59,11 @@ const reducer = (state: Coparte, action): Coparte => {
           [value[0]]: value[1],
         },
       }
+    case "RECARGAR_NOTAS":
+      return {
+        ...state,
+        notas: value,
+      }
     default:
       return state
   }
@@ -52,11 +71,11 @@ const reducer = (state: Coparte, action): Coparte => {
 
 const estadoInicialForma: Coparte = {
   nombre: "",
+  nombre_corto: "",
   id_alt: "",
   i_estatus_legal: 1,
   representante_legal: "",
   rfc: "",
-  id_tema_social: 1,
   administrador: {
     id: 0,
   },
@@ -80,33 +99,32 @@ const estadoInicialForma: Coparte = {
   },
   usuarios: [],
   proyectos: [],
+  notas: [],
 }
 
 const FormaCoparte = () => {
   const { user } = useAuth()
   if (!user) return null
-  const { temas_sociales, estados } = useCatalogos()
+  const { estados } = useCatalogos()
   const router = useRouter()
   const idCoparte = router.query.idC
   const [estadoForma, dispatch] = useReducer(reducer, estadoInicialForma)
   const [administardoresDB, setAdministardoresDB] = useState<UsuarioMin[]>([])
+  const [mensajeNota, setMensajeNota] = useState<string>("")
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [modoEditar, setModoEditar] = useState<boolean>(!idCoparte)
   const modalidad = idCoparte ? "EDITAR" : "CREAR"
+  const inputNota = useRef(null)
 
   useEffect(() => {
     cargarData()
   }, [])
 
-  const cargarAdministradores = async () => {
-    return await ApiCall.get(`/usuarios?id_rol=2&min=true`)
-  }
-
   const cargarData = async () => {
     setIsLoading(true)
 
     try {
-      const promesas = [cargarAdministradores()]
+      const promesas = [obtenerUsuariosXRol(2)]
       if (modalidad === "EDITAR") {
         promesas.push(obtener())
       }
@@ -120,17 +138,17 @@ const FormaCoparte = () => {
       const adminsDB = resCombinadas[0].data as UsuarioMin[]
       setAdministardoresDB(adminsDB)
 
-      //setear en el select a primer admin en la lista
-      dispatch({
-        type: "ADMINISTRADOR",
-        value: [undefined, adminsDB[0].id],
-      })
-
       if (modalidad === "EDITAR") {
         const dataCoparte = resCombinadas[1].data[0] as Coparte
         dispatch({
           type: "CARGAR_DATA",
           value: dataCoparte,
+        })
+      } else {
+        //setear en el select a primer admin en la lista
+        dispatch({
+          type: "ADMINISTRADOR",
+          value: [undefined, adminsDB[0].id],
         })
       }
     } catch (error) {
@@ -159,13 +177,42 @@ const FormaCoparte = () => {
     idCoparte ? setModoEditar(false) : router.push("/copartes")
   }
 
-  const handleChange = (ev: ChangeEvent, type: string) => {
+  const handleChange = (ev: ChangeEvent, type: ActionTypes) => {
     const { name, value } = ev.target
 
     dispatch({
       type,
       value: [name, value],
     })
+  }
+
+  const agregarNota = async () => {
+    if (mensajeNota.length < 10) {
+      inputNota.current.focus()
+      return
+    }
+
+    const cr = await ApiCall.post(`/copartes/${idCoparte}/notas`, {
+      id_usuario: user.id,
+      mensaje: mensajeNota,
+    })
+    if (cr.error) {
+      console.log(cr.data)
+    } else {
+      //limpiar el input
+      setMensajeNota("")
+
+      const re = await ApiCall.get(`/copartes/${idCoparte}/notas`)
+      if (re.error) {
+        console.log(re.data)
+      } else {
+        const notasDB = re.data as NotaCoparte[]
+        dispatch({
+          type: "RECARGAR_NOTAS",
+          value: notasDB,
+        })
+      }
+    }
   }
 
   const handleSubmit = async (ev: React.SyntheticEvent) => {
@@ -212,7 +259,7 @@ const FormaCoparte = () => {
           <input
             className="form-control"
             type="text"
-            onChange={(e) => handleChange(e, "BASE")}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="id_alt"
             value={estadoForma.id_alt}
             disabled={!modoEditar}
@@ -223,9 +270,20 @@ const FormaCoparte = () => {
           <input
             className="form-control"
             type="text"
-            onChange={(e) => handleChange(e, "BASE")}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="nombre"
             value={estadoForma.nombre}
+            disabled={!modoEditar}
+          />
+        </div>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label">Nombre corto</label>
+          <input
+            className="form-control"
+            type="text"
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+            name="nombre_corto"
+            value={estadoForma.nombre_corto}
             disabled={!modoEditar}
           />
         </div>
@@ -233,7 +291,7 @@ const FormaCoparte = () => {
           <label className="form-label">Estatus legal</label>
           <select
             className="form-control"
-            onChange={(e) => handleChange(e, "BASE")}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="i_estatus_legal"
             value={estadoForma.i_estatus_legal}
             disabled={!modoEditar}
@@ -247,7 +305,7 @@ const FormaCoparte = () => {
           <input
             className="form-control"
             type="text"
-            onChange={(e) => handleChange(e, "BASE")}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="representante_legal"
             value={estadoForma.representante_legal}
             disabled={!modoEditar || estadoForma.i_estatus_legal != 1}
@@ -258,28 +316,12 @@ const FormaCoparte = () => {
           <input
             className="form-control"
             type="text"
-            onChange={(e) => handleChange(e, "BASE")}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="rfc"
             placeholder="de la organización"
             value={estadoForma.rfc}
             disabled={!modoEditar || estadoForma.i_estatus_legal != 1}
           />
-        </div>
-        <div className="col-12 col-md-6 col-lg-4 mb-3">
-          <label className="form-label">Tema social</label>
-          <select
-            className="form-control"
-            onChange={(e) => handleChange(e, "BASE")}
-            name="id_tema_social"
-            value={estadoForma.id_tema_social}
-            disabled={!modoEditar}
-          >
-            {temas_sociales.map(({ id, nombre }) => (
-              <option key={id} value={id}>
-                {nombre}
-              </option>
-            ))}
-          </select>
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Administrador</label>
@@ -557,7 +599,7 @@ const FormaCoparte = () => {
             </div>
           </div>
           {/* Seccion Proyectos */}
-          <div className="row mb-3">
+          <div className="row mb-5">
             <div className="col-12 mb-3 d-flex justify-content-between">
               <h2 className="color1 mb-0">Proyectos</h2>
               {estadoForma.administrador.id == user.id && (
@@ -622,6 +664,50 @@ const FormaCoparte = () => {
                   )}
                 </tbody>
               </table>
+            </div>
+          </div>
+          {/* Seccion notas */}
+          <div className="row mb-3">
+            <div className="col-12 mb-3">
+              <h2 className="color1 mb-0">Notas</h2>
+            </div>
+            <div className="col-12 table-responsive mb-3">
+              <table className="table">
+                <thead className="table-light">
+                  <tr>
+                    <th>Usuario</th>
+                    <th>Mensaje</th>
+                    <th>Fecha</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {estadoForma.notas.map(
+                    ({ id, usuario, mensaje, dt_registro }) => (
+                      <tr key={id}>
+                        <td>{usuario}</td>
+                        <td>{mensaje}</td>
+                        <td>{dt_registro}</td>
+                      </tr>
+                    )
+                  )}
+                </tbody>
+              </table>
+            </div>
+            <div className="col-12 col-md-9 mb-3">
+              <input
+                type="text"
+                className="form-control"
+                value={mensajeNota}
+                onChange={({ target }) => setMensajeNota(target.value)}
+                placeholder="mensaje de la nota"
+                ref={inputNota}
+              ></input>
+              {/* <textarea className="form-control"></textarea> */}
+            </div>
+            <div className="col-12 col-md-3 mb-3 text-end">
+              <button className="btn btn-secondary" onClick={agregarNota}>
+                Agregar nota +
+              </button>
             </div>
           </div>
         </>

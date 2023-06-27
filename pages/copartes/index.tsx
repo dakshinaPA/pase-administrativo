@@ -70,10 +70,16 @@ const Financiadores = () => {
     setShowModalEliminar(false)
   }
 
-  const busquedaFiltrados = resultadosDB.filter(({ nombre }) => {
-    const query = aMinuscula(inputBusqueda)
-    return aMinuscula(nombre).includes(query)
-  })
+  const busquedaFiltrados = resultadosDB.filter(
+    ({ nombre, id_alt, nombre_corto }) => {
+      const query = aMinuscula(inputBusqueda)
+      return (
+        aMinuscula(nombre).includes(query) ||
+        aMinuscula(id_alt).includes(query) ||
+        aMinuscula(nombre_corto).includes(query)
+      )
+    }
+  )
 
   const determinarNombreAEliminar = (): string => {
     const coparte = resultadosDB.find((coparte) => coparte.id === idAEliminar)
@@ -120,6 +126,7 @@ const Financiadores = () => {
                   <th>#id</th>
                   <th>Alt id</th>
                   <th>Nombre</th>
+                  <th>Nombre corto</th>
                   <th>Estatus legal</th>
                   <th>RFC</th>
                   <th>Representante legal</th>
@@ -134,6 +141,7 @@ const Financiadores = () => {
                     id,
                     id_alt,
                     nombre,
+                    nombre_corto,
                     i_estatus_legal,
                     estatus_legal,
                     rfc,
@@ -146,6 +154,7 @@ const Financiadores = () => {
                       <td>{id}</td>
                       <td>{id_alt}</td>
                       <td>{nombre}</td>
+                      <td>{nombre_corto}</td>
                       <td>{estatus_legal}</td>
                       <td>{i_estatus_legal === 1 ? rfc : "NA"}</td>
                       <td>

@@ -81,6 +81,8 @@ export interface Proyecto extends ProyectoMin {
   f_monto_total: string
   i_tipo_financiamiento: number
   tipo_financiamiento?: string
+  id_tema_social: number
+  tema_social?: number
   i_beneficiados: number
   dt_registro?: string
   dt_registro_epoch?: string

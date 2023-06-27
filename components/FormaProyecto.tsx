@@ -27,7 +27,7 @@ const FormaProyecto = () => {
   const { user } = useAuth()
   if (!user) return null
 
-  const { rubros_presupuestales } = useCatalogos()
+  const { rubros_presupuestales, temas_sociales } = useCatalogos()
   const router = useRouter()
   const idCoparte = Number(router.query.idC)
   const idProyecto = Number(router.query.idP)
@@ -37,6 +37,7 @@ const FormaProyecto = () => {
     id_alt: "",
     f_monto_total: "0",
     i_tipo_financiamiento: 1,
+    id_tema_social: 1,
     i_beneficiados: 0,
     responsable: {
       id: 0,
@@ -437,6 +438,22 @@ const FormaProyecto = () => {
             <option value="2">Única ministración</option>
             <option value="3">Varias Ministraciones</option>
             <option value="4">Multi anual</option>
+          </select>
+        </div>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label">Tema social</label>
+          <select
+            className="form-control"
+            onChange={handleChange}
+            name="id_tema_social"
+            value={estadoForma.id_tema_social}
+            disabled={!modoEditar}
+          >
+            {temas_sociales.map(({ id, nombre }) => (
+              <option key={id} value={id}>
+                {nombre}
+              </option>
+            ))}
           </select>
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">

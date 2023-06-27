@@ -84,7 +84,7 @@ const Usuarios = () => {
           })
         }
       } else {
-        const reUsuarios = await obtenerUsuariosXRol(rolUsuarioSelect)
+        const reUsuarios = await obtenerUsuariosXRol(rolUsuarioSelect, false)
         if (reUsuarios.error) throw reUsuarios.data
         usuarios = reUsuarios.data as Usuario[]
       }

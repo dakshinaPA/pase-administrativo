@@ -2,7 +2,12 @@ import { UsuarioDB } from "@api/db/usuarios"
 import { CoparteDB } from "@api/db/copartes"
 import { RespuestaController } from "@api/utils/response"
 import { LoginUsuario, ResUsuarioDB } from "@api/models/usuario.model"
-import { Usuario, CoparteUsuario, UsuarioLogin } from "@models/usuario.model"
+import {
+  Usuario,
+  CoparteUsuario,
+  UsuarioLogin,
+  QueriesUsuario,
+} from "@models/usuario.model"
 // import { CoparteUsuario } from "@models/coparte.model"
 import { ResDB } from "@api/models/respuestas.model"
 import { CopartesServices } from "./copartes"
@@ -27,11 +32,7 @@ class UsuariosServices {
 
         // copartes = obtenerCoUs.data as CoparteUsuario[]
 
-
-
-        return RespuestaController.exitosa(200, "Usuario encontrado", [
-          usuario,
-        ])
+        return RespuestaController.exitosa(200, "Usuario encontrado", [usuario])
       } else {
         // no hubo error pero no hay match con usuario
         return RespuestaController.fallida(
@@ -64,19 +65,14 @@ class UsuariosServices {
     return RespuestaController.exitosa(200, "Consulta exitosa", re.data)
   }
 
-  static async obtener(
-    id_rol: number,
-    id_coparte: number,
-    id_usuario: number,
-    min: boolean
-  ) {
+  static async obtener(queries: QueriesUsuario) {
+    const id_rol = Number(queries.id_rol)
+    const id_usuario = Number(queries.id)
+    const min = Boolean(queries.min)
+
     if (min) return await this.obtenerVmin(id_rol)
-    if (id_coparte) return await CopartesServices.obtenerUsuarios(id_coparte, false)
     try {
-      const resUsuariosDB = await UsuarioDB.obtener(
-        id_rol,
-        id_usuario
-      )
+      const resUsuariosDB = await UsuarioDB.obtener(id_rol, id_usuario)
       if (resUsuariosDB.error) throw resUsuariosDB.data
 
       const usuariosDB = resUsuariosDB.data as ResUsuarioDB[]
@@ -97,9 +93,9 @@ class UsuariosServices {
 
           let coparte: CoparteUsuario = null
 
-          if(id_rol == 3){
+          if (id_rol == 3) {
             const reCoparteUsuario = await UsuarioDB.obtenerCoparteCoparte(id)
-            if(reCoparteUsuario.error) throw reCoparteUsuario.data
+            if (reCoparteUsuario.error) throw reCoparteUsuario.data
             coparte = reCoparteUsuario.data[0] as CoparteUsuario
           }
 
@@ -186,7 +182,6 @@ class UsuariosServices {
 
   static async actualizar(id_usuario: number, data: Usuario) {
     try {
-
       const upUsuario = UsuarioDB.actualizar(id_usuario, data)
 
       const promesas = [upUsuario]

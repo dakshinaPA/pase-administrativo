@@ -4,6 +4,8 @@ import {
   Coparte,
   CoparteUsuario,
   CoparteUsuarioMin,
+  NotaCoparte,
+  QueriesCoparte,
   // EnlaceCoparte,
 } from "@models/coparte.model"
 import { ResCoparteDB } from "@api/models/coparte.model"
@@ -35,11 +37,13 @@ class CopartesServices {
     return RespuestaController.exitosa(200, "Consulta exitosa", re.data)
   }
 
-  static async obtener(queries: Queries) {
-    const { id, min } = queries
-    const id_coparte = Number(id)
+  static async obtener(queries: QueriesCoparte) {
+    const id_coparte = Number(queries.id)
     const id_admin = Number(queries.id_admin)
+    const min = Boolean(queries.min)
+
     if (min) return await this.obtenerVmin(id_coparte, id_admin)
+
     try {
       const re = await CoparteDB.obtener(id_coparte, id_admin)
       if (re.error) throw re.data
@@ -54,11 +58,10 @@ class CopartesServices {
             nombre_administrador,
             id_alt,
             nombre,
+            nombre_corto,
             i_estatus_legal,
             representante_legal,
             rfc,
-            id_tema_social,
-            tema_social,
             dt_registro,
             id_coparte_direccion,
             calle,
@@ -73,12 +76,18 @@ class CopartesServices {
 
           let usuarios: CoparteUsuario[] = null
           let proyectos: Proyecto[] = null
+          let notas: NotaCoparte[] = null
 
           if (id_coparte) {
             const reUsuarios = this.obtenerUsuarios(Number(id_coparte), false)
-            const reProyectos = ProyectosServices.obtener({id_coparte})
+            const reProyectos = ProyectosServices.obtener({ id_coparte })
+            const reNotas = this.obtenerNotas(id)
 
-            const resCombinadas = await Promise.all([reUsuarios, reProyectos])
+            const resCombinadas = await Promise.all([
+              reUsuarios,
+              reProyectos,
+              reNotas,
+            ])
 
             for (const rc of resCombinadas) {
               if (rc.error) throw rc.data
@@ -86,18 +95,18 @@ class CopartesServices {
 
             usuarios = resCombinadas[0].data as CoparteUsuario[]
             proyectos = resCombinadas[1].data as Proyecto[]
+            notas = resCombinadas[2].data as NotaCoparte[]
           }
 
           return {
             id,
             id_alt,
             nombre,
+            nombre_corto,
             i_estatus_legal,
             estatus_legal: this.obetnerStatusLegal(i_estatus_legal),
             representante_legal,
             rfc,
-            id_tema_social,
-            tema_social,
             dt_registro: epochAFecha(dt_registro),
             direccion: {
               id: id_coparte_direccion,
@@ -116,6 +125,7 @@ class CopartesServices {
             },
             usuarios,
             proyectos,
+            notas
           }
         })
       )
@@ -252,6 +262,50 @@ class CopartesServices {
 
     return RespuestaController.exitosa(200, "Consulta exitosa", usuariosCoparte)
   }
+
+  static async obtenerNotas(id_coparte: number) {
+    const re = await CoparteDB.obtenerNotas(id_coparte)
+
+    if (re.error) {
+      return RespuestaController.fallida(
+        400,
+        "Error al obtener notas del financiador",
+        re.data
+      )
+    }
+
+    let notas = re.data as NotaCoparte[]
+    notas = notas.map((nota) => {
+      return {
+        ...nota,
+        dt_registro: epochAFecha(nota.dt_registro),
+      }
+    })
+
+    return RespuestaController.exitosa(200, "consulta exitosa", notas)
+  }
+
+  static async crearNota(id_coparte: number, data: NotaCoparte) {
+    const crearNota = await CoparteDB.crearNota(id_coparte, data)
+
+    if (crearNota.error) {
+      return RespuestaController.fallida(
+        400,
+        "Error al crear nota de financiador",
+        crearNota.data
+      )
+    }
+
+    // @ts-ignore
+    const idInsertado = crearNota.data.insertId
+
+    return RespuestaController.exitosa(
+      201,
+      "Nota de financiador creada con éxito",
+      { idInsertado }
+    )
+  }
+
 }
 
 export { CopartesServices }

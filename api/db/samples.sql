@@ -202,15 +202,14 @@ CREATE TABLE `copartes` (
   `id_administrador` INT UNSIGNED NOT NULL COMMENT 'administrador responsable',
   `id_alt` VARCHAR(20) UNIQUE NOT NULL,
   `nombre` VARCHAR(45) NOT NULL,
+  `nombre_corto` VARCHAR(20) NOT NULL,
   `i_estatus_legal` TINYINT UNSIGNED NOT NULL DEFAULT 1 COMMENT '1.constituida, 2.no constituida',
   `representante_legal` VARCHAR(80) NOT NULL DEFAULT '' COMMENT 'solo constituidas',
   `rfc` VARCHAR(20) NOT NULL DEFAULT '' COMMENT 'solo constituidas',
-  `id_tema_social` INT UNSIGNED NOT NULL,
   `b_activo` TINYINT UNSIGNED NOT NULL DEFAULT 1,
   `dt_registro` VARCHAR(10) NOT NULL,
   PRIMARY KEY (`id`),
-  INDEX (`id_administrador`),
-  INDEX (`id_tema_social`));
+  INDEX (`id_administrador`));
 
 -- INSERT INTO `copartes` (`id_alt`, `nombre`, `i_estatus`, `i_estatus_legal`, `representante_legal`, `dt_registro`) 
 -- VALUES ('001', 'Espirales', 1, 1, 'Felipe Montealvirez Torres','1685385164'),
@@ -246,6 +245,17 @@ CREATE TABLE `coparte_usuarios` (
   PRIMARY KEY (`id`),
   INDEX (`id_usuario`),
   INDEX (`id_coparte`));
+
+CREATE TABLE `coparte_notas` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `id_coparte` INT UNSIGNED NOT NULL,
+  `id_usuario` INT UNSIGNED NOT NULL,
+  `mensaje` TEXT NOT NULL,
+  `b_activo` TINYINT UNSIGNED NOT NULL DEFAULT 1,
+  `dt_registro` VARCHAR(10) NOT NULL,
+  PRIMARY KEY (`id`),
+  INDEX (`id_coparte`),
+  INDEX (`id_usuario`));
 
 -- INSERT INTO `coparte_usuarios` (`id_coparte`, `id_usuario`) 
 -- VALUES (1, 1),
@@ -296,6 +306,7 @@ CREATE TABLE `proyectos` (
   `id_coparte` INT UNSIGNED NOT NULL,
   `id_responsable` INT UNSIGNED NOT NULL COMMENT 'id usuario coparte',
   `id_alt` VARCHAR(20) UNIQUE NOT NULL,
+  `id_tema_social` INT UNSIGNED NOT NULL,
   `f_monto_total` VARCHAR(20) NOT NULL,
   `i_tipo_financiamiento` TINYINT UNSIGNED NOT NULL COMMENT '1.estipendio, 2.unica ministracion, 3.varias ministraciones, 4.multi anual',
   `i_beneficiados` INT UNSIGNED NOT NULL,
@@ -304,6 +315,7 @@ CREATE TABLE `proyectos` (
   PRIMARY KEY (`id`),
   INDEX (`id_financiador`),
   INDEX (`id_coparte`),
+  INDEX (`id_tema_social`),
   INDEX (`id_responsable`));
 
   CREATE TABLE `proyecto_ministraciones` (

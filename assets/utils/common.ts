@@ -77,12 +77,15 @@ const obtenerProyectosUsuario = async (id_responsable: number, min = true) => {
 }
 
 const obtenerUsuariosCoparte = async (id_coparte: number) => {
-  let url = `/usuarios?id_coparte=${id_coparte}`
+  let url = `/copartes/${id_coparte}/usuarios`
   return await ApiCall.get(url)
 }
 
-const obtenerUsuariosXRol = async (id_rol: number) => {
+const obtenerUsuariosXRol = async (id_rol: number, min = true) => {
   let url = `/usuarios?id_rol=${id_rol}`
+  if (min) {
+    url += "&min=true"
+  }
   return await ApiCall.get(url)
 }
 
