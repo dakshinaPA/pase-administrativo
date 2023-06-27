@@ -70,6 +70,7 @@ const estadoInicialForma: Financiador = {
   i_tipo: 1,
   actividad: "",
   representante_legal: "",
+  rfc_representante_legal: "",
   pagina_web: "",
   dt_constitucion: "",
   enlace: {
@@ -245,7 +246,7 @@ const FormaFinanciador = () => {
             onChange={(e) => handleChange(e, "BASE")}
             name="id_alt"
             value={estadoForma.id_alt}
-            disabled={!modoEditar}
+            disabled={Boolean(idFinanciador)}
           />
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
@@ -284,7 +285,7 @@ const FormaFinanciador = () => {
           </select>
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
-          <label className="form-label">Actividad</label>
+          <label className="form-label">Objeto social</label>
           <input
             className="form-control"
             type="text"
@@ -302,6 +303,18 @@ const FormaFinanciador = () => {
             onChange={(e) => handleChange(e, "BASE")}
             name="representante_legal"
             value={estadoForma.representante_legal}
+            disabled={!modoEditar}
+          />
+        </div>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label">RFC Representante</label>
+          <input
+            className="form-control"
+            type="text"
+            onChange={(e) => handleChange(e, "BASE")}
+            name="rfc_representante_legal"
+            value={estadoForma.rfc_representante_legal}
+            placeholder="del representante legal"
             disabled={!modoEditar}
           />
         </div>

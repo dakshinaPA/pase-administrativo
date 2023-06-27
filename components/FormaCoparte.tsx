@@ -84,7 +84,7 @@ const estadoInicialForma: Coparte = {
 
 const FormaCoparte = () => {
   const { user } = useAuth()
-  if(!user) return null
+  if (!user) return null
   const { temas_sociales, estados } = useCatalogos()
   const router = useRouter()
   const idCoparte = router.query.idC
@@ -208,17 +208,6 @@ const FormaCoparte = () => {
       </div>
       <FormaContenedor onSubmit={handleSubmit}>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
-          <label className="form-label">Nombre</label>
-          <input
-            className="form-control"
-            type="text"
-            onChange={(e) => handleChange(e, "BASE")}
-            name="nombre"
-            value={estadoForma.nombre}
-            disabled={!modoEditar}
-          />
-        </div>
-        <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">ID alterno</label>
           <input
             className="form-control"
@@ -226,6 +215,17 @@ const FormaCoparte = () => {
             onChange={(e) => handleChange(e, "BASE")}
             name="id_alt"
             value={estadoForma.id_alt}
+            disabled={!modoEditar}
+          />
+        </div>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label">Nombre</label>
+          <input
+            className="form-control"
+            type="text"
+            onChange={(e) => handleChange(e, "BASE")}
+            name="nombre"
+            value={estadoForma.nombre}
             disabled={!modoEditar}
           />
         </div>

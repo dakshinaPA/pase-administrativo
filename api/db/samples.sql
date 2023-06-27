@@ -11,8 +11,8 @@ CREATE TABLE `paises` (
 
 INSERT INTO `paises` (`nombre`) 
 VALUES ('MEXICO'),
-('EU'),
-('ARGENTINA');
+('PANAMA'),
+('EU');
 
 CREATE TABLE `estados` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -85,6 +85,7 @@ CREATE TABLE `financiadores` (
   `id_alt` VARCHAR(20) UNIQUE NOT NULL,
   `nombre` VARCHAR(30) NOT NULL COMMENT 'Denominacion social',
   `representante_legal` VARCHAR(80) NOT NULL,
+  `rfc_representante_legal` VARCHAR(20) NOT NULL,
   `pagina_web` VARCHAR(100) NOT NULL DEFAULT '',
   `rfc` VARCHAR(50) UNIQUE NOT NULL COMMENT 'RFC o tax number',
   `actividad` VARCHAR(80) NOT NULL COMMENT 'actividad, giro mercantil u objeto social',

@@ -58,7 +58,7 @@ const Financiadores = () => {
       } else {
         //cargar proyecto de usuario coparte
         const reProyectos = await ApiCall.get(
-          `/proyectos?id_usuario=${user.id}`
+          `/proyectos?id_responsable=${user.id}`
         )
         if (reProyectos.error) throw reProyectos.data
 
