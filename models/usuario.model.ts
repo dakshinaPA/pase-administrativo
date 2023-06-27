@@ -1,4 +1,4 @@
-import { CoparteUsuario } from "@models/coparte.model"
+// import { CoparteUsuario } from "@models/coparte.model"
 
 export interface UsuarioMin {
   id?: number
@@ -13,12 +13,22 @@ export interface RolUsuario {
   b_enlace?: boolean
 }
 
+export interface CoparteUsuario {
+  id?: number //id coparte_usuarios
+  id_coparte: number
+  cargo: string
+  b_enlace?: boolean
+}
+
+export type IdRolUsuario = 1 | 2 | 3
+
 export interface Usuario extends UsuarioMin {
   email: string
   telefono: string
-  password?: string
-  rol: RolUsuario
-  copartes?: CoparteUsuario[]
+  password: string
+  id_rol: IdRolUsuario
+  rol?: string
+  coparte?: CoparteUsuario
 }
 
 export interface UsuarioLogin extends UsuarioMin {

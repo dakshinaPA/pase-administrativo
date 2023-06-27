@@ -41,7 +41,7 @@ class CopartesServices {
     const id_admin = Number(queries.id_admin)
     if (min) return await this.obtenerVmin(id_coparte, id_admin)
     try {
-      const re = await CoparteDB.obtener(id_coparte)
+      const re = await CoparteDB.obtener(id_coparte, id_admin)
       if (re.error) throw re.data
 
       const copartesDB = re.data as ResCoparteDB[]

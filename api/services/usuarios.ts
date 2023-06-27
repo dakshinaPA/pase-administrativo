@@ -2,9 +2,10 @@ import { UsuarioDB } from "@api/db/usuarios"
 import { CoparteDB } from "@api/db/copartes"
 import { RespuestaController } from "@api/utils/response"
 import { LoginUsuario, ResUsuarioDB } from "@api/models/usuario.model"
-import { Usuario, UsuarioLogin } from "@models/usuario.model"
-import { CoparteUsuario } from "@models/coparte.model"
+import { Usuario, CoparteUsuario, UsuarioLogin } from "@models/usuario.model"
+// import { CoparteUsuario } from "@models/coparte.model"
 import { ResDB } from "@api/models/respuestas.model"
+import { CopartesServices } from "./copartes"
 
 class UsuariosServices {
   static async login(dataUsuario: LoginUsuario) {
@@ -70,10 +71,10 @@ class UsuariosServices {
     min: boolean
   ) {
     if (min) return await this.obtenerVmin(id_rol)
+    if (id_coparte) return await CopartesServices.obtenerUsuarios(id_coparte, false)
     try {
       const resUsuariosDB = await UsuarioDB.obtener(
         id_rol,
-        id_coparte,
         id_usuario
       )
       if (resUsuariosDB.error) throw resUsuariosDB.data
@@ -92,29 +93,34 @@ class UsuariosServices {
             password,
             id_rol,
             rol,
-            b_enlace,
           } = usuario
 
-          let copartes: CoparteUsuario[] = null
+          let coparte: CoparteUsuario = null
 
-          if (id_usuario && id_rol !== 1) {
-            const obtenerCoUs =
-              id_rol === 3
-                ? await UsuarioDB.obtenerCoparteCoparte(id)
-                : await UsuarioDB.obtenerCopartesAdministrador(id)
-
-            if (obtenerCoUs.error) throw obtenerCoUs.data
-
-            const copartesCoUS = obtenerCoUs.data as CoparteUsuario[]
-
-            copartes =
-              id_rol === 3
-                ? copartesCoUS.map((cop) => ({
-                    ...cop,
-                    b_enlace: Boolean(cop.b_enlace),
-                  }))
-                : copartesCoUS
+          if(id_rol == 3){
+            const reCoparteUsuario = await UsuarioDB.obtenerCoparteCoparte(id)
+            if(reCoparteUsuario.error) throw reCoparteUsuario.data
+            coparte = reCoparteUsuario.data[0] as CoparteUsuario
           }
+
+          // if (id_usuario && id_rol !== 1) {
+          //   const obtenerCoUs =
+          //     id_rol === 3
+          //       ? await UsuarioDB.obtenerCoparteCoparte(id)
+          //       : await UsuarioDB.obtenerCopartesAdministrador(id)
+
+          //   if (obtenerCoUs.error) throw obtenerCoUs.data
+
+          //   const copartesCoUS = obtenerCoUs.data as CoparteUsuario[]
+
+          //   copartes =
+          //     id_rol === 3
+          //       ? copartesCoUS.map((cop) => ({
+          //           ...cop,
+          //           b_enlace: Boolean(cop.b_enlace),
+          //         }))
+          //       : copartesCoUS
+          // }
 
           return {
             id,
@@ -124,12 +130,9 @@ class UsuariosServices {
             email,
             telefono,
             password: id_usuario ? password : "",
-            rol: {
-              id: id_rol,
-              nombre: rol,
-              b_enlace: Boolean(b_enlace),
-            },
-            copartes,
+            id_rol,
+            rol,
+            coparte,
           }
         })
       )
@@ -155,11 +158,11 @@ class UsuariosServices {
 
       // @ts-ignore
       const idInsertado = crear.data.insertId
-      const id_rol = data.rol.id
+      const id_rol = data.id_rol
       let idInsertadoCoparteUsuario = 0
       // registrar en tabla coparte_usuarios
       if (id_rol == 3) {
-        const { id_coparte, cargo } = data.copartes[0]
+        const { id_coparte, cargo } = data.coparte
 
         const crearCoparteUsuario = await CoparteDB.crearUsuario(
           id_coparte,
@@ -183,11 +186,13 @@ class UsuariosServices {
 
   static async actualizar(id_usuario: number, data: Usuario) {
     try {
-      const promesas: Promise<ResDB>[] = []
 
-      promesas.push(UsuarioDB.actualizar(id_usuario, data))
-      if (data.rol.id === 3) {
-        promesas.push(CoparteDB.actualizarUsuario(data.copartes[0]))
+      const upUsuario = UsuarioDB.actualizar(id_usuario, data)
+
+      const promesas = [upUsuario]
+
+      if (data.id_rol == 3) {
+        promesas.push(CoparteDB.actualizarUsuario(data.coparte))
       }
 
       const resCombinadas = await Promise.all(promesas)

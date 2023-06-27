@@ -47,10 +47,10 @@ const obtenerCopartesAdmin = async (id_admin: number, min = true) => {
   return await ApiCall.get(url)
 }
 
-const obtenerCopartes = async (id_coparte: number, min = true) => {
+const obtenerCopartes = async (id_coparte?: number, min = true) => {
   let url = "/copartes"
 
-  if(id_coparte){
+  if (id_coparte) {
     url += `/${id_coparte}`
   }
 
@@ -73,6 +73,16 @@ const obtenerProyectosUsuario = async (id_responsable: number, min = true) => {
   if (min) {
     url += "&min=true"
   }
+  return await ApiCall.get(url)
+}
+
+const obtenerUsuariosCoparte = async (id_coparte: number) => {
+  let url = `/usuarios?id_coparte=${id_coparte}`
+  return await ApiCall.get(url)
+}
+
+const obtenerUsuariosXRol = async (id_rol: number) => {
+  let url = `/usuarios?id_rol=${id_rol}`
   return await ApiCall.get(url)
 }
 
@@ -121,5 +131,7 @@ export {
   obtenerCopartesAdmin,
   obtenerFinanciadores,
   obtenerCopartes,
-  obtenerProyectosUsuario
+  obtenerProyectosUsuario,
+  obtenerUsuariosCoparte,
+  obtenerUsuariosXRol
 }

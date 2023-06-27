@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useReducer } from "react"
 import { useRouter } from "next/router"
 import { ChangeEvent } from "@assets/models/formEvents.model"
 import { Usuario } from "@models/usuario.model"
@@ -6,36 +6,63 @@ import { CoparteMin } from "@models/coparte.model"
 import { Loader } from "@components/Loader"
 import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
 import { BtnBack } from "@components/BtnBack"
-import { ApiCall } from "@assets/utils/apiCalls"
+import { ApiCall, ApiCallRes } from "@assets/utils/apiCalls"
 import { BtnEditar } from "./Botones"
 import { obtenerCopartes, obtenerCopartesAdmin } from "@assets/utils/common"
 import { useAuth } from "@contexts/auth.context"
 
-const FormaUsuario = () => {
-  const estadoInicialForma: Usuario = {
-    nombre: "",
-    apellido_paterno: "",
-    apellido_materno: "",
-    email: "",
-    telefono: "",
-    password: "",
-    rol: {
-      id: 3,
-    },
-    copartes: [
-      {
-        id_coparte: 0,
-        cargo: "",
-      },
-    ],
-  }
+type ActionTypes = "CARGA_INICIAL" | "HANDLE_CHANGE" | "HANDLE_CHANGE_COPARTE"
 
+interface ActionDispatch {
+  type: ActionTypes
+  payload: any
+}
+
+const reducer = (state: Usuario, action: ActionDispatch): Usuario => {
+  const { type, payload } = action
+
+  switch (type) {
+    case "CARGA_INICIAL":
+      return payload
+    case "HANDLE_CHANGE":
+      return {
+        ...state,
+        [payload.name]: payload.value,
+      }
+    case "HANDLE_CHANGE_COPARTE":
+      return {
+        ...state,
+        coparte: {
+          ...state.coparte,
+          [payload.name]: payload.value,
+        },
+      }
+    default:
+      return state
+  }
+}
+
+const estadoInicialForma: Usuario = {
+  nombre: "",
+  apellido_paterno: "",
+  apellido_materno: "",
+  email: "",
+  telefono: "",
+  password: "",
+  id_rol: 3,
+  coparte: {
+    id_coparte: 0,
+    cargo: "",
+  },
+}
+
+const FormaUsuario = () => {
   const { user } = useAuth()
-  if(!user) return null
+  if (!user) return null
   const router = useRouter()
   const idCoparte = Number(router.query.idC)
   const idUsuario = Number(router.query.id)
-  const [estadoForma, setEstadoForma] = useState(estadoInicialForma)
+  const [estadoForma, dispatch] = useReducer(reducer, estadoInicialForma)
   const [copartesDB, setCopartesDB] = useState<CoparteMin[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [modoEditar, setModoEditar] = useState<boolean>(!idUsuario)
@@ -45,44 +72,23 @@ const FormaUsuario = () => {
     cargarData()
   }, [])
 
-  useEffect(() => {
-    //limpiar campos de coparte si se cambia de rol
-    setEstadoForma({
-      ...estadoForma,
-      copartes: [
-        {
-          id_coparte: 1,
-          cargo: "",
-        },
-      ],
-    })
-  }, [estadoForma.rol.id])
-
-  useEffect(() => {
-    if (idCoparte) {
-      setEstadoForma({
-        ...estadoForma,
-        rol: {
-          id: 3,
-        },
-        copartes: [
-          {
-            id_coparte: Number(idCoparte),
-            cargo: "",
-          },
-        ],
-      })
-    }
-  }, [copartesDB])
-
   const cargarData = async () => {
     setIsLoading(true)
 
     try {
-      const reCopartes =
-        user.id_rol == 2 ? obtenerCopartesAdmin(user.id) : obtenerCopartes(0)
-      
-        const promesas = [reCopartes]
+      let reCopartes: Promise<ApiCallRes>
+
+      if (idCoparte) {
+        reCopartes = obtenerCopartes(idCoparte)
+      } else {
+        if (user.id_rol == 2) {
+          reCopartes = obtenerCopartesAdmin(user.id)
+        } else {
+          reCopartes = obtenerCopartes()
+        }
+      }
+
+      const promesas = [reCopartes]
 
       if (modalidad === "EDITAR") {
         promesas.push(obtener())
@@ -98,16 +104,17 @@ const FormaUsuario = () => {
       setCopartesDB(copartesDB)
 
       if (modalidad === "EDITAR") {
-        setEstadoForma(resCombinadas[1].data[0] as Usuario)
+        dispatch({
+          type: "CARGA_INICIAL",
+          payload: resCombinadas[1].data[0] as Usuario,
+        })
       } else {
-        setEstadoForma({
-          ...estadoForma,
-          copartes: [
-            {
-              ...estadoForma.copartes[0],
-              id_coparte: copartesDB[0].id,
-            },
-          ],
+        dispatch({
+          type: "HANDLE_CHANGE_COPARTE",
+          payload: {
+            name: "id_coparte",
+            value: copartesDB[0].id,
+          },
         })
       }
     } catch (error) {
@@ -136,37 +143,10 @@ const FormaUsuario = () => {
     modalidad === "EDITAR" ? setModoEditar(false) : router.push("/usuarios")
   }
 
-  const handleChange = (ev: ChangeEvent) => {
-    const { name, value } = ev.target
-
-    setEstadoForma({
-      ...estadoForma,
-      [name]: value,
-    })
-  }
-
-  const handleChangeRol = (ev: ChangeEvent) => {
-    const { value } = ev.target
-
-    setEstadoForma({
-      ...estadoForma,
-      rol: {
-        id: Number(value),
-      },
-    })
-  }
-
-  const handleChangeCoparte = (ev: ChangeEvent) => {
-    const { name, value } = ev.target
-
-    setEstadoForma({
-      ...estadoForma,
-      copartes: [
-        {
-          ...estadoForma.copartes[0],
-          [name]: value,
-        },
-      ],
+  const handleChange = (ev: ChangeEvent, type: ActionTypes) => {
+    dispatch({
+      type,
+      payload: ev.target,
     })
   }
 
@@ -213,7 +193,7 @@ const FormaUsuario = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChange}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="nombre"
             value={estadoForma.nombre}
             disabled={!modoEditar}
@@ -224,7 +204,7 @@ const FormaUsuario = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChange}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="apellido_paterno"
             value={estadoForma.apellido_paterno}
             disabled={!modoEditar}
@@ -235,7 +215,7 @@ const FormaUsuario = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChange}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="apellido_materno"
             value={estadoForma.apellido_materno}
             disabled={!modoEditar}
@@ -246,7 +226,7 @@ const FormaUsuario = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChange}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="email"
             value={estadoForma.email}
             disabled={!modoEditar}
@@ -257,7 +237,7 @@ const FormaUsuario = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChange}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="telefono"
             value={estadoForma.telefono}
             disabled={!modoEditar}
@@ -268,7 +248,7 @@ const FormaUsuario = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChange}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="password"
             value={estadoForma.password}
             disabled={!modoEditar}
@@ -278,8 +258,9 @@ const FormaUsuario = () => {
           <label className="form-label">Rol</label>
           <select
             className="form-control"
-            onChange={handleChangeRol}
-            value={estadoForma.rol.id}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+            name="id_rol"
+            value={estadoForma.id_rol}
             disabled={
               Boolean(idUsuario) || Boolean(idCoparte) || user.id_rol == 2
             }
@@ -289,15 +270,15 @@ const FormaUsuario = () => {
             <option value="3">Coparte</option>
           </select>
         </div>
-        {estadoForma.rol.id === 3 && (
+        {estadoForma.id_rol == 3 && (
           <>
             <div className="col-12 col-md-6 col-lg-4 mb-3">
               <label className="form-label">Coparte</label>
               <select
                 className="form-control"
-                onChange={handleChangeCoparte}
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE_COPARTE")}
                 name="id_coparte"
-                value={estadoForma.copartes[0].id_coparte}
+                value={estadoForma.coparte.id_coparte}
                 disabled={Boolean(idUsuario) || Boolean(idCoparte)}
               >
                 {copartesDB.map(({ id, nombre }) => (
@@ -312,9 +293,9 @@ const FormaUsuario = () => {
               <input
                 className="form-control"
                 type="text"
-                onChange={handleChangeCoparte}
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE_COPARTE")}
                 name="cargo"
-                value={estadoForma.copartes[0].cargo}
+                value={estadoForma.coparte.cargo}
                 disabled={!modoEditar}
               />
             </div>

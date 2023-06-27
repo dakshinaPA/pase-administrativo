@@ -8,14 +8,16 @@ import {
   aMinuscula,
   obtenerCopartes,
   obtenerCopartesAdmin,
+  obtenerUsuariosCoparte,
+  obtenerUsuariosXRol,
 } from "@assets/utils/common"
-import { Usuario } from "@models/usuario.model"
-import { CoparteMin } from "@models/coparte.model"
+import { IdRolUsuario, Usuario } from "@models/usuario.model"
+import { CoparteMin, CoparteUsuario } from "@models/coparte.model"
 import { useAuth } from "@contexts/auth.context"
 
 const Usuarios = () => {
   const { user } = useAuth()
-  if(!user) return null
+  if (!user) return null
   const router = useRouter()
   const [copartesDB, setCopartesDB] = useState<CoparteMin[]>([])
   const [usuariosDB, setUsuariosDB] = useState<Usuario[]>([])
@@ -23,7 +25,7 @@ const Usuarios = () => {
   const [showModalEliminar, setShowModalEliminar] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [inputBusqueda, setInputBusqueda] = useState<string>("")
-  const [rolUsuarioSelect, setRolUsuarioSelect] = useState<number>(3)
+  const [rolUsuarioSelect, setRolUsuarioSelect] = useState<IdRolUsuario>(3)
   const [coparteSelect, setCoparteSelect] = useState<number>(0)
 
   useEffect(() => {
@@ -31,34 +33,67 @@ const Usuarios = () => {
   }, [])
 
   useEffect(() => {
-    if(rolUsuarioSelect != 3 || coparteSelect){
-      obtenerUsuarios()
-    }
-  }, [rolUsuarioSelect, coparteSelect])
+    cargarUsuarios()
+  }, [coparteSelect, rolUsuarioSelect])
 
   const abrirModalEliminarUsuario = (id: number) => {
     setUsuarioAEliminar(id)
     setShowModalEliminar(true)
   }
 
-  const obtenerUsuarios = async () => {
+  const cargarUsuarios = async () => {
     setIsLoading(true)
 
-    let url = `/usuarios`
-    if (rolUsuarioSelect == 3) {
-      url += `?id_coparte=${coparteSelect}`
-    } else {
-      url += `?id_rol=${rolUsuarioSelect}`
+    try {
+      let usuarios: Usuario[] = []
+
+      if (rolUsuarioSelect == 3) {
+        if (coparteSelect > 0) {
+          const reUsuarios = await obtenerUsuariosCoparte(coparteSelect)
+          if (reUsuarios.error) throw reUsuarios.data
+
+          const usuariosCoparte = reUsuarios.data as CoparteUsuario[]
+          //transformar data a formato usuario
+          usuarios = usuariosCoparte.map((usuario) => {
+            const {
+              id_usuario,
+              nombre,
+              apellido_paterno,
+              apellido_materno,
+              email,
+              telefono,
+              cargo,
+              b_enlace,
+            } = usuario
+
+            return {
+              id: id_usuario,
+              nombre,
+              apellido_paterno,
+              apellido_materno,
+              email,
+              telefono,
+              password: "",
+              id_rol: 3,
+              coparte: {
+                id_coparte: coparteSelect,
+                cargo,
+                b_enlace: Boolean(b_enlace),
+              },
+            }
+          })
+        }
+      } else {
+        const reUsuarios = await obtenerUsuariosXRol(rolUsuarioSelect)
+        if (reUsuarios.error) throw reUsuarios.data
+        usuarios = reUsuarios.data as Usuario[]
+      }
+
+      setUsuariosDB(usuarios)
+    } catch (error) {
+      console.log(error)
     }
 
-    const res = await ApiCall.get(url)
-    const { error, data, mensaje } = res
-
-    if (error) {
-      console.log(data)
-    } else {
-      setUsuariosDB(data as Usuario[])
-    }
     setIsLoading(false)
   }
 
@@ -66,7 +101,7 @@ const Usuarios = () => {
     const res =
       user.id_rol == 2
         ? await obtenerCopartesAdmin(user.id)
-        : await obtenerCopartes(0)
+        : await obtenerCopartes()
 
     const { error, data, mensaje } = res
 
@@ -91,7 +126,7 @@ const Usuarios = () => {
     if (error) {
       console.log(error)
     } else {
-      await obtenerUsuarios()
+      await cargarUsuarios()
     }
 
     setIsLoading(false)
@@ -141,18 +176,19 @@ const Usuarios = () => {
             Registrar +
           </button>
         </div>
-        <div className="col-12 col-md-6 col-lg-2 mb-3">
-          <select
-            className="form-control"
-            onChange={handleCambioRol}
-            value={rolUsuarioSelect}
-            disabled={user.id_rol == 2}
-          >
-            <option value="1">Super Usuario</option>
-            <option value="2">Administrador</option>
-            <option value="3">Coparte</option>
-          </select>
-        </div>
+        {user.id_rol == 1 && (
+          <div className="col-12 col-md-6 col-lg-2 mb-3">
+            <select
+              className="form-control"
+              onChange={handleCambioRol}
+              value={rolUsuarioSelect}
+            >
+              <option value="1">Super Usuario</option>
+              <option value="2">Administrador</option>
+              <option value="3">Coparte</option>
+            </select>
+          </div>
+        )}
         <div className="col-12 col-md-6 col-lg-2 mb-3">
           {rolUsuarioSelect == 3 && (
             <select
@@ -197,7 +233,12 @@ const Usuarios = () => {
                   <th>Nombre</th>
                   <th>Email</th>
                   <th>Telefono</th>
-                  {rolUsuarioSelect == 3 && <th>Enlace</th>}
+                  {rolUsuarioSelect == 3 && (
+                    <>
+                      <th>Cargo</th>
+                      <th>Enlace</th>
+                    </>
+                  )}
                   <th>Acciones</th>
                 </tr>
               </thead>
@@ -210,10 +251,8 @@ const Usuarios = () => {
                     apellido_materno,
                     email,
                     telefono,
-                    rol,
+                    coparte,
                   } = usuario
-
-                  const icono = rol.b_enlace ? "bi-check" : "bi-x"
 
                   return (
                     <tr key={`coparte_${id}`}>
@@ -224,9 +263,16 @@ const Usuarios = () => {
                       <td>{email}</td>
                       <td>{telefono}</td>
                       {rolUsuarioSelect == 3 && (
-                        <td>
-                          <i className={`bi ${icono}`}></i>
-                        </td>
+                        <>
+                          <td>{coparte?.cargo}</td>
+                          <td>
+                            <i
+                              className={`bi ${
+                                coparte?.b_enlace ? "bi-check" : "bi-x"
+                              }`}
+                            ></i>
+                          </td>
+                        </>
                       )}
                       <td>
                         <div className="d-flex">

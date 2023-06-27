@@ -1,3 +1,5 @@
+import { IdRolUsuario } from "@models/usuario.model"
+
 export interface ResUsuarioDB {
   id: number
   nombre: string
@@ -6,7 +8,7 @@ export interface ResUsuarioDB {
   email: string
   telefono: string
   password?: string
-  id_rol: number
+  id_rol: IdRolUsuario
   b_enlace: null | 1 | 0
   rol: string
 }

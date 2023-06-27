@@ -4,13 +4,17 @@ import { useRouter } from "next/router"
 import { Loader } from "@components/Loader"
 import { ModalEliminar } from "@components/ModalEliminar"
 import { TablaContenedor } from "@components/Contenedores"
-import { aMinuscula } from "@assets/utils/common"
+import {
+  aMinuscula,
+  obtenerCopartes,
+  obtenerCopartesAdmin,
+} from "@assets/utils/common"
 import { Coparte } from "@models/coparte.model"
 import { useAuth } from "@contexts/auth.context"
 
 const Financiadores = () => {
   const { user } = useAuth()
-  if(!user) return null
+  if (!user) return null
   const router = useRouter()
   const [resultadosDB, setResultadosDB] = useState<Coparte[]>([])
   const [idAEliminar, setIdAEliminar] = useState<number>(0)
@@ -30,7 +34,10 @@ const Financiadores = () => {
   const obtenerTodos = async () => {
     setIsLoading(true)
 
-    const { error, data, mensaje } = await ApiCall.get("/copartes")
+    const { error, data, mensaje } =
+      user.id_rol == 2
+        ? await obtenerCopartesAdmin(user.id, false)
+        : await obtenerCopartes(0, false)
 
     if (error) {
       console.log(data)
@@ -155,31 +162,27 @@ const Financiadores = () => {
                           >
                             <i className="bi bi-eye-fill"></i>
                           </button>
-                          {administrador.id == user.id && (
-                            <>
-                              <button
-                                className="btn btn-dark btn-sm ms-1"
-                                onClick={() =>
-                                  router.push(
-                                    `/copartes/${id}/usuarios/registro`
-                                  )
-                                }
-                                title="registrar usuario"
-                              >
-                                <i className="bi bi-person-plus"></i>
-                              </button>
-                              <button
-                                className="btn btn-dark btn-sm ms-1"
-                                onClick={() =>
-                                  router.push(
-                                    `/copartes/${id}/proyectos/registro`
-                                  )
-                                }
-                                title="registrar proyecto"
-                              >
-                                <i className="bi bi-file-earmark-text"></i>
-                              </button>
-                            </>
+                          <button
+                            className="btn btn-dark btn-sm ms-1"
+                            onClick={() =>
+                              router.push(`/copartes/${id}/usuarios/registro`)
+                            }
+                            title="registrar usuario"
+                          >
+                            <i className="bi bi-person-plus"></i>
+                          </button>
+                          {user.id_rol == 2 && (
+                            <button
+                              className="btn btn-dark btn-sm ms-1"
+                              onClick={() =>
+                                router.push(
+                                  `/copartes/${id}/proyectos/registro`
+                                )
+                              }
+                              title="registrar proyecto"
+                            >
+                              <i className="bi bi-file-earmark-text"></i>
+                            </button>
                           )}
                           {user.id_rol == 1 && (
                             <button

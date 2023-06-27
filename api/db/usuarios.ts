@@ -41,13 +41,18 @@ class UsuarioDB {
     }
   }
 
-  static async obtener(id_rol: number, id_coparte: number, id_usuario: number) {
+  static async obtener(id_rol?: number, id_usuario?: number) {
+    // let query = `SELECT u.id, u.nombre, u.apellido_paterno, u.apellido_materno, u.email, u.telefono, u.password, u.id_rol,
+    //   r.nombre rol,
+    //   cu.b_enlace
+    //   FROM usuarios u
+    //   JOIN roles r ON u.id_rol = r.id
+    //   LEFT JOIN coparte_usuarios cu ON u.id = cu.id_usuario
+    //   WHERE u.b_activo=1`
     let query = `SELECT u.id, u.nombre, u.apellido_paterno, u.apellido_materno, u.email, u.telefono, u.password, u.id_rol,
-      r.nombre rol,
-      cu.b_enlace
+      r.nombre rol
       FROM usuarios u
       JOIN roles r ON u.id_rol = r.id
-      LEFT JOIN coparte_usuarios cu ON u.id = cu.id_usuario
       WHERE u.b_activo=1`
 
     if (id_usuario) {
@@ -58,9 +63,9 @@ class UsuarioDB {
       query += ` AND u.id_rol=${id_rol}`
     }
 
-    if (id_coparte) {
-      query += ` AND cu.id_coparte=${id_coparte}`
-    }
+    // if (id_coparte) {
+    //   query += ` AND cu.id_coparte=${id_coparte}`
+    // }
 
     try {
       const res = await queryDB(query)
@@ -78,7 +83,7 @@ class UsuarioDB {
       email,
       telefono,
       password,
-      rol,
+      id_rol,
     } = data
 
     const query = `INSERT INTO usuarios ( nombre, apellido_paterno, apellido_materno,
@@ -91,7 +96,7 @@ class UsuarioDB {
       email,
       telefono,
       password,
-      rol.id,
+      id_rol,
       fechaActualAEpoch(),
     ]
 

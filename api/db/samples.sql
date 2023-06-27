@@ -67,15 +67,31 @@ INSERT INTO `bancos` (`nombre`) VALUES
 
 CREATE TABLE `rubros_presupuestales` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `nombre` VARCHAR(40) NOT NULL,
+  `nombre` VARCHAR(150) NOT NULL,
   `b_activo` TINYINT UNSIGNED NOT NULL DEFAULT 1,
   PRIMARY KEY (`id`));
 
 INSERT INTO `rubros_presupuestales` (`nombre`) VALUES 
-('VIATICOS'),
-('VIAJES'),
-('GASOLINA'), 
-('SALARIOS');
+('Asimilados a salarios'),
+('Honorarios a personas físicas residentes nacionales'),
+('Arrendamiento a personas físicas residentes nacionales'),
+('Arrendamiento a personas morales'),
+('Combustibles y lubricantes'),
+('Viáticos y gastos de viaje'),
+('Teléfono, internet'),
+('Mobiliario y equipo'),
+('Limpieza, artículos de higiene y medicamentos'),
+('Papelería y artículos de oficina'),
+('Mantenimiento y conservación'),
+('Propaganda y publicidad'),
+('Capacitación y asesoría'),
+('Donativos y ayudas'),
+('Asistencia Técnica'),
+('Gastos no deducibles (sin requisitos fiscales)'),
+('Paquetería y mensajería'),
+('TI (Software, Pagina Web)'),
+('Insumos para proyecto (despensa)'),
+('Materiales para proyecto');
 
 
 --------------------------------------------------------
@@ -241,11 +257,36 @@ CREATE TABLE `coparte_usuarios` (
 
 CREATE TABLE `temas_sociales` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `nombre` VARCHAR(30) NOT NULL,
+  `nombre` TEXT NOT NULL,
   `b_activo` TINYINT UNSIGNED NOT NULL DEFAULT 1,
   PRIMARY KEY (`id`));
 
-INSERT INTO `temas_sociales` (`nombre`) VALUES ('Apoyo a la comunidad'), ('Lucha social');
+INSERT INTO `temas_sociales` (`nombre`) VALUES
+('Cuerpo: i.Interrupción legal, segura y gratuita del embarazo'),
+('Cuerpo: ii.Derechos sexuales y reproductivos'),
+('Cuerpo: iii.El deporte y el arte como estrategias para combatir violencias'),
+('Cuerpo: iv.Violencia de género y feminicidios'),
+('Cuerpo: v.Búsqueda de personas desaparecidas'),
+('Cuerpo: vi.Fundamentalismos'),
+('Cuerpo: vii.Maternidad segura'),
+('Tierra : i.Alternativas comunitarias para responder al cambio climático'),
+('Tierra : ii.Desarrollo sustentable'),
+('Tierra : iii.Derecho de las mujeres a la propiedad de la tierra'),
+('Tierra : iv.Justicia ambiental'),
+('Tierra : v.Defensa del territorio ante proyectos extractivistas (mineras, eólicas, et)'),
+('Trabajo: i.Derechos laborales de trabajadoras de la maquila, empleadas del hogar, trabajadoras sexuales, jornaleras, et'),
+('Trabajo: ii.Trabajo doméstico y de cuidados'),
+('Trabajo: iii.Autonomía económica y cooperativas'),
+('Trabajo: iv.Reinserción social de mujeres privadas de la libertad'),
+('Trabajo: v.Participación de mujeres en sindicatos'),
+('Identidades: i. Participación política de mujeres indígenas y afrodescendientes'),
+('Identidades: ii.Movimientos LBTTTIQ+'),
+('Identidades: iii.Discapacidades'),
+('Identidades: iv.Migración'),
+('Identidades: v.Niñez y educación'),
+('Identidades: vi.Liderazgo y participación política'),
+('Identidades vii.Violencia'),
+('Arte y cultura de los pueblos indígenas');
 
 -----------------------------------------------------------
 

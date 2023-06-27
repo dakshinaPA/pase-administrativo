@@ -27,7 +27,7 @@ class CoparteDB {
     }
   }
 
-  static async obtener(id: number) {
+  static async obtener(id: number, id_admin:number) {
     let query = `
       SELECT c.id, c.id_administrador, c.id_alt, c.nombre, c.i_estatus_legal, c.representante_legal, c.rfc, c.id_tema_social, c.dt_registro,
       cd.id id_coparte_direccion, cd.calle, cd.numero_ext, cd.numero_int, cd.colonia, cd.municipio, cd.cp, cd.id_estado,
@@ -43,6 +43,10 @@ class CoparteDB {
 
     if (id) {
       query += ` AND c.id=${id} LIMIT 1`
+    }
+
+    if (id_admin) {
+      query += ` AND c.id_administrador=${id_admin}`
     }
 
     try {
