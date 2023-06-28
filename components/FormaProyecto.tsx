@@ -25,6 +25,7 @@ import { BtnEditar } from "./Botones"
 import { RubrosPresupuestalesDB } from "@api/models/catalogos.model"
 
 type ActionTypes =
+  | "SET_IDS_DEPENDENCIAS"
   | "CARGA_INICIAL"
   | "HANDLE_CHANGE"
   | "QUITAR_MINISTRACION"
@@ -39,6 +40,12 @@ const reducer = (state: Proyecto, action: ActionDispatch): Proyecto => {
   const { type, payload } = action
 
   switch (type) {
+    case "SET_IDS_DEPENDENCIAS":
+      return {
+        ...state,
+        id_financiador: payload.id_financiador,
+        id_coparte: payload.id_coparte,
+      }
     case "CARGA_INICIAL":
       return payload
     case "HANDLE_CHANGE":
@@ -61,7 +68,7 @@ const reducer = (state: Proyecto, action: ActionDispatch): Proyecto => {
   }
 }
 
-const FormaMinistracion = ({ agregarMinistracion }) => {
+const FormaMinistracion = ({ agregarMinistracion, setShowForma }) => {
   const { rubros_presupuestales } = useCatalogos()
 
   const estaInicialdFormaMinistracion: MinistracionProyecto = {
@@ -81,12 +88,18 @@ const FormaMinistracion = ({ agregarMinistracion }) => {
     estaInicialdFormaMinistracion
   )
   const [formaRubros, setFormaRubros] = useState(estadoInicialdFormaRubros)
-  const [showForma, setShowForma] = useState(false)
   const inputNumero = useRef(null)
   const inputGrupo = useRef(null)
   const inputDtRecepcion = useRef(null)
   const selectRubro = useRef(null)
   const inputMontoRubro = useRef(null)
+  const formMinistracion = useRef(null)
+
+  useEffect(() => {
+    formMinistracion.current.scrollIntoView({
+      behavior: "smooth",
+    })
+  }, [])
 
   useEffect(() => {
     const montoMinistracionAagregar =
@@ -158,6 +171,17 @@ const FormaMinistracion = ({ agregarMinistracion }) => {
     setFormaRubros(estadoInicialdFormaRubros)
   }
 
+  const quitarRubro = (id_rubro: number) => {
+    const listaFiltrada = formaMinistracion.rubros_presupuestales.filter(
+      (rubro) => rubro.id_rubro != id_rubro
+    )
+
+    setFormaMinistracion((prevstate) => ({
+      ...prevstate,
+      rubros_presupuestales: listaFiltrada,
+    }))
+  }
+
   const cerrarForma = () => {
     setFormaMinistracion(estaInicialdFormaMinistracion)
     setFormaRubros(estadoInicialdFormaRubros)
@@ -205,161 +229,145 @@ const FormaMinistracion = ({ agregarMinistracion }) => {
   }
 
   return (
-    <div className="col-12">
-      {!showForma ? (
-        <div className="row">
-          <div className="col-12 mb-3">
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => setShowForma(true)}
-            >
-              Nueva ministración +
-            </button>
+    <div className="col-12" ref={formMinistracion}>
+      <div className="row">
+        <div className="col-12 col-md-6 col-lg-3">
+          <div className="mb-3">
+            <label className="form-label">Número</label>
+            <input
+              className="form-control"
+              type="text"
+              onChange={handleChangeMinistracion}
+              name="i_numero"
+              value={formaMinistracion.i_numero}
+              ref={inputNumero}
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Monto</label>
+            <input
+              className="form-control"
+              type="text"
+              onChange={handleChangeMinistracion}
+              name="f_monto"
+              value={formaMinistracion.f_monto}
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Grupo</label>
+            <input
+              className="form-control"
+              type="text"
+              onChange={handleChangeMinistracion}
+              name="i_grupo"
+              value={formaMinistracion.i_grupo}
+              ref={inputGrupo}
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Fecha de rececpión</label>
+            <input
+              className="form-control"
+              type="date"
+              onChange={handleChangeMinistracion}
+              name="dt_recepcion"
+              value={formaMinistracion.dt_recepcion}
+              ref={inputDtRecepcion}
+            />
           </div>
         </div>
-      ) : (
-        <div className="row">
-          <div className="col-12 col-md-6 col-lg-3">
-            <div className="mb-3">
-              <label className="form-label">Número</label>
-              <input
-                className="form-control"
-                type="text"
-                onChange={handleChangeMinistracion}
-                name="i_numero"
-                value={formaMinistracion.i_numero}
-                ref={inputNumero}
-              />
-            </div>
-            <div className="mb-3">
-              <label className="form-label">Monto</label>
-              <input
-                className="form-control"
-                type="text"
-                onChange={handleChangeMinistracion}
-                name="f_monto"
-                value={formaMinistracion.f_monto}
-              />
-            </div>
-            <div className="mb-3">
-              <label className="form-label">Grupo</label>
-              <input
-                className="form-control"
-                type="text"
-                onChange={handleChangeMinistracion}
-                name="i_grupo"
-                value={formaMinistracion.i_grupo}
-                ref={inputGrupo}
-              />
-            </div>
-            <div className="mb-3">
-              <label className="form-label">Fecha de rececpión</label>
-              <input
-                className="form-control"
-                type="date"
-                onChange={handleChangeMinistracion}
-                name="dt_recepcion"
-                value={formaMinistracion.dt_recepcion}
-                ref={inputDtRecepcion}
-              />
-            </div>
-          </div>
-          <div className="col-12 col-md-6 col-lg mb-3">
-            <label className="form-label">Rubros seleccionados</label>
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Rubro</th>
-                  <th>Monto</th>
-                </tr>
-              </thead>
-              <tbody>
-                {formaMinistracion.rubros_presupuestales.map(
-                  ({ id_rubro, nombre, f_monto }) => (
-                    <tr key={id_rubro}>
-                      <td>{nombre}</td>
-                      <td>{f_monto}</td>
-                    </tr>
-                  )
-                )}
-              </tbody>
-              <tbody></tbody>
-            </table>
-          </div>
-          <div className="col-12 col-lg-3 mb-3">
-            <div className="mb-3">
-              <label className="form-label">Rubro</label>
-              <select
-                className="form-control"
-                name="id_rubro"
-                value={formaRubros.id_rubro}
-                onChange={handleChangeRubro}
-                ref={selectRubro}
-              >
-                <option value="0" disabled>
-                  Selecciona rubro
+        <div className="col-12 col-md-6 col-lg mb-3">
+          <label className="form-label">Rubros seleccionados</label>
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Rubro</th>
+                <th>Monto</th>
+                <th>
+                  <i className="bi bi-trash"></i>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {formaMinistracion.rubros_presupuestales.map(
+                ({ id_rubro, nombre, f_monto }) => (
+                  <tr key={id_rubro}>
+                    <td>{nombre}</td>
+                    <td>{f_monto}</td>
+                    <td>
+                      <button
+                        type="button"
+                        className="btn btn-dark btn-sm"
+                        onClick={() => quitarRubro(id_rubro)}
+                      >
+                        <i className="bi bi-x-circle"></i>
+                      </button>
+                    </td>
+                  </tr>
+                )
+              )}
+            </tbody>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div className="col-12 col-lg-3 mb-3">
+          <div className="mb-3">
+            <label className="form-label">Rubro</label>
+            <select
+              className="form-control"
+              name="id_rubro"
+              value={formaRubros.id_rubro}
+              onChange={handleChangeRubro}
+              ref={selectRubro}
+            >
+              <option value="0" disabled>
+                Selecciona rubro
+              </option>
+              {rubrosNoSeleccionados().map(({ id, nombre }) => (
+                <option key={id} value={id}>
+                  {nombre}
                 </option>
-                {rubrosNoSeleccionados().map(({ id, nombre }) => (
-                  <option key={id} value={id}>
-                    {nombre}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="mb-3">
-              <label className="form-label">Monto</label>
-              <input
-                className="form-control"
-                type="text"
-                name="f_monto"
-                value={formaRubros.f_monto}
-                onChange={handleChangeRubro}
-                ref={inputMontoRubro}
-              />
-            </div>
-            <div>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm w-100"
-                onClick={agregarRubro}
-              >
-                Agregar rubro +
-              </button>
-            </div>
+              ))}
+            </select>
           </div>
-          <div className="col-12 mb-3">
+          <div className="mb-3">
+            <label className="form-label">Monto</label>
+            <input
+              className="form-control"
+              type="text"
+              name="f_monto"
+              value={formaRubros.f_monto}
+              onChange={handleChangeRubro}
+              ref={inputMontoRubro}
+            />
+          </div>
+          <div>
             <button
               type="button"
-              className="btn btn-secondary"
-              onClick={cerrarForma}
+              className="btn btn-secondary btn-sm w-100"
+              onClick={agregarRubro}
             >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              className="btn btn-secondary ms-2"
-              onClick={handleAgregar}
-            >
-              Agregar ministración +
+              Agregar rubro +
             </button>
           </div>
         </div>
-      )}
-
-      {/* <div className="text-end">
-        <button
-          className="btn btn-secondary"
-          type="button"
-          onClick={agregarMinistracion}
-          disabled={
-            estadoForma.i_tipo_financiamiento <= 2 &&
-            estadoForma.ministraciones.length > 0
-          }
-        >
-          Agregar +
-        </button>
-      </div> */}
+        <div className="col-12 mb-3 d-flex justify-content-between">
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={cerrarForma}
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary ms-2"
+            onClick={handleAgregar}
+          >
+            Agregar ministración +
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
@@ -407,7 +415,7 @@ const TablaMinistraciones = ({
                 <td>{i_grupo}</td>
                 <td>{inputDateAformato(dt_recepcion)}</td>
                 <td>
-                  <table>
+                  <table className="table table-bordered mb-0">
                     <tbody>
                       {rubros_presupuestales.map(
                         ({ id_rubro, nombre, f_monto }) => {
@@ -710,6 +718,7 @@ const FormaProyecto = () => {
   const [usuariosCoparteDB, setUsuariosCoparteDB] = useState<
     CoparteUsuarioMin[]
   >([])
+  const [showFormaMinistracion, setShowFormaMinistracion] = useState(false)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [modoEditar, setModoEditar] = useState<boolean>(!idProyecto)
   const modalidad = idProyecto ? "EDITAR" : "CREAR"
@@ -748,6 +757,23 @@ const FormaProyecto = () => {
     // }
   }, [estadoForma.i_tipo_financiamiento])
 
+  useEffect(() => {
+    if (modalidad === "CREAR") {
+      const montoTotalProyecto = estadoForma.ministraciones.reduce(
+        (acum, ministracion) => acum + Number(ministracion.f_monto),
+        0
+      )
+
+      dispatch({
+        type: "HANDLE_CHANGE",
+        payload: {
+          name: "f_monto_total",
+          value: montoTotalProyecto,
+        },
+      })
+    }
+  }, [estadoForma.ministraciones])
+
   const cargarData = async () => {
     setIsLoading(true)
 
@@ -782,10 +808,10 @@ const FormaProyecto = () => {
         })
       } else {
         dispatch({
-          type: "HANDLE_CHANGE",
+          type: "SET_IDS_DEPENDENCIAS",
           payload: {
-            name: "id_coparte",
-            value: copartesAdminDB[0].id,
+            id_coparte: copartesAdminDB[0]?.id ?? 0,
+            id_financiador: financiaodresDB[0]?.id ?? 0,
           },
         })
       }
@@ -862,6 +888,10 @@ const FormaProyecto = () => {
     })
   }
 
+  const mostrarFormaMinistracion = () => {
+    setShowFormaMinistracion(true)
+  }
+
   const handleSubmit = async (ev: React.SyntheticEvent) => {
     ev.preventDefault()
 
@@ -886,11 +916,6 @@ const FormaProyecto = () => {
       }
     }
   }
-
-  const montoTotalProyecto = estadoForma.ministraciones.reduce(
-    (acum, el) => acum + Number(el.f_monto),
-    0
-  )
 
   if (isLoading) {
     return <Loader />
@@ -1033,15 +1058,31 @@ const FormaProyecto = () => {
           <hr />
         </div>
         {/* Seccion Ministraciones */}
-        <div className="col-12 mb-3">
+        <div className="col-12 mb-3 d-flex justify-content-between">
           <h4 className="color1 mb-0">Ministraciones</h4>
+          {(estadoForma.i_tipo_financiamiento >= 3 ||
+            (estadoForma.i_tipo_financiamiento <= 2 &&
+              !(estadoForma.ministraciones.length > 0))) && (
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={mostrarFormaMinistracion}
+            >
+              Nueva ministración +
+            </button>
+          )}
         </div>
         <TablaMinistraciones
           modoEditar={modoEditar}
           ministraciones={estadoForma.ministraciones}
           quitar={quitarMinistracion}
         />
-        <FormaMinistracion agregarMinistracion={agregarMinistracion} />
+        {showFormaMinistracion && (
+          <FormaMinistracion
+            agregarMinistracion={agregarMinistracion}
+            setShowForma={setShowFormaMinistracion}
+          />
+        )}
         {modoEditar && (
           <div className="col-12 text-end">
             <button
