@@ -330,14 +330,14 @@ CREATE TABLE `proyectos` (
     PRIMARY KEY (`id`),
     INDEX (`id_proyecto`));
 
-  CREATE TABLE `proyecto_rubros_presupuestales` (
+  CREATE TABLE `ministracion_rubros_presupuestales` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    `id_proyecto` INT UNSIGNED NOT NULL,
+    `id_ministracion` INT UNSIGNED NOT NULL,
     `id_rubro` INT UNSIGNED NOT NULL,
     `f_monto` VARCHAR(20) NOT NULL,
     `b_activo` TINYINT UNSIGNED NOT NULL DEFAULT 1,
     PRIMARY KEY (`id`),
-    INDEX (`id_proyecto`),
+    INDEX (`id_ministracion`),
     INDEX (`id_rubro`));
 
 -----------------------------------------------------------

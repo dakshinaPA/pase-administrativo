@@ -52,9 +52,9 @@ export interface ProveedorProyecto {
   direccion: Direccion
 }
 
-export interface RubroProyecto {
+export interface RubroMinistracion {
   id?: number
-  id_proyecto?: number
+  id_ministracion?: number
   id_rubro: number
   nombre?: string
   f_monto: string
@@ -67,34 +67,29 @@ export interface MinistracionProyecto {
   f_monto: string
   i_grupo: string
   dt_recepcion: string
+  rubros_presupuestales: RubroMinistracion[]
   dt_registro?: string
 }
 
 export interface ProyectoMin {
   id?: number
   id_alt: string
-  rubros?: RubroProyecto[]
 }
 
 export interface Proyecto extends ProyectoMin {
+  id_financiador: number
+  financiador?: string
   id_coparte: number
-  f_monto_total: string
-  i_tipo_financiamiento: number
-  tipo_financiamiento?: string
+  coparte?: string
+  id_responsable: number
+  responsable?: string
   id_tema_social: number
   tema_social?: number
+  i_tipo_financiamiento: number
+  tipo_financiamiento?: string
+  f_monto_total: string
   i_beneficiados: number
   dt_registro?: string
-  dt_registro_epoch?: string
-  financiador: {
-    id: number
-    nombre?: string
-  }
-  responsable: {
-    id: number
-    nombre?: string
-  }
-  rubros: RubroProyecto[]
   ministraciones: MinistracionProyecto[]
   colaboradores?: ColaboradorProyecto[]
   proveedores?: ProveedorProyecto[]

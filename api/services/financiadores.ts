@@ -21,7 +21,7 @@ class FinanciadoresServices {
       return RespuestaController.fallida(
         400,
         "Error al obtener financiadores",
-        obtener.error
+        obtener.data
       )
     }
 

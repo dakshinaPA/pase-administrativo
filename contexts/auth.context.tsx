@@ -25,10 +25,12 @@ const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     login({
-      email: "omar.maldo.vi@gmail.com",
-      password: "123",
+      // email: "omar.maldo.vi@gmail.com",
+      // password: "123",
       // email: 'ximepra@gmail.com',
       // password: '123'
+      email: 'iflores@dakshina.org.mx',
+      password: '123'
     })
   }, [])
 
