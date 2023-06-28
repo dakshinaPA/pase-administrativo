@@ -61,11 +61,630 @@ const reducer = (state: Proyecto, action: ActionDispatch): Proyecto => {
   }
 }
 
+const FormaMinistracion = ({ agregarMinistracion }) => {
+  const { rubros_presupuestales } = useCatalogos()
+
+  const estaInicialdFormaMinistracion: MinistracionProyecto = {
+    i_numero: 0,
+    f_monto: "0",
+    i_grupo: "0",
+    dt_recepcion: "",
+    rubros_presupuestales: [],
+  }
+
+  const estadoInicialdFormaRubros: RubroMinistracion = {
+    id_rubro: 0,
+    f_monto: "",
+  }
+
+  const [formaMinistracion, setFormaMinistracion] = useState(
+    estaInicialdFormaMinistracion
+  )
+  const [formaRubros, setFormaRubros] = useState(estadoInicialdFormaRubros)
+  const [showForma, setShowForma] = useState(false)
+  const inputNumero = useRef(null)
+  const inputGrupo = useRef(null)
+  const inputDtRecepcion = useRef(null)
+  const selectRubro = useRef(null)
+  const inputMontoRubro = useRef(null)
+
+  useEffect(() => {
+    const montoMinistracionAagregar =
+      formaMinistracion.rubros_presupuestales.reduce(
+        (acum, rubro) => acum + Number(rubro.f_monto),
+        0
+      )
+
+    setFormaMinistracion((prevState) => ({
+      ...prevState,
+      f_monto: String(montoMinistracionAagregar),
+    }))
+  }, [formaMinistracion.rubros_presupuestales])
+
+  const handleChangeMinistracion = (ev: ChangeEvent) => {
+    const { name, value } = ev.target
+
+    setFormaMinistracion({
+      ...formaMinistracion,
+      [name]: value,
+    })
+  }
+
+  const handleChangeRubro = (ev: ChangeEvent) => {
+    const { name, value } = ev.target
+
+    setFormaRubros((prevState) => {
+      return {
+        ...prevState,
+        [name]: value,
+      }
+    })
+  }
+
+  const agregarRubro = () => {
+    if (formaRubros.id_rubro == 0) {
+      selectRubro.current.focus()
+      return
+    }
+
+    if (!Number(formaRubros.f_monto)) {
+      inputMontoRubro.current.focus()
+      return
+    }
+
+    const rubroMatch = rubros_presupuestales.find(
+      (rp) => rp.id == formaRubros.id_rubro
+    )
+
+    if (!rubroMatch) return
+
+    const rubroAagregar: RubroMinistracion = {
+      id_rubro: formaRubros.id_rubro,
+      nombre: rubroMatch.nombre,
+      f_monto: formaRubros.f_monto,
+    }
+
+    setFormaMinistracion((prevState) => {
+      return {
+        ...prevState,
+        rubros_presupuestales: [
+          ...prevState.rubros_presupuestales,
+          rubroAagregar,
+        ],
+      }
+    })
+
+    //limpiar forma
+    setFormaRubros(estadoInicialdFormaRubros)
+  }
+
+  const cerrarForma = () => {
+    setFormaMinistracion(estaInicialdFormaMinistracion)
+    setFormaRubros(estadoInicialdFormaRubros)
+    setShowForma(false)
+  }
+
+  const handleAgregar = () => {
+    if (!Number(formaMinistracion.i_numero)) {
+      inputNumero.current.focus()
+      return
+    }
+
+    if (!Number(formaMinistracion.i_grupo)) {
+      inputGrupo.current.focus()
+      return
+    }
+
+    if (!formaMinistracion.dt_recepcion) {
+      inputDtRecepcion.current.focus()
+      return
+    }
+
+    if (!formaMinistracion.rubros_presupuestales.length) {
+      selectRubro.current.focus()
+      return
+    }
+
+    agregarMinistracion(formaMinistracion)
+    cerrarForma()
+  }
+
+  const rubrosNoSeleccionados = () => {
+    const rubros: RubrosPresupuestalesDB[] = []
+    const idsRubrosForma = formaMinistracion.rubros_presupuestales.map(
+      ({ id_rubro }) => Number(id_rubro)
+    )
+
+    for (const rp of rubros_presupuestales) {
+      if (!idsRubrosForma.includes(rp.id)) {
+        rubros.push(rp)
+      }
+    }
+
+    return rubros
+  }
+
+  return (
+    <div className="col-12">
+      {!showForma ? (
+        <div className="row">
+          <div className="col-12 mb-3">
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => setShowForma(true)}
+            >
+              Nueva ministración +
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="row">
+          <div className="col-12 col-md-6 col-lg-3">
+            <div className="mb-3">
+              <label className="form-label">Número</label>
+              <input
+                className="form-control"
+                type="text"
+                onChange={handleChangeMinistracion}
+                name="i_numero"
+                value={formaMinistracion.i_numero}
+                ref={inputNumero}
+              />
+            </div>
+            <div className="mb-3">
+              <label className="form-label">Monto</label>
+              <input
+                className="form-control"
+                type="text"
+                onChange={handleChangeMinistracion}
+                name="f_monto"
+                value={formaMinistracion.f_monto}
+              />
+            </div>
+            <div className="mb-3">
+              <label className="form-label">Grupo</label>
+              <input
+                className="form-control"
+                type="text"
+                onChange={handleChangeMinistracion}
+                name="i_grupo"
+                value={formaMinistracion.i_grupo}
+                ref={inputGrupo}
+              />
+            </div>
+            <div className="mb-3">
+              <label className="form-label">Fecha de rececpión</label>
+              <input
+                className="form-control"
+                type="date"
+                onChange={handleChangeMinistracion}
+                name="dt_recepcion"
+                value={formaMinistracion.dt_recepcion}
+                ref={inputDtRecepcion}
+              />
+            </div>
+          </div>
+          <div className="col-12 col-md-6 col-lg mb-3">
+            <label className="form-label">Rubros seleccionados</label>
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Rubro</th>
+                  <th>Monto</th>
+                </tr>
+              </thead>
+              <tbody>
+                {formaMinistracion.rubros_presupuestales.map(
+                  ({ id_rubro, nombre, f_monto }) => (
+                    <tr key={id_rubro}>
+                      <td>{nombre}</td>
+                      <td>{f_monto}</td>
+                    </tr>
+                  )
+                )}
+              </tbody>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div className="col-12 col-lg-3 mb-3">
+            <div className="mb-3">
+              <label className="form-label">Rubro</label>
+              <select
+                className="form-control"
+                name="id_rubro"
+                value={formaRubros.id_rubro}
+                onChange={handleChangeRubro}
+                ref={selectRubro}
+              >
+                <option value="0" disabled>
+                  Selecciona rubro
+                </option>
+                {rubrosNoSeleccionados().map(({ id, nombre }) => (
+                  <option key={id} value={id}>
+                    {nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="mb-3">
+              <label className="form-label">Monto</label>
+              <input
+                className="form-control"
+                type="text"
+                name="f_monto"
+                value={formaRubros.f_monto}
+                onChange={handleChangeRubro}
+                ref={inputMontoRubro}
+              />
+            </div>
+            <div>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm w-100"
+                onClick={agregarRubro}
+              >
+                Agregar rubro +
+              </button>
+            </div>
+          </div>
+          <div className="col-12 mb-3">
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={cerrarForma}
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary ms-2"
+              onClick={handleAgregar}
+            >
+              Agregar ministración +
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* <div className="text-end">
+        <button
+          className="btn btn-secondary"
+          type="button"
+          onClick={agregarMinistracion}
+          disabled={
+            estadoForma.i_tipo_financiamiento <= 2 &&
+            estadoForma.ministraciones.length > 0
+          }
+        >
+          Agregar +
+        </button>
+      </div> */}
+    </div>
+  )
+}
+
+interface PropsTablaMinistraciones {
+  modoEditar: boolean
+  ministraciones: MinistracionProyecto[]
+  quitar: (i_numero: number) => void
+}
+
+const TablaMinistraciones = ({
+  modoEditar,
+  ministraciones,
+  quitar,
+}: PropsTablaMinistraciones) => {
+  return (
+    <div className="col-12 col-md table-responsive mb-3">
+      <table className="table">
+        <thead className="table-light">
+          <tr>
+            <th>Número</th>
+            <th>Grupo</th>
+            <th>Fecha de recepción</th>
+            <th>Rubros</th>
+            <th>Monto</th>
+            {modoEditar && (
+              <th>
+                <i className="bi bi-trash"></i>
+              </th>
+            )}
+          </tr>
+        </thead>
+        <tbody>
+          {ministraciones.map(
+            ({
+              id,
+              i_numero,
+              f_monto,
+              i_grupo,
+              dt_recepcion,
+              rubros_presupuestales,
+            }) => (
+              <tr key={i_numero}>
+                <td>{i_numero}</td>
+                <td>{i_grupo}</td>
+                <td>{inputDateAformato(dt_recepcion)}</td>
+                <td>
+                  <table>
+                    <tbody>
+                      {rubros_presupuestales.map(
+                        ({ id_rubro, nombre, f_monto }) => {
+                          const nombre_corto = `${nombre.substring(0, 20)}...`
+
+                          return (
+                            <tr key={id_rubro}>
+                              <td>{nombre_corto}</td>
+                              <td>{f_monto}</td>
+                            </tr>
+                          )
+                        }
+                      )}
+                    </tbody>
+                  </table>
+                </td>
+                <td>{f_monto}</td>
+                {modoEditar && (
+                  <td>
+                    {!id && (
+                      <button
+                        type="button"
+                        className="btn btn-dark btn-sm"
+                        onClick={() => quitar(i_numero)}
+                      >
+                        <i className="bi bi-x-circle"></i>
+                      </button>
+                    )}
+                  </td>
+                )}
+              </tr>
+            )
+          )}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+const Colaboradores = ({ colaboradores }) => {
+  const { user } = useAuth()
+  const router = useRouter()
+  const idProyecto = Number(router.query.idP)
+
+  return (
+    <div className="row mb-5">
+      <div className="col-12 mb-3 d-flex justify-content-between">
+        <h3 className="color1 mb-0">Colaboradores</h3>
+        {user.id_rol == 3 && (
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() =>
+              router.push(`/proyectos/${idProyecto}/colaboradores/registro`)
+            }
+          >
+            Registrar +
+          </button>
+        )}
+      </div>
+      <div className="col-12 table-responsive">
+        <table className="table">
+          <thead className="table-light">
+            <tr>
+              <th>Nombre</th>
+              <th>Tipo</th>
+              <th>Servicio</th>
+              <th>Teléfono</th>
+              <th>RFC</th>
+              <th>CLABE</th>
+              <th>Banco</th>
+              <th>Monto total</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {colaboradores.map(
+              ({
+                id,
+                nombre,
+                apellido_paterno,
+                tipo,
+                nombre_servicio,
+                telefono,
+                rfc,
+                clabe,
+                banco,
+                f_monto_total,
+              }) => (
+                <tr key={id}>
+                  <td>
+                    {nombre} {apellido_paterno}
+                  </td>
+                  <td>{tipo}</td>
+                  <td>{nombre_servicio}</td>
+                  <td>{telefono}</td>
+                  <td>{rfc}</td>
+                  <td>{clabe}</td>
+                  <td>{banco}</td>
+                  <td>{f_monto_total}</td>
+                  <td>
+                    <button
+                      className="btn btn-dark btn-sm"
+                      onClick={() =>
+                        router.push(
+                          `/proyectos/${idProyecto}/colaboradores/${id}`
+                        )
+                      }
+                    >
+                      <i className="bi bi-eye-fill"></i>
+                    </button>
+                  </td>
+                </tr>
+              )
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+const Proveedores = ({ proveedores }) => {
+  const { user } = useAuth()
+  const router = useRouter()
+  const idProyecto = Number(router.query.idP)
+
+  return (
+    <div className="row mb-5">
+      <div className="col-12 mb-3 d-flex justify-content-between">
+        <h3 className="color1 mb-0">Proveedores</h3>
+        {user.id_rol == 3 && (
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() =>
+              router.push(`/proyectos/${idProyecto}/proveedores/registro`)
+            }
+          >
+            Registrar +
+          </button>
+        )}
+      </div>
+      <div className="col-12 table-responsive">
+        <table className="table">
+          <thead className="table-light">
+            <tr>
+              <th>Nombre</th>
+              <th>Tipo</th>
+              <th>Servicio</th>
+              <th>Teléfono</th>
+              <th>RFC</th>
+              <th>CLABE</th>
+              <th>Banco</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {proveedores.map(
+              ({
+                id,
+                nombre,
+                tipo,
+                descripcion_servicio,
+                telefono,
+                rfc,
+                clabe,
+                banco,
+              }) => (
+                <tr key={id}>
+                  <td>{nombre}</td>
+                  <td>{tipo}</td>
+                  <td>{descripcion_servicio}</td>
+                  <td>{telefono}</td>
+                  <td>{rfc}</td>
+                  <td>{clabe}</td>
+                  <td>{banco}</td>
+                  <td>
+                    <button
+                      className="btn btn-dark btn-sm"
+                      onClick={() =>
+                        router.push(
+                          `/proyectos/${idProyecto}/proveedores/${id}`
+                        )
+                      }
+                    >
+                      <i className="bi bi-eye-fill"></i>
+                    </button>
+                  </td>
+                </tr>
+              )
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+const SolicitudesPresupuesto = ({ solicitudes }) => {
+  const { user } = useAuth()
+  const router = useRouter()
+  const idProyecto = Number(router.query.idP)
+
+  return (
+    <div className="row mb-3">
+      <div className="col-12 mb-3 d-flex justify-content-between">
+        <h3 className="color1 mb-0">Solicitudes de presupuesto</h3>
+        {user.id_rol == 3 && (
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() =>
+              router.push(
+                `/proyectos/${idProyecto}/solicitudes-presupuesto/registro`
+              )
+            }
+          >
+            Registrar +
+          </button>
+        )}
+      </div>
+      <div className="col-12 table-responsive">
+        <table className="table">
+          <thead className="table-light">
+            <tr>
+              <th>Descripción gasto</th>
+              <th>Tipo</th>
+              <th>Rubro</th>
+              <th>Proveedor</th>
+              <th>Importe</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {solicitudes.map(
+              ({
+                id,
+                descripcion_gasto,
+                tipo_gasto,
+                rubro,
+                proveedor,
+                f_importe,
+              }) => (
+                <tr key={id}>
+                  <td>{descripcion_gasto}</td>
+                  <td>{tipo_gasto}</td>
+                  <td>{rubro}</td>
+                  <td>{proveedor}</td>
+                  <td>{f_importe}</td>
+                  <td>
+                    <button
+                      className="btn btn-dark btn-sm"
+                      onClick={() =>
+                        router.push(
+                          `/proyectos/${idProyecto}/solicitudes-presupuesto/${id}`
+                        )
+                      }
+                    >
+                      <i className="bi bi-eye-fill"></i>
+                    </button>
+                  </td>
+                </tr>
+              )
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
 const FormaProyecto = () => {
   const { user } = useAuth()
   if (!user) return null
 
-  const { rubros_presupuestales, temas_sociales } = useCatalogos()
+  const { temas_sociales } = useCatalogos()
   const router = useRouter()
   const idCoparte = Number(router.query.idC)
   const idProyecto = Number(router.query.idP)
@@ -85,24 +704,7 @@ const FormaProyecto = () => {
     solicitudes_presupuesto: [],
   }
 
-  const estaInicialdFormaMinistracion: MinistracionProyecto = {
-    i_numero: 0,
-    f_monto: "0",
-    i_grupo: "0",
-    dt_recepcion: "",
-    rubros_presupuestales: [],
-  }
-
-  const estadoInicialdFormaRubros: RubroMinistracion = {
-    id_rubro: 0,
-    f_monto: "",
-  }
-
   const [estadoForma, dispatch] = useReducer(reducer, estadoInicialForma)
-  const [formaMinistracion, setFormaMinistracion] = useState(
-    estaInicialdFormaMinistracion
-  )
-  const [formaRubros, setFormaRubros] = useState(estadoInicialdFormaRubros)
   const [financiadoresDB, setFinanciadoresDB] = useState<FinanciadorMin[]>([])
   const [copartesDB, setCopartesDB] = useState<CoparteMin[]>([])
   const [usuariosCoparteDB, setUsuariosCoparteDB] = useState<
@@ -111,9 +713,6 @@ const FormaProyecto = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [modoEditar, setModoEditar] = useState<boolean>(!idProyecto)
   const modalidad = idProyecto ? "EDITAR" : "CREAR"
-  
-  const selectRubro = useRef(null)
-  const inputMontoRubro = useRef(null)
 
   useEffect(() => {
     cargarData()
@@ -122,26 +721,6 @@ const FormaProyecto = () => {
   useEffect(() => {
     cargarUsuariosCoparte()
   }, [estadoForma.id_coparte])
-
-  useEffect(() => {
-    const montoMinistracionAagregar =
-      formaMinistracion.rubros_presupuestales.reduce(
-        (acum, rubro) => acum + Number(rubro.f_monto),
-        0
-      )
-
-    setFormaMinistracion((prevState) => ({
-      ...prevState,
-      f_monto: String(montoMinistracionAagregar),
-    }))
-  }, [formaMinistracion.rubros_presupuestales])
-
-  // useEffect(() => {
-  //   setFormaMinistracion({
-  //     ...estaInicialdFormaMinistracion,
-  //     i_numero: estadoForma.ministraciones.length + 1,
-  //   })
-  // }, [estadoForma.ministraciones.length])
 
   useEffect(() => {
     // switch (Number(estadoForma.i_tipo_financiamiento)) {
@@ -265,88 +844,11 @@ const FormaProyecto = () => {
     })
   }
 
-  const handleChangeRubro = (ev: ChangeEvent) => {
-    const { name, value } = ev.target
-
-    setFormaRubros((prevState) => {
-      return {
-        ...prevState,
-        [name]: value,
-      }
+  const agregarMinistracion = (ministracion: MinistracionProyecto) => {
+    dispatch({
+      type: "AGREGAR_MINISTRACION",
+      payload: ministracion,
     })
-  }
-
-  const agregarRubro = () => {
-
-    if(formaRubros.id_rubro == 0){
-      selectRubro.current.focus()
-      return
-    }
-
-    if(!formaRubros.f_monto){
-      inputMontoRubro.current.focus()
-      return
-    }
-
-    const rubroMatch = rubros_presupuestales.find(
-      (rp) => rp.id == formaRubros.id_rubro
-    )
-
-    if (!rubroMatch) return
-
-    const rubroAagregar: RubroMinistracion = {
-      id_rubro: formaRubros.id_rubro,
-      nombre: rubroMatch.nombre,
-      f_monto: formaRubros.f_monto,
-    }
-
-    setFormaMinistracion((prevState) => {
-      return {
-        ...prevState,
-        rubros_presupuestales: [
-          ...prevState.rubros_presupuestales,
-          rubroAagregar,
-        ],
-      }
-    })
-
-    //limpiar forma
-    setFormaRubros(estadoInicialdFormaRubros)
-  }
-
-  const quitarRubro = (id_rubro: number) => {
-    // const nuevaLista = estadoForma.rubros.filter(
-    //   (rubro) => rubro.id_rubro != id_rubro
-    // )
-    // setEstadoForma({
-    //   ...estadoForma,
-    //   rubros: nuevaLista,
-    // })
-  }
-
-  const handleChangeMinistracion = (ev: ChangeEvent) => {
-    const { name, value } = ev.target
-
-    setFormaMinistracion({
-      ...formaMinistracion,
-      [name]: value,
-    })
-  }
-
-  const agregarMinistracion = () => {
-    // setEstadoForma({
-    //   ...estadoForma,
-    //   ministraciones: [
-    //     ...estadoForma.ministraciones,
-    //     {
-    //       ...formaMinistracion,
-    //       f_monto:
-    //         estadoForma.i_tipo_financiamiento <= 2
-    //           ? estadoForma.f_monto_total
-    //           : formaMinistracion.f_monto,
-    //     },
-    //   ],
-    // })
   }
 
   const quitarMinistracion = (i_numero: number) => {
@@ -383,21 +885,6 @@ const FormaProyecto = () => {
         setModoEditar(false)
       }
     }
-  }
-
-  const rubrosNoSeleccionados = () => {
-    const rubros: RubrosPresupuestalesDB[] = []
-    const idsRubrosForma = formaMinistracion.rubros_presupuestales.map(({ id_rubro }) =>
-      Number(id_rubro)
-    )
-
-    for (const rp of rubros_presupuestales) {
-      if (!idsRubrosForma.includes(rp.id)) {
-        rubros.push(rp)
-      }
-    }
-
-    return rubros
   }
 
   const montoTotalProyecto = estadoForma.ministraciones.reduce(
@@ -549,175 +1036,12 @@ const FormaProyecto = () => {
         <div className="col-12 mb-3">
           <h4 className="color1 mb-0">Ministraciones</h4>
         </div>
-        {modoEditar && (
-          <div className="col-12">
-            <div className="row">
-              <div className="col-12 col-md-6 col-lg-3">
-                <div className="mb-3">
-                  <label className="form-label">Número</label>
-                  <input
-                    className="form-control"
-                    type="text"
-                    onChange={handleChangeMinistracion}
-                    name="i_numero"
-                    value={formaMinistracion.i_numero}
-                  />
-                </div>
-                <div className="mb-3">
-                  <label className="form-label">Monto</label>
-                  <input
-                    className="form-control"
-                    type="text"
-                    onChange={handleChangeMinistracion}
-                    name="f_monto"
-                    value={formaMinistracion.f_monto}
-                  />
-                </div>
-                <div className="mb-3">
-                  <label className="form-label">Grupo</label>
-                  <input
-                    className="form-control"
-                    type="text"
-                    onChange={handleChangeMinistracion}
-                    name="i_grupo"
-                    value={formaMinistracion.i_grupo}
-                  />
-                </div>
-                <div className="mb-3">
-                  <label className="form-label">Fecha de rececpión</label>
-                  <input
-                    className="form-control"
-                    type="date"
-                    onChange={handleChangeMinistracion}
-                    name="dt_recepcion"
-                    value={formaMinistracion.dt_recepcion}
-                  />
-                </div>
-              </div>
-              <div className="col-12 col-md-6 col-lg mb-3">
-                <label className="form-label">Rubros seleccionados</label>
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>Rubro</th>
-                      <th>Monto</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {formaMinistracion.rubros_presupuestales.map(
-                      ({ id_rubro, nombre, f_monto }) => (
-                        <tr key={id_rubro}>
-                          <td>{nombre}</td>
-                          <td>{f_monto}</td>
-                        </tr>
-                      )
-                    )}
-                  </tbody>
-                  <tbody></tbody>
-                </table>
-              </div>
-              <div className="col-12 col-lg-3 mb-3">
-                <div className="mb-3">
-                  <label className="form-label">Rubro</label>
-                  <select
-                    className="form-control"
-                    name="id_rubro"
-                    value={formaRubros.id_rubro}
-                    onChange={handleChangeRubro}
-                    ref={selectRubro}
-                  >
-                    <option value="0" disabled>Selecciona rubro</option>
-                    {rubrosNoSeleccionados().map(({ id, nombre }) => (
-                      <option key={id} value={id}>
-                        {nombre}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="mb-3">
-                  <label className="form-label">Monto</label>
-                  <input
-                    className="form-control"
-                    type="text"
-                    name="f_monto"
-                    value={formaRubros.f_monto}
-                    onChange={handleChangeRubro}
-                    ref={inputMontoRubro}
-                  />
-                </div>
-                <div className="text-center">
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={agregarRubro}
-                  >
-                    Agregar rubro +
-                  </button>
-                </div>
-              </div>
-            </div>
-            {/* <div className="text-end">
-              <button
-                className="btn btn-secondary"
-                type="button"
-                onClick={agregarMinistracion}
-                disabled={
-                  estadoForma.i_tipo_financiamiento <= 2 &&
-                  estadoForma.ministraciones.length > 0
-                }
-              >
-                Agregar +
-              </button>
-            </div> */}
-          </div>
-        )}
-        <div className="col-12 col-md table-responsive mb-3">
-          <label className="form-label">
-            Ministraciones{" "}
-            {modalidad === "CREAR" ? "a registrar" : "registradas"}
-          </label>
-          <table className="table">
-            <thead className="table-light">
-              <tr>
-                <th>Número</th>
-                <th>Monto</th>
-                <th>Grupo</th>
-                <th>Fecha de recepción</th>
-                <th>Rubros</th>
-                {modoEditar && (
-                  <th>
-                    <i className="bi bi-trash"></i>
-                  </th>
-                )}
-              </tr>
-            </thead>
-            <tbody>
-              {estadoForma.ministraciones.map(
-                ({ id, i_numero, f_monto, i_grupo, dt_recepcion }) => (
-                  <tr key={i_numero}>
-                    <td>{i_numero}</td>
-                    <td>{f_monto}</td>
-                    <td>{i_grupo}</td>
-                    <td>{inputDateAformato(dt_recepcion)}</td>
-                    {modoEditar && (
-                      <td>
-                        {!id && (
-                          <button
-                            type="button"
-                            className="btn btn-dark btn-sm"
-                            onClick={() => quitarMinistracion(i_numero)}
-                          >
-                            <i className="bi bi-x-circle"></i>
-                          </button>
-                        )}
-                      </td>
-                    )}
-                  </tr>
-                )
-              )}
-            </tbody>
-          </table>
-        </div>
+        <TablaMinistraciones
+          modoEditar={modoEditar}
+          ministraciones={estadoForma.ministraciones}
+          quitar={quitarMinistracion}
+        />
+        <FormaMinistracion agregarMinistracion={agregarMinistracion} />
         {modoEditar && (
           <div className="col-12 text-end">
             <button
@@ -735,217 +1059,11 @@ const FormaProyecto = () => {
       </FormaContenedor>
       {modalidad === "EDITAR" && (
         <>
-          {/* Seccion Colaboradores */}
-          <div className="row mb-5">
-            <div className="col-12 mb-3 d-flex justify-content-between">
-              <h3 className="color1 mb-0">Colaboradores</h3>
-              {user.id_rol == 3 && (
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() =>
-                    router.push(
-                      `/proyectos/${idProyecto}/colaboradores/registro`
-                    )
-                  }
-                >
-                  Registrar +
-                </button>
-              )}
-            </div>
-            <div className="col-12 table-responsive">
-              <table className="table">
-                <thead className="table-light">
-                  <tr>
-                    <th>Nombre</th>
-                    <th>Tipo</th>
-                    <th>Servicio</th>
-                    <th>Teléfono</th>
-                    <th>RFC</th>
-                    <th>CLABE</th>
-                    <th>Banco</th>
-                    <th>Monto total</th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {estadoForma.colaboradores.map(
-                    ({
-                      id,
-                      nombre,
-                      apellido_paterno,
-                      tipo,
-                      nombre_servicio,
-                      telefono,
-                      rfc,
-                      clabe,
-                      banco,
-                      f_monto_total,
-                    }) => (
-                      <tr key={id}>
-                        <td>
-                          {nombre} {apellido_paterno}
-                        </td>
-                        <td>{tipo}</td>
-                        <td>{nombre_servicio}</td>
-                        <td>{telefono}</td>
-                        <td>{rfc}</td>
-                        <td>{clabe}</td>
-                        <td>{banco}</td>
-                        <td>{f_monto_total}</td>
-                        <td>
-                          <button
-                            className="btn btn-dark btn-sm"
-                            onClick={() =>
-                              router.push(
-                                `/proyectos/${idProyecto}/colaboradores/${id}`
-                              )
-                            }
-                          >
-                            <i className="bi bi-eye-fill"></i>
-                          </button>
-                        </td>
-                      </tr>
-                    )
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-          {/* Seccion Proveedores */}
-          <div className="row mb-5">
-            <div className="col-12 mb-3 d-flex justify-content-between">
-              <h3 className="color1 mb-0">Proveedores</h3>
-              {user.id_rol == 3 && (
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() =>
-                    router.push(`/proyectos/${idProyecto}/proveedores/registro`)
-                  }
-                >
-                  Registrar +
-                </button>
-              )}
-            </div>
-            <div className="col-12 table-responsive">
-              <table className="table">
-                <thead className="table-light">
-                  <tr>
-                    <th>Nombre</th>
-                    <th>Tipo</th>
-                    <th>Servicio</th>
-                    <th>Teléfono</th>
-                    <th>RFC</th>
-                    <th>CLABE</th>
-                    <th>Banco</th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {estadoForma.proveedores.map(
-                    ({
-                      id,
-                      nombre,
-                      tipo,
-                      descripcion_servicio,
-                      telefono,
-                      rfc,
-                      clabe,
-                      banco,
-                    }) => (
-                      <tr key={id}>
-                        <td>{nombre}</td>
-                        <td>{tipo}</td>
-                        <td>{descripcion_servicio}</td>
-                        <td>{telefono}</td>
-                        <td>{rfc}</td>
-                        <td>{clabe}</td>
-                        <td>{banco}</td>
-                        <td>
-                          <button
-                            className="btn btn-dark btn-sm"
-                            onClick={() =>
-                              router.push(
-                                `/proyectos/${idProyecto}/proveedores/${id}`
-                              )
-                            }
-                          >
-                            <i className="bi bi-eye-fill"></i>
-                          </button>
-                        </td>
-                      </tr>
-                    )
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-          {/* Seccion solicitudes */}
-          <div className="row mb-3">
-            <div className="col-12 mb-3 d-flex justify-content-between">
-              <h3 className="color1 mb-0">Solicitudes de presupuesto</h3>
-              {user.id_rol == 3 && (
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() =>
-                    router.push(
-                      `/proyectos/${idProyecto}/solicitudes-presupuesto/registro`
-                    )
-                  }
-                >
-                  Registrar +
-                </button>
-              )}
-            </div>
-            <div className="col-12 table-responsive">
-              <table className="table">
-                <thead className="table-light">
-                  <tr>
-                    <th>Descripción gasto</th>
-                    <th>Tipo</th>
-                    <th>Rubro</th>
-                    <th>Proveedor</th>
-                    <th>Importe</th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {estadoForma.solicitudes_presupuesto.map(
-                    ({
-                      id,
-                      descripcion_gasto,
-                      tipo_gasto,
-                      rubro,
-                      proveedor,
-                      f_importe,
-                    }) => (
-                      <tr key={id}>
-                        <td>{descripcion_gasto}</td>
-                        <td>{tipo_gasto}</td>
-                        <td>{rubro}</td>
-                        <td>{proveedor}</td>
-                        <td>{f_importe}</td>
-                        <td>
-                          <button
-                            className="btn btn-dark btn-sm"
-                            onClick={() =>
-                              router.push(
-                                `/proyectos/${idProyecto}/solicitudes-presupuesto/${id}`
-                              )
-                            }
-                          >
-                            <i className="bi bi-eye-fill"></i>
-                          </button>
-                        </td>
-                      </tr>
-                    )
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <Colaboradores colaboradores={estadoForma.colaboradores} />
+          <Proveedores proveedores={estadoForma.proveedores} />
+          <SolicitudesPresupuesto
+            solicitudes={estadoForma.solicitudes_presupuesto}
+          />
         </>
       )}
     </RegistroContenedor>
