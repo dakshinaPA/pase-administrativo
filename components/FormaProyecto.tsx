@@ -30,6 +30,7 @@ type ActionTypes =
   | "HANDLE_CHANGE"
   | "QUITAR_MINISTRACION"
   | "AGREGAR_MINISTRACION"
+  | "CAMBIAR_TIPO_FINANCIAMIENTO"
 
 interface ActionDispatch {
   type: ActionTypes
@@ -62,6 +63,11 @@ const reducer = (state: Proyecto, action: ActionDispatch): Proyecto => {
       return {
         ...state,
         ministraciones: [...state.ministraciones, payload],
+      }
+    case "CAMBIAR_TIPO_FINANCIAMIENTO":
+      return {
+        ...state,
+        ministraciones: [],
       }
     default:
       return state
@@ -419,11 +425,11 @@ const TablaMinistraciones = ({
                     <tbody>
                       {rubros_presupuestales.map(
                         ({ id_rubro, nombre, f_monto }) => {
-                          const nombre_corto = `${nombre.substring(0, 20)}...`
+                          // const nombre_corto = `${nombre.substring(0, 20)}...`
 
                           return (
                             <tr key={id_rubro}>
-                              <td>{nombre_corto}</td>
+                              <td>{nombre}</td>
                               <td>{f_monto}</td>
                             </tr>
                           )
@@ -698,7 +704,7 @@ const FormaProyecto = () => {
   const idProyecto = Number(router.query.idP)
 
   const estadoInicialForma: Proyecto = {
-    id_coparte: idCoparte || 0,
+    id_coparte: 0,
     id_financiador: 0,
     id_responsable: 0,
     id_alt: "",
@@ -732,29 +738,12 @@ const FormaProyecto = () => {
   }, [estadoForma.id_coparte])
 
   useEffect(() => {
-    // switch (Number(estadoForma.i_tipo_financiamiento)) {
-    //   case 1:
-    //   case 2:
-    //     setFormaMinistracion({
-    //       ...formaMinistracion,
-    //       i_numero: 1,
-    //       f_monto: estadoForma.f_monto_total,
-    //     })
-    //     break
-    //   case 3:
-    //   case 4:
-    //     setFormaMinistracion(estaInicialdFormaMinistracion)
-    //     break
-    //   default:
-    //     setFormaMinistracion(estaInicialdFormaMinistracion)
-    // }
-    //limpiar lista ministraciones si hay un cambio de tipo financiamiento
-    // if (modalidad === "CREAR") {
-    //   setEstadoForma({
-    //     ...estadoForma,
-    //     ministraciones: [],
-    //   })
-    // }
+    if (modalidad === "CREAR") {
+      dispatch({
+        type: "CAMBIAR_TIPO_FINANCIAMIENTO",
+        payload: null,
+      })
+    }
   }, [estadoForma.i_tipo_financiamiento])
 
   useEffect(() => {
@@ -824,7 +813,7 @@ const FormaProyecto = () => {
 
   const cargarUsuariosCoparte = async () => {
     const idCoparte = estadoForma.id_coparte
-    if (!idCoparte || modalidad === "EDITAR") return
+    if (!idCoparte) return
 
     const reUsCoDB = await obtenerUsuariosCoparte(idCoparte)
 
@@ -896,7 +885,7 @@ const FormaProyecto = () => {
     ev.preventDefault()
 
     console.log(estadoForma)
-    return
+    // return
 
     setIsLoading(true)
     const { error, data, mensaje } =
@@ -916,6 +905,8 @@ const FormaProyecto = () => {
       }
     }
   }
+
+  const showBtnNuevaMinistracion = modoEditar && !showFormaMinistracion && (estadoForma.i_tipo_financiamiento >= 3 || (estadoForma.i_tipo_financiamiento <= 2 && !(estadoForma.ministraciones.length > 0) ) )
 
   if (isLoading) {
     return <Loader />
@@ -1060,9 +1051,7 @@ const FormaProyecto = () => {
         {/* Seccion Ministraciones */}
         <div className="col-12 mb-3 d-flex justify-content-between">
           <h4 className="color1 mb-0">Ministraciones</h4>
-          {(estadoForma.i_tipo_financiamiento >= 3 ||
-            (estadoForma.i_tipo_financiamiento <= 2 &&
-              !(estadoForma.ministraciones.length > 0))) && (
+          {showBtnNuevaMinistracion && (
             <button
               type="button"
               className="btn btn-secondary"

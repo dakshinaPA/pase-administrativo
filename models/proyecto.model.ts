@@ -84,7 +84,7 @@ export interface Proyecto extends ProyectoMin {
   id_responsable: number
   responsable?: string
   id_tema_social: number
-  tema_social?: number
+  tema_social?: string
   i_tipo_financiamiento: number
   tipo_financiamiento?: string
   f_monto_total: string
