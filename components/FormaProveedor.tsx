@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useReducer, useState } from "react"
 import { useRouter } from "next/router"
 import { ChangeEvent } from "@assets/models/formEvents.model"
 import { ProveedorProyecto, ProyectoMin } from "@models/proyecto.model"
@@ -9,12 +9,48 @@ import { ApiCall } from "@assets/utils/apiCalls"
 import { useCatalogos } from "@contexts/catalogos.context"
 import { BtnEditar } from "./Botones"
 import { useAuth } from "@contexts/auth.context"
+import { obtenerProyectos } from "@assets/utils/common"
+
+type ActionTypes = "CARGA_INICIAL" | "HANDLE_CHANGE" | "HANDLE_CHANGE_DIRECCION"
+
+interface ActionDispatch {
+  type: ActionTypes
+  payload: any
+}
+
+const reducer = (
+  state: ProveedorProyecto,
+  action: ActionDispatch
+): ProveedorProyecto => {
+  const { type, payload } = action
+
+  switch (type) {
+    case "CARGA_INICIAL":
+      return payload
+    case "HANDLE_CHANGE":
+      return {
+        ...state,
+        [payload.name]: payload.value,
+      }
+    case "HANDLE_CHANGE_DIRECCION":
+      return {
+        ...state,
+        direccion: {
+          ...state.direccion,
+          [payload.name]: payload.value,
+        },
+      }
+    default:
+      return state
+  }
+}
 
 const FormaProveedor = () => {
   const { user } = useAuth()
-  if(!user) return null
+  if (!user) return null
   const router = useRouter()
   const idProyecto = Number(router.query.id)
+  const idProveedor = Number(router.query.idP)
 
   const estadoInicialForma: ProveedorProyecto = {
     id_proyecto: idProyecto || 0,
@@ -38,8 +74,7 @@ const FormaProveedor = () => {
   }
 
   const { estados, bancos } = useCatalogos()
-  const idProveedor = Number(router.query.idP)
-  const [estadoForma, setEstadoForma] = useState(estadoInicialForma)
+  const [estadoForma, dispatch] = useReducer(reducer, estadoInicialForma)
   const [proyectosDB, setProyectosDB] = useState<ProyectoMin[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [modoEditar, setModoEditar] = useState<boolean>(!idProveedor)
@@ -53,7 +88,7 @@ const FormaProveedor = () => {
     setIsLoading(true)
 
     try {
-      const promesas = [obtenerProyectos()]
+      const promesas = [obtenerProyectosDB()]
       if (modalidad === "EDITAR") {
         promesas.push(obtener())
       }
@@ -64,10 +99,26 @@ const FormaProveedor = () => {
         if (rc.error) throw rc.data
       }
 
-      setProyectosDB(resCombinadas[0].data as ProyectoMin[])
+      const proyectosDB = resCombinadas[0].data as ProyectoMin[]
+      setProyectosDB(proyectosDB)
+
+      if (!idProyecto) {
+        dispatch({
+          type: "HANDLE_CHANGE",
+          payload: {
+            name: "id_proyecto",
+            value: proyectosDB[0].id,
+          },
+        })
+      }
 
       if (modalidad === "EDITAR") {
-        setEstadoForma(resCombinadas[1].data[0] as ProveedorProyecto)
+        const colaborador = resCombinadas[1].data[0] as ProveedorProyecto
+
+        dispatch({
+          type: "CARGA_INICIAL",
+          payload: colaborador,
+        })
       }
     } catch (error) {
       console.log(error)
@@ -76,9 +127,10 @@ const FormaProveedor = () => {
     setIsLoading(false)
   }
 
-  const obtenerProyectos = async () => {
-    const url = `/proyectos/${idProyecto}?min=true`
-    return await ApiCall.get(url)
+  const obtenerProyectosDB = () => {
+    return idProyecto
+      ? obtenerProyectos({ id: idProyecto })
+      : obtenerProyectos({ id_responsable: user.id })
   }
 
   const obtener = async () => {
@@ -97,33 +149,23 @@ const FormaProveedor = () => {
   }
 
   const cancelar = () => {
-    modalidad === "EDITAR" ? setModoEditar(false) : router.push("/proyectos")
+    modalidad === "EDITAR" ? setModoEditar(false) : router.back()
   }
 
-  const handleChange = (ev: ChangeEvent) => {
+  const handleChange = (ev: ChangeEvent, type: ActionTypes) => {
     const { name, value } = ev.target
 
-    setEstadoForma({
-      ...estadoForma,
-      [name]: value,
-    })
-  }
-
-  const handleChangeDireccion = (ev: ChangeEvent) => {
-    const { name, value } = ev.target
-
-    setEstadoForma({
-      ...estadoForma,
-      direccion: {
-        ...estadoForma.direccion,
-        [name]: value,
-      },
+    dispatch({
+      type,
+      payload: { name, value },
     })
   }
 
   const handleSubmit = async (ev: React.SyntheticEvent) => {
     ev.preventDefault()
     console.log(estadoForma)
+
+    return
 
     setIsLoading(true)
     const { error, data, mensaje } =
@@ -166,10 +208,10 @@ const FormaProveedor = () => {
           <label className="form-label">Proyecto</label>
           <select
             className="form-control"
-            onChange={handleChange}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="id_proyecto"
             value={estadoForma.id_proyecto}
-            disabled
+            disabled={!!idProyecto}
           >
             {proyectosDB.map(({ id, id_alt }) => (
               <option key={id} value={id}>
@@ -183,7 +225,7 @@ const FormaProveedor = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChange}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="nombre"
             value={estadoForma.nombre}
             disabled={!modoEditar}
@@ -193,7 +235,7 @@ const FormaProveedor = () => {
           <label className="form-label">Tipo</label>
           <select
             className="form-control"
-            onChange={handleChange}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="i_tipo"
             value={estadoForma.i_tipo}
             disabled={Boolean(idProveedor)}
@@ -207,7 +249,7 @@ const FormaProveedor = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChange}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="clabe"
             value={estadoForma.clabe}
             disabled={!modoEditar}
@@ -217,7 +259,7 @@ const FormaProveedor = () => {
           <label className="form-label">Banco</label>
           <select
             className="form-control"
-            onChange={handleChange}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="id_banco"
             value={estadoForma.id_banco}
             disabled={!modoEditar}
@@ -234,7 +276,7 @@ const FormaProveedor = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChange}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="email"
             value={estadoForma.email}
             disabled={!modoEditar}
@@ -245,7 +287,7 @@ const FormaProveedor = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChange}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="telefono"
             value={estadoForma.telefono}
             disabled={!modoEditar}
@@ -256,7 +298,7 @@ const FormaProveedor = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChange}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="rfc"
             value={estadoForma.rfc}
             disabled={!modoEditar}
@@ -267,7 +309,7 @@ const FormaProveedor = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChange}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="descripcion_servicio"
             value={estadoForma.descripcion_servicio}
             disabled={!modoEditar}
@@ -284,7 +326,7 @@ const FormaProveedor = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChangeDireccion}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE_DIRECCION")}
             name="calle"
             value={estadoForma.direccion.calle}
             disabled={!modoEditar}
@@ -295,7 +337,7 @@ const FormaProveedor = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChangeDireccion}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE_DIRECCION")}
             name="numero_ext"
             value={estadoForma.direccion.numero_ext}
             disabled={!modoEditar}
@@ -306,7 +348,7 @@ const FormaProveedor = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChangeDireccion}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE_DIRECCION")}
             name="numero_int"
             value={estadoForma.direccion.numero_int}
             disabled={!modoEditar}
@@ -317,7 +359,7 @@ const FormaProveedor = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChangeDireccion}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE_DIRECCION")}
             name="colonia"
             value={estadoForma.direccion.colonia}
             disabled={!modoEditar}
@@ -328,7 +370,7 @@ const FormaProveedor = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChangeDireccion}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE_DIRECCION")}
             name="municipio"
             value={estadoForma.direccion.municipio}
             disabled={!modoEditar}
@@ -339,7 +381,7 @@ const FormaProveedor = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChangeDireccion}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE_DIRECCION")}
             name="cp"
             value={estadoForma.direccion.cp}
             disabled={!modoEditar}
@@ -349,7 +391,7 @@ const FormaProveedor = () => {
           <label className="form-label">Estado</label>
           <select
             className="form-control"
-            onChange={handleChangeDireccion}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE_DIRECCION")}
             name="id_estado"
             value={estadoForma.direccion.id_estado}
             disabled={!modoEditar}

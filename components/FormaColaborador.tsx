@@ -160,7 +160,7 @@ const FormaColaborador = () => {
   }
 
   const cancelar = () => {
-    modalidad === "EDITAR" ? setModoEditar(false) : router.push("/proyectos")
+    modalidad === "EDITAR" ? setModoEditar(false) : router.back()
   }
 
   const handleChange = (ev: ChangeEvent, type: ActionTypes) => {
