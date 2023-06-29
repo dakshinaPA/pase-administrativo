@@ -21,7 +21,7 @@ import {
 import { useAuth } from "@contexts/auth.context"
 import { obtenerProyectos, obtenerSolicitudes } from "@assets/utils/common"
 
-interface ColaboradoresProyecto {
+interface DataProyecto {
   colaboradores: ColaboradorProyecto[]
   proveedores: ProveedorProyecto[]
   rubros_presupuestales: RubroMinistracion[]
@@ -71,7 +71,7 @@ const reducer = (
   }
 }
 
-const estadoInicialDataProyecto: ColaboradoresProyecto = {
+const estadoInicialDataProyecto: DataProyecto = {
   colaboradores: [],
   proveedores: [],
   rubros_presupuestales: [],
@@ -85,7 +85,7 @@ const FormaSolicitudPresupuesto = () => {
   const idSolicitud = Number(router.query.idS)
 
   const estadoInicialForma: SolicitudPresupuesto = {
-    id_proyecto: idProyecto || 0,
+    id_proyecto: 0,
     i_tipo_gasto: 1,
     titular: "",
     clabe: "",
@@ -112,6 +112,10 @@ const FormaSolicitudPresupuesto = () => {
     cargarData()
   }, [])
 
+  useEffect(() => {
+    cargarDataProyecto()
+  }, [estadoForma.id_proyecto])
+
   const cargarData = async () => {
     setIsLoading(true)
 
@@ -130,7 +134,14 @@ const FormaSolicitudPresupuesto = () => {
       const proyectosDB = resCombinadas[0].data as ProyectoMin[]
       setProyectosDB(proyectosDB)
 
-      if (!idProyecto) {
+      if (modalidad === "EDITAR") {
+        const solicitud = resCombinadas[1].data[0] as SolicitudPresupuesto
+
+        dispatch({
+          type: "CARGA_INICIAL",
+          payload: solicitud,
+        })
+      } else {
         dispatch({
           type: "HANDLE_CHANGE",
           payload: {
@@ -139,20 +150,29 @@ const FormaSolicitudPresupuesto = () => {
           },
         })
       }
-
-      if (modalidad === "EDITAR") {
-        const solicitud = resCombinadas[1].data[0] as SolicitudPresupuesto
-
-        dispatch({
-          type: "CARGA_INICIAL",
-          payload: solicitud,
-        })
-      }
     } catch (error) {
       console.log(error)
     }
 
     setIsLoading(false)
+  }
+
+  const cargarDataProyecto = async () => {
+    const idProyecto = estadoForma.id_proyecto
+    if (!idProyecto) return
+
+    const reDataProyecto = await obtenerProyectos({
+      id: idProyecto,
+      registro_solicitud: true,
+      min: false,
+    })
+
+    if(reDataProyecto.error){
+      console.log(reDataProyecto.data)
+    } else {
+      const dataProyecto = reDataProyecto.data as DataProyecto
+      setDataProyecto(dataProyecto)
+    }
   }
 
   const obtenerProyectosDB = () => {

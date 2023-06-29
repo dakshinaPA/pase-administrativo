@@ -67,11 +67,14 @@ const obtenerFinanciadores = async (min = true) => {
 }
 
 const obtenerProyectos = (queries: QueriesProyecto) => {
-  const { id, id_coparte, id_responsable, min = true } = queries
+  const { id, id_coparte, id_responsable, min = true, registro_solicitud } = queries
   let url = `/proyectos`
 
   if (id) {
     url += `/${id}`
+    if(registro_solicitud){
+      url += "/data"
+    }
   } else if (id_coparte) {
     url += `?id_coparte=${id_coparte}`
   } else if (id_responsable) {

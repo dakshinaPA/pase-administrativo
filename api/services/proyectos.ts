@@ -175,6 +175,7 @@ class ProyectosServices {
       return RespuestaController.exitosa(200, "Consulta exitosa", {
         colaboradores,
         proveedores,
+        rubros_presupuestales: []
       })
     } catch (error) {
       return RespuestaController.fallida(
