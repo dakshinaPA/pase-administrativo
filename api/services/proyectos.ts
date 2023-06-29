@@ -162,8 +162,9 @@ class ProyectosServices {
     try {
       const reColaboradores = ColaboradorServices.obtener(id_proyecto)
       const reProveedores = ProveedorServices.obtener(id_proyecto)
+      const rerubros = ProyectoDB.obtenerRubrosUltimaMinistracion(id_proyecto)
 
-      const resCombinadas = await Promise.all([reColaboradores, reProveedores])
+      const resCombinadas = await Promise.all([reColaboradores, reProveedores, rerubros])
 
       for (const rc of resCombinadas) {
         if (rc.error) throw rc.data
@@ -171,11 +172,12 @@ class ProyectosServices {
 
       const colaboradores = resCombinadas[0].data as ColaboradorProyecto[]
       const proveedores = resCombinadas[1].data as ProveedorProyecto[]
+      const rubros_presupuestales = resCombinadas[2].data as RubroMinistracion[]
 
       return RespuestaController.exitosa(200, "Consulta exitosa", {
         colaboradores,
         proveedores,
-        rubros_presupuestales: []
+        rubros_presupuestales
       })
     } catch (error) {
       return RespuestaController.fallida(

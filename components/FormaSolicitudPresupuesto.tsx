@@ -2,11 +2,9 @@ import { useEffect, useState, useReducer, useRef } from "react"
 import { useRouter } from "next/router"
 import { ChangeEvent } from "@assets/models/formEvents.model"
 import {
-  ColaboradorProyecto,
-  ProveedorProyecto,
+  DataProyecto,
   ProyectoMin,
   QueriesProyecto,
-  RubroMinistracion,
 } from "@models/proyecto.model"
 import { Loader } from "@components/Loader"
 import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
@@ -20,12 +18,6 @@ import {
 } from "@models/solicitud-presupuesto.model"
 import { useAuth } from "@contexts/auth.context"
 import { obtenerProyectos, obtenerSolicitudes } from "@assets/utils/common"
-
-interface DataProyecto {
-  colaboradores: ColaboradorProyecto[]
-  proveedores: ProveedorProyecto[]
-  rubros_presupuestales: RubroMinistracion[]
-}
 
 type ActionTypes =
   | "CARGA_INICIAL"

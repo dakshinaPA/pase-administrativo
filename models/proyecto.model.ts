@@ -108,3 +108,9 @@ export interface Proyecto extends ProyectoMin {
   solicitudes_presupuesto?: SolicitudPresupuesto[]
   notas?: NotaProyecto[]
 }
+
+export interface DataProyecto {
+  colaboradores: ColaboradorProyecto[]
+  proveedores: ProveedorProyecto[]
+  rubros_presupuestales: RubroMinistracion[]
+}

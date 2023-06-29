@@ -147,33 +147,6 @@ class ProyectoDB {
     }
   }
 
-
-  // static async limpiarRubros(id_proyecto: number) {
-  //   const query = `UPDATE proyecto_rubros_presupuestales SET b_activo=0 WHERE id_proyecto=${id_proyecto}`
-
-  //   try {
-  //     const res = await queryDB(query)
-  //     return RespuestaDB.exitosa(res)
-  //   } catch (error) {
-  //     return RespuestaDB.fallida(error)
-  //   }
-  // }
-
-  // static async actualizarRubro(rubro: RubroMinistracion) {
-  //   const { id, f_monto } = rubro
-
-  //   const query = `UPDATE proyecto_rubros_presupuestales SET f_monto=?, b_activo=1 WHERE id=?`
-
-  //   const placeHolders = [f_monto, id]
-
-  //   try {
-  //     const res = await queryDBPlaceHolder(query, placeHolders)
-  //     return RespuestaDB.exitosa(res)
-  //   } catch (error) {
-  //     return RespuestaDB.fallida(error)
-  //   }
-  // }
-
   static async obtenerMinistraciones(id_proyecto: number) {
     let query = `SELECT id, i_numero, f_monto, i_grupo, dt_recepcion, dt_registro
       FROM proyecto_ministraciones WHERE id_proyecto = ${id_proyecto} AND b_activo = 1`
@@ -236,6 +209,26 @@ class ProyectoDB {
     WHERE mrp.id_ministracion=? AND mrp.b_activo=1`
 
     const placeHolders = [id_ministracion]
+
+    try {
+      const res = await queryDBPlaceHolder(query, placeHolders)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
+
+  static async obtenerRubrosUltimaMinistracion(id_proyecto: number) {
+
+    const query = `SELECT mrp.id_rubro,
+      rp.nombre
+      FROM ministracion_rubros_presupuestales mrp
+      JOIN rubros_presupuestales rp ON mrp.id_rubro = rp.id
+      WHERE mrp.id_ministracion=
+      (SELECT pm.id FROM proyecto_ministraciones pm WHERE pm.id_proyecto=? ORDER BY pm.i_numero DESC LIMIT 1)
+      AND mrp.b_activo=1`
+
+    const placeHolders = [id_proyecto]
 
     try {
       const res = await queryDBPlaceHolder(query, placeHolders)
