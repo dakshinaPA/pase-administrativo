@@ -88,6 +88,30 @@ const obtenerProyectos = (queries: QueriesProyecto) => {
   return ApiCall.get(url)
 }
 
+const obtenerColaboradores = (id_proyecto?: number, id?: number) => {
+  let url = ""
+
+  if (id) {
+    url = `/colaboradores/${id}`
+  } else if (id_proyecto) {
+    url = `/proyectos/${id_proyecto}/colaboradores`
+  }
+
+  return ApiCall.get(url)
+}
+
+const obtenerProveedores = (id_proyecto?: number, id?: number) => {
+  let url = ""
+
+  if (id) {
+    url = `/proveedores/${id}`
+  } else if (id_proyecto) {
+    url = `/proyectos/${id_proyecto}/proveedores`
+  }
+
+  return ApiCall.get(url)
+}
+
 const obtenerUsuariosCoparte = async (id_coparte: number, min = true) => {
   let url = `/copartes/${id_coparte}/usuarios`
   if (min) {
@@ -151,4 +175,6 @@ export {
   obtenerUsuariosCoparte,
   obtenerUsuariosXRol,
   obtenerProyectos,
+  obtenerColaboradores,
+  obtenerProveedores,
 }

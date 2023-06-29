@@ -8,9 +8,9 @@ class ProveedorServices {
   static obtenerTipo(id_tipo: 1 | 2) {
     switch (id_tipo) {
       case 1:
-        return "FÍSICA"
+        return "Persona Física"
       case 2:
-        return "MORAL"
+        return "Persona Moral"
     }
   }
 
@@ -25,6 +25,7 @@ class ProveedorServices {
         proveedoresDB.map(async (proveedor) => {
           const {
             id,
+            id_proyecto,
             nombre,
             i_tipo,
             clabe,
@@ -47,6 +48,7 @@ class ProveedorServices {
 
           return {
             id,
+            id_proyecto,
             nombre,
             i_tipo,
             tipo: this.obtenerTipo(i_tipo),

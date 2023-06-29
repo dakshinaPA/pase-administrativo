@@ -6,21 +6,21 @@ import { TablaContenedor } from "@components/Contenedores"
 import { ModalEliminar } from "@components/ModalEliminar"
 import {
   aMinuscula,
-  obtenerColaboradores,
+  obtenerProveedores,
   obtenerProyectos,
 } from "@assets/utils/common"
 import { useAuth } from "@contexts/auth.context"
-import { ColaboradorProyecto, ProyectoMin } from "@models/proyecto.model"
+import { ProveedorProyecto, ProyectoMin } from "@models/proyecto.model"
 
-const Colaboradores = () => {
+const Proveedores = () => {
   const { user } = useAuth()
   if (!user) return null
   const router = useRouter()
   const [proyectosDB, setProyectosDB] = useState<ProyectoMin[]>([])
-  const [colaboradoresDB, setColaboradoresDB] = useState<ColaboradorProyecto[]>(
+  const [proveedoresDB, setProveedoresDB] = useState<ProveedorProyecto[]>(
     []
   )
-  const [colaboradorAeliminar, setColaboradorAEliminar] = useState<number>(0)
+  const [proveedorAeliminar, setProveedorAEliminar] = useState<number>(0)
   const [selectProyecto, setSelectProyecto] = useState(0)
   const [showModalEliminar, setShowModalEliminar] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(false)
@@ -31,7 +31,7 @@ const Colaboradores = () => {
   }, [])
 
   useEffect(() => {
-    cargarColaboradores()
+    cargarProveedores()
   }, [selectProyecto])
 
   const cargarProyectosUsuario = async () => {
@@ -45,64 +45,64 @@ const Colaboradores = () => {
     }
   }
 
-  const cargarColaboradores = async () => {
+  const cargarProveedores = async () => {
     if (!selectProyecto) return
 
-    const reColaboradores = await obtenerColaboradores(selectProyecto)
-    if (reColaboradores.error) {
-      console.log(reColaboradores.data)
+    const reProveedores = await obtenerProveedores(selectProyecto)
+    if (reProveedores.error) {
+      console.log(reProveedores.data)
     } else {
-      const colaboradoresDB = reColaboradores.data as ColaboradorProyecto[]
-      setColaboradoresDB(colaboradoresDB)
+      const proveedoresDB = reProveedores.data as ProveedorProyecto[]
+      setProveedoresDB(proveedoresDB)
     }
   }
 
-  const abrirModalEliminarColaborador = (id: number) => {
-    setColaboradorAEliminar(id)
+  const abrirModalEliminarProveedor = (id: number) => {
+    setProveedorAEliminar(id)
     setShowModalEliminar(true)
   }
 
-  const eliminarColaborador = async () => {
-    setColaboradorAEliminar(0)
+  const eliminarProveedor = async () => {
+    setProveedorAEliminar(0)
     setShowModalEliminar(false)
     setIsLoading(true)
 
     const { error, data, mensaje } = await ApiCall.delete(
-      `/colaboradores/${colaboradorAeliminar}`
+      `/proveedores/${proveedorAeliminar}`
     )
 
     if (error) {
       console.log(error)
     } else {
-      await cargarColaboradores()
+      await cargarProveedores()
     }
 
     setIsLoading(false)
   }
 
-  const cancelarEliminarUsuario = () => {
-    setColaboradorAEliminar(0)
+  const cancelarEliminarProveedor = () => {
+    setProveedorAEliminar(0)
     setShowModalEliminar(false)
   }
 
-  const colaboradoresFiltrados = colaboradoresDB.filter(
-    ({ nombre, apellido_paterno, apellido_materno, email }) => {
+  const proveedoresFiltrados = proveedoresDB.filter(
+    ({ nombre, email }) => {
       const query = inputBusqueda.toLocaleLowerCase()
       return (
         aMinuscula(nombre).includes(query) ||
-        aMinuscula(apellido_paterno).includes(query) ||
-        aMinuscula(apellido_materno).includes(query) ||
+        // aMinuscula(apellido_paterno).includes(query) ||
+        // aMinuscula(apellido_materno).includes(query) ||
         aMinuscula(email).includes(query)
       )
     }
   )
 
-  const determinarNombreColaboradorAEliminar = (): string => {
-    const colaboradorMatch = colaboradoresDB.find(
-      (colaborador) => colaborador.id === colaboradorAeliminar
+  const determinarNombreProveedorAEliminar = (): string => {
+    const proveedorMatch = proveedoresDB.find(
+      (proveedor) => proveedor.id === proveedorAeliminar
     )
-    return colaboradorMatch
-      ? `${colaboradorMatch.nombre} ${colaboradorMatch.nombre}`
+    return proveedorMatch
+      ? `${proveedorMatch.nombre} ${proveedorMatch.nombre}`
       : ""
   }
 
@@ -113,7 +113,7 @@ const Colaboradores = () => {
           <button
             type="button"
             className="btn btn-secondary w-100"
-            onClick={() => router.push("/colaboradores/registro")}
+            onClick={() => router.push("/proveedores/registro")}
           >
             Registrar +
           </button>
@@ -160,52 +160,40 @@ const Colaboradores = () => {
                 <tr>
                   <th>#id</th>
                   <th>Nombre</th>
-                  <th>Servicio</th>
                   <th>Tipo</th>
+                  <th>Servicio</th>
                   <th>Email</th>
                   <th>Teléfono</th>
-                  <th>Monto</th>
-                  <th>Inicio servicio</th>
-                  <th>Fin servicio</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
               <tbody>
-                {colaboradoresFiltrados.map((colaborador) => {
+                {proveedoresFiltrados.map((proveedor) => {
                   const {
                     id,
                     id_proyecto,
                     nombre,
-                    apellido_paterno,
-                    nombre_servicio,
                     tipo,
+                    descripcion_servicio,
                     email,
                     telefono,
-                    f_monto_total,
-                    dt_inicio_servicio,
-                    dt_fin_servicio,
-                  } = colaborador
+                  } = proveedor
 
                   return (
                     <tr key={id}>
                       <td>{id}</td>
-                      <td>
-                        {nombre} {apellido_paterno}
-                      </td>
-                      <td>{nombre_servicio}</td>
+                      <td>{nombre}</td>
                       <td>{tipo}</td>
+                      <td>{descripcion_servicio}</td>
                       <td>{email}</td>
                       <td>{telefono}</td>
-                      <td>{f_monto_total}</td>
-                      <td>{dt_inicio_servicio}</td>
-                      <td>{dt_fin_servicio}</td>
                       <td>
                         <div className="d-flex">
                           <button
                             className="btn btn-dark btn-sm me-1"
                             onClick={() =>
                               router.push(
-                                `/proyectos/${id_proyecto}/colaboradores/${id}`
+                                `/proyectos/${id_proyecto}/proveedores/${id}`
                               )
                             }
                           >
@@ -214,7 +202,7 @@ const Colaboradores = () => {
 
                           <button
                             className="btn btn-dark btn-sm"
-                            onClick={() => abrirModalEliminarColaborador(id)}
+                            onClick={() => abrirModalEliminarProveedor(id)}
                           >
                             <i className="bi bi-x-circle"></i>
                           </button>
@@ -230,16 +218,16 @@ const Colaboradores = () => {
       )}
       <ModalEliminar
         show={showModalEliminar}
-        aceptar={eliminarColaborador}
-        cancelar={cancelarEliminarUsuario}
+        aceptar={eliminarProveedor}
+        cancelar={cancelarEliminarProveedor}
       >
         <p className="mb-0">
-          ¿Estás segur@ de eliminar al colaborador{" "}
-          {determinarNombreColaboradorAEliminar()}?
+          ¿Estás segur@ de eliminar al proveedor{" "}
+          {determinarNombreProveedorAEliminar()}?
         </p>
       </ModalEliminar>
     </TablaContenedor>
   )
 }
 
-export default Colaboradores
+export default Proveedores
