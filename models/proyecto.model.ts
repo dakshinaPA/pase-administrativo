@@ -13,6 +13,7 @@ export interface QueriesProyecto {
 export interface ColaboradorProyecto {
   id?: number
   id_proyecto?: number
+  id_responsable?: number
   nombre: string
   apellido_paterno: string
   apellido_materno: string
@@ -38,6 +39,7 @@ export interface ColaboradorProyecto {
 export interface ProveedorProyecto {
   id?: number
   id_proyecto?: number
+  id_responsable?: number
   nombre: string
   i_tipo: 1 | 2 // 1.persona fisica, 2. persona moral
   tipo?: string

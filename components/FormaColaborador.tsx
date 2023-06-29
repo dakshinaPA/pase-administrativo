@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useState } from "react"
+import { use, useEffect, useReducer, useState } from "react"
 import { useRouter } from "next/router"
 import { ChangeEvent } from "@assets/models/formEvents.model"
 import {
@@ -205,9 +205,11 @@ const FormaColaborador = () => {
               <h2 className="color1 mb-0">Registrar Colaborador</h2>
             )}
           </div>
-          {!modoEditar && idColaborador && (
-            <BtnEditar onClick={() => setModoEditar(true)} />
-          )}
+          {!modoEditar &&
+            idColaborador &&
+            user.id === estadoForma.id_responsable && (
+              <BtnEditar onClick={() => setModoEditar(true)} />
+            )}
         </div>
       </div>
       <FormaContenedor onSubmit={handleSubmit}>

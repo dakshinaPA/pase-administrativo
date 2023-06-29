@@ -26,6 +26,7 @@ class ColaboradorServices {
           const {
             id,
             id_proyecto,
+            id_responsable,
             nombre,
             apellido_paterno,
             apellido_materno,
@@ -57,6 +58,7 @@ class ColaboradorServices {
           return {
             id,
             id_proyecto,
+            id_responsable,
             nombre,
             apellido_paterno,
             apellido_materno,

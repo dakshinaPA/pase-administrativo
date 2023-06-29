@@ -8,9 +8,11 @@ class ProveedorDB {
   static async obtener(id_proyecto: number, id_proveedor?: number) {
     let query = `SELECT p.id, p.id_proyecto, p.nombre, p.i_tipo, p.clabe, p.id_banco, p.telefono, p.email, p.rfc, p.descripcion_servicio, p.dt_registro,
       pd.id id_direccion, pd.calle, pd.numero_ext, pd.numero_int, pd.colonia, pd.municipio, pd.cp, pd.id_estado,
+      pr.id_responsable,
       e.nombre estado,
       b.nombre banco
       FROM proveedores p
+      JOIN proyectos pr ON p.id_proyecto = pr.id
       JOIN proveedor_direccion pd ON p.id = pd.id_proveedor
       JOIN estados e ON pd.id_estado = e.id
       JOIN bancos b ON p.id_banco = b.id

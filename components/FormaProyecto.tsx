@@ -23,6 +23,7 @@ import {
   inputDateAformato,
   obtenerCopartes,
   obtenerFinanciadores,
+  obtenerProyectos,
   obtenerUsuariosCoparte,
 } from "@assets/utils/common"
 import { BtnEditar } from "./Botones"
@@ -863,7 +864,7 @@ const FormaProyecto = () => {
       const promesas = [obtenerFinanciadores(), obtenerCopartes(queryCopartes)]
 
       if (modalidad === "EDITAR") {
-        promesas.push(obtener())
+        promesas.push(obtenerProyectos({id: idProyecto, min: false}))
       }
 
       const resCombinadas = await Promise.all(promesas)
@@ -925,19 +926,12 @@ const FormaProyecto = () => {
     }
   }
 
-  const obtener = async () => {
-    const res = await ApiCall.get(`/proyectos/${idProyecto}`)
-    return res
+  const registrar = () => {
+    return ApiCall.post("/proyectos", estadoForma)
   }
 
-  const registrar = async () => {
-    const res = await ApiCall.post("/proyectos", estadoForma)
-    return res
-  }
-
-  const editar = async () => {
-    const res = await ApiCall.put(`/proyectos/${idProyecto}`, estadoForma)
-    return res
+  const editar = () => {
+    return ApiCall.put(`/proyectos/${idProyecto}`, estadoForma)
   }
 
   const cancelar = () => {

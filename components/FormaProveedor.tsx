@@ -1,7 +1,11 @@
 import { useEffect, useReducer, useState } from "react"
 import { useRouter } from "next/router"
 import { ChangeEvent } from "@assets/models/formEvents.model"
-import { ProveedorProyecto, ProyectoMin, QueriesProyecto } from "@models/proyecto.model"
+import {
+  ProveedorProyecto,
+  ProyectoMin,
+  QueriesProyecto,
+} from "@models/proyecto.model"
 import { Loader } from "@components/Loader"
 import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
 import { BtnBack } from "@components/BtnBack"
@@ -135,7 +139,6 @@ const FormaProveedor = () => {
     return obtenerProyectos(queryProyectos)
   }
 
-
   const registrar = async () => {
     return ApiCall.post("/proveedores", estadoForma)
   }
@@ -192,9 +195,11 @@ const FormaProveedor = () => {
               <h2 className="color1 mb-0">Registrar Proveedor</h2>
             )}
           </div>
-          {!modoEditar && idProveedor && (
-            <BtnEditar onClick={() => setModoEditar(true)} />
-          )}
+          {!modoEditar &&
+            idProveedor &&
+            user.id === estadoForma.id_responsable && (
+              <BtnEditar onClick={() => setModoEditar(true)} />
+            )}
         </div>
       </div>
       <FormaContenedor onSubmit={handleSubmit}>

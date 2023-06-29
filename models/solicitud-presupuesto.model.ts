@@ -24,6 +24,7 @@ export interface SolicitudPresupuesto {
   id?: number
   id_proyecto: number
   proyecto?: string
+  id_responsable?: number
   i_tipo_gasto: TipoGastoSolicitud
   tipo_gasto?: string
   proveedor: string

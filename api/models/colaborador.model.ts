@@ -1,6 +1,7 @@
 export interface ResColaboradoreDB {
   id: number
-  id_proyecto?: number
+  id_proyecto: number
+  id_responsable: number
   nombre: string
   apellido_paterno: string
   apellido_materno: string

@@ -26,6 +26,7 @@ class ProveedorServices {
           const {
             id,
             id_proyecto,
+            id_responsable,
             nombre,
             i_tipo,
             clabe,
@@ -49,6 +50,7 @@ class ProveedorServices {
           return {
             id,
             id_proyecto,
+            id_responsable,
             nombre,
             i_tipo,
             tipo: this.obtenerTipo(i_tipo),

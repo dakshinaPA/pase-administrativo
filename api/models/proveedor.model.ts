@@ -1,6 +1,7 @@
 export interface ResProveedorDB {
   id: number
   id_proyecto: number
+  id_responsable: number
   nombre: string // nombre o razon social
   i_tipo: 1 | 2 // persona fisica, persona moral
   clabe: string

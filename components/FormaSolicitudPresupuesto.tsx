@@ -167,7 +167,7 @@ const FormaSolicitudPresupuesto = () => {
       min: false,
     })
 
-    if(reDataProyecto.error){
+    if (reDataProyecto.error) {
       console.log(reDataProyecto.data)
     } else {
       const dataProyecto = reDataProyecto.data as DataProyecto
@@ -308,9 +308,11 @@ const FormaSolicitudPresupuesto = () => {
               </h2>
             )}
           </div>
-          {!modoEditar && idSolicitud && (
-            <BtnEditar onClick={() => setModoEditar(true)} />
-          )}
+          {!modoEditar &&
+            idSolicitud &&
+            user.id === estadoForma.id_responsable && (
+              <BtnEditar onClick={() => setModoEditar(true)} />
+            )}
         </div>
       </div>
       <FormaContenedor onSubmit={handleSubmit}>

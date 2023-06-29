@@ -54,6 +54,7 @@ class SolicitudesPresupuestoServices {
           const {
             id,
             id_proyecto,
+            id_responsable,
             proyecto,
             i_tipo_gasto,
             clabe,
@@ -85,6 +86,7 @@ class SolicitudesPresupuestoServices {
             id,
             id_proyecto,
             proyecto,
+            id_responsable,
             i_tipo_gasto,
             tipo_gasto: this.obtenerTipoGasto(i_tipo_gasto),
             clabe,
