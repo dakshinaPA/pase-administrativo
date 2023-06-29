@@ -7,12 +7,15 @@ import { ModalEliminar } from "@components/ModalEliminar"
 import {
   aMinuscula,
   obtenerCopartes,
-  obtenerCopartesAdmin,
   obtenerUsuariosCoparte,
   obtenerUsuariosXRol,
 } from "@assets/utils/common"
 import { IdRolUsuario, Usuario } from "@models/usuario.model"
-import { CoparteMin, CoparteUsuario } from "@models/coparte.model"
+import {
+  CoparteMin,
+  CoparteUsuario,
+  QueriesCoparte,
+} from "@models/coparte.model"
 import { useAuth } from "@contexts/auth.context"
 
 const Usuarios = () => {
@@ -98,12 +101,10 @@ const Usuarios = () => {
   }
 
   const obtenerCopartesDB = async () => {
-    const res =
-      user.id_rol == 2
-        ? await obtenerCopartesAdmin(user.id)
-        : await obtenerCopartes()
+    const queryCopartes: QueriesCoparte =
+      user.id_rol == 2 ? { id_admin: user.id } : {}
 
-    const { error, data, mensaje } = res
+    const { error, data, mensaje } = await obtenerCopartes(queryCopartes)
 
     if (error) {
       console.log(data)

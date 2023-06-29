@@ -13,12 +13,15 @@ import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
 import { BtnBack } from "@components/BtnBack"
 import { ApiCall, ApiCallRes } from "@assets/utils/apiCalls"
 import { useAuth } from "@contexts/auth.context"
-import { CoparteMin, CoparteUsuarioMin } from "@models/coparte.model"
+import {
+  CoparteMin,
+  CoparteUsuarioMin,
+  QueriesCoparte,
+} from "@models/coparte.model"
 import { useCatalogos } from "@contexts/catalogos.context"
 import {
   inputDateAformato,
   obtenerCopartes,
-  obtenerCopartesAdmin,
   obtenerFinanciadores,
   obtenerUsuariosCoparte,
 } from "@assets/utils/common"
@@ -468,7 +471,7 @@ const TablaMinistraciones = ({
   )
 }
 
-const Colaboradores = ({ colaboradores }) => {
+const Colaboradores = ({ colaboradores, id_responsable }) => {
   const { user } = useAuth()
   const router = useRouter()
   const idProyecto = Number(router.query.idP)
@@ -477,7 +480,7 @@ const Colaboradores = ({ colaboradores }) => {
     <div className="row mb-5">
       <div className="col-12 mb-3 d-flex justify-content-between">
         <h3 className="color1 mb-0">Colaboradores</h3>
-        {user.id_rol == 3 && (
+        {user.id == id_responsable && (
           <button
             type="button"
             className="btn btn-secondary"
@@ -551,7 +554,7 @@ const Colaboradores = ({ colaboradores }) => {
   )
 }
 
-const Proveedores = ({ proveedores }) => {
+const Proveedores = ({ proveedores, id_responsable }) => {
   const { user } = useAuth()
   const router = useRouter()
   const idProyecto = Number(router.query.idP)
@@ -560,7 +563,7 @@ const Proveedores = ({ proveedores }) => {
     <div className="row mb-5">
       <div className="col-12 mb-3 d-flex justify-content-between">
         <h3 className="color1 mb-0">Proveedores</h3>
-        {user.id_rol == 3 && (
+        {user.id == id_responsable && (
           <button
             type="button"
             className="btn btn-secondary"
@@ -628,7 +631,7 @@ const Proveedores = ({ proveedores }) => {
   )
 }
 
-const SolicitudesPresupuesto = ({ solicitudes }) => {
+const SolicitudesPresupuesto = ({ solicitudes, id_responsable }) => {
   const { user } = useAuth()
   const router = useRouter()
   const idProyecto = Number(router.query.idP)
@@ -637,7 +640,7 @@ const SolicitudesPresupuesto = ({ solicitudes }) => {
     <div className="row mb-5">
       <div className="col-12 mb-3 d-flex justify-content-between">
         <h3 className="color1 mb-0">Solicitudes de presupuesto</h3>
-        {user.id_rol == 3 && (
+        {user.id == id_responsable && (
           <button
             type="button"
             className="btn btn-secondary"
@@ -853,11 +856,11 @@ const FormaProyecto = () => {
     setIsLoading(true)
 
     try {
-      const reCopartes = idCoparte
-        ? obtenerCopartes(idCoparte)
-        : obtenerCopartesAdmin(user.id)
+      const queryCopartes: QueriesCoparte = idCoparte
+        ? { id: idCoparte }
+        : { id_admin: user.id }
 
-      const promesas = [obtenerFinanciadores(), reCopartes]
+      const promesas = [obtenerFinanciadores(), obtenerCopartes(queryCopartes)]
 
       if (modalidad === "EDITAR") {
         promesas.push(obtener())
@@ -908,14 +911,17 @@ const FormaProyecto = () => {
     } else {
       const usuariosCoparte = reUsCoDB.data as CoparteUsuarioMin[]
       setUsuariosCoparteDB(usuariosCoparte)
-      //setear al primer usuario de la lista
-      dispatch({
-        type: "HANDLE_CHANGE",
-        payload: {
-          name: "id_responsable",
-          value: usuariosCoparte[0].id_usuario,
-        },
-      })
+
+      if (modalidad === "CREAR") {
+        //setear al primer usuario de la lista
+        dispatch({
+          type: "HANDLE_CHANGE",
+          payload: {
+            name: "id_responsable",
+            value: usuariosCoparte[0].id_usuario,
+          },
+        })
+      }
     }
   }
 
@@ -1024,9 +1030,11 @@ const FormaProyecto = () => {
             <BtnBack navLink="/proyectos" />
             {!idProyecto && <h2 className="color1 mb-0">Registrar proyecto</h2>}
           </div>
-          {!modoEditar && idProyecto && user.id_rol == 2 && (
-            <BtnEditar onClick={() => setModoEditar(true)} />
-          )}
+          {!modoEditar &&
+            idProyecto &&
+            estadoForma.id_administrador == user.id && (
+              <BtnEditar onClick={() => setModoEditar(true)} />
+            )}
         </div>
       </div>
       <FormaContenedor onSubmit={handleSubmit}>
@@ -1193,10 +1201,17 @@ const FormaProyecto = () => {
       </FormaContenedor>
       {modalidad === "EDITAR" && (
         <>
-          <Colaboradores colaboradores={estadoForma.colaboradores} />
-          <Proveedores proveedores={estadoForma.proveedores} />
+          <Colaboradores
+            colaboradores={estadoForma.colaboradores}
+            id_responsable={estadoForma.id_responsable}
+          />
+          <Proveedores
+            proveedores={estadoForma.proveedores}
+            id_responsable={estadoForma.id_responsable}
+          />
           <SolicitudesPresupuesto
             solicitudes={estadoForma.solicitudes_presupuesto}
+            id_responsable={estadoForma.id_responsable}
           />
           <Notas notas={estadoForma.notas} refrescarNotas={refrescarNotas} />
         </>

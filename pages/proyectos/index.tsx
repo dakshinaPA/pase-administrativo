@@ -4,14 +4,18 @@ import { useRouter } from "next/router"
 import { Loader } from "@components/Loader"
 import { ModalEliminar } from "@components/ModalEliminar"
 import { TablaContenedor } from "@components/Contenedores"
-import { aMinuscula } from "@assets/utils/common"
+import {
+  aMinuscula,
+  obtenerCopartes,
+  obtenerProyectos,
+} from "@assets/utils/common"
 import { Proyecto } from "@models/proyecto.model"
 import { useAuth } from "@contexts/auth.context"
-import { CoparteMin } from "@models/coparte.model"
+import { CoparteMin, QueriesCoparte } from "@models/coparte.model"
 
 const Financiadores = () => {
   const { user } = useAuth()
-  if(!user) return null
+  if (!user) return null
   const router = useRouter()
   const [proyectosDB, setProyectosDB] = useState<Proyecto[]>([])
   const [copartesDB, setCopartesDB] = useState<CoparteMin[]>([])
@@ -42,13 +46,10 @@ const Financiadores = () => {
     try {
       //setear copartes para filtrar si es admin o superu usuario
       if (user.id_rol != 3) {
-        let url = "/copartes?min=true"
+        const queryCopartes: QueriesCoparte =
+          user.id_rol == 2 ? { id_admin: user.id } : {}
 
-        if (user.id_rol == 2) {
-          url += `&id_admin=${user.id}`
-        }
-
-        const reCopartes = await ApiCall.get(url)
+        const reCopartes = await obtenerCopartes(queryCopartes)
         if (reCopartes.error) throw reCopartes.data
 
         const resCopartes = reCopartes.data as CoparteMin[]
@@ -57,9 +58,10 @@ const Financiadores = () => {
         setSelectCoparte(resCopartes[0].id)
       } else {
         //cargar proyecto de usuario coparte
-        const reProyectos = await ApiCall.get(
-          `/proyectos?id_responsable=${user.id}`
-        )
+        const reProyectos = await obtenerProyectos({
+          id_responsable: user.id,
+          min: false,
+        })
         if (reProyectos.error) throw reProyectos.data
 
         setProyectosDB(reProyectos.data as Proyecto[])
@@ -72,7 +74,7 @@ const Financiadores = () => {
   }
 
   const cargarProyectosCoparte = async (id_coparte: number) => {
-    const reProyectos = await ApiCall.get(`/proyectos?id_coparte=${id_coparte}`)
+    const reProyectos = await obtenerProyectos({ id_coparte, min: false })
     if (reProyectos.error) {
       console.log(reProyectos.data)
     } else {
@@ -184,6 +186,7 @@ const Financiadores = () => {
                     id,
                     id_alt,
                     id_coparte,
+                    id_responsable,
                     financiador,
                     tipo_financiamiento,
                     f_monto_total,
@@ -214,7 +217,7 @@ const Financiadores = () => {
                           >
                             <i className="bi bi-eye-fill"></i>
                           </button>
-                          {user.id_rol == 3 && (
+                          {user.id == id_responsable  && (
                             <>
                               <button
                                 className="btn btn-dark btn-sm ms-1"

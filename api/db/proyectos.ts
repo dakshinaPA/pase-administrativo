@@ -5,15 +5,23 @@ import {
   MinistracionProyecto,
   RubroMinistracion,
   NotaProyecto,
+  QueriesProyecto,
 } from "@models/proyecto.model"
 import { fechaActualAEpoch } from "@assets/utils/common"
 
 class ProyectoDB {
-  static async obtenerVMin(id_proyecto?: number) {
+  static async obtenerVMin(queries: QueriesProyecto) {
+
+    const { id_responsable, id } = queries
+
     let query = `SELECT id, id_alt from proyectos WHERE b_activo=1`
 
-    if (id_proyecto) {
-      query += ` AND id=${id_proyecto}`
+    if (id) {
+      query += ` AND id=${id}`
+    }
+
+    if (id_responsable) {
+      query += ` AND id_responsable=${id_responsable}`
     }
 
     try {
@@ -32,7 +40,7 @@ class ProyectoDB {
     let query = `SELECT p.id, p.id_financiador, p.id_coparte, p.id_responsable, p.id_alt, p.id_tema_social,
       p.f_monto_total, p.i_tipo_financiamiento, p.i_beneficiados, p.dt_registro,
       f.nombre financiador,
-      c.nombre coparte,
+      c.nombre coparte, c.id_administrador,
       CONCAT(u.nombre, ' ', u.apellido_paterno) responsable,
       ts.nombre tema_social
       FROM proyectos p

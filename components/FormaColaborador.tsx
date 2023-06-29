@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useReducer, useState } from "react"
 import { useRouter } from "next/router"
 import { ChangeEvent } from "@assets/models/formEvents.model"
 import { ColaboradorProyecto, ProyectoMin } from "@models/proyecto.model"
@@ -9,12 +9,48 @@ import { ApiCall } from "@assets/utils/apiCalls"
 import { useCatalogos } from "@contexts/catalogos.context"
 import { BtnEditar } from "./Botones"
 import { useAuth } from "@contexts/auth.context"
+import { obtenerProyectos } from "@assets/utils/common"
+
+type ActionTypes = "CARGA_INICIAL" | "HANDLE_CHANGE" | "HANDLE_CHANGE_DIRECCION"
+
+interface ActionDispatch {
+  type: ActionTypes
+  payload: any
+}
+
+const reducer = (
+  state: ColaboradorProyecto,
+  action: ActionDispatch
+): ColaboradorProyecto => {
+  const { type, payload } = action
+
+  switch (type) {
+    case "CARGA_INICIAL":
+      return payload
+    case "HANDLE_CHANGE":
+      return {
+        ...state,
+        [payload.name]: payload.value,
+      }
+    case "HANDLE_CHANGE_DIRECCION":
+      return {
+        ...state,
+        direccion: {
+          ...state.direccion,
+          [payload.name]: payload.value,
+        },
+      }
+    default:
+      return state
+  }
+}
 
 const FormaColaborador = () => {
   const { user } = useAuth()
-  if(!user) return null
+  if (!user) return null
   const router = useRouter()
   const idProyecto = Number(router.query.id)
+  const idColaborador = Number(router.query.idC)
 
   const estadoInicialForma: ColaboradorProyecto = {
     id_proyecto: idProyecto || 0,
@@ -46,8 +82,7 @@ const FormaColaborador = () => {
   }
 
   const { estados, bancos } = useCatalogos()
-  const idColaborador = Number(router.query.idC)
-  const [estadoForma, setEstadoForma] = useState(estadoInicialForma)
+  const [estadoForma, dispatch] = useReducer(reducer, estadoInicialForma)
   const [proyectosDB, setProyectosDB] = useState<ProyectoMin[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [modoEditar, setModoEditar] = useState<boolean>(!idColaborador)
@@ -61,7 +96,7 @@ const FormaColaborador = () => {
     setIsLoading(true)
 
     try {
-      const promesas = [obtenerProyectos()]
+      const promesas = [obtenerProyectosDB()]
       if (modalidad === "EDITAR") {
         promesas.push(obtener())
       }
@@ -72,10 +107,26 @@ const FormaColaborador = () => {
         if (rc.error) throw rc.data
       }
 
-      setProyectosDB(resCombinadas[0].data as ProyectoMin[])
+      const proyectosDB = resCombinadas[0].data as ProyectoMin[]
+      setProyectosDB(proyectosDB)
+
+      if (!idProyecto) {
+        dispatch({
+          type: "HANDLE_CHANGE",
+          payload: {
+            name: "id_proyecto",
+            value: proyectosDB[0].id,
+          },
+        })
+      }
 
       if (modalidad === "EDITAR") {
-        setEstadoForma(resCombinadas[1].data[0] as ColaboradorProyecto)
+        const colaborador = resCombinadas[1].data[0] as ColaboradorProyecto
+
+        dispatch({
+          type: "CARGA_INICIAL",
+          payload: colaborador,
+        })
       }
     } catch (error) {
       console.log(error)
@@ -84,9 +135,10 @@ const FormaColaborador = () => {
     setIsLoading(false)
   }
 
-  const obtenerProyectos = async () => {
-    const url = `/proyectos/${idProyecto}?min=true`
-    return await ApiCall.get(url)
+  const obtenerProyectosDB = () => {
+    return idProyecto
+      ? obtenerProyectos({ id: idProyecto })
+      : obtenerProyectos({ id_responsable: user.id })
   }
 
   const obtener = async () => {
@@ -111,24 +163,12 @@ const FormaColaborador = () => {
     modalidad === "EDITAR" ? setModoEditar(false) : router.push("/proyectos")
   }
 
-  const handleChange = (ev: ChangeEvent) => {
+  const handleChange = (ev: ChangeEvent, type: ActionTypes) => {
     const { name, value } = ev.target
 
-    setEstadoForma({
-      ...estadoForma,
-      [name]: value,
-    })
-  }
-
-  const handleChangeDireccion = (ev: ChangeEvent) => {
-    const { name, value } = ev.target
-
-    setEstadoForma({
-      ...estadoForma,
-      direccion: {
-        ...estadoForma.direccion,
-        [name]: value,
-      },
+    dispatch({
+      type,
+      payload: { name, value },
     })
   }
 
@@ -147,7 +187,7 @@ const FormaColaborador = () => {
       if (modalidad === "CREAR") {
         router.push(
           //@ts-ignore
-          `/proyectos/${idProyecto}/colaboradores/${data.idInsertado}`
+          `/proyectos/${estadoForma.id_proyecto}/colaboradores/${data.idInsertado}`
         )
       } else {
         setModoEditar(false)
@@ -181,10 +221,10 @@ const FormaColaborador = () => {
               <label className="form-label">Proyecto</label>
               <select
                 className="form-control"
-                onChange={handleChange}
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
                 name="id_proyecto"
                 value={estadoForma.id_proyecto}
-                disabled
+                disabled={!!idProyecto}
               >
                 {proyectosDB.map(({ id, id_alt }) => (
                   <option key={id} value={id}>
@@ -202,7 +242,7 @@ const FormaColaborador = () => {
               <input
                 className="form-control"
                 type="text"
-                onChange={handleChange}
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
                 name="nombre"
                 value={estadoForma.nombre}
                 disabled={!modoEditar}
@@ -213,7 +253,7 @@ const FormaColaborador = () => {
               <input
                 className="form-control"
                 type="text"
-                onChange={handleChange}
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
                 name="apellido_paterno"
                 value={estadoForma.apellido_paterno}
                 disabled={!modoEditar}
@@ -224,7 +264,7 @@ const FormaColaborador = () => {
               <input
                 className="form-control"
                 type="text"
-                onChange={handleChange}
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
                 name="apellido_materno"
                 value={estadoForma.apellido_materno}
                 disabled={!modoEditar}
@@ -238,7 +278,7 @@ const FormaColaborador = () => {
               <label className="form-label">Tipo</label>
               <select
                 className="form-control"
-                onChange={handleChange}
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
                 name="i_tipo"
                 value={estadoForma.i_tipo}
                 disabled={!modoEditar}
@@ -252,7 +292,7 @@ const FormaColaborador = () => {
               <input
                 className="form-control"
                 type="text"
-                onChange={handleChange}
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
                 name="clabe"
                 value={estadoForma.clabe}
                 disabled={!modoEditar}
@@ -262,7 +302,7 @@ const FormaColaborador = () => {
               <label className="form-label">Banco</label>
               <select
                 className="form-control"
-                onChange={handleChange}
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
                 name="id_banco"
                 value={estadoForma.id_banco}
                 disabled={!modoEditar}
@@ -279,7 +319,7 @@ const FormaColaborador = () => {
               <input
                 className="form-control"
                 type="text"
-                onChange={handleChange}
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
                 name="f_monto_total"
                 value={estadoForma.f_monto_total}
                 disabled={!modoEditar}
@@ -294,7 +334,7 @@ const FormaColaborador = () => {
               <input
                 className="form-control"
                 type="text"
-                onChange={handleChange}
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
                 name="email"
                 value={estadoForma.email}
                 disabled={!modoEditar}
@@ -305,7 +345,7 @@ const FormaColaborador = () => {
               <input
                 className="form-control"
                 type="text"
-                onChange={handleChange}
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
                 name="telefono"
                 value={estadoForma.telefono}
                 disabled={!modoEditar}
@@ -316,7 +356,7 @@ const FormaColaborador = () => {
               <input
                 className="form-control"
                 type="text"
-                onChange={handleChange}
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
                 name="rfc"
                 value={estadoForma.rfc}
                 disabled={!modoEditar}
@@ -327,7 +367,7 @@ const FormaColaborador = () => {
               <input
                 className="form-control"
                 type="text"
-                onChange={handleChange}
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
                 name="curp"
                 value={estadoForma.curp}
                 disabled={!modoEditar}
@@ -338,7 +378,7 @@ const FormaColaborador = () => {
               <input
                 className="form-control"
                 type="text"
-                onChange={handleChange}
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
                 name="cp"
                 value={estadoForma.cp}
                 disabled={!modoEditar}
@@ -351,7 +391,7 @@ const FormaColaborador = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChange}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="nombre_servicio"
             value={estadoForma.nombre_servicio}
             disabled={!modoEditar}
@@ -362,7 +402,7 @@ const FormaColaborador = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChange}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="descripcion_servicio"
             value={estadoForma.descripcion_servicio}
             disabled={!modoEditar}
@@ -373,7 +413,7 @@ const FormaColaborador = () => {
           <input
             className="form-control"
             type="date"
-            onChange={handleChange}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="dt_inicio_servicio"
             value={estadoForma.dt_inicio_servicio}
             disabled={!modoEditar}
@@ -384,7 +424,7 @@ const FormaColaborador = () => {
           <input
             className="form-control"
             type="date"
-            onChange={handleChange}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="dt_fin_servicio"
             value={estadoForma.dt_fin_servicio}
             disabled={!modoEditar}
@@ -401,7 +441,7 @@ const FormaColaborador = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChangeDireccion}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE_DIRECCION")}
             name="calle"
             value={estadoForma.direccion.calle}
             disabled={!modoEditar}
@@ -412,7 +452,7 @@ const FormaColaborador = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChangeDireccion}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE_DIRECCION")}
             name="numero_ext"
             value={estadoForma.direccion.numero_ext}
             disabled={!modoEditar}
@@ -423,7 +463,7 @@ const FormaColaborador = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChangeDireccion}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE_DIRECCION")}
             name="numero_int"
             value={estadoForma.direccion.numero_int}
             disabled={!modoEditar}
@@ -434,7 +474,7 @@ const FormaColaborador = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChangeDireccion}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE_DIRECCION")}
             name="colonia"
             value={estadoForma.direccion.colonia}
             disabled={!modoEditar}
@@ -445,7 +485,7 @@ const FormaColaborador = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChangeDireccion}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE_DIRECCION")}
             name="municipio"
             value={estadoForma.direccion.municipio}
             disabled={!modoEditar}
@@ -456,7 +496,7 @@ const FormaColaborador = () => {
           <input
             className="form-control"
             type="text"
-            onChange={handleChangeDireccion}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE_DIRECCION")}
             name="cp"
             value={estadoForma.direccion.cp}
             disabled={!modoEditar}
@@ -466,7 +506,7 @@ const FormaColaborador = () => {
           <label className="form-label">Estado</label>
           <select
             className="form-control"
-            onChange={handleChangeDireccion}
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE_DIRECCION")}
             name="id_estado"
             value={estadoForma.direccion.id_estado}
             disabled={!modoEditar}

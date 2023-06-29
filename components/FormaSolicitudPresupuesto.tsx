@@ -5,7 +5,7 @@ import {
   ColaboradorProyecto,
   ProveedorProyecto,
   ProyectoMin,
-  RubroProyecto,
+  RubroMinistracion,
 } from "@models/proyecto.model"
 import { Loader } from "@components/Loader"
 import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
@@ -18,12 +18,12 @@ import {
   SolicitudPresupuesto,
 } from "@models/solicitud-presupuesto.model"
 import { useAuth } from "@contexts/auth.context"
-import { obtenerProyectosUsuario } from "@assets/utils/common"
+import { obtenerProyectos, obtenerProyectosUsuario } from "@assets/utils/common"
 
 interface ColaboradoresProyecto {
   colaboradores: ColaboradorProyecto[]
   proveedores: ProveedorProyecto[]
-  rubros_presupuestales: RubroProyecto[]
+  rubros_presupuestales: RubroMinistracion[]
 }
 
 const reducer = (state: SolicitudPresupuesto, action): SolicitudPresupuesto => {
@@ -108,7 +108,7 @@ const FormaSolicitudPresupuesto = () => {
 
     try {
       if (modalidad === "CREAR") {
-        const reProyectosUsuario = await obtenerProyectosUsuario(user.id)
+        const reProyectosUsuario = await obtenerProyectos({id_responsable: user.id})
         if (reProyectosUsuario.error) throw reProyectosUsuario.data
         const proyectosUsuarioDB = reProyectosUsuario.data as ProyectoMin[]
         setProyectosDB(proyectosUsuarioDB)

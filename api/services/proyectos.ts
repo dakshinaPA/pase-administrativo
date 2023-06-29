@@ -19,9 +19,9 @@ import { epochAFecha } from "@assets/utils/common"
 import { ResDB } from "@api/models/respuestas.model"
 
 class ProyectosServices {
-  static async obtenerVMin(id_proyecto?: number) {
+  static async obtenerVMin(queries: QueriesProyecto) {
     try {
-      const re = await ProyectoDB.obtenerVMin(id_proyecto)
+      const re = await ProyectoDB.obtenerVMin(queries)
       if (re.error) throw re.data
 
       return RespuestaController.exitosa(200, "Consulta exitosa", re.data)
@@ -50,7 +50,7 @@ class ProyectosServices {
   static async obtener(queries: QueriesProyecto) {
     const { id_coparte, id_responsable, id: id_proyecto, min } = queries
 
-    if (min) return await this.obtenerVMin(id_proyecto)
+    if (min) return await this.obtenerVMin(queries)
     try {
       const obtenerDB = await ProyectoDB.obtener(
         id_coparte,
@@ -68,6 +68,7 @@ class ProyectosServices {
             id_financiador,
             financiador,
             id_coparte,
+            id_administrador,
             coparte,
             id_responsable,
             responsable,
@@ -121,6 +122,7 @@ class ProyectosServices {
             financiador,
             id_coparte,
             coparte,
+            id_administrador,
             id_responsable,
             responsable,
             id_tema_social,

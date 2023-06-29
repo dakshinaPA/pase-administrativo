@@ -643,10 +643,10 @@ const FormaCoparte = () => {
                         <td>{id}</td>
                         <td>{id_alt}</td>
                         <td>{tipo_financiamiento}</td>
-                        <td>{financiador.nombre}</td>
+                        <td>{financiador}</td>
                         <td>{f_monto_total}</td>
                         <td>{i_beneficiados}</td>
-                        <td>{responsable.nombre}</td>
+                        <td>{responsable}</td>
                         <td>
                           <button
                             className="btn btn-dark btn-sm"

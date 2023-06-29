@@ -2,13 +2,13 @@ import { useEffect, useState, useReducer } from "react"
 import { useRouter } from "next/router"
 import { ChangeEvent } from "@assets/models/formEvents.model"
 import { Usuario } from "@models/usuario.model"
-import { CoparteMin } from "@models/coparte.model"
+import { CoparteMin, QueriesCoparte } from "@models/coparte.model"
 import { Loader } from "@components/Loader"
 import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
 import { BtnBack } from "@components/BtnBack"
 import { ApiCall, ApiCallRes } from "@assets/utils/apiCalls"
 import { BtnEditar } from "./Botones"
-import { obtenerCopartes, obtenerCopartesAdmin } from "@assets/utils/common"
+import { obtenerCopartes } from "@assets/utils/common"
 import { useAuth } from "@contexts/auth.context"
 
 type ActionTypes = "CARGA_INICIAL" | "HANDLE_CHANGE" | "HANDLE_CHANGE_COPARTE"
@@ -79,13 +79,12 @@ const FormaUsuario = () => {
       let reCopartes: Promise<ApiCallRes>
 
       if (idCoparte) {
-        reCopartes = obtenerCopartes(idCoparte)
+        reCopartes = obtenerCopartes({ id: idCoparte })
       } else {
-        if (user.id_rol == 2) {
-          reCopartes = obtenerCopartesAdmin(user.id)
-        } else {
-          reCopartes = obtenerCopartes()
-        }
+        const queryCopartes: QueriesCoparte =
+          user.id_rol == 2 ? { id_admin: user.id } : {}
+        
+          reCopartes = obtenerCopartes(queryCopartes)
       }
 
       const promesas = [reCopartes]

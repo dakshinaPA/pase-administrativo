@@ -4,12 +4,8 @@ import { useRouter } from "next/router"
 import { Loader } from "@components/Loader"
 import { ModalEliminar } from "@components/ModalEliminar"
 import { TablaContenedor } from "@components/Contenedores"
-import {
-  aMinuscula,
-  obtenerCopartes,
-  obtenerCopartesAdmin,
-} from "@assets/utils/common"
-import { Coparte } from "@models/coparte.model"
+import { aMinuscula, obtenerCopartes } from "@assets/utils/common"
+import { Coparte, QueriesCoparte } from "@models/coparte.model"
 import { useAuth } from "@contexts/auth.context"
 
 const Financiadores = () => {
@@ -34,10 +30,10 @@ const Financiadores = () => {
   const obtenerTodos = async () => {
     setIsLoading(true)
 
-    const { error, data, mensaje } =
-      user.id_rol == 2
-        ? await obtenerCopartesAdmin(user.id, false)
-        : await obtenerCopartes(0, false)
+    const queryCopartes: QueriesCoparte =
+      user.id_rol == 2 ? { id_admin: user.id, min: false } : { min: false }
+
+    const { error, data, mensaje } = await obtenerCopartes(queryCopartes)
 
     if (error) {
       console.log(data)

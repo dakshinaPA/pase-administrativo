@@ -1,4 +1,6 @@
+import { QueriesProyecto } from "@models/proyecto.model"
 import { ApiCall } from "./apiCalls"
+import { QueriesCoparte } from "@models/coparte.model"
 
 const determinarNombreArchivo = (archivo) => {
   if (!archivo) {
@@ -39,25 +41,21 @@ const fechaActualAEpoch = () => {
   return fechaEpoch
 }
 
-const obtenerCopartesAdmin = async (id_admin: number, min = true) => {
-  let url = `/copartes?id_admin=${id_admin}`
-  if (min) {
-    url += "&min=true"
-  }
-  return await ApiCall.get(url)
-}
+const obtenerCopartes = async (queries: QueriesCoparte) => {
+  const { id, id_admin, min = true } = queries
 
-const obtenerCopartes = async (id_coparte?: number, min = true) => {
   let url = "/copartes"
 
-  if (id_coparte) {
-    url += `/${id_coparte}`
+  if (id) {
+    url += `/${id}`
+  } else if (id_admin) {
+    url += `?id_admin=${id_admin}`
   }
 
   if (min) {
-    url += "?min=true"
+    url += `${id_admin ? "&" : "?"}min=true`
   }
-  return await ApiCall.get(url)
+  return ApiCall.get(url)
 }
 
 const obtenerFinanciadores = async (min = true) => {
@@ -65,15 +63,29 @@ const obtenerFinanciadores = async (min = true) => {
   if (min) {
     url += "?min=true"
   }
-  return await ApiCall.get(url)
+  return ApiCall.get(url)
 }
 
-const obtenerProyectosUsuario = async (id_responsable: number, min = true) => {
-  let url = `/proyectos?id_responsable=${id_responsable}`
-  if (min) {
-    url += "&min=true"
+const obtenerProyectos = (queries: QueriesProyecto) => {
+  const { id, id_coparte, id_responsable, min = true } = queries
+  let url = `/proyectos`
+
+  if (id) {
+    url += `/${id}`
+  } else if (id_coparte) {
+    url += `?id_coparte=${id_coparte}`
+  } else if (id_responsable) {
+    url += `?id_responsable=${id_responsable}`
   }
-  return await ApiCall.get(url)
+
+  if (min) {
+    if (id) {
+      url += "?min=true"
+    } else {
+      url += "&min=true"
+    }
+  }
+  return ApiCall.get(url)
 }
 
 const obtenerUsuariosCoparte = async (id_coparte: number, min = true) => {
@@ -81,7 +93,7 @@ const obtenerUsuariosCoparte = async (id_coparte: number, min = true) => {
   if (min) {
     url += "?min=true"
   }
-  return await ApiCall.get(url)
+  return ApiCall.get(url)
 }
 
 const obtenerUsuariosXRol = async (id_rol: number, min = true) => {
@@ -89,7 +101,7 @@ const obtenerUsuariosXRol = async (id_rol: number, min = true) => {
   if (min) {
     url += "&min=true"
   }
-  return await ApiCall.get(url)
+  return ApiCall.get(url)
 }
 
 const estadosRepublica = [
@@ -134,10 +146,9 @@ export {
   epochAFecha,
   fechaActualAEpoch,
   inputDateAformato,
-  obtenerCopartesAdmin,
   obtenerFinanciadores,
   obtenerCopartes,
-  obtenerProyectosUsuario,
   obtenerUsuariosCoparte,
-  obtenerUsuariosXRol
+  obtenerUsuariosXRol,
+  obtenerProyectos,
 }

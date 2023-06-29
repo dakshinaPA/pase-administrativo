@@ -90,6 +90,7 @@ export interface Proyecto extends ProyectoMin {
   financiador?: string
   id_coparte: number
   coparte?: string
+  id_administrador?: number
   id_responsable: number
   responsable?: string
   id_tema_social: number
