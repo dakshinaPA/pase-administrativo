@@ -112,6 +112,18 @@ const obtenerProveedores = (id_proyecto?: number, id?: number) => {
   return ApiCall.get(url)
 }
 
+const obtenerSolicitudes = (id_proyecto?: number, id?: number) => {
+  let url = ""
+
+  if (id) {
+    url = `/solicitudes-presupuesto/${id}`
+  } else if (id_proyecto) {
+    url = `/proyectos/${id_proyecto}/solicitudes-presupuesto`
+  }
+
+  return ApiCall.get(url)
+}
+
 const obtenerUsuariosCoparte = async (id_coparte: number, min = true) => {
   let url = `/copartes/${id_coparte}/usuarios`
   if (min) {
@@ -177,4 +189,5 @@ export {
   obtenerProyectos,
   obtenerColaboradores,
   obtenerProveedores,
+  obtenerSolicitudes
 }

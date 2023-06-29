@@ -5,6 +5,7 @@ import {
   ColaboradorProyecto,
   ProveedorProyecto,
   ProyectoMin,
+  QueriesProyecto,
   RubroMinistracion,
 } from "@models/proyecto.model"
 import { Loader } from "@components/Loader"
@@ -18,7 +19,7 @@ import {
   SolicitudPresupuesto,
 } from "@models/solicitud-presupuesto.model"
 import { useAuth } from "@contexts/auth.context"
-import { obtenerProyectos, obtenerProyectosUsuario } from "@assets/utils/common"
+import { obtenerProyectos, obtenerSolicitudes } from "@assets/utils/common"
 
 interface ColaboradoresProyecto {
   colaboradores: ColaboradorProyecto[]
@@ -26,25 +27,39 @@ interface ColaboradoresProyecto {
   rubros_presupuestales: RubroMinistracion[]
 }
 
-const reducer = (state: SolicitudPresupuesto, action): SolicitudPresupuesto => {
-  const { type, value } = action
+type ActionTypes =
+  | "CARGA_INICIAL"
+  | "HANDLE_CHANGE"
+  | "AGREGAR_FACTURA"
+  | "QUITAR_FACTURA"
+
+interface ActionDispatch {
+  type: ActionTypes
+  payload: any
+}
+
+const reducer = (
+  state: SolicitudPresupuesto,
+  action: ActionDispatch
+): SolicitudPresupuesto => {
+  const { type, payload } = action
 
   switch (type) {
-    case "CARGAR_DATA":
-      return value
+    case "CARGA_INICIAL":
+      return payload
     case "HANDLE_CHANGE":
       return {
         ...state,
-        [value[0]]: value[1],
+        [payload.name]: payload.value,
       }
     case "AGREGAR_FACTURA":
       return {
         ...state,
-        comprobantes: [...state.comprobantes, value],
+        comprobantes: [...state.comprobantes, payload],
       }
     case "QUITAR_FACTURA":
       const comprobantesFiltrados = state.comprobantes.filter(
-        (comp) => comp.folio_fiscal !== value
+        (comp) => comp.folio_fiscal !== payload
       )
 
       return {
@@ -97,33 +112,40 @@ const FormaSolicitudPresupuesto = () => {
     cargarData()
   }, [])
 
-  useEffect(() => {
-    if (estadoForma.id_proyecto) {
-      cargarDataProyecto(estadoForma.id_proyecto)
-    }
-  }, [estadoForma.id_proyecto])
-
   const cargarData = async () => {
     setIsLoading(true)
 
     try {
-      if (modalidad === "CREAR") {
-        const reProyectosUsuario = await obtenerProyectos({id_responsable: user.id})
-        if (reProyectosUsuario.error) throw reProyectosUsuario.data
-        const proyectosUsuarioDB = reProyectosUsuario.data as ProyectoMin[]
-        setProyectosDB(proyectosUsuarioDB)
-        //cambiar el id proyecto por default al primero de la lista
+      const promesas = [obtenerProyectosDB()]
+      if (modalidad === "EDITAR") {
+        promesas.push(obtenerSolicitudes(null, idSolicitud))
+      }
+
+      const resCombinadas = await Promise.all(promesas)
+
+      for (const rc of resCombinadas) {
+        if (rc.error) throw rc.data
+      }
+
+      const proyectosDB = resCombinadas[0].data as ProyectoMin[]
+      setProyectosDB(proyectosDB)
+
+      if (!idProyecto) {
         dispatch({
           type: "HANDLE_CHANGE",
-          value: ["id_proyecto", idProyecto || proyectosUsuarioDB[0].id],
+          payload: {
+            name: "id_proyecto",
+            value: proyectosDB[0].id,
+          },
         })
-      } else {
-        const reSolicitud = await obtener()
-        if (reSolicitud.error) throw reSolicitud.data
-        const solicitud = reSolicitud.data[0] as SolicitudPresupuesto
+      }
+
+      if (modalidad === "EDITAR") {
+        const solicitud = resCombinadas[1].data[0] as SolicitudPresupuesto
+
         dispatch({
-          type: "CARGAR_DATA",
-          value: solicitud,
+          type: "CARGA_INICIAL",
+          payload: solicitud,
         })
       }
     } catch (error) {
@@ -133,55 +155,32 @@ const FormaSolicitudPresupuesto = () => {
     setIsLoading(false)
   }
 
-  const cargarDataProyecto = async (id_proyecto: number) => {
-    const reDataProyecto = await ApiCall.get(`/proyectos/${id_proyecto}/data`)
+  const obtenerProyectosDB = () => {
+    const queryProyectos: QueriesProyecto = idProyecto
+      ? { id: idProyecto }
+      : { id_responsable: user.id }
 
-    if (reDataProyecto.error) {
-      console.log(reDataProyecto.data)
-    } else {
-      const dataProyecto = reDataProyecto.data as ColaboradoresProyecto
-      setDataProyecto(dataProyecto)
-      if (modalidad === "CREAR") {
-        //elegir el primer rubro por default
-        dispatch({
-          type: "HANDLE_CHANGE",
-          value: [
-            "id_partida_presupuestal",
-            dataProyecto.rubros_presupuestales[0].id_rubro,
-          ],
-        })
-      }
-    }
-  }
-
-  const obtener = async () => {
-    const res = await ApiCall.get(`/solicitudes-presupuesto/${idSolicitud}`)
-    return res
+    return obtenerProyectos(queryProyectos)
   }
 
   const registrar = async () => {
-    const res = await ApiCall.post("/solicitudes-presupuesto", estadoForma)
-    return res
+    return ApiCall.post("/solicitudes-presupuesto", estadoForma)
   }
 
   const editar = async () => {
-    const res = await ApiCall.put(
-      `/solicitudes-presupuesto/${idSolicitud}`,
-      estadoForma
-    )
-    return res
+    return ApiCall.put(`/solicitudes-presupuesto/${idSolicitud}`, estadoForma)
   }
 
   const cancelar = () => {
     modalidad === "EDITAR" ? setModoEditar(false) : router.back()
   }
 
-  const handleChange = (ev: ChangeEvent, type: string) => {
+  const handleChange = (ev: ChangeEvent, type: ActionTypes) => {
     const { name, value } = ev.target
 
     dispatch({
       type,
-      value: [name, value],
+      payload: { name, value },
     })
   }
 
@@ -224,7 +223,7 @@ const FormaSolicitudPresupuesto = () => {
 
       dispatch({
         type: "AGREGAR_FACTURA",
-        value: dataComprobante,
+        payload: dataComprobante,
       })
     }
 
@@ -234,13 +233,15 @@ const FormaSolicitudPresupuesto = () => {
   const quitarFactura = (folio: string) => {
     dispatch({
       type: "QUITAR_FACTURA",
-      value: folio,
+      payload: folio,
     })
   }
 
   const handleSubmit = async (ev: React.SyntheticEvent) => {
     ev.preventDefault()
     console.log(estadoForma)
+
+    return
 
     setIsLoading(true)
     const { error, data, mensaje } =

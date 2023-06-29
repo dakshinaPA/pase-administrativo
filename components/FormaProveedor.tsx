@@ -1,7 +1,7 @@
 import { useEffect, useReducer, useState } from "react"
 import { useRouter } from "next/router"
 import { ChangeEvent } from "@assets/models/formEvents.model"
-import { ProveedorProyecto, ProyectoMin } from "@models/proyecto.model"
+import { ProveedorProyecto, ProyectoMin, QueriesProyecto } from "@models/proyecto.model"
 import { Loader } from "@components/Loader"
 import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
 import { BtnBack } from "@components/BtnBack"
@@ -9,7 +9,7 @@ import { ApiCall } from "@assets/utils/apiCalls"
 import { useCatalogos } from "@contexts/catalogos.context"
 import { BtnEditar } from "./Botones"
 import { useAuth } from "@contexts/auth.context"
-import { obtenerProyectos } from "@assets/utils/common"
+import { obtenerProveedores, obtenerProyectos } from "@assets/utils/common"
 
 type ActionTypes = "CARGA_INICIAL" | "HANDLE_CHANGE" | "HANDLE_CHANGE_DIRECCION"
 
@@ -90,7 +90,7 @@ const FormaProveedor = () => {
     try {
       const promesas = [obtenerProyectosDB()]
       if (modalidad === "EDITAR") {
-        promesas.push(obtener())
+        promesas.push(obtenerProveedores(null, idProveedor))
       }
 
       const resCombinadas = await Promise.all(promesas)
@@ -128,24 +128,20 @@ const FormaProveedor = () => {
   }
 
   const obtenerProyectosDB = () => {
-    return idProyecto
-      ? obtenerProyectos({ id: idProyecto })
-      : obtenerProyectos({ id_responsable: user.id })
+    const queryProyectos: QueriesProyecto = idProyecto
+      ? { id: idProyecto }
+      : { id_responsable: user.id }
+
+    return obtenerProyectos(queryProyectos)
   }
 
-  const obtener = async () => {
-    const res = await ApiCall.get(`/proveedores/${idProveedor}`)
-    return res
-  }
 
   const registrar = async () => {
-    const res = await ApiCall.post("/proveedores", estadoForma)
-    return res
+    return ApiCall.post("/proveedores", estadoForma)
   }
 
   const editar = async () => {
-    const res = await ApiCall.put(`/proveedores/${idProveedor}`, estadoForma)
-    return res
+    return ApiCall.put(`/proveedores/${idProveedor}`, estadoForma)
   }
 
   const cancelar = () => {
@@ -164,8 +160,6 @@ const FormaProveedor = () => {
   const handleSubmit = async (ev: React.SyntheticEvent) => {
     ev.preventDefault()
     console.log(estadoForma)
-
-    return
 
     setIsLoading(true)
     const { error, data, mensaje } =

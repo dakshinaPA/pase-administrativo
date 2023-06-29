@@ -4,70 +4,62 @@ import { useRouter } from "next/router"
 import { Loader } from "@components/Loader"
 import { TablaContenedor } from "@components/Contenedores"
 import { ModalEliminar } from "@components/ModalEliminar"
-import { aMinuscula } from "@assets/utils/common"
+import {
+  aMinuscula,
+  obtenerProyectos,
+  obtenerSolicitudes,
+} from "@assets/utils/common"
 import { useAuth } from "@contexts/auth.context"
 import { ProyectoMin } from "@models/proyecto.model"
 import { SolicitudPresupuesto } from "@models/solicitud-presupuesto.model"
 
-const Colaboradores = () => {
+const SolicitudesPresupuesto = () => {
   const { user } = useAuth()
   if (!user) return null
   const router = useRouter()
-  // const [proyectosDB, setProyectosDB] = useState<ProyectoMin[]>([])
+  const [proyectosDB, setProyectosDB] = useState<ProyectoMin[]>([])
   const [solicitudesDB, setSolicitudesDB] = useState<SolicitudPresupuesto[]>([])
-  // const [usuariosDB, setUsuariosDB] = useState<Usuario[]>([])
-  const [solicitudAEliminar, setSolicitudAEliminar] = useState<number>(0)
+  const [solicitudAeliminar, setSolicitudAEliminar] = useState<number>(0)
+  const [selectProyecto, setSelectProyecto] = useState(0)
   const [showModalEliminar, setShowModalEliminar] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [inputBusqueda, setInputBusqueda] = useState<string>("")
-  // const [rolUsuarioSelect, setRolUsuarioSelect] = useState<number>(3)
-  // const [proyectosSelect, setProyectosSelect] = useState<number>(0)
 
   useEffect(() => {
-    // obtenerCopartesDB()
-    // cargarProyectosUsuario()
-    cargarSolicitudesUsuario()
+    cargarProyectosUsuario()
   }, [])
 
-  // useEffect(() => {
-  //   if(rolUsuarioSelect != 3 || coparteSelect){
-  //     obtenerUsuarios()
-  //   }
-  // }, [rolUsuarioSelect, coparteSelect])
+  useEffect(() => {
+    cargarSolicitudes()
+  }, [selectProyecto])
 
-  const cargarSolicitudesUsuario = async () => {
-    const reSolicitudesUsuario = await ApiCall.get(
-      `/solicitudes-presupuesto?id_usuario=${user.id}`
-    )
-
-    if (reSolicitudesUsuario.error) {
-      console.log(reSolicitudesUsuario.data)
+  const cargarProyectosUsuario = async () => {
+    const reProyectos = await obtenerProyectos({ id_responsable: user.id })
+    if (reProyectos.error) {
+      console.log(reProyectos.data)
     } else {
-      const solicitudesDB = reSolicitudesUsuario.data as SolicitudPresupuesto[]
+      const proyectos = reProyectos.data as ProyectoMin[]
+      setProyectosDB(proyectos)
+      setSelectProyecto(proyectos[0].id)
+    }
+  }
+
+  const cargarSolicitudes = async () => {
+    if (!selectProyecto) return
+
+    const reSolicitudes = await obtenerSolicitudes(selectProyecto)
+    if (reSolicitudes.error) {
+      console.log(reSolicitudes.data)
+    } else {
+      const solicitudesDB = reSolicitudes.data as SolicitudPresupuesto[]
       setSolicitudesDB(solicitudesDB)
     }
   }
 
-  // const cargarProyectosUsuario = async () => {
-  //   const reProyectosUsuario = await ApiCall.get(`/proyectos?id_usuario=${user.id}`)
-
-  //   if(reProyectosUsuario.error){
-  //     console.log(reProyectosUsuario.data)
-  //   } else {
-  //     const proyectosDB = reProyectosUsuario.data as ProyectoMin[]
-  //     setProyectosDB(proyectosDB)
-  //     setProyectosSelect(proyectosDB[0].id)
-  //   }
-  // }
-
-  const abrirModalEliminarUsuario = (id: number) => {
+  const abrirModalEliminarSolicitud = (id: number) => {
     setSolicitudAEliminar(id)
     setShowModalEliminar(true)
   }
-
-  // const obtnerSolicitudesProyecto = async (id_proyecto: number) => {
-  //   return await ApiCall.get(`/solicitudes-presupuesto?${id_proyecto}`)
-  // }
 
   const eliminarSolicitud = async () => {
     setSolicitudAEliminar(0)
@@ -75,41 +67,38 @@ const Colaboradores = () => {
     setIsLoading(true)
 
     const { error, data, mensaje } = await ApiCall.delete(
-      `/solicitudes-presupuesto/${solicitudAEliminar}`
+      `/solicitudes-presupuesto/${solicitudAeliminar}`
     )
 
     if (error) {
-      console.log(error)
+      console.log(data)
     } else {
-      // await obtenerUsuarios()
+      await cargarSolicitudes()
     }
 
     setIsLoading(false)
   }
 
-  const cancelarEliminarUsuario = () => {
+  const cancelarEliminarSolicitud = () => {
     setSolicitudAEliminar(0)
     setShowModalEliminar(false)
   }
 
-  // const usuariosFiltrados = solicitudesDB.filter(
-  //   ({  }) => {
-  //     const query = inputBusqueda.toLocaleLowerCase()
-  //     return (
-  //       aMinuscula(nombre).includes(query) ||
-  //       aMinuscula(apellido_paterno).includes(query) ||
-  //       aMinuscula(apellido_materno).includes(query) ||
-  //       aMinuscula(email).includes(query)
-  //     )
-  //   }
-  // )
+  // const solicitudesFiltradass = solicitudesDB.filter(({  }) => {
+  //   const query = inputBusqueda.toLocaleLowerCase()
+  //   return (
+  //     aMinuscula(nombre).includes(query) || aMinuscula(email).includes(query)
+  //   )
+  // })
 
-  const determinarNombreSolicitudAEliminar = (): string => {
-    const solicitud = solicitudesDB.find(
-      (solicitud) => solicitud.id === solicitudAEliminar
-    )
-    return solicitud ? String(solicitud.id) : ""
-  }
+  // const determinarNombreProveedorAEliminar = (): string => {
+  //   const proveedorMatch = solicitudesDB.find(
+  //     (solicitud) => solicitud.id === solicitudAeliminar
+  //   )
+  //   return proveedorMatch
+  //     ? `${proveedorMatch.nombre} ${proveedorMatch.nombre}`
+  //     : ""
+  // }
 
   return (
     <TablaContenedor>
@@ -123,18 +112,21 @@ const Colaboradores = () => {
             Registrar +
           </button>
         </div>
-        {/* <div className="col-12 col-md-6 col-lg-2 mb-3">
+        <div className="col-12 col-md-6 col-lg-2 mb-3">
           <select
             className="form-control"
-            onChange={handleCambioRol}
-            value={rolUsuarioSelect}
-            disabled={user.id_rol == 2}
+            onChange={({ target: { value } }) =>
+              setSelectProyecto(Number(value))
+            }
+            value={selectProyecto}
           >
-            <option value="1">Super Usuario</option>
-            <option value="2">Administrador</option>
-            <option value="3">Coparte</option>
+            {proyectosDB.map(({ id, id_alt }) => (
+              <option key={id} value={id}>
+                {id_alt}
+              </option>
+            ))}
           </select>
-        </div> */}
+        </div>
         <div className="d-none d-lg-block col mb-3"></div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <div className="input-group">
@@ -161,10 +153,12 @@ const Colaboradores = () => {
               <thead>
                 <tr>
                   <th>#id</th>
-                  <th>Proyecto</th>
                   <th>Tipo de gasto</th>
+                  <th>CLABE</th>
+                  <th>Banco</th>
+                  <th>Proveedor</th>
+                  <th>Descripción</th>
                   <th>Partida presupuestal</th>
-                  <th>Descricpión del gasto</th>
                   <th>Importe</th>
                   <th>Estatus</th>
                   <th>Acciones</th>
@@ -175,21 +169,25 @@ const Colaboradores = () => {
                   const {
                     id,
                     id_proyecto,
-                    proyecto,
                     tipo_gasto,
-                    rubro,
+                    clabe,
+                    banco,
+                    proveedor,
                     descripcion_gasto,
+                    rubro,
                     f_importe,
-                    estatus,
+                    estatus
                   } = solicitud
 
                   return (
                     <tr key={id}>
                       <td>{id}</td>
-                      <td>{proyecto}</td>
                       <td>{tipo_gasto}</td>
-                      <td>{rubro}</td>
+                      <td>{clabe}</td>
+                      <td>{banco}</td>
+                      <td>{proveedor}</td>
                       <td>{descripcion_gasto}</td>
+                      <td>{rubro}</td>
                       <td>{f_importe}</td>
                       <td>{estatus}</td>
                       <td>
@@ -197,19 +195,20 @@ const Colaboradores = () => {
                           <button
                             className="btn btn-dark btn-sm me-1"
                             onClick={() =>
-                              router.push(`/proyectos/${id_proyecto}/solicitudes-presupuesto/${id}`)
+                              router.push(
+                                `/proyectos/${id_proyecto}/solicitudes-presupuesto/${id}`
+                              )
                             }
                           >
                             <i className="bi bi-eye-fill"></i>
                           </button>
-                          {user.id_rol == 1 && (
-                            <button
-                              className="btn btn-dark btn-sm"
-                              onClick={() => abrirModalEliminarUsuario(id)}
-                            >
-                              <i className="bi bi-x-circle"></i>
-                            </button>
-                          )}
+
+                          <button
+                            className="btn btn-dark btn-sm"
+                            onClick={() => abrirModalEliminarSolicitud(id)}
+                          >
+                            <i className="bi bi-x-circle"></i>
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -223,15 +222,14 @@ const Colaboradores = () => {
       <ModalEliminar
         show={showModalEliminar}
         aceptar={eliminarSolicitud}
-        cancelar={cancelarEliminarUsuario}
+        cancelar={cancelarEliminarSolicitud}
       >
         <p className="mb-0">
-          ¿Estás segur@ de eliminar al usuario{" "}
-          {determinarNombreSolicitudAEliminar()}?
+          ¿Estás segur@ de eliminar la solicitud {solicitudAeliminar}?
         </p>
       </ModalEliminar>
     </TablaContenedor>
   )
 }
 
-export default Colaboradores
+export default SolicitudesPresupuesto

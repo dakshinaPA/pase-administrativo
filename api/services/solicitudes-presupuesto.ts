@@ -58,6 +58,7 @@ class SolicitudesPresupuestoServices {
             i_tipo_gasto,
             clabe,
             id_banco,
+            banco,
             titular_cuenta,
             rfc_titular,
             email_titular,
@@ -82,12 +83,13 @@ class SolicitudesPresupuestoServices {
 
           return {
             id,
-            i_tipo_gasto,
-            tipo_gasto: this.obtenerTipoGasto(i_tipo_gasto),
             id_proyecto,
             proyecto,
+            i_tipo_gasto,
+            tipo_gasto: this.obtenerTipoGasto(i_tipo_gasto),
             clabe,
             id_banco,
+            banco,
             titular: titular_cuenta,
             rfc: rfc_titular,
             email: email_titular,

@@ -90,8 +90,6 @@ const Proveedores = () => {
       const query = inputBusqueda.toLocaleLowerCase()
       return (
         aMinuscula(nombre).includes(query) ||
-        // aMinuscula(apellido_paterno).includes(query) ||
-        // aMinuscula(apellido_materno).includes(query) ||
         aMinuscula(email).includes(query)
       )
     }

@@ -10,6 +10,7 @@ export interface ResSolicitudPresupuestoDB {
   i_tipo_gasto: TipoGastoSolicitud
   clabe: string
   id_banco: number
+  banco: string
   titular_cuenta: string
   rfc_titular: string
   email_titular: string

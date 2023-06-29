@@ -14,9 +14,11 @@ class SolicitudesPresupuestoDB {
     let query = `SELECT sp.id, sp.id_proyecto, sp.i_tipo_gasto, sp.clabe, sp.id_banco, sp.titular_cuenta, sp.rfc_titular,
     sp.email_titular, sp.proveedor, sp.descripcion_gasto, sp.id_partida_presupuestal, sp.f_importe, sp.i_estatus, sp.dt_registro,
     p.id_alt proyecto,
+    b.nombre banco,
     r.nombre rubro
     FROM solicitudes_presupuesto sp
     JOIN proyectos p ON sp.id_proyecto=p.id
+    JOIN bancos b ON sp.id_banco=b.id
     JOIN rubros_presupuestales r ON sp.id_partida_presupuestal=r.id
     WHERE sp.b_activo=1`
 

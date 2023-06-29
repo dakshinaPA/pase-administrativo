@@ -37,6 +37,7 @@ export interface SolicitudPresupuesto {
   titular: string
   clabe: string
   id_banco: number
+  banco?: string
   rfc: string
   email: string
   comprobantes?: ComprobanteSolicitud[]

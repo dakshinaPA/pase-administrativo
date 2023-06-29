@@ -1,7 +1,11 @@
 import { useEffect, useReducer, useState } from "react"
 import { useRouter } from "next/router"
 import { ChangeEvent } from "@assets/models/formEvents.model"
-import { ColaboradorProyecto, ProyectoMin } from "@models/proyecto.model"
+import {
+  ColaboradorProyecto,
+  ProyectoMin,
+  QueriesProyecto,
+} from "@models/proyecto.model"
 import { Loader } from "@components/Loader"
 import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
 import { BtnBack } from "@components/BtnBack"
@@ -9,7 +13,7 @@ import { ApiCall } from "@assets/utils/apiCalls"
 import { useCatalogos } from "@contexts/catalogos.context"
 import { BtnEditar } from "./Botones"
 import { useAuth } from "@contexts/auth.context"
-import { obtenerProyectos } from "@assets/utils/common"
+import { obtenerColaboradores, obtenerProyectos } from "@assets/utils/common"
 
 type ActionTypes = "CARGA_INICIAL" | "HANDLE_CHANGE" | "HANDLE_CHANGE_DIRECCION"
 
@@ -98,7 +102,7 @@ const FormaColaborador = () => {
     try {
       const promesas = [obtenerProyectosDB()]
       if (modalidad === "EDITAR") {
-        promesas.push(obtener())
+        promesas.push(obtenerColaboradores(null, idColaborador))
       }
 
       const resCombinadas = await Promise.all(promesas)
@@ -136,27 +140,19 @@ const FormaColaborador = () => {
   }
 
   const obtenerProyectosDB = () => {
-    return idProyecto
-      ? obtenerProyectos({ id: idProyecto })
-      : obtenerProyectos({ id_responsable: user.id })
-  }
+    const queryProyectos: QueriesProyecto = idProyecto
+      ? { id: idProyecto }
+      : { id_responsable: user.id }
 
-  const obtener = async () => {
-    const res = await ApiCall.get(`/colaboradores/${idColaborador}`)
-    return res
+    return obtenerProyectos(queryProyectos)
   }
 
   const registrar = async () => {
-    const res = await ApiCall.post("/colaboradores", estadoForma)
-    return res
+    return ApiCall.post("/colaboradores", estadoForma)
   }
 
   const editar = async () => {
-    const res = await ApiCall.put(
-      `/colaboradores/${idColaborador}`,
-      estadoForma
-    )
-    return res
+    return ApiCall.put(`/colaboradores/${idColaborador}`, estadoForma)
   }
 
   const cancelar = () => {
