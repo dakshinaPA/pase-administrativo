@@ -49,7 +49,7 @@ const Usuarios = () => {
 
       if (rolUsuarioSelect == 3) {
         if (coparteSelect > 0) {
-          const reUsuarios = await obtenerUsuariosCoparte(coparteSelect)
+          const reUsuarios = await obtenerUsuariosCoparte(coparteSelect, false)
           if (reUsuarios.error) throw reUsuarios.data
 
           const usuariosCoparte = reUsuarios.data as CoparteUsuario[]

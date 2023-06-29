@@ -71,6 +71,15 @@ export interface MinistracionProyecto {
   dt_registro?: string
 }
 
+export interface NotaProyecto {
+  id?: number
+  id_proyecto: number
+  id_usuario: number
+  mensaje: string
+  usuario?: string
+  dt_registro: string
+}
+
 export interface ProyectoMin {
   id?: number
   id_alt: string
@@ -94,4 +103,5 @@ export interface Proyecto extends ProyectoMin {
   colaboradores?: ColaboradorProyecto[]
   proveedores?: ProveedorProyecto[]
   solicitudes_presupuesto?: SolicitudPresupuesto[]
+  notas?: NotaProyecto[]
 }

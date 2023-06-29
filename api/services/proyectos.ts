@@ -11,6 +11,7 @@ import {
   ProyectoMin,
   QueriesProyecto,
   RubroMinistracion,
+  NotaProyecto,
 } from "@models/proyecto.model"
 import { SolicitudPresupuesto } from "@models/solicitud-presupuesto.model"
 import { ResProyectoDB } from "@api/models/proyecto.model"
@@ -83,6 +84,7 @@ class ProyectosServices {
           let colaboradores: ColaboradorProyecto[] = null
           let proveedores: ProveedorProyecto[] = null
           let solicitudes: SolicitudPresupuesto[] = null
+          let notas: NotaProyecto[] = null
 
           if (id_proyecto) {
             const reColaboradores = ColaboradorServices.obtener(id_proyecto)
@@ -91,12 +93,14 @@ class ProyectosServices {
             const reSolicitudes = SolicitudesPresupuestoServices.obtener({
               id_proyecto,
             })
+            const reNotas = this.obtenerNotas(id_proyecto)
 
             const resCombinadas = await Promise.all([
               reColaboradores,
               reProveedores,
               reMinistraciones,
               reSolicitudes,
+              reNotas
             ])
 
             for (const rc of resCombinadas) {
@@ -107,6 +111,7 @@ class ProyectosServices {
             proveedores = resCombinadas[1].data as ProveedorProyecto[]
             ministraciones = resCombinadas[2].data as MinistracionProyecto[]
             solicitudes = resCombinadas[3].data as SolicitudPresupuesto[]
+            notas = resCombinadas[4].data as NotaProyecto[]
           }
 
           return {
@@ -132,6 +137,7 @@ class ProyectosServices {
             colaboradores,
             proveedores,
             solicitudes_presupuesto: solicitudes,
+            notas
           }
         })
       )
@@ -316,6 +322,53 @@ class ProyectosServices {
       200,
       "Proyecto borrado con éxito",
       dl.data
+    )
+  }
+
+  static async obtenerNotas(id_proyecto: number) {
+    const re = await ProyectoDB.obtenerNotas(id_proyecto)
+
+    if (re.error) {
+      return RespuestaController.fallida(
+        400,
+        "Error al obtener notas del financiador",
+        re.data
+      )
+    }
+
+    let notas = re.data as NotaProyecto[]
+    notas = notas.map((nota) => {
+      return {
+        ...nota,
+        dt_registro: epochAFecha(nota.dt_registro),
+      }
+    })
+
+    return RespuestaController.exitosa(
+      200,
+      "consulta exitosa",
+      notas
+    )
+  }
+
+  static async crearNota(id_proyecto: number, data: NotaProyecto) {
+    const cr = await ProyectoDB.crearNota(id_proyecto, data)
+
+    if (cr.error) {
+      return RespuestaController.fallida(
+        400,
+        "Error al crear nota de financiador",
+        cr.data
+      )
+    }
+
+    // @ts-ignore
+    const idInsertado = cr.data.insertId
+
+    return RespuestaController.exitosa(
+      201,
+      "Nota de financiador creada con éxito",
+      { idInsertado }
     )
   }
 }

@@ -4,6 +4,7 @@ import {
   Proyecto,
   MinistracionProyecto,
   RubroMinistracion,
+  NotaProyecto,
 } from "@models/proyecto.model"
 import { fechaActualAEpoch } from "@assets/utils/common"
 
@@ -278,6 +279,41 @@ class ProyectoDB {
 
     try {
       const res = await queryDB(query)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
+
+  static async obtenerNotas(idProyecto: number) {
+    let query = `SELECT p.id, p.mensaje, p.dt_registro,
+      CONCAT(u.nombre, ' ', u.apellido_paterno) usuario
+      FROM proyecto_notas p JOIN usuarios u ON p.id_usuario = u.id
+      WHERE p.id_proyecto=${idProyecto} AND p.b_activo=1`
+
+    try {
+      const res = await queryDB(query)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
+
+  static async crearNota(id_proyecto: number, data: NotaProyecto) {
+    const { id_usuario, mensaje } = data
+
+    const query = `INSERT INTO proyecto_notas ( id_proyecto, id_usuario,
+      mensaje, dt_registro ) VALUES ( ?, ?, ?, ? )`
+
+    const placeHolders = [
+      id_proyecto,
+      id_usuario,
+      mensaje,
+      fechaActualAEpoch(),
+    ]
+
+    try {
+      const res = await queryDBPlaceHolder(query, placeHolders)
       return RespuestaDB.exitosa(res)
     } catch (error) {
       return RespuestaDB.fallida(error)

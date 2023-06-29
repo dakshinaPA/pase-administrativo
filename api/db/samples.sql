@@ -340,6 +340,17 @@ CREATE TABLE `proyectos` (
     INDEX (`id_ministracion`),
     INDEX (`id_rubro`));
 
+  CREATE TABLE `proyecto_notas` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `id_proyecto` INT UNSIGNED NOT NULL,
+  `id_usuario` INT UNSIGNED NOT NULL,
+  `mensaje` TEXT NOT NULL,
+  `b_activo` TINYINT UNSIGNED NOT NULL DEFAULT 1,
+  `dt_registro` VARCHAR(10) NOT NULL,
+  PRIMARY KEY (`id`),
+  INDEX (`id_proyecto`),
+  INDEX (`id_usuario`));
+
 -----------------------------------------------------------
 
   CREATE TABLE `colaboradores` (

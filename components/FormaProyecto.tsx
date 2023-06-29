@@ -3,6 +3,7 @@ import { useRouter } from "next/router"
 import { ChangeEvent } from "@assets/models/formEvents.model"
 import {
   MinistracionProyecto,
+  NotaProyecto,
   Proyecto,
   RubroMinistracion,
 } from "@models/proyecto.model"
@@ -31,6 +32,7 @@ type ActionTypes =
   | "QUITAR_MINISTRACION"
   | "AGREGAR_MINISTRACION"
   | "CAMBIAR_TIPO_FINANCIAMIENTO"
+  | "RECARGAR_NOTAS"
 
 interface ActionDispatch {
   type: ActionTypes
@@ -68,6 +70,11 @@ const reducer = (state: Proyecto, action: ActionDispatch): Proyecto => {
       return {
         ...state,
         ministraciones: [],
+      }
+    case "RECARGAR_NOTAS":
+      return {
+        ...state,
+        notas: payload,
       }
     default:
       return state
@@ -430,7 +437,7 @@ const TablaMinistraciones = ({
                           return (
                             <tr key={id_rubro}>
                               <td>{nombre}</td>
-                              <td>{f_monto}</td>
+                              <td className="w-25">{f_monto}</td>
                             </tr>
                           )
                         }
@@ -627,7 +634,7 @@ const SolicitudesPresupuesto = ({ solicitudes }) => {
   const idProyecto = Number(router.query.idP)
 
   return (
-    <div className="row mb-3">
+    <div className="row mb-5">
       <div className="col-12 mb-3 d-flex justify-content-between">
         <h3 className="color1 mb-0">Solicitudes de presupuesto</h3>
         {user.id_rol == 3 && (
@@ -694,6 +701,84 @@ const SolicitudesPresupuesto = ({ solicitudes }) => {
   )
 }
 
+interface PropsNotas {
+  notas: NotaProyecto[]
+  refrescarNotas: () => void
+}
+
+const Notas = ({ notas, refrescarNotas }: PropsNotas) => {
+  const router = useRouter()
+  const idProyecto = Number(router.query.idP)
+  const { user } = useAuth()
+  const [mensajeNota, setMensajeNota] = useState<string>("")
+  const inputNota = useRef(null)
+
+  const agregar = async () => {
+    if (mensajeNota.length < 10) {
+      inputNota.current.focus()
+      return
+    }
+
+    //limpiar el input
+    setMensajeNota("")
+
+    const cr = await ApiCall.post(`/proyectos/${idProyecto}/notas`, {
+      id_usuario: user.id,
+      mensaje: mensajeNota,
+    })
+
+    if (cr.error) {
+      console.log(cr.data)
+    } else {
+      refrescarNotas()
+    }
+  }
+
+  return (
+    <div className="row">
+      <div className="col-12 mb-3">
+        <h3 className="color1 mb-0">Notas</h3>
+      </div>
+      <div className="col-12 table-responsive mb-3">
+        <table className="table">
+          <thead className="table-light">
+            <tr>
+              <th>Usuario</th>
+              <th>Mensaje</th>
+              <th>Fecha</th>
+            </tr>
+          </thead>
+          <tbody>
+            {notas.map(({ id, usuario, mensaje, dt_registro }) => (
+              <tr key={id}>
+                <td>{usuario}</td>
+                <td>{mensaje}</td>
+                <td>{dt_registro}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="col-12 col-md-9 mb-3">
+        <input
+          type="text"
+          className="form-control"
+          value={mensajeNota}
+          onChange={({ target }) => setMensajeNota(target.value)}
+          placeholder="mensaje de la nota"
+          ref={inputNota}
+        ></input>
+        {/* <textarea className="form-control"></textarea> */}
+      </div>
+      <div className="col-12 col-md-3 mb-3 text-end">
+        <button className="btn btn-secondary" onClick={agregar}>
+          Agregar nota +
+        </button>
+      </div>
+    </div>
+  )
+}
+
 const FormaProyecto = () => {
   const { user } = useAuth()
   if (!user) return null
@@ -716,6 +801,7 @@ const FormaProyecto = () => {
     colaboradores: [],
     proveedores: [],
     solicitudes_presupuesto: [],
+    notas: [],
   }
 
   const [estadoForma, dispatch] = useReducer(reducer, estadoInicialForma)
@@ -877,6 +963,20 @@ const FormaProyecto = () => {
     })
   }
 
+  const refrescarNotas = async () => {
+    const re = await ApiCall.get(`/proyectos/${idProyecto}/notas`)
+
+    if (re.error) {
+      console.log(re.data)
+    } else {
+      const notasDB = re.data as NotaProyecto[]
+      dispatch({
+        type: "RECARGAR_NOTAS",
+        payload: notasDB,
+      })
+    }
+  }
+
   const mostrarFormaMinistracion = () => {
     setShowFormaMinistracion(true)
   }
@@ -885,7 +985,6 @@ const FormaProyecto = () => {
     ev.preventDefault()
 
     console.log(estadoForma)
-    // return
 
     setIsLoading(true)
     const { error, data, mensaje } =
@@ -906,7 +1005,12 @@ const FormaProyecto = () => {
     }
   }
 
-  const showBtnNuevaMinistracion = modoEditar && !showFormaMinistracion && (estadoForma.i_tipo_financiamiento >= 3 || (estadoForma.i_tipo_financiamiento <= 2 && !(estadoForma.ministraciones.length > 0) ) )
+  const showBtnNuevaMinistracion =
+    modoEditar &&
+    !showFormaMinistracion &&
+    (estadoForma.i_tipo_financiamiento >= 3 ||
+      (estadoForma.i_tipo_financiamiento <= 2 &&
+        !(estadoForma.ministraciones.length > 0)))
 
   if (isLoading) {
     return <Loader />
@@ -1094,6 +1198,7 @@ const FormaProyecto = () => {
           <SolicitudesPresupuesto
             solicitudes={estadoForma.solicitudes_presupuesto}
           />
+          <Notas notas={estadoForma.notas} refrescarNotas={refrescarNotas} />
         </>
       )}
     </RegistroContenedor>
