@@ -349,17 +349,9 @@ const FormaMinistracion = () => {
   )
 }
 
-interface PropsTablaMinistraciones {
-  modoEditar: boolean
-  ministraciones: MinistracionProyecto[]
-  quitar: (i_numero: number) => void
-}
+const TablaMinistraciones = () => {
+  const { estadoForma, modoEditar, quitarMinistracion, editarMinistracion } = useProyecto()
 
-const TablaMinistraciones = ({
-  modoEditar,
-  ministraciones,
-  quitar,
-}: PropsTablaMinistraciones) => {
   return (
     <div className="col-12 col-md table-responsive mb-3">
       <table className="table">
@@ -370,11 +362,11 @@ const TablaMinistraciones = ({
             <th>Fecha de recepción</th>
             <th>Rubros</th>
             <th>Monto</th>
-            <th>Acciones</th>
+            {modoEditar && <th>Acciones</th>}
           </tr>
         </thead>
         <tbody>
-          {ministraciones.map(
+          {estadoForma.ministraciones.map(
             ({
               id,
               i_numero,
@@ -406,18 +398,28 @@ const TablaMinistraciones = ({
                   </table>
                 </td>
                 <td>{f_monto}</td>
-
-                <td>
-                  {!id && (
-                    <button
-                      type="button"
-                      className="btn btn-dark btn-sm"
-                      onClick={() => quitar(i_numero)}
-                    >
-                      <i className="bi bi-x-circle"></i>
-                    </button>
-                  )}
-                </td>
+                {modoEditar && (
+                  <td>
+                    {!!id ? (
+                      <button
+                        type="button"
+                        className="btn btn-dark btn-sm"
+                        title="editar ministración"
+                        onClick={() => editarMinistracion(id)}
+                      >
+                        <i className="bi bi-pencil"></i>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="btn btn-dark btn-sm"
+                        onClick={() => quitarMinistracion(i_numero)}
+                      >
+                        <i className="bi bi-x-circle"></i>
+                      </button>
+                    )}
+                  </td>
+                )}
               </tr>
             )
           )}
@@ -749,6 +751,8 @@ const FormaProyecto = () => {
     modalidad,
     showFormaMinistracion,
     setShowFormaMinistracion,
+    modoEditar,
+    setModoEditar,
   } = useProyecto()
 
   const router = useRouter()
@@ -758,7 +762,6 @@ const FormaProyecto = () => {
     CoparteUsuarioMin[]
   >([])
   const [isLoading, setIsLoading] = useState<boolean>(false)
-  const [modoEditar, setModoEditar] = useState<boolean>(!idProyecto)
 
   useEffect(() => {
     cargarData()
@@ -874,17 +877,6 @@ const FormaProyecto = () => {
     dispatch({
       type,
       payload: ev.target,
-    })
-  }
-
-  const quitarMinistracion = (i_numero: number) => {
-    const nuevaLista = estadoForma.ministraciones.filter(
-      (min) => min.i_numero != i_numero
-    )
-
-    dispatch({
-      type: "QUITAR_MINISTRACION",
-      payload: nuevaLista,
     })
   }
 
@@ -1102,11 +1094,7 @@ const FormaProyecto = () => {
             </button>
           )}
         </div>
-        <TablaMinistraciones
-          modoEditar={modoEditar}
-          ministraciones={estadoForma.ministraciones}
-          quitar={quitarMinistracion}
-        />
+        <TablaMinistraciones />
         {showFormaMinistracion && <FormaMinistracion />}
         {modoEditar && (
           <div className="col-12 text-end">

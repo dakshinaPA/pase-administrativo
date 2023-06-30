@@ -25,6 +25,10 @@ interface ProyectoProvider {
   formaMinistracion: MinistracionProyecto
   estaInicialdFormaMinistracion: MinistracionProyecto
   setFormaMinistracion: Dispatch<SetStateAction<MinistracionProyecto>>
+  quitarMinistracion: (i_numero: number) => void
+  editarMinistracion: (id_ministracion: number) => void
+  modoEditar: boolean
+  setModoEditar: Dispatch<SetStateAction<boolean>>
 }
 
 const ProyectoContext = createContext(null)
@@ -123,6 +127,7 @@ const ProyectoProvider = ({ children }) => {
   const [formaMinistracion, setFormaMinistracion] = useState(
     estaInicialdFormaMinistracion
   )
+  const [modoEditar, setModoEditar] = useState<boolean>(!idProyecto)
   const modalidad = idProyecto ? "EDITAR" : "CREAR"
 
   // useEffect(() => {}, [])
@@ -146,6 +151,29 @@ const ProyectoProvider = ({ children }) => {
     }
   }
 
+  const quitarMinistracion = (i_numero: number) => {
+    const nuevaLista = estadoForma.ministraciones.filter(
+      (min) => min.i_numero != i_numero
+    )
+
+    dispatch({
+      type: "QUITAR_MINISTRACION",
+      payload: nuevaLista,
+    })
+  }
+
+  const editarMinistracion = (id_ministracion: number) => {
+   
+    const matchMinistracion = estadoForma.ministraciones.find( min => min.id == id_ministracion)
+    if(!matchMinistracion){
+      console.log(matchMinistracion)
+      return
+    }
+
+    setFormaMinistracion(matchMinistracion)
+    setShowFormaMinistracion(true)
+  }
+
   const proyecto: ProyectoProvider = {
     estadoForma,
     dispatch,
@@ -158,6 +186,10 @@ const ProyectoProvider = ({ children }) => {
     formaMinistracion,
     setFormaMinistracion,
     estaInicialdFormaMinistracion,
+    quitarMinistracion,
+    editarMinistracion,
+    modoEditar,
+    setModoEditar
   }
 
   return (
