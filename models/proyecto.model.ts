@@ -84,7 +84,7 @@ export interface NotaProyecto {
 
 export interface ProyectoMin {
   id?: number
-  id_alt: string
+  nombre: string
 }
 
 export interface Proyecto extends ProyectoMin {
@@ -95,6 +95,7 @@ export interface Proyecto extends ProyectoMin {
   id_administrador?: number
   id_responsable: number
   responsable?: string
+  id_alt: string
   id_tema_social: number
   tema_social?: string
   i_tipo_financiamiento: number

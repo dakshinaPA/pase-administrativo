@@ -28,82 +28,28 @@ import {
 } from "@assets/utils/common"
 import { BtnCancelar, BtnEditar, BtnRegistrar } from "./Botones"
 import { RubrosPresupuestalesDB } from "@api/models/catalogos.model"
+import {
+  ActionTypes,
+  ProyectoProvider,
+  useProyecto,
+} from "@contexts/proyecto.context"
 
-type ActionTypes =
-  | "SET_IDS_DEPENDENCIAS"
-  | "CARGA_INICIAL"
-  | "HANDLE_CHANGE"
-  | "QUITAR_MINISTRACION"
-  | "AGREGAR_MINISTRACION"
-  | "CAMBIAR_TIPO_FINANCIAMIENTO"
-  | "RECARGAR_NOTAS"
-
-interface ActionDispatch {
-  type: ActionTypes
-  payload: any
-}
-
-const reducer = (state: Proyecto, action: ActionDispatch): Proyecto => {
-  const { type, payload } = action
-
-  switch (type) {
-    case "SET_IDS_DEPENDENCIAS":
-      return {
-        ...state,
-        id_financiador: payload.id_financiador,
-        id_coparte: payload.id_coparte,
-      }
-    case "CARGA_INICIAL":
-      return payload
-    case "HANDLE_CHANGE":
-      return {
-        ...state,
-        [payload.name]: payload.value,
-      }
-    case "QUITAR_MINISTRACION":
-      return {
-        ...state,
-        ministraciones: payload,
-      }
-    case "AGREGAR_MINISTRACION":
-      return {
-        ...state,
-        ministraciones: [...state.ministraciones, payload],
-      }
-    case "CAMBIAR_TIPO_FINANCIAMIENTO":
-      return {
-        ...state,
-        ministraciones: [],
-      }
-    case "RECARGAR_NOTAS":
-      return {
-        ...state,
-        notas: payload,
-      }
-    default:
-      return state
-  }
-}
-
-const FormaMinistracion = ({ agregarMinistracion, setShowForma }) => {
+const FormaMinistracion = () => {
+  const {
+    estadoForma,
+    dispatch,
+    setShowFormaMinistracion,
+    formaMinistracion,
+    estaInicialdFormaMinistracion,
+    setFormaMinistracion,
+  } = useProyecto()
   const { rubros_presupuestales } = useCatalogos()
-
-  const estaInicialdFormaMinistracion: MinistracionProyecto = {
-    i_numero: 0,
-    f_monto: "0",
-    i_grupo: "0",
-    dt_recepcion: "",
-    rubros_presupuestales: [],
-  }
 
   const estadoInicialdFormaRubros: RubroMinistracion = {
     id_rubro: 0,
     f_monto: "",
   }
 
-  const [formaMinistracion, setFormaMinistracion] = useState(
-    estaInicialdFormaMinistracion
-  )
   const [formaRubros, setFormaRubros] = useState(estadoInicialdFormaRubros)
   const inputNumero = useRef(null)
   const inputGrupo = useRef(null)
@@ -202,7 +148,7 @@ const FormaMinistracion = ({ agregarMinistracion, setShowForma }) => {
   const cerrarForma = () => {
     setFormaMinistracion(estaInicialdFormaMinistracion)
     setFormaRubros(estadoInicialdFormaRubros)
-    setShowForma(false)
+    setShowFormaMinistracion(false)
   }
 
   const handleAgregar = () => {
@@ -226,7 +172,11 @@ const FormaMinistracion = ({ agregarMinistracion, setShowForma }) => {
       return
     }
 
-    agregarMinistracion(formaMinistracion)
+    dispatch({
+      type: "AGREGAR_MINISTRACION",
+      payload: formaMinistracion,
+    })
+
     cerrarForma()
   }
 
@@ -245,9 +195,19 @@ const FormaMinistracion = ({ agregarMinistracion, setShowForma }) => {
     return rubros
   }
 
+  // obligar al usuario a seleccionar como primera opcion el rubro de gestion financiera
+  const RubroDefault = () => {
+    const rubroGestion = rubros_presupuestales.find((rubro) => rubro.id == 1)
+    if (!rubroGestion) return null
+
+    return <option value={rubroGestion.id}>{rubroGestion.nombre}</option>
+  }
+
+  const disabledInputNumero = estadoForma.i_tipo_financiamiento <= 2
+
   return (
-    <div className="col-12" ref={formMinistracion}>
-      <div className="row">
+    <div className="col-12 mb-3" ref={formMinistracion}>
+      <div className="row border py-3">
         <div className="col-12 col-md-6 col-lg-3">
           <div className="mb-3">
             <label className="form-label">Número</label>
@@ -258,6 +218,7 @@ const FormaMinistracion = ({ agregarMinistracion, setShowForma }) => {
               name="i_numero"
               value={formaMinistracion.i_numero}
               ref={inputNumero}
+              disabled={disabledInputNumero}
             />
           </div>
           <div className="mb-3">
@@ -341,11 +302,15 @@ const FormaMinistracion = ({ agregarMinistracion, setShowForma }) => {
               <option value="0" disabled>
                 Selecciona rubro
               </option>
-              {rubrosNoSeleccionados().map(({ id, nombre }) => (
-                <option key={id} value={id}>
-                  {nombre}
-                </option>
-              ))}
+              {formaMinistracion.rubros_presupuestales.length > 0 ? (
+                rubrosNoSeleccionados().map(({ id, nombre }) => (
+                  <option key={id} value={id}>
+                    {nombre}
+                  </option>
+                ))
+              ) : (
+                <RubroDefault />
+              )}
             </select>
           </div>
           <div className="mb-3">
@@ -369,14 +334,8 @@ const FormaMinistracion = ({ agregarMinistracion, setShowForma }) => {
             </button>
           </div>
         </div>
-        <div className="col-12 mb-3 d-flex justify-content-between">
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={cerrarForma}
-          >
-            Cancelar
-          </button>
+        <div className="col-12 d-flex justify-content-between">
+          <BtnCancelar onclick={cerrarForma} margin={false} />
           <button
             type="button"
             className="btn btn-secondary ms-2"
@@ -411,11 +370,7 @@ const TablaMinistraciones = ({
             <th>Fecha de recepción</th>
             <th>Rubros</th>
             <th>Monto</th>
-            {modoEditar && (
-              <th>
-                <i className="bi bi-trash"></i>
-              </th>
-            )}
+            <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -451,19 +406,18 @@ const TablaMinistraciones = ({
                   </table>
                 </td>
                 <td>{f_monto}</td>
-                {modoEditar && (
-                  <td>
-                    {!id && (
-                      <button
-                        type="button"
-                        className="btn btn-dark btn-sm"
-                        onClick={() => quitar(i_numero)}
-                      >
-                        <i className="bi bi-x-circle"></i>
-                      </button>
-                    )}
-                  </td>
-                )}
+
+                <td>
+                  {!id && (
+                    <button
+                      type="button"
+                      className="btn btn-dark btn-sm"
+                      onClick={() => quitar(i_numero)}
+                    >
+                      <i className="bi bi-x-circle"></i>
+                    </button>
+                  )}
+                </td>
               </tr>
             )
           )}
@@ -473,16 +427,15 @@ const TablaMinistraciones = ({
   )
 }
 
-const Colaboradores = ({ colaboradores, id_responsable }) => {
-  const { user } = useAuth()
+const Colaboradores = () => {
+  const { estadoForma, idProyecto, user } = useProyecto()
   const router = useRouter()
-  const idProyecto = Number(router.query.idP)
 
   return (
     <div className="row mb-5">
       <div className="col-12 mb-3 d-flex justify-content-between">
         <h3 className="color1 mb-0">Colaboradores</h3>
-        {user.id == id_responsable && (
+        {user.id == estadoForma.id_responsable && (
           <button
             type="button"
             className="btn btn-secondary"
@@ -510,7 +463,7 @@ const Colaboradores = ({ colaboradores, id_responsable }) => {
             </tr>
           </thead>
           <tbody>
-            {colaboradores.map(
+            {estadoForma.colaboradores.map(
               ({
                 id,
                 nombre,
@@ -785,40 +738,27 @@ const Notas = ({ notas, refrescarNotas }: PropsNotas) => {
 }
 
 const FormaProyecto = () => {
-  const { user } = useAuth()
-  if (!user) return null
-
   const { temas_sociales } = useCatalogos()
+
+  const {
+    estadoForma,
+    dispatch,
+    idProyecto,
+    idCoparte,
+    user,
+    modalidad,
+    showFormaMinistracion,
+    setShowFormaMinistracion,
+  } = useProyecto()
+
   const router = useRouter()
-  const idCoparte = Number(router.query.idC)
-  const idProyecto = Number(router.query.idP)
-
-  const estadoInicialForma: Proyecto = {
-    id_coparte: 0,
-    id_financiador: 0,
-    id_responsable: 0,
-    id_alt: "",
-    f_monto_total: "0",
-    i_tipo_financiamiento: 1,
-    id_tema_social: 1,
-    i_beneficiados: 0,
-    ministraciones: [],
-    colaboradores: [],
-    proveedores: [],
-    solicitudes_presupuesto: [],
-    notas: [],
-  }
-
-  const [estadoForma, dispatch] = useReducer(reducer, estadoInicialForma)
   const [financiadoresDB, setFinanciadoresDB] = useState<FinanciadorMin[]>([])
   const [copartesDB, setCopartesDB] = useState<CoparteMin[]>([])
   const [usuariosCoparteDB, setUsuariosCoparteDB] = useState<
     CoparteUsuarioMin[]
   >([])
-  const [showFormaMinistracion, setShowFormaMinistracion] = useState(false)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [modoEditar, setModoEditar] = useState<boolean>(!idProyecto)
-  const modalidad = idProyecto ? "EDITAR" : "CREAR"
 
   useEffect(() => {
     cargarData()
@@ -827,15 +767,6 @@ const FormaProyecto = () => {
   useEffect(() => {
     cargarUsuariosCoparte()
   }, [estadoForma.id_coparte])
-
-  useEffect(() => {
-    if (modalidad === "CREAR") {
-      dispatch({
-        type: "CAMBIAR_TIPO_FINANCIAMIENTO",
-        payload: null,
-      })
-    }
-  }, [estadoForma.i_tipo_financiamiento])
 
   useEffect(() => {
     if (modalidad === "CREAR") {
@@ -865,7 +796,7 @@ const FormaProyecto = () => {
       const promesas = [obtenerFinanciadores(), obtenerCopartes(queryCopartes)]
 
       if (modalidad === "EDITAR") {
-        promesas.push(obtenerProyectos({id: idProyecto, min: false}))
+        promesas.push(obtenerProyectos({ id: idProyecto, min: false }))
       }
 
       const resCombinadas = await Promise.all(promesas)
@@ -946,13 +877,6 @@ const FormaProyecto = () => {
     })
   }
 
-  const agregarMinistracion = (ministracion: MinistracionProyecto) => {
-    dispatch({
-      type: "AGREGAR_MINISTRACION",
-      payload: ministracion,
-    })
-  }
-
   const quitarMinistracion = (i_numero: number) => {
     const nuevaLista = estadoForma.ministraciones.filter(
       (min) => min.i_numero != i_numero
@@ -1013,6 +937,9 @@ const FormaProyecto = () => {
       (estadoForma.i_tipo_financiamiento <= 2 &&
         !(estadoForma.ministraciones.length > 0)))
 
+  const showBtnEditar =
+    !modoEditar && idProyecto && estadoForma.id_administrador == user.id
+
   if (isLoading) {
     return <Loader />
   }
@@ -1025,11 +952,7 @@ const FormaProyecto = () => {
             <BtnBack navLink="/proyectos" />
             {!idProyecto && <h2 className="color1 mb-0">Registrar proyecto</h2>}
           </div>
-          {!modoEditar &&
-            idProyecto &&
-            estadoForma.id_administrador == user.id && (
-              <BtnEditar onClick={() => setModoEditar(true)} />
-            )}
+          {showBtnEditar && <BtnEditar onClick={() => setModoEditar(true)} />}
         </div>
       </div>
       <FormaContenedor onSubmit={handleSubmit}>
@@ -1046,6 +969,17 @@ const FormaProyecto = () => {
             />
           </div>
         )}
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label">Nombre</label>
+          <input
+            className="form-control"
+            type="text"
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+            name="nombre"
+            value={estadoForma.nombre}
+            disabled={!modoEditar}
+          />
+        </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Financiador</label>
           <select
@@ -1131,17 +1065,6 @@ const FormaProyecto = () => {
           </select>
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
-          <label className="form-label">Monto total</label>
-          <input
-            className="form-control"
-            type="text"
-            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-            name="f_monto_total"
-            value={estadoForma.f_monto_total}
-            disabled
-          />
-        </div>
-        <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Beneficiados</label>
           <input
             className="form-control"
@@ -1150,6 +1073,17 @@ const FormaProyecto = () => {
             name="i_beneficiados"
             value={estadoForma.i_beneficiados}
             disabled={!modoEditar}
+          />
+        </div>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label">Monto total</label>
+          <input
+            className="form-control"
+            type="text"
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+            name="f_monto_total"
+            value={estadoForma.f_monto_total}
+            disabled
           />
         </div>
         <div className="col-12">
@@ -1173,12 +1107,7 @@ const FormaProyecto = () => {
           ministraciones={estadoForma.ministraciones}
           quitar={quitarMinistracion}
         />
-        {showFormaMinistracion && (
-          <FormaMinistracion
-            agregarMinistracion={agregarMinistracion}
-            setShowForma={setShowFormaMinistracion}
-          />
-        )}
+        {showFormaMinistracion && <FormaMinistracion />}
         {modoEditar && (
           <div className="col-12 text-end">
             <BtnCancelar onclick={cancelar} margin={"r"} />
@@ -1188,10 +1117,7 @@ const FormaProyecto = () => {
       </FormaContenedor>
       {modalidad === "EDITAR" && (
         <>
-          <Colaboradores
-            colaboradores={estadoForma.colaboradores}
-            id_responsable={estadoForma.id_responsable}
-          />
+          <Colaboradores />
           <Proveedores
             proveedores={estadoForma.proveedores}
             id_responsable={estadoForma.id_responsable}
@@ -1207,4 +1133,12 @@ const FormaProyecto = () => {
   )
 }
 
-export { FormaProyecto }
+const RegistroProyecto = () => {
+  return (
+    <ProyectoProvider>
+      <FormaProyecto />
+    </ProyectoProvider>
+  )
+}
+
+export { RegistroProyecto }

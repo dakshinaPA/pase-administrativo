@@ -37,7 +37,7 @@ class ProyectoDB {
     id_proyecto: number,
     id_responsable: number
   ) {
-    let query = `SELECT p.id, p.id_financiador, p.id_coparte, p.id_responsable, p.id_alt, p.id_tema_social,
+    let query = `SELECT p.id, p.id_financiador, p.id_coparte, p.id_responsable, p.id_alt, p.nombre, p.id_tema_social,
       p.f_monto_total, p.i_tipo_financiamiento, p.i_beneficiados, p.dt_registro,
       f.nombre financiador,
       c.nombre coparte, c.id_administrador,
@@ -76,20 +76,22 @@ class ProyectoDB {
       id_financiador,
       id_responsable,
       id_alt,
+      nombre,
       id_tema_social,
       f_monto_total,
       i_tipo_financiamiento,
       i_beneficiados,
     } = data
 
-    const query = `INSERT INTO proyectos ( id_financiador, id_coparte, id_responsable, id_alt, id_tema_social,
-      f_monto_total, i_tipo_financiamiento, i_beneficiados, dt_registro) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ? )`
+    const query = `INSERT INTO proyectos ( id_financiador, id_coparte, id_responsable, id_alt, nombre, id_tema_social,
+      f_monto_total, i_tipo_financiamiento, i_beneficiados, dt_registro) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )`
 
     const placeHolders = [
       id_financiador,
       id_coparte,
       id_responsable,
       id_alt,
+      nombre,
       id_tema_social,
       f_monto_total,
       i_tipo_financiamiento,
@@ -108,22 +110,20 @@ class ProyectoDB {
   static async actualizar(id_proyecto: number, data: Proyecto) {
     const {
       id_responsable,
-      id_alt,
+      nombre,
       id_tema_social,
       f_monto_total,
-      i_tipo_financiamiento,
       i_beneficiados,
     } = data
 
-    const query = `UPDATE proyectos SET id_responsable=?, id_alt=?, id_tema_social=?,
+    const query = `UPDATE proyectos SET id_responsable=?, nombre=?, id_tema_social=?,
     f_monto_total=?, i_beneficiados=? WHERE id=? LIMIT 1`
 
     const placeHolders = [
       id_responsable,
-      id_alt,
+      nombre,
       id_tema_social,
       f_monto_total,
-      // i_tipo_financiamiento,
       i_beneficiados,
       id_proyecto,
     ]

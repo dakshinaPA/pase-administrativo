@@ -1,7 +1,7 @@
-import { FormaProyecto } from "@components/FormaProyecto"
+import { RegistroProyecto } from "@components/FormaProyecto"
 
-const RegistroProyecto = () => {
-  return <FormaProyecto />
+const RegistrarProyecto = () => {
+  return <RegistroProyecto />
 }
 
-export default RegistroProyecto
+export default RegistrarProyecto

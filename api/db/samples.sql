@@ -72,6 +72,7 @@ CREATE TABLE `rubros_presupuestales` (
   PRIMARY KEY (`id`));
 
 INSERT INTO `rubros_presupuestales` (`nombre`) VALUES 
+('Gestión financiera'),
 ('Asimilados a salarios'),
 ('Honorarios a personas físicas residentes nacionales'),
 ('Arrendamiento a personas físicas residentes nacionales'),
@@ -91,7 +92,8 @@ INSERT INTO `rubros_presupuestales` (`nombre`) VALUES
 ('Paquetería y mensajería'),
 ('TI (Software, Pagina Web)'),
 ('Insumos para proyecto (despensa)'),
-('Materiales para proyecto');
+('Materiales para proyecto'),
+('Pagos al extranjero');
 
 
 --------------------------------------------------------
@@ -306,6 +308,7 @@ CREATE TABLE `proyectos` (
   `id_coparte` INT UNSIGNED NOT NULL,
   `id_responsable` INT UNSIGNED NOT NULL COMMENT 'id usuario coparte',
   `id_alt` VARCHAR(20) UNIQUE NOT NULL,
+  `nombre` VARCHAR(70) UNIQUE NOT NULL,
   `id_tema_social` INT UNSIGNED NOT NULL,
   `f_monto_total` VARCHAR(20) NOT NULL,
   `i_tipo_financiamiento` TINYINT UNSIGNED NOT NULL COMMENT '1.estipendio, 2.unica ministracion, 3.varias ministraciones, 4.multi anual',
@@ -486,11 +489,12 @@ TRUNCATE TABLE financiadores;
 
 TRUNCATE TABLE proyectos;
 TRUNCATE TABLE proyecto_ministraciones;
-TRUNCATE TABLE proyecto_rubros_presupuestales;
+TRUNCATE TABLE ministracion_rubros_presupuestales;
 TRUNCATE TABLE colaboradores;
 TRUNCATE TABLE colaborador_direccion;
 TRUNCATE TABLE proveedores;
 TRUNCATE TABLE proveedor_direccion;
 TRUNCATE TABLE solicitudes_presupuesto;
 TRUNCATE TABLE solicitud_presupuesto_comprobantes;
+TRUNCATE TABLE proyecto_notas;
 
