@@ -11,7 +11,7 @@ import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
 import { BtnBack } from "@components/BtnBack"
 import { ApiCall } from "@assets/utils/apiCalls"
 import { useCatalogos } from "@contexts/catalogos.context"
-import { BtnEditar } from "./Botones"
+import { BtnCancelar, BtnEditar, BtnRegistrar } from "./Botones"
 import { useAuth } from "@contexts/auth.context"
 import { obtenerProveedores, obtenerProyectos } from "@assets/utils/common"
 
@@ -304,7 +304,7 @@ const FormaProveedor = () => {
           />
         </div>
         <div className="col-12 mb-3">
-          <label className="form-label">Descricpión servicio</label>
+          <label className="form-label">Descricpión de la compra o servicio</label>
           <input
             className="form-control"
             type="text"
@@ -404,16 +404,8 @@ const FormaProveedor = () => {
         </div>
         {modoEditar && (
           <div className="col-12 text-end">
-            <button
-              className="btn btn-secondary me-2"
-              type="button"
-              onClick={cancelar}
-            >
-              Cancelar
-            </button>
-            <button className="btn btn-secondary" type="submit">
-              {idProyecto ? "Guardar" : "Registrar"}
-            </button>
+            <BtnCancelar onclick={cancelar} margin={"r"} />
+            <BtnRegistrar modalidad={modalidad} margin={false} />
           </div>
         )}
       </FormaContenedor>

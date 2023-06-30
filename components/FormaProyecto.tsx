@@ -26,7 +26,7 @@ import {
   obtenerProyectos,
   obtenerUsuariosCoparte,
 } from "@assets/utils/common"
-import { BtnEditar } from "./Botones"
+import { BtnCancelar, BtnEditar, BtnRegistrar } from "./Botones"
 import { RubrosPresupuestalesDB } from "@api/models/catalogos.model"
 
 type ActionTypes =
@@ -268,6 +268,7 @@ const FormaMinistracion = ({ agregarMinistracion, setShowForma }) => {
               onChange={handleChangeMinistracion}
               name="f_monto"
               value={formaMinistracion.f_monto}
+              disabled
             />
           </div>
           <div className="mb-3">
@@ -1137,7 +1138,7 @@ const FormaProyecto = () => {
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="f_monto_total"
             value={estadoForma.f_monto_total}
-            disabled={!modoEditar}
+            disabled
           />
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
@@ -1180,16 +1181,8 @@ const FormaProyecto = () => {
         )}
         {modoEditar && (
           <div className="col-12 text-end">
-            <button
-              className="btn btn-secondary me-2"
-              type="button"
-              onClick={cancelar}
-            >
-              Cancelar
-            </button>
-            <button className="btn btn-secondary" type="submit">
-              {idProyecto ? "Guardar" : "Registrar"}
-            </button>
+            <BtnCancelar onclick={cancelar} margin={"r"} />
+            <BtnRegistrar modalidad={modalidad} margin={false} />
           </div>
         )}
       </FormaContenedor>

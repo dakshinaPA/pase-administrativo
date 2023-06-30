@@ -11,7 +11,7 @@ import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
 import { BtnBack } from "@components/BtnBack"
 import { ApiCall } from "@assets/utils/apiCalls"
 import { useCatalogos } from "@contexts/catalogos.context"
-import { BtnEditar } from "./Botones"
+import { BtnCancelar, BtnEditar, BtnRegistrar } from "./Botones"
 import {
   ComprobanteSolicitud,
   SolicitudPresupuesto,
@@ -208,7 +208,7 @@ const FormaSolicitudPresupuesto = () => {
         "application/xml"
       )
 
-      // console.log(xml)
+      console.log(xml)
 
       const [comprobante] = xml.getElementsByTagName("cfdi:Comprobante")
       const [emisor] = comprobante.getElementsByTagName("cfdi:Emisor")
@@ -444,6 +444,7 @@ const FormaSolicitudPresupuesto = () => {
             name="proveedor"
             value={estadoForma.proveedor}
             disabled={!modoEditar}
+            placeholder="emisor de la factura"
           />
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
@@ -553,16 +554,8 @@ const FormaSolicitudPresupuesto = () => {
         </div>
         {modoEditar && (
           <div className="col-12 text-end">
-            <button
-              className="btn btn-secondary me-2"
-              type="button"
-              onClick={cancelar}
-            >
-              Cancelar
-            </button>
-            <button className="btn btn-secondary" type="submit">
-              {idProyecto ? "Guardar" : "Registrar"}
-            </button>
+            <BtnCancelar onclick={cancelar} margin={"r"} />
+            <BtnRegistrar modalidad={modalidad} margin={false} />
           </div>
         )}
       </FormaContenedor>

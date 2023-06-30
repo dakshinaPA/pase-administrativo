@@ -7,9 +7,10 @@ import { Loader } from "@components/Loader"
 import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
 import { BtnBack } from "@components/BtnBack"
 import { ApiCall, ApiCallRes } from "@assets/utils/apiCalls"
-import { BtnEditar } from "./Botones"
+import { BtnCancelar, BtnEditar, BtnRegistrar } from "./Botones"
 import { obtenerCopartes } from "@assets/utils/common"
 import { useAuth } from "@contexts/auth.context"
+
 
 type ActionTypes = "CARGA_INICIAL" | "HANDLE_CHANGE" | "HANDLE_CHANGE_COPARTE"
 
@@ -124,18 +125,15 @@ const FormaUsuario = () => {
   }
 
   const obtener = async () => {
-    const res = await ApiCall.get(`/usuarios/${idUsuario}`)
-    return res
+    return ApiCall.get(`/usuarios/${idUsuario}`)
   }
 
   const registrar = async () => {
-    const res = await ApiCall.post("/usuarios", estadoForma)
-    return res
+    return ApiCall.post("/usuarios", estadoForma)
   }
 
   const editar = async () => {
-    const res = await ApiCall.put(`/usuarios/${idUsuario}`, estadoForma)
-    return res
+    return ApiCall.put(`/usuarios/${idUsuario}`, estadoForma)
   }
 
   const cancelar = () => {
@@ -302,16 +300,8 @@ const FormaUsuario = () => {
         )}
         {modoEditar && (
           <div className="col-12 text-end">
-            <button
-              className="btn btn-secondary me-2"
-              type="button"
-              onClick={cancelar}
-            >
-              Cancelar
-            </button>
-            <button className="btn btn-secondary" type="submit">
-              {modalidad === "EDITAR" ? "Guardar" : "Registrar"}
-            </button>
+            <BtnCancelar onclick={cancelar} margin={"r"} />
+            <BtnRegistrar modalidad={modalidad} margin={false} />
           </div>
         )}
       </FormaContenedor>

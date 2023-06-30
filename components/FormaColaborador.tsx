@@ -11,7 +11,7 @@ import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
 import { BtnBack } from "@components/BtnBack"
 import { ApiCall } from "@assets/utils/apiCalls"
 import { useCatalogos } from "@contexts/catalogos.context"
-import { BtnEditar } from "./Botones"
+import { BtnCancelar, BtnEditar, BtnRegistrar } from "./Botones"
 import { useAuth } from "@contexts/auth.context"
 import { obtenerColaboradores, obtenerProyectos } from "@assets/utils/common"
 
@@ -321,6 +321,7 @@ const FormaColaborador = () => {
                 name="f_monto_total"
                 value={estadoForma.f_monto_total}
                 disabled={!modoEditar}
+                placeholder="presupuestado (incluyendo impuestos)"
               />
             </div>
           </div>
@@ -380,6 +381,7 @@ const FormaColaborador = () => {
                 name="cp"
                 value={estadoForma.cp}
                 disabled={!modoEditar}
+                placeholder="de la constancia de situación fiscal"
               />
             </div>
           </div>
@@ -518,16 +520,8 @@ const FormaColaborador = () => {
         </div>
         {modoEditar && (
           <div className="col-12 text-end">
-            <button
-              className="btn btn-secondary me-2"
-              type="button"
-              onClick={cancelar}
-            >
-              Cancelar
-            </button>
-            <button className="btn btn-secondary" type="submit">
-              {idProyecto ? "Guardar" : "Registrar"}
-            </button>
+            <BtnCancelar onclick={cancelar} margin={"r"} />
+            <BtnRegistrar modalidad={modalidad} margin={false} />
           </div>
         )}
       </FormaContenedor>
