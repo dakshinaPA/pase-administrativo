@@ -9,7 +9,7 @@ import {
 } from "react"
 import { useRouter } from "next/router"
 import { ApiCall } from "@assets/utils/apiCalls"
-import { MinistracionProyecto, Proyecto } from "@models/proyecto.model"
+import { MinistracionProyecto, Proyecto, RubroMinistracion } from "@models/proyecto.model"
 import { useAuth } from "./auth.context"
 import { UsuarioLogin } from "@models/usuario.model"
 
@@ -22,7 +22,7 @@ interface ProyectoProvider {
   modalidad: "EDITAR" | "CREAR"
   showFormaMinistracion: boolean
   setShowFormaMinistracion: Dispatch<SetStateAction<boolean>>
-  formaMinistracion: MinistracionProyecto
+  formaMinistracion: FormaMinistracion
   estaInicialdFormaMinistracion: MinistracionProyecto
   setFormaMinistracion: Dispatch<SetStateAction<MinistracionProyecto>>
   quitarMinistracion: (i_numero: number) => void
@@ -45,6 +45,15 @@ export type ActionTypes =
 interface ActionDispatch {
   type: ActionTypes
   payload: any
+}
+
+interface FormaMinistracion {
+  i_numero: number
+  f_monto: string
+  i_grupo: string
+  dt_recepcion: string
+  id_rubro: number
+  rubros_presupuestales: RubroMinistracion[]
 }
 
 const reducer = (state: Proyecto, action: ActionDispatch): Proyecto => {
@@ -114,11 +123,12 @@ const ProyectoProvider = ({ children }) => {
     notas: [],
   }
 
-  const estaInicialdFormaMinistracion: MinistracionProyecto = {
+  const estaInicialdFormaMinistracion: FormaMinistracion = {
     i_numero: 1,
     f_monto: "0",
     i_grupo: "0",
     dt_recepcion: "",
+    id_rubro: 0,
     rubros_presupuestales: [],
   }
 
@@ -170,7 +180,12 @@ const ProyectoProvider = ({ children }) => {
       return
     }
 
-    setFormaMinistracion(matchMinistracion)
+    const dataForma = {
+      ...matchMinistracion,
+      id_rubro: 0
+    }
+
+    setFormaMinistracion(dataForma)
     setShowFormaMinistracion(true)
   }
 
