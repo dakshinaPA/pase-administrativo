@@ -1,14 +1,17 @@
 import { RubrosPresupuestalesDB } from "@api/models/catalogos.model"
-import { BtnCancelar } from "./Botones"
+import { BtnCancelar, BtnRegistrar } from "./Botones"
 import { useProyecto } from "@contexts/proyecto.context"
 import { useCatalogos } from "@contexts/catalogos.context"
-import { RubroMinistracion } from "@models/proyecto.model"
+import { MinistracionProyecto, RubroMinistracion } from "@models/proyecto.model"
 import { MutableRefObject, createRef, useEffect, useRef } from "react"
 import { ChangeEvent } from "@assets/models/formEvents.model"
+import { ApiCall } from "@assets/utils/apiCalls"
+import { obtenerMinistraciones } from "@assets/utils/common"
 
 const FormaMinistracion = () => {
   const {
     estadoForma,
+    idProyecto,
     dispatch,
     setShowFormaMinistracion,
     formaMinistracion,
@@ -34,6 +37,7 @@ const FormaMinistracion = () => {
   useEffect(() => {
     formMinistracion.current.scrollIntoView({
       behavior: "smooth",
+      block: "end",
     })
   }, [])
 
@@ -217,6 +221,32 @@ const FormaMinistracion = () => {
     }
   }
 
+  const handleGuardar = async () => {
+    console.log(formaMinistracion)
+    const upMinistracion = await ApiCall.put(
+      `/ministraciones/${estadoForma.id}`,
+      formaMinistracion
+    )
+
+    if (upMinistracion.error) {
+      console.log(upMinistracion.data)
+    } else {
+      const reMinistraciones = await obtenerMinistraciones(idProyecto)
+      if (reMinistraciones.error) {
+        console.log(reMinistraciones.data)
+      } else {
+        const ministraciones = reMinistraciones.data as MinistracionProyecto[]
+
+        dispatch({
+          type: "RECARGAR_MINISTRACIONES",
+          payload: ministraciones,
+        })
+
+        cerrarForma()
+      }
+    }
+  }
+
   const rubrosNoSeleccionados = () => {
     const rubros: RubrosPresupuestalesDB[] = []
     const idsRubrosForma = formaMinistracion.rubros_presupuestales.map(
@@ -343,13 +373,15 @@ const FormaMinistracion = () => {
                       />
                     </td>
                     <td>
-                      <button
-                        type="button"
-                        className="btn btn-dark btn-sm"
-                        onClick={() => quitarRubro(id_rubro)}
-                      >
-                        <i className="bi bi-x-circle"></i>
-                      </button>
+                      {id_rubro != 1 && (
+                        <button
+                          type="button"
+                          className="btn btn-dark btn-sm"
+                          onClick={() => quitarRubro(id_rubro)}
+                        >
+                          <i className="bi bi-x-circle"></i>
+                        </button>
+                      )}
                     </td>
                   </tr>
                 )
@@ -405,13 +437,23 @@ const FormaMinistracion = () => {
         </div> */}
         <div className="col-12 d-flex justify-content-between">
           <BtnCancelar onclick={cerrarForma} margin={false} />
-          <button
-            type="button"
-            className="btn btn-secondary ms-2"
-            onClick={handleAgregar}
-          >
-            Agregar ministración +
-          </button>
+          {!formaMinistracion.id ? (
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={handleAgregar}
+            >
+              Agregar ministración +
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="btn btn-outline-success"
+              onClick={handleGuardar}
+            >
+              Guardar cambios
+            </button>
+          )}
         </div>
       </div>
     </div>

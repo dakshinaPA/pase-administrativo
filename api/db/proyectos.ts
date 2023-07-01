@@ -11,7 +11,6 @@ import { fechaActualAEpoch } from "@assets/utils/common"
 
 class ProyectoDB {
   static async obtenerVMin(queries: QueriesProyecto) {
-
     const { id_responsable, id } = queries
 
     let query = `SELECT id, id_alt from proyectos WHERE b_activo=1`
@@ -165,7 +164,8 @@ class ProyectoDB {
   ) {
     const { i_numero, f_monto, i_grupo, dt_recepcion } = data
 
-    const query = `INSERT INTO proyecto_ministraciones ( id_proyecto, i_numero, f_monto, i_grupo, dt_recepcion, dt_registro ) VALUES ( ?, ?, ?, ?, ?, ? )`
+    const query = `INSERT INTO proyecto_ministraciones ( id_proyecto, i_numero, f_monto, i_grupo,
+      dt_recepcion, dt_registro ) VALUES ( ?, ?, ?, ?, ?, ? )`
 
     const placeHolders = [
       id_proyecto,
@@ -184,13 +184,22 @@ class ProyectoDB {
     }
   }
 
-  static async actualizarMinistracion(data: MinistracionProyecto) {
-    const { id, i_numero, f_monto, i_grupo, dt_recepcion } = data
+  static async actualizarMinistracion(
+    id_ministracion: number,
+    data: MinistracionProyecto
+  ) {
+    const { i_numero, f_monto, i_grupo, dt_recepcion } = data
 
     const query = `UPDATE proyecto_ministraciones SET i_numero=?, f_monto=?,
       i_grupo=?, dt_recepcion=? WHERE id=? LIMIT 1`
 
-    const placeHolders = [i_numero, f_monto, i_grupo, dt_recepcion, id]
+    const placeHolders = [
+      i_numero,
+      f_monto,
+      i_grupo,
+      dt_recepcion,
+      id_ministracion,
+    ]
 
     try {
       const res = await queryDBPlaceHolder(query, placeHolders)
@@ -201,7 +210,6 @@ class ProyectoDB {
   }
 
   static async obtenerRubrosMinistracion(id_ministracion: number) {
-
     const query = `SELECT mrp.id, mrp.id_ministracion, mrp.id_rubro, mrp.f_monto,
     rp.nombre nombre
     FROM ministracion_rubros_presupuestales mrp
@@ -218,17 +226,35 @@ class ProyectoDB {
     }
   }
 
-  static async obtenerRubrosUltimaMinistracion(id_proyecto: number) {
+  // static async obtenerRubrosUltimaMinistracion(id_proyecto: number) {
 
-    const query = `SELECT mrp.id_rubro,
-      rp.nombre
-      FROM ministracion_rubros_presupuestales mrp
-      JOIN rubros_presupuestales rp ON mrp.id_rubro = rp.id
-      WHERE mrp.id_ministracion=
-      (SELECT pm.id FROM proyecto_ministraciones pm WHERE pm.id_proyecto=? ORDER BY pm.i_numero DESC LIMIT 1)
-      AND mrp.b_activo=1`
+  //   const query = `SELECT mrp.id_rubro,
+  //     rp.nombre
+  //     FROM ministracion_rubros_presupuestales mrp
+  //     JOIN rubros_presupuestales rp ON mrp.id_rubro = rp.id
+  //     WHERE mrp.id_ministracion=
+  //     (SELECT pm.id FROM proyecto_ministraciones pm WHERE pm.id_proyecto=? ORDER BY pm.i_numero DESC LIMIT 1)
+  //     AND mrp.b_activo=1`
 
-    const placeHolders = [id_proyecto]
+  //   const placeHolders = [id_proyecto]
+
+  //   try {
+  //     const res = await queryDBPlaceHolder(query, placeHolders)
+  //     return RespuestaDB.exitosa(res)
+  //   } catch (error) {
+  //     return RespuestaDB.fallida(error)
+  //   }
+  // }
+
+  static async crearRubroMinistracion(
+    id_ministracion: number,
+    data: RubroMinistracion
+  ) {
+    const { id_rubro, f_monto } = data
+
+    const query = `INSERT INTO ministracion_rubros_presupuestales ( id_ministracion, id_rubro, f_monto ) VALUES ( ?, ?, ? )`
+
+    const placeHolders = [id_ministracion, id_rubro, f_monto]
 
     try {
       const res = await queryDBPlaceHolder(query, placeHolders)
@@ -238,12 +264,26 @@ class ProyectoDB {
     }
   }
 
-  static async crearRubroMinistracion(id_ministracion: number, data: RubroMinistracion) {
-    const { id_rubro, f_monto } = data
+  static async actualizarRubroMinistracion(data: RubroMinistracion) {
+    const { id, f_monto } = data
 
-    const query = `INSERT INTO ministracion_rubros_presupuestales ( id_ministracion, id_rubro, f_monto ) VALUES ( ?, ?, ? )`
+    const query = `UPDATE ministracion_rubros_presupuestales SET f_monto=?, b_activo=?
+      WHERE id=? LIMIT 1`
 
-    const placeHolders = [id_ministracion, id_rubro, f_monto]
+    const placeHolders = [f_monto, 1, id]
+
+    try {
+      const res = await queryDBPlaceHolder(query, placeHolders)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
+
+  static async limpiarRubrosMinistracion(id_ministracion: number) {
+    const query = `UPDATE ministracion_rubros_presupuestales SET b_activo=0 WHERE id_ministracion=?`
+
+    const placeHolders = [id_ministracion]
 
     try {
       const res = await queryDBPlaceHolder(query, placeHolders)
@@ -306,12 +346,7 @@ class ProyectoDB {
     const query = `INSERT INTO proyecto_notas ( id_proyecto, id_usuario,
       mensaje, dt_registro ) VALUES ( ?, ?, ?, ? )`
 
-    const placeHolders = [
-      id_proyecto,
-      id_usuario,
-      mensaje,
-      fechaActualAEpoch(),
-    ]
+    const placeHolders = [id_proyecto, id_usuario, mensaje, fechaActualAEpoch()]
 
     try {
       const res = await queryDBPlaceHolder(query, placeHolders)

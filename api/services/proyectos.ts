@@ -102,7 +102,7 @@ class ProyectosServices {
               reProveedores,
               reMinistraciones,
               reSolicitudes,
-              reNotas
+              reNotas,
             ])
 
             for (const rc of resCombinadas) {
@@ -141,7 +141,7 @@ class ProyectosServices {
             colaboradores,
             proveedores,
             solicitudes_presupuesto: solicitudes,
-            notas
+            notas,
           }
         })
       )
@@ -164,9 +164,13 @@ class ProyectosServices {
     try {
       const reColaboradores = ColaboradorServices.obtener(id_proyecto)
       const reProveedores = ProveedorServices.obtener(id_proyecto)
-      const rerubros = ProyectoDB.obtenerRubrosUltimaMinistracion(id_proyecto)
+      // const rerubros = ProyectoDB.obtenerRubrosUltimaMinistracion(id_proyecto)
 
-      const resCombinadas = await Promise.all([reColaboradores, reProveedores, rerubros])
+      const resCombinadas = await Promise.all([
+        reColaboradores,
+        reProveedores,
+        // rerubros,
+      ])
 
       for (const rc of resCombinadas) {
         if (rc.error) throw rc.data
@@ -174,12 +178,12 @@ class ProyectosServices {
 
       const colaboradores = resCombinadas[0].data as ColaboradorProyecto[]
       const proveedores = resCombinadas[1].data as ProveedorProyecto[]
-      const rubros_presupuestales = resCombinadas[2].data as RubroMinistracion[]
+      // const rubros_presupuestales = resCombinadas[2].data as RubroMinistracion[]
 
       return RespuestaController.exitosa(200, "Consulta exitosa", {
         colaboradores,
         proveedores,
-        rubros_presupuestales
+        rubros_presupuestales: [],
       })
     } catch (error) {
       return RespuestaController.fallida(
@@ -216,9 +220,62 @@ class ProyectosServices {
       )
 
       return RespuestaController.exitosa(
-        201,
+        200,
         "ministraciones obtenidas con éxito",
         ministracionesHidratadas
+      )
+    } catch (error) {
+      return RespuestaController.fallida(
+        400,
+        "Error al obtener ministraciones de proyecto",
+        error
+      )
+    }
+  }
+
+  static async actualizarMinistracion(
+    id_ministracion: number,
+    data: MinistracionProyecto
+  ) {
+    try {
+      const { rubros_presupuestales } = data
+
+      const up = ProyectoDB.actualizarMinistracion(id_ministracion, data)
+      const dlRubros = ProyectoDB.limpiarRubrosMinistracion(id_ministracion)
+
+      //evitar posible problema de desincronizacion con eapagado de rubros
+      const resCombinadas1 = await Promise.all([up, dlRubros])
+      for (const rc of resCombinadas1) {
+        if (rc.error) throw rc.data
+      }
+
+      // const promesas = [up, dlRubros]
+      // for (const rp of rubros_presupuestales) {
+      //   if (rp.id) {
+      //     promesas.push(ProyectoDB.actualizarRubroMinistracion(rp))
+      //   } else {
+      //     promesas.push(ProyectoDB.crearRubroMinistracion(id_ministracion, rp))
+      //   }
+      // }
+
+      const resCombinadas = await Promise.all(
+        rubros_presupuestales.map((rp) => {
+          if (rp.id) {
+            return ProyectoDB.actualizarRubroMinistracion(rp)
+          } else {
+            return ProyectoDB.crearRubroMinistracion(id_ministracion, rp)
+          }
+        })
+      )
+
+      for (const rc of resCombinadas) {
+        if (rc.error) throw rc.data
+      }
+
+      return RespuestaController.exitosa(
+        200,
+        "ministracion actualizada con éxito",
+        null
       )
     } catch (error) {
       return RespuestaController.fallida(
@@ -351,11 +408,7 @@ class ProyectosServices {
       }
     })
 
-    return RespuestaController.exitosa(
-      200,
-      "consulta exitosa",
-      notas
-    )
+    return RespuestaController.exitosa(200, "consulta exitosa", notas)
   }
 
   static async crearNota(id_proyecto: number, data: NotaProyecto) {

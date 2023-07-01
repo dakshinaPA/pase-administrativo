@@ -35,9 +35,15 @@ import {
 } from "@contexts/proyecto.context"
 import { FormaMinistracion } from "./FromaMinistracion"
 
-
 const TablaMinistraciones = () => {
-  const { estadoForma, modoEditar, quitarMinistracion, editarMinistracion } = useProyecto()
+  const {
+    estadoForma,
+    modalidad,
+    modoEditar,
+    showFormaMinistracion,
+    quitarMinistracion,
+    editarMinistracion,
+  } = useProyecto()
 
   return (
     <div className="col-12 col-md table-responsive mb-3">
@@ -49,7 +55,7 @@ const TablaMinistraciones = () => {
             <th>Fecha de recepción</th>
             <th>Rubros</th>
             <th>Monto</th>
-            {modoEditar && <th>Acciones</th>}
+            <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -85,28 +91,27 @@ const TablaMinistraciones = () => {
                   </table>
                 </td>
                 <td>{f_monto}</td>
-                {modoEditar && (
-                  <td>
-                    {!!id ? (
-                      <button
-                        type="button"
-                        className="btn btn-dark btn-sm"
-                        title="editar ministración"
-                        onClick={() => editarMinistracion(id)}
-                      >
-                        <i className="bi bi-pencil"></i>
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        className="btn btn-dark btn-sm"
-                        onClick={() => quitarMinistracion(i_numero)}
-                      >
-                        <i className="bi bi-x-circle"></i>
-                      </button>
-                    )}
-                  </td>
-                )}
+                <td>
+                  {modalidad === "EDITAR" && !showFormaMinistracion && !modoEditar && (
+                    <button
+                      type="button"
+                      className="btn btn-dark btn-sm"
+                      title="editar ministración"
+                      onClick={() => editarMinistracion(id)}
+                    >
+                      <i className="bi bi-pencil"></i>
+                    </button>
+                  )}
+                  {!id && (
+                    <button
+                      type="button"
+                      className="btn btn-dark btn-sm"
+                      onClick={() => quitarMinistracion(i_numero)}
+                    >
+                      <i className="bi bi-x-circle"></i>
+                    </button>
+                  )}
+                </td>
               </tr>
             )
           )}
@@ -631,7 +636,7 @@ const FormaProyecto = () => {
             <BtnBack navLink="/proyectos" />
             {!idProyecto && <h2 className="color1 mb-0">Registrar proyecto</h2>}
           </div>
-          {showBtnEditar && <BtnEditar onClick={() => setModoEditar(true)} />}
+          {showBtnEditar && !showFormaMinistracion && <BtnEditar onClick={() => setModoEditar(true)} />}
         </div>
       </div>
       <FormaContenedor onSubmit={handleSubmit}>

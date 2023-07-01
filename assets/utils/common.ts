@@ -67,12 +67,18 @@ const obtenerFinanciadores = async (min = true) => {
 }
 
 const obtenerProyectos = (queries: QueriesProyecto) => {
-  const { id, id_coparte, id_responsable, min = true, registro_solicitud } = queries
+  const {
+    id,
+    id_coparte,
+    id_responsable,
+    min = true,
+    registro_solicitud,
+  } = queries
   let url = `/proyectos`
 
   if (id) {
     url += `/${id}`
-    if(registro_solicitud){
+    if (registro_solicitud) {
       url += "/data"
     }
   } else if (id_coparte) {
@@ -88,6 +94,11 @@ const obtenerProyectos = (queries: QueriesProyecto) => {
       url += "&min=true"
     }
   }
+  return ApiCall.get(url)
+}
+
+const obtenerMinistraciones = (id_proyecto: number) => {
+  let url = `/proyectos/${id_proyecto}/ministraciones`
   return ApiCall.get(url)
 }
 
@@ -192,5 +203,6 @@ export {
   obtenerProyectos,
   obtenerColaboradores,
   obtenerProveedores,
-  obtenerSolicitudes
+  obtenerSolicitudes,
+  obtenerMinistraciones
 }

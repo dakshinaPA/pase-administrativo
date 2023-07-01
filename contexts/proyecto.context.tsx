@@ -9,7 +9,11 @@ import {
 } from "react"
 import { useRouter } from "next/router"
 import { ApiCall } from "@assets/utils/apiCalls"
-import { MinistracionProyecto, Proyecto, RubroMinistracion } from "@models/proyecto.model"
+import {
+  MinistracionProyecto,
+  Proyecto,
+  RubroMinistracion,
+} from "@models/proyecto.model"
 import { useAuth } from "./auth.context"
 import { UsuarioLogin } from "@models/usuario.model"
 
@@ -39,6 +43,7 @@ export type ActionTypes =
   | "HANDLE_CHANGE"
   | "QUITAR_MINISTRACION"
   | "AGREGAR_MINISTRACION"
+  | "RECARGAR_MINISTRACIONES"
   | "CAMBIAR_TIPO_FINANCIAMIENTO"
   | "RECARGAR_NOTAS"
 
@@ -48,6 +53,7 @@ interface ActionDispatch {
 }
 
 interface FormaMinistracion {
+  id?: number
   i_numero: number
   f_monto: string
   i_grupo: string
@@ -82,6 +88,11 @@ const reducer = (state: Proyecto, action: ActionDispatch): Proyecto => {
       return {
         ...state,
         ministraciones: [...state.ministraciones, payload],
+      }
+    case "RECARGAR_MINISTRACIONES":
+      return {
+        ...state,
+        ministraciones: payload,
       }
     case "CAMBIAR_TIPO_FINANCIAMIENTO":
       return {
@@ -173,16 +184,17 @@ const ProyectoProvider = ({ children }) => {
   }
 
   const editarMinistracion = (id_ministracion: number) => {
-   
-    const matchMinistracion = estadoForma.ministraciones.find( min => min.id == id_ministracion)
-    if(!matchMinistracion){
+    const matchMinistracion = estadoForma.ministraciones.find(
+      (min) => min.id == id_ministracion
+    )
+    if (!matchMinistracion) {
       console.log(matchMinistracion)
       return
     }
 
     const dataForma = {
       ...matchMinistracion,
-      id_rubro: 0
+      id_rubro: 0,
     }
 
     setFormaMinistracion(dataForma)
@@ -204,7 +216,7 @@ const ProyectoProvider = ({ children }) => {
     quitarMinistracion,
     editarMinistracion,
     modoEditar,
-    setModoEditar
+    setModoEditar,
   }
 
   return (
