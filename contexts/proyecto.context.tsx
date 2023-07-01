@@ -27,7 +27,7 @@ interface ProyectoProvider {
   showFormaMinistracion: boolean
   setShowFormaMinistracion: Dispatch<SetStateAction<boolean>>
   formaMinistracion: FormaMinistracion
-  estaInicialdFormaMinistracion: MinistracionProyecto
+  estaInicialFormaMinistracion: MinistracionProyecto
   setFormaMinistracion: Dispatch<SetStateAction<MinistracionProyecto>>
   quitarMinistracion: (i_numero: number) => void
   editarMinistracion: (id_ministracion: number) => void
@@ -134,7 +134,7 @@ const ProyectoProvider = ({ children }) => {
     notas: [],
   }
 
-  const estaInicialdFormaMinistracion: FormaMinistracion = {
+  const estaInicialFormaMinistracion: FormaMinistracion = {
     i_numero: 1,
     f_monto: "0",
     i_grupo: "0",
@@ -146,7 +146,7 @@ const ProyectoProvider = ({ children }) => {
   const [estadoForma, dispatch] = useReducer(reducer, estadoInicialForma)
   const [showFormaMinistracion, setShowFormaMinistracion] = useState(false)
   const [formaMinistracion, setFormaMinistracion] = useState(
-    estaInicialdFormaMinistracion
+    estaInicialFormaMinistracion
   )
   const [modoEditar, setModoEditar] = useState<boolean>(!idProyecto)
   const modalidad = idProyecto ? "EDITAR" : "CREAR"
@@ -157,6 +157,24 @@ const ProyectoProvider = ({ children }) => {
       handleTipoCambioFinanciamineto()
     }
   }, [estadoForma.i_tipo_financiamiento])
+
+  // useEffect(() => {
+
+  //   if (formaMinistracion.id) return
+
+  //   // limpiar la forma cada que se cierre o abra nueva ministracion
+  //   // calcular automaticamente el numero de ministracion de acuerdo al siguiente en la lista
+  //   setFormaMinistracion((prevState) => ({
+  //     ...estaInicialFormaMinistracion,
+  //     i_numero:
+  //       estadoForma.ministraciones.length > 0
+  //         ? Number(
+  //             estadoForma.ministraciones[estadoForma.ministraciones.length - 1]
+  //               .i_numero
+  //           ) + 1
+  //         : 1,
+  //   }))
+  // }, [showFormaMinistracion])
 
   const handleTipoCambioFinanciamineto = () => {
     dispatch({
@@ -212,7 +230,7 @@ const ProyectoProvider = ({ children }) => {
     setShowFormaMinistracion,
     formaMinistracion,
     setFormaMinistracion,
-    estaInicialdFormaMinistracion,
+    estaInicialFormaMinistracion,
     quitarMinistracion,
     editarMinistracion,
     modoEditar,

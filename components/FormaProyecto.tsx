@@ -92,16 +92,18 @@ const TablaMinistraciones = () => {
                 </td>
                 <td>{f_monto}</td>
                 <td>
-                  {modalidad === "EDITAR" && !showFormaMinistracion && !modoEditar && (
-                    <button
-                      type="button"
-                      className="btn btn-dark btn-sm"
-                      title="editar ministración"
-                      onClick={() => editarMinistracion(id)}
-                    >
-                      <i className="bi bi-pencil"></i>
-                    </button>
-                  )}
+                  {modalidad === "EDITAR" &&
+                    !showFormaMinistracion &&
+                    !modoEditar && (
+                      <button
+                        type="button"
+                        className="btn btn-dark btn-sm"
+                        title="editar ministración"
+                        onClick={() => editarMinistracion(id)}
+                      >
+                        <i className="bi bi-pencil"></i>
+                      </button>
+                    )}
                   {!id && (
                     <button
                       type="button"
@@ -443,6 +445,8 @@ const FormaProyecto = () => {
     modalidad,
     showFormaMinistracion,
     setShowFormaMinistracion,
+    setFormaMinistracion,
+    estaInicialFormaMinistracion,
     modoEditar,
     setModoEditar,
   } = useProyecto()
@@ -587,6 +591,16 @@ const FormaProyecto = () => {
   }
 
   const mostrarFormaMinistracion = () => {
+    //cuando se vaya a agregar una nueva ministracion hay que limpiar la forma
+    //hay que calcular el numero automaticamente
+    setFormaMinistracion((prevState) => ({
+      ...estaInicialFormaMinistracion,
+      i_numero:
+        Number(
+          estadoForma.ministraciones[estadoForma.ministraciones.length - 1]
+            ?.i_numero || 0
+        ) + 1,
+    }))
     setShowFormaMinistracion(true)
   }
 
@@ -636,7 +650,9 @@ const FormaProyecto = () => {
             <BtnBack navLink="/proyectos" />
             {!idProyecto && <h2 className="color1 mb-0">Registrar proyecto</h2>}
           </div>
-          {showBtnEditar && !showFormaMinistracion && <BtnEditar onClick={() => setModoEditar(true)} />}
+          {showBtnEditar && !showFormaMinistracion && (
+            <BtnEditar onClick={() => setModoEditar(true)} />
+          )}
         </div>
       </div>
       <FormaContenedor onSubmit={handleSubmit}>

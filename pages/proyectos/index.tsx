@@ -171,6 +171,7 @@ const Financiadores = () => {
                 <tr>
                   <th>#id</th>
                   <th>Alt id</th>
+                  <th>Nombre</th>
                   <th>Financiador</th>
                   <th>Tipo financiamiento</th>
                   <th>Monto total</th>
@@ -185,6 +186,7 @@ const Financiadores = () => {
                   const {
                     id,
                     id_alt,
+                    nombre,
                     id_coparte,
                     id_responsable,
                     financiador,
@@ -198,6 +200,7 @@ const Financiadores = () => {
                     <tr key={id}>
                       <td>{id}</td>
                       <td>{id_alt}</td>
+                      <td>{nombre}</td>
                       <td>{financiador}</td>
                       <td>{tipo_financiamiento}</td>
                       <td>{f_monto_total}</td>

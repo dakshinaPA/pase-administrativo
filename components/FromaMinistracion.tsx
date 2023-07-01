@@ -15,7 +15,7 @@ const FormaMinistracion = () => {
     dispatch,
     setShowFormaMinistracion,
     formaMinistracion,
-    estaInicialdFormaMinistracion,
+    // estaInicialdFormaMinistracion,
     setFormaMinistracion,
   } = useProyecto()
   const { rubros_presupuestales } = useCatalogos()
@@ -176,7 +176,7 @@ const FormaMinistracion = () => {
   }
 
   const cerrarForma = () => {
-    setFormaMinistracion(estaInicialdFormaMinistracion)
+    // setFormaMinistracion(estaInicialdFormaMinistracion)
     // setFormaRubros(estadoInicialdFormaRubros)
     setShowFormaMinistracion(false)
   }
@@ -270,7 +270,9 @@ const FormaMinistracion = () => {
     return <option value={rubroGestion.id}>{rubroGestion.nombre}</option>
   }
 
-  const disabledInputNumero = estadoForma.i_tipo_financiamiento <= 2
+  const disabledInputNumero =
+    estadoForma.i_tipo_financiamiento <= 2 ||
+    estadoForma.ministraciones.length > 0
 
   return (
     <div className="col-12 mb-3" ref={formMinistracion}>
