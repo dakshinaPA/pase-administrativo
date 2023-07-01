@@ -468,20 +468,20 @@ const FormaProyecto = () => {
   }, [estadoForma.id_coparte])
 
   useEffect(() => {
-    if (modalidad === "CREAR") {
-      const montoTotalProyecto = estadoForma.ministraciones.reduce(
-        (acum, ministracion) => acum + Number(ministracion.f_monto),
-        0
-      )
+    // if (modalidad === "CREAR") {
+    // }
+    const montoTotalProyecto = estadoForma.ministraciones.reduce(
+      (acum, ministracion) => acum + Number(ministracion.f_monto),
+      0
+    )
 
-      dispatch({
-        type: "HANDLE_CHANGE",
-        payload: {
-          name: "f_monto_total",
-          value: montoTotalProyecto,
-        },
-      })
-    }
+    dispatch({
+      type: "HANDLE_CHANGE",
+      payload: {
+        name: "f_monto_total",
+        value: montoTotalProyecto,
+      },
+    })
   }, [estadoForma.ministraciones])
 
   const cargarData = async () => {

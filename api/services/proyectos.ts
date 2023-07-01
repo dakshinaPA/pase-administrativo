@@ -258,7 +258,7 @@ class ProyectosServices {
       //   }
       // }
 
-      const resCombinadas = await Promise.all(
+      const resCombinadas2 = await Promise.all(
         rubros_presupuestales.map((rp) => {
           if (rp.id) {
             return ProyectoDB.actualizarRubroMinistracion(rp)
@@ -268,7 +268,7 @@ class ProyectosServices {
         })
       )
 
-      for (const rc of resCombinadas) {
+      for (const rc of resCombinadas2) {
         if (rc.error) throw rc.data
       }
 

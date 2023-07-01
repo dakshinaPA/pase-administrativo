@@ -224,7 +224,7 @@ const FormaMinistracion = () => {
   const handleGuardar = async () => {
     console.log(formaMinistracion)
     const upMinistracion = await ApiCall.put(
-      `/ministraciones/${estadoForma.id}`,
+      `/ministraciones/${formaMinistracion.id}`,
       formaMinistracion
     )
 
