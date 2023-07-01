@@ -92,18 +92,16 @@ const TablaMinistraciones = () => {
                 </td>
                 <td>{f_monto}</td>
                 <td>
-                  {modalidad === "EDITAR" &&
-                    !showFormaMinistracion &&
-                    !modoEditar && (
-                      <button
-                        type="button"
-                        className="btn btn-dark btn-sm"
-                        title="editar ministración"
-                        onClick={() => editarMinistracion(id)}
-                      >
-                        <i className="bi bi-pencil"></i>
-                      </button>
-                    )}
+                  {modoEditar && !showFormaMinistracion && id && (
+                    <button
+                      type="button"
+                      className="btn btn-dark btn-sm"
+                      title="editar ministración"
+                      onClick={() => editarMinistracion(id)}
+                    >
+                      <i className="bi bi-pencil"></i>
+                    </button>
+                  )}
                   {!id && (
                     <button
                       type="button"
@@ -623,7 +621,17 @@ const FormaProyecto = () => {
           `/copartes/${estadoForma.id_coparte}/proyectos/${data.idInsertado}`
         )
       } else {
-        setModoEditar(false)
+        const reProyectoActualizado = await obtenerProyectos({ id: idProyecto, min: false })
+        if(reProyectoActualizado.error){
+          console.log(reProyectoActualizado.data)
+        } else {
+          const proyectoActualizado = reProyectoActualizado.data[0] as Proyecto
+          dispatch({
+            type: "CARGA_INICIAL",
+            payload: proyectoActualizado
+          })
+          setModoEditar(false)
+        }
       }
     }
   }
@@ -804,7 +812,7 @@ const FormaProyecto = () => {
         </div>
         <TablaMinistraciones />
         {showFormaMinistracion && <FormaMinistracion />}
-        {modoEditar && (
+        {modoEditar && !showFormaMinistracion && (
           <div className="col-12 text-end">
             <BtnCancelar onclick={cancelar} margin={"r"} />
             <BtnRegistrar modalidad={modalidad} margin={false} />

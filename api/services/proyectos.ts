@@ -323,29 +323,14 @@ class ProyectosServices {
       const idInsertado = cr.data.insertId
 
       const crMinistraciones = await Promise.all(
-        ministraciones.map(async (ministracion) => {
-          const { rubros_presupuestales } = ministracion
-
-          const crMinistracion = await ProyectoDB.crearMinistracion(
-            idInsertado,
-            ministracion
-          )
-          if (crMinistracion.error) throw crMinistracion.data
-          // @ts-ignore
-          const idInsertadoMinistracion = crMinistracion.data.insertId
-
-          const crRubrosMinistracion = await Promise.all(
-            rubros_presupuestales.map(async (rubroMinistracion) => {
-              const crRubroMinistracion =
-                await ProyectoDB.crearRubroMinistracion(
-                  idInsertadoMinistracion,
-                  rubroMinistracion
-                )
-              if (crRubroMinistracion.error) throw crRubroMinistracion.data
-            })
-          )
-        })
+        ministraciones.map(
+          async (min) => await this.crearMinistracion(idInsertado, min)
+        )
       )
+
+      for (const cm of crMinistraciones) {
+        if (cm.error) throw cm.data
+      }
 
       return RespuestaController.exitosa(201, "Proyecto creado con éxito", {
         idInsertado,
@@ -359,8 +344,20 @@ class ProyectosServices {
     try {
       const { ministraciones } = data
 
-      const up = await ProyectoDB.actualizar(id_proyecto, data)
-      if (up.error) throw up.data
+      const up = ProyectoDB.actualizar(id_proyecto, data)
+      const promesas = [up]
+
+      for (const min of ministraciones) {
+        if (!min.id) {
+          promesas.push(this.crearMinistracion(id_proyecto, min))
+        }
+      }
+
+      const resCombinadas = await Promise.all(promesas)
+
+      for (const rc of resCombinadas) {
+        if (rc.error) throw rc.data
+      }
 
       return RespuestaController.exitosa(
         200,
@@ -417,7 +414,7 @@ class ProyectosServices {
     if (cr.error) {
       return RespuestaController.fallida(
         400,
-        "Error al crear nota de financiador",
+        "Error al crear nota de proyecto",
         cr.data
       )
     }
@@ -427,8 +424,72 @@ class ProyectosServices {
 
     return RespuestaController.exitosa(
       201,
-      "Nota de financiador creada con éxito",
+      "Nota de proyecto creada con éxito",
       { idInsertado }
+    )
+  }
+
+  static async crearMinistracion(
+    id_proyecto: number,
+    ministracion: MinistracionProyecto
+  ) {
+    try {
+      const { rubros_presupuestales } = ministracion
+
+      const crMinistracion = await ProyectoDB.crearMinistracion(
+        id_proyecto,
+        ministracion
+      )
+      if (crMinistracion.error) throw crMinistracion.data
+      // @ts-ignore
+      const idInsertadoMinistracion = crMinistracion.data.insertId
+
+      const crRubros = await Promise.all(
+        rubros_presupuestales.map(
+          async (rubro) =>
+            await this.crearRubroMinistracion(idInsertadoMinistracion, rubro)
+        )
+      )
+
+      for (const cr of crRubros) {
+        if (cr.error) throw cr.data
+      }
+
+      return RespuestaController.exitosa(201, "Ministracion creada con éxito", {
+        idInsertadoMinistracion,
+      })
+    } catch (error) {
+      return RespuestaController.fallida(
+        400,
+        "Error al crear ministracion",
+        error
+      )
+    }
+  }
+
+  static async crearRubroMinistracion(
+    id_ministracion: number,
+    rubro: RubroMinistracion
+  ) {
+    const crRubro = await ProyectoDB.crearRubroMinistracion(
+      id_ministracion,
+      rubro
+    )
+    if (crRubro.error) {
+      return RespuestaController.fallida(
+        400,
+        "Error al crear rubro de ministración",
+        crRubro.data
+      )
+    }
+
+    // @ts-ignore
+    const idInsertadoRubro = crRubro.data.insertId
+
+    return RespuestaController.exitosa(
+      201,
+      "Rubro de ministración creado con éxito",
+      { idInsertadoRubro }
     )
   }
 }

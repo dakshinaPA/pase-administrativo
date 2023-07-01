@@ -37,12 +37,15 @@ class ProyectoDB {
     id_responsable: number
   ) {
     let query = `SELECT p.id, p.id_financiador, p.id_coparte, p.id_responsable, p.id_alt, p.nombre, p.id_tema_social,
-      p.f_monto_total, p.i_tipo_financiamiento, p.i_beneficiados, p.dt_registro,
+      p.i_tipo_financiamiento, p.i_beneficiados, p.dt_registro,
+      SUM(mrp.f_monto) f_monto_total,
       f.nombre financiador,
       c.nombre coparte, c.id_administrador,
       CONCAT(u.nombre, ' ', u.apellido_paterno) responsable,
       ts.nombre tema_social
       FROM proyectos p
+      JOIN proyecto_ministraciones pm ON p.id = pm.id_proyecto
+      JOIN ministracion_rubros_presupuestales mrp ON pm.id = mrp.id_ministracion
       JOIN financiadores f ON p.id_financiador = f.id
       JOIN copartes c ON p.id_coparte = c.id
       JOIN usuarios u ON p.id_responsable = u.id
@@ -54,12 +57,14 @@ class ProyectoDB {
     }
 
     if (id_proyecto) {
-      query += ` AND p.id=${id_proyecto} LIMIT 1`
+      query += ` AND p.id=${id_proyecto}`
     }
 
     if (id_responsable) {
       query += ` AND p.id_responsable=${id_responsable}`
     }
+
+    query += " GROUP BY p.id"
 
     try {
       const res = await queryDB(query)
@@ -77,13 +82,12 @@ class ProyectoDB {
       id_alt,
       nombre,
       id_tema_social,
-      f_monto_total,
       i_tipo_financiamiento,
       i_beneficiados,
     } = data
 
     const query = `INSERT INTO proyectos ( id_financiador, id_coparte, id_responsable, id_alt, nombre, id_tema_social,
-      f_monto_total, i_tipo_financiamiento, i_beneficiados, dt_registro) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )`
+      i_tipo_financiamiento, i_beneficiados, dt_registro) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ? )`
 
     const placeHolders = [
       id_financiador,
@@ -92,7 +96,6 @@ class ProyectoDB {
       id_alt,
       nombre,
       id_tema_social,
-      f_monto_total,
       i_tipo_financiamiento,
       i_beneficiados,
       fechaActualAEpoch(),
@@ -111,18 +114,16 @@ class ProyectoDB {
       id_responsable,
       nombre,
       id_tema_social,
-      f_monto_total,
       i_beneficiados,
     } = data
 
     const query = `UPDATE proyectos SET id_responsable=?, nombre=?, id_tema_social=?,
-    f_monto_total=?, i_beneficiados=? WHERE id=? LIMIT 1`
+      i_beneficiados=? WHERE id=? LIMIT 1`
 
     const placeHolders = [
       id_responsable,
       nombre,
       id_tema_social,
-      f_monto_total,
       i_beneficiados,
       id_proyecto,
     ]
@@ -147,8 +148,10 @@ class ProyectoDB {
   }
 
   static async obtenerMinistraciones(id_proyecto: number) {
-    let query = `SELECT id, i_numero, f_monto, i_grupo, dt_recepcion, dt_registro
-      FROM proyecto_ministraciones WHERE id_proyecto = ${id_proyecto} AND b_activo = 1`
+    let query = `SELECT pm.id, pm.i_numero, SUM(mrp.f_monto) f_monto, pm.i_grupo, pm.dt_recepcion, pm.dt_registro
+      FROM proyecto_ministraciones pm
+      JOIN ministracion_rubros_presupuestales mrp ON pm.id = mrp.id_ministracion
+      WHERE pm.id_proyecto = ${id_proyecto} AND pm.b_activo=1 GROUP BY pm.id`
 
     try {
       const res = await queryDB(query)
@@ -162,15 +165,14 @@ class ProyectoDB {
     id_proyecto: number,
     data: MinistracionProyecto
   ) {
-    const { i_numero, f_monto, i_grupo, dt_recepcion } = data
+    const { i_numero, i_grupo, dt_recepcion } = data
 
-    const query = `INSERT INTO proyecto_ministraciones ( id_proyecto, i_numero, f_monto, i_grupo,
-      dt_recepcion, dt_registro ) VALUES ( ?, ?, ?, ?, ?, ? )`
+    const query = `INSERT INTO proyecto_ministraciones ( id_proyecto, i_numero, i_grupo,
+      dt_recepcion, dt_registro ) VALUES ( ?, ?, ?, ?, ? )`
 
     const placeHolders = [
       id_proyecto,
       i_numero,
-      f_monto,
       i_grupo,
       dt_recepcion,
       fechaActualAEpoch(),
@@ -188,14 +190,13 @@ class ProyectoDB {
     id_ministracion: number,
     data: MinistracionProyecto
   ) {
-    const { i_numero, f_monto, i_grupo, dt_recepcion } = data
+    const { i_numero, i_grupo, dt_recepcion } = data
 
-    const query = `UPDATE proyecto_ministraciones SET i_numero=?, f_monto=?,
+    const query = `UPDATE proyecto_ministraciones SET i_numero=?,
       i_grupo=?, dt_recepcion=? WHERE id=? LIMIT 1`
 
     const placeHolders = [
       i_numero,
-      f_monto,
       i_grupo,
       dt_recepcion,
       id_ministracion,

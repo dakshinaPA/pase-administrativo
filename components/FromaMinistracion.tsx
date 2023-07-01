@@ -39,6 +39,7 @@ const FormaMinistracion = () => {
       behavior: "smooth",
       block: "end",
     })
+    // formMinistracion.current.scrollIntoView(true)
   }, [])
 
   useEffect(() => {
