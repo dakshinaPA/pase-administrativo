@@ -124,9 +124,9 @@ const Proveedores = () => {
             }
             value={selectProyecto}
           >
-            {proyectosDB.map(({ id, id_alt }) => (
+            {proyectosDB.map(({ id, id_alt, nombre }) => (
               <option key={id} value={id}>
-                {id_alt}
+                {nombre} - {id_alt}
               </option>
             ))}
           </select>

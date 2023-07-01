@@ -212,9 +212,9 @@ const FormaProveedor = () => {
             value={estadoForma.id_proyecto}
             disabled={!!idProyecto}
           >
-            {proyectosDB.map(({ id, id_alt }) => (
+            {proyectosDB.map(({ id, id_alt, nombre }) => (
               <option key={id} value={id}>
-                {id_alt}
+                {nombre} - {id_alt}
               </option>
             ))}
           </select>
@@ -304,7 +304,9 @@ const FormaProveedor = () => {
           />
         </div>
         <div className="col-12 mb-3">
-          <label className="form-label">Descricpión de la compra o servicio</label>
+          <label className="form-label">
+            Descricpión de la compra o servicio
+          </label>
           <input
             className="form-control"
             type="text"

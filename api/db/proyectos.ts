@@ -13,7 +13,7 @@ class ProyectoDB {
   static async obtenerVMin(queries: QueriesProyecto) {
     const { id_responsable, id } = queries
 
-    let query = `SELECT id, id_alt from proyectos WHERE b_activo=1`
+    let query = `SELECT id, id_alt, nombre from proyectos WHERE b_activo=1`
 
     if (id) {
       query += ` AND id=${id}`
