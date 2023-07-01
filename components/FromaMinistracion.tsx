@@ -6,7 +6,10 @@ import { MinistracionProyecto, RubroMinistracion } from "@models/proyecto.model"
 import { MutableRefObject, createRef, useEffect, useRef } from "react"
 import { ChangeEvent } from "@assets/models/formEvents.model"
 import { ApiCall } from "@assets/utils/apiCalls"
-import { obtenerMinistraciones } from "@assets/utils/common"
+import {
+  fechaActualInputDate,
+  obtenerMinistraciones,
+} from "@assets/utils/common"
 
 const FormaMinistracion = () => {
   const {
@@ -17,6 +20,7 @@ const FormaMinistracion = () => {
     formaMinistracion,
     // estaInicialdFormaMinistracion,
     setFormaMinistracion,
+    setModoEditar
   } = useProyecto()
   const { rubros_presupuestales } = useCatalogos()
 
@@ -182,25 +186,25 @@ const FormaMinistracion = () => {
     setShowFormaMinistracion(false)
   }
 
-  const handleAgregar = () => {
+  const validarForma = () => {
     if (!Number(formaMinistracion.i_numero)) {
       inputNumero.current.focus()
-      return
+      return false
     }
 
     if (!Number(formaMinistracion.i_grupo)) {
       inputGrupo.current.focus()
-      return
+      return false
     }
 
     if (!formaMinistracion.dt_recepcion) {
       inputDtRecepcion.current.focus()
-      return
+      return false
     }
 
     if (!formaMinistracion.rubros_presupuestales.length) {
       selectRubro.current.focus()
-      return
+      return false
     }
 
     try {
@@ -208,21 +212,30 @@ const FormaMinistracion = () => {
       formaMinistracion.rubros_presupuestales.forEach((rubro, index) => {
         if (!Number(rubro.f_monto)) throw index
       })
-
-      dispatch({
-        type: "AGREGAR_MINISTRACION",
-        payload: formaMinistracion,
-      })
-
-      cerrarForma()
     } catch (index) {
       const input =
         tableRubros.current.querySelectorAll("input[type=text]")[index]
       input.focus()
+      return false
     }
+
+    return true
+  }
+
+  const handleAgregar = () => {
+    if (!validarForma()) return
+
+    dispatch({
+      type: "AGREGAR_MINISTRACION",
+      payload: formaMinistracion,
+    })
+
+    cerrarForma()
   }
 
   const handleGuardar = async () => {
+    if (!validarForma()) return
+
     console.log(formaMinistracion)
     const upMinistracion = await ApiCall.put(
       `/ministraciones/${formaMinistracion.id}`,
@@ -244,6 +257,7 @@ const FormaMinistracion = () => {
         })
 
         cerrarForma()
+        setModoEditar(false)
       }
     }
   }
@@ -321,6 +335,7 @@ const FormaMinistracion = () => {
               onChange={handleChangeMinistracion}
               name="dt_recepcion"
               value={formaMinistracion.dt_recepcion}
+              max={fechaActualInputDate()}
               ref={inputDtRecepcion}
             />
           </div>

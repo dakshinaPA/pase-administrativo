@@ -41,6 +41,19 @@ const fechaActualAEpoch = () => {
   return fechaEpoch
 }
 
+const fechaActualInputDate = () => {
+  //regresa la fecha actual para input date
+  const dt = new Date()
+  const dtFormatoMX = dt.toLocaleDateString("es-MX", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  })
+  const [dia, mes, anio] = dtFormatoMX.split("/")
+  const dtAformatoInput = `${anio}-${mes}-${dia}`
+  return dtAformatoInput
+}
+
 const obtenerCopartes = async (queries: QueriesCoparte) => {
   const { id, id_admin, min = true } = queries
 
@@ -204,5 +217,6 @@ export {
   obtenerColaboradores,
   obtenerProveedores,
   obtenerSolicitudes,
-  obtenerMinistraciones
+  obtenerMinistraciones,
+  fechaActualInputDate,
 }

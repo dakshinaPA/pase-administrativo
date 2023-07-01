@@ -203,16 +203,16 @@ const Colaboradores = () => {
   )
 }
 
-const Proveedores = ({ proveedores, id_responsable }) => {
+const Proveedores = () => {
   const { user } = useAuth()
   const router = useRouter()
-  const idProyecto = Number(router.query.idP)
+  const {estadoForma, idProyecto} = useProyecto()
 
   return (
     <div className="row mb-5">
       <div className="col-12 mb-3 d-flex justify-content-between">
         <h3 className="color1 mb-0">Proveedores</h3>
-        {user.id == id_responsable && (
+        {user.id == estadoForma.id_responsable && (
           <button
             type="button"
             className="btn btn-secondary"
@@ -239,7 +239,7 @@ const Proveedores = ({ proveedores, id_responsable }) => {
             </tr>
           </thead>
           <tbody>
-            {proveedores.map(
+            {estadoForma.proveedores.map(
               ({
                 id,
                 nombre,
@@ -280,16 +280,16 @@ const Proveedores = ({ proveedores, id_responsable }) => {
   )
 }
 
-const SolicitudesPresupuesto = ({ solicitudes, id_responsable }) => {
+const SolicitudesPresupuesto = () => {
   const { user } = useAuth()
   const router = useRouter()
-  const idProyecto = Number(router.query.idP)
+  const {estadoForma, idProyecto} = useProyecto()
 
   return (
     <div className="row mb-5">
       <div className="col-12 mb-3 d-flex justify-content-between">
         <h3 className="color1 mb-0">Solicitudes de presupuesto</h3>
-        {user.id == id_responsable && (
+        {user.id == estadoForma.id_responsable && (
           <button
             type="button"
             className="btn btn-secondary"
@@ -316,7 +316,7 @@ const SolicitudesPresupuesto = ({ solicitudes, id_responsable }) => {
             </tr>
           </thead>
           <tbody>
-            {solicitudes.map(
+            {estadoForma.solicitudes_presupuesto.map(
               ({
                 id,
                 descripcion_gasto,
@@ -621,14 +621,17 @@ const FormaProyecto = () => {
           `/copartes/${estadoForma.id_coparte}/proyectos/${data.idInsertado}`
         )
       } else {
-        const reProyectoActualizado = await obtenerProyectos({ id: idProyecto, min: false })
-        if(reProyectoActualizado.error){
+        const reProyectoActualizado = await obtenerProyectos({
+          id: idProyecto,
+          min: false,
+        })
+        if (reProyectoActualizado.error) {
           console.log(reProyectoActualizado.data)
         } else {
           const proyectoActualizado = reProyectoActualizado.data[0] as Proyecto
           dispatch({
             type: "CARGA_INICIAL",
-            payload: proyectoActualizado
+            payload: proyectoActualizado,
           })
           setModoEditar(false)
         }
@@ -822,14 +825,8 @@ const FormaProyecto = () => {
       {modalidad === "EDITAR" && (
         <>
           <Colaboradores />
-          <Proveedores
-            proveedores={estadoForma.proveedores}
-            id_responsable={estadoForma.id_responsable}
-          />
-          <SolicitudesPresupuesto
-            solicitudes={estadoForma.solicitudes_presupuesto}
-            id_responsable={estadoForma.id_responsable}
-          />
+          <Proveedores />
+          <SolicitudesPresupuesto />
           <Notas notas={estadoForma.notas} refrescarNotas={refrescarNotas} />
         </>
       )}

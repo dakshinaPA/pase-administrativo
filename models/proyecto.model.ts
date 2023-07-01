@@ -60,6 +60,7 @@ export interface RubroMinistracion {
   id_rubro: number
   nombre?: string
   f_monto: string
+  b_activo?: boolean
 }
 
 export interface MinistracionProyecto {

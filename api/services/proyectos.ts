@@ -241,34 +241,57 @@ class ProyectosServices {
       const { rubros_presupuestales } = data
 
       const up = ProyectoDB.actualizarMinistracion(id_ministracion, data)
-      const dlRubros = ProyectoDB.limpiarRubrosMinistracion(id_ministracion)
+      const reTodosRubros =
+        ProyectoDB.obtenerTodosRubrosMinistracion(id_ministracion)
 
-      //evitar posible problema de desincronizacion con eapagado de rubros
-      const resCombinadas1 = await Promise.all([up, dlRubros])
-      for (const rc of resCombinadas1) {
-        if (rc.error) throw rc.data
+      const promesas1 = await Promise.all([up, reTodosRubros])
+
+      for (const p1 of promesas1) {
+        if (p1.error) throw p1.data
       }
 
-      // const promesas = [up, dlRubros]
-      // for (const rp of rubros_presupuestales) {
-      //   if (rp.id) {
-      //     promesas.push(ProyectoDB.actualizarRubroMinistracion(rp))
-      //   } else {
-      //     promesas.push(ProyectoDB.crearRubroMinistracion(id_ministracion, rp))
-      //   }
-      // }
+      const todosRubrosDB = promesas1[1].data as RubroMinistracion[]
+      const rubrosActivosDB = todosRubrosDB.filter(({ b_activo }) => !!b_activo)
 
-      const resCombinadas2 = await Promise.all(
-        rubros_presupuestales.map((rp) => {
-          if (rp.id) {
-            return ProyectoDB.actualizarRubroMinistracion(rp)
+      const promesas2 = []
+
+      for (const rp of rubros_presupuestales) {
+        //si tiene id es porque se va a ctualizar
+        if (rp.id) {
+          promesas2.push(ProyectoDB.actualizarRubroMinistracion(rp))
+        } else {
+          //si no tiene id o se va a registrar o se va a actualizar
+          const rubroMatchDB = todosRubrosDB.find(
+            (rDB) => rDB.id_rubro == rp.id_rubro
+          )
+          if (rubroMatchDB) {
+            promesas2.push(
+              ProyectoDB.reactivarRubroMinistracion({
+                id: rubroMatchDB.id,
+                ...rp,
+              })
+            )
           } else {
-            return ProyectoDB.crearRubroMinistracion(id_ministracion, rp)
+            promesas2.push(
+              ProyectoDB.crearRubroMinistracion(id_ministracion, rp)
+            )
           }
-        })
-      )
+        }
+      }
 
-      for (const rc of resCombinadas2) {
+      //comparar rubros activos de DB vs los que vienen de cliente y ver si se borro alguno
+      for (const raDB of rubrosActivosDB) {
+        const matchCliente = rubros_presupuestales.find(
+          (rp) => rp.id == raDB.id
+        )
+        if (!matchCliente) {
+          promesas2.push(ProyectoDB.desactivarRubroMinistracion(raDB.id))
+        }
+      }
+
+      //evitar posible problema de desincronizacion con eapagado de rubros
+      const resCombinadas = await Promise.all(promesas2)
+      for (const rc of resCombinadas) {
         if (rc.error) throw rc.data
       }
 
@@ -280,7 +303,7 @@ class ProyectosServices {
     } catch (error) {
       return RespuestaController.fallida(
         400,
-        "Error al obtener ministraciones de proyecto",
+        "Error al actualizar ministración",
         error
       )
     }
