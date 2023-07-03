@@ -164,12 +164,12 @@ class ProyectosServices {
     try {
       const reColaboradores = ColaboradorServices.obtener(id_proyecto)
       const reProveedores = ProveedorServices.obtener(id_proyecto)
-      // const rerubros = ProyectoDB.obtenerRubrosUltimaMinistracion(id_proyecto)
+      const rerubros = ProyectoDB.obtenerRubrosMinistraciones(id_proyecto)
 
       const resCombinadas = await Promise.all([
         reColaboradores,
         reProveedores,
-        // rerubros,
+        rerubros,
       ])
 
       for (const rc of resCombinadas) {
@@ -178,17 +178,19 @@ class ProyectosServices {
 
       const colaboradores = resCombinadas[0].data as ColaboradorProyecto[]
       const proveedores = resCombinadas[1].data as ProveedorProyecto[]
-      // const rubros_presupuestales = resCombinadas[2].data as RubroMinistracion[]
+      const rubros_presupuestales = resCombinadas[2].data as RubroMinistracion[]
+
+      //quitar los rubros repetido
 
       return RespuestaController.exitosa(200, "Consulta exitosa", {
         colaboradores,
         proveedores,
-        rubros_presupuestales: [],
+        rubros_presupuestales,
       })
     } catch (error) {
       return RespuestaController.fallida(
         400,
-        "Error al obtener colaboradores del proyecto",
+        "Error al obtener data del proyecto",
         error
       )
     }

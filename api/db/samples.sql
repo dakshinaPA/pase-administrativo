@@ -95,6 +95,37 @@ INSERT INTO `rubros_presupuestales` (`nombre`) VALUES
 ('Materiales para proyecto'),
 ('Pagos al extranjero');
 
+CREATE TABLE `metodos_pago` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `clave` VARCHAR(2) NOT NULL,
+  `nombre` VARCHAR(100) NOT NULL,
+  PRIMARY KEY (`id`));
+
+INSERT INTO `metodos_pago` (`clave`, `nombre`) VALUES
+('01', 'Efectivo'),
+('02', 'Cheque nominativo'),
+('03', 'Transferencia electrónica de fondos'),
+('04', 'Tarjeta de crédito'),
+('05', 'Monedero electrónico'),
+('06', 'Dinero electrónico'),
+('08', 'Vales de despensa'),
+('12', 'Dación en pago'),
+('13', 'Pago por subrogación'),
+('14', 'Pago por consignación'),
+('15', 'Condonación'),
+('17', 'Compensación'),
+('23', 'Novación'),
+('24', 'Confusión'),
+('25', 'Remisión de deuda'),
+('26', 'Prescripción o caducidad'),
+('27', 'A satisfacción del acreedor'),
+('28', 'Tarjeta de débito'),
+('29', 'Tarjeta de servicios'),
+('30', 'Aplicación de anticipos'),
+('31', 'Intermediario pagos'),
+('99', 'Por definir');
+
+
 
 --------------------------------------------------------
 
@@ -438,7 +469,6 @@ CREATE TABLE `solicitudes_presupuesto` (
   `clabe` VARCHAR(18) NOT NULL,
   `id_banco` INT UNSIGNED NOT NULL,
   `titular_cuenta` VARCHAR(80) NOT NULL,
-  `rfc_titular` VARCHAR(20) NOT NULL,
   `email_titular` VARCHAR(50) NOT NULL,
   `proveedor` VARCHAR(50) NOT NULL DEFAULT '' COMMENT 'menos en gastos por comprobar',
   `descripcion_gasto` VARCHAR(300) NOT NULL,
@@ -457,18 +487,14 @@ CREATE TABLE `solicitud_presupuesto_comprobantes` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `id_solicitud_presupuesto` INT UNSIGNED NOT NULL,
   `folio_fiscal` VARCHAR(40) NOT NULL,
-  `f_subtotal` VARCHAR(20) NOT NULL,
   `f_total` VARCHAR(20) NOT NULL,
   `f_retenciones` VARCHAR(20) NOT NULL,
-  `regimen_fiscal` VARCHAR(6) NOT NULL,
-  `forma_pago` VARCHAR(6) NOT NULL,
-  `metodo_pago` VARCHAR(6) NOT NULL,
-  -- `regimen_fiscal` TINYINT UNSIGNED NOT NULL,
-  -- `i_forma_pago` TINYINT UNSIGNED NOT NULL,
-  -- `i_metodo_pago` TINYINT UNSIGNED NOT NULL,
+  `i_metodo_pago` TINYINT UNSIGNED NOT NULL COMMENT '1.- PUE, 2.PPD',
+  `id_forma_pago`INT UNSIGNED NOT NULL,
   `b_activo` TINYINT UNSIGNED NOT NULL DEFAULT 1,
   `dt_registro` VARCHAR(10) NOT NULL,
   PRIMARY KEY (`id`),
+  INDEX (`id_forma_pago`),
   INDEX (`id_solicitud_presupuesto`));
 
 ------------------------------------------------------

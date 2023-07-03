@@ -244,25 +244,25 @@ class ProyectoDB {
     }
   }
 
-  // static async obtenerRubrosUltimaMinistracion(id_proyecto: number) {
+  static async obtenerRubrosMinistraciones(id_proyecto: number) {
 
-  //   const query = `SELECT mrp.id_rubro,
-  //     rp.nombre
-  //     FROM ministracion_rubros_presupuestales mrp
-  //     JOIN rubros_presupuestales rp ON mrp.id_rubro = rp.id
-  //     WHERE mrp.id_ministracion=
-  //     (SELECT pm.id FROM proyecto_ministraciones pm WHERE pm.id_proyecto=? ORDER BY pm.i_numero DESC LIMIT 1)
-  //     AND mrp.b_activo=1`
+    const query = `SELECT DISTINCT mrp.id_rubro,
+      rp.nombre
+      FROM ministracion_rubros_presupuestales mrp
+      JOIN rubros_presupuestales rp ON mrp.id_rubro = rp.id
+      WHERE mrp.id_ministracion IN
+      (SELECT pm.id FROM proyecto_ministraciones pm WHERE pm.id_proyecto=?)
+      AND mrp.b_activo=1`
 
-  //   const placeHolders = [id_proyecto]
+    const placeHolders = [id_proyecto]
 
-  //   try {
-  //     const res = await queryDBPlaceHolder(query, placeHolders)
-  //     return RespuestaDB.exitosa(res)
-  //   } catch (error) {
-  //     return RespuestaDB.fallida(error)
-  //   }
-  // }
+    try {
+      const res = await queryDBPlaceHolder(query, placeHolders)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
 
   static async crearRubroMinistracion(
     id_ministracion: number,

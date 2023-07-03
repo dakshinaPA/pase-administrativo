@@ -111,7 +111,7 @@ const FormaProveedor = () => {
           type: "HANDLE_CHANGE",
           payload: {
             name: "id_proyecto",
-            value: proyectosDB[0].id,
+            value: proyectosDB[0]?.id || 0,
           },
         })
       }
@@ -212,11 +212,15 @@ const FormaProveedor = () => {
             value={estadoForma.id_proyecto}
             disabled={!!idProyecto}
           >
-            {proyectosDB.map(({ id, id_alt, nombre }) => (
-              <option key={id} value={id}>
-                {nombre} - {id_alt}
-              </option>
-            ))}
+            {proyectosDB.length > 0 ? (
+              proyectosDB.map(({ id, id_alt, nombre }) => (
+                <option key={id} value={id}>
+                  {nombre} - {id_alt}
+                </option>
+              ))
+            ) : (
+              <option value="0">No hay proyectos</option>
+            )}
           </select>
         </div>
         <div className="col-12 col-lg-8 mb-3">

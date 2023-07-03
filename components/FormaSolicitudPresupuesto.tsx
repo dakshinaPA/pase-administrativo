@@ -82,7 +82,6 @@ const FormaSolicitudPresupuesto = () => {
     titular: "",
     clabe: "",
     id_banco: 1,
-    rfc: "",
     email: "",
     proveedor: "",
     descripcion_gasto: "",
@@ -91,7 +90,7 @@ const FormaSolicitudPresupuesto = () => {
     comprobantes: [],
   }
 
-  const { bancos } = useCatalogos()
+  const { bancos, metodos_pago } = useCatalogos()
   const [estadoForma, dispatch] = useReducer(reducer, estadoInicialForma)
   const [proyectosDB, setProyectosDB] = useState<ProyectoMin[]>([])
   const [dataProyecto, setDataProyecto] = useState(estadoInicialDataProyecto)
@@ -138,7 +137,7 @@ const FormaSolicitudPresupuesto = () => {
           type: "HANDLE_CHANGE",
           payload: {
             name: "id_proyecto",
-            value: proyectosDB[0].id,
+            value: proyectosDB[0]?.id || 0,
           },
         })
       }
@@ -196,6 +195,19 @@ const FormaSolicitudPresupuesto = () => {
     })
   }
 
+  const asignarIMetodoPago = (metodo_pago: "PUE" | "PPD") => {
+    return metodo_pago == "PUE" ? 1 : 2
+  }
+
+  const asignarIdFormaPAgo = (clave: string) => {
+    const metodoMatch = metodos_pago.find((mp) => mp.clave == clave)
+
+    return {
+      id: metodoMatch?.id || 0,
+      nombre: metodoMatch?.nombre || "",
+    }
+  }
+
   const agregarFactura = (ev) => {
     const [file] = ev.target.files
 
@@ -211,26 +223,34 @@ const FormaSolicitudPresupuesto = () => {
       console.log(xml)
 
       const [comprobante] = xml.getElementsByTagName("cfdi:Comprobante")
-      const [emisor] = comprobante.getElementsByTagName("cfdi:Emisor")
+      const [timbre] = xml.getElementsByTagName("tfd:TimbreFiscalDigital")
+
+      // const [emisor] = comprobante.getElementsByTagName("cfdi:Emisor")
 
       // console.log(comprobante)
       // console.log(emisor)
 
-      const folio_fiscal = comprobante.getAttribute("Folio")
-      const metodo_pago = comprobante.getAttribute("MetodoPago")
-      const f_subtotal = comprobante.getAttribute("SubTotal")
+      const folio_fiscal = timbre.getAttribute("UUID")
+      const metodo_pago = comprobante.getAttribute("MetodoPago") as
+        | "PUE"
+        | "PPD"
+      const clave_forma_pago = comprobante.getAttribute("FormaPago")
+      // const f_subtotal = comprobante.getAttribute("SubTotal")
       const f_retenciones = comprobante.getAttribute("Descuento")
       const f_total = comprobante.getAttribute("Total")
-      const regimen_fiscal = emisor.getAttribute("RegimenFiscal")
+      // const regimen_fiscal = emisor.getAttribute("RegimenFiscal")
+
+      const formaPago = asignarIdFormaPAgo(clave_forma_pago)
 
       const dataComprobante: ComprobanteSolicitud = {
         folio_fiscal,
+        i_metodo_pago: asignarIMetodoPago(metodo_pago),
         metodo_pago,
-        forma_pago: "03",
-        regimen_fiscal,
-        f_subtotal,
+        id_forma_pago: formaPago.id,
+        clave_forma_pago: clave_forma_pago || "",
+        forma_pago: formaPago.nombre,
         f_total,
-        f_retenciones,
+        f_retenciones: f_retenciones || "",
       }
 
       dispatch({
@@ -288,6 +308,54 @@ const FormaSolicitudPresupuesto = () => {
     return <Loader />
   }
 
+  const OptionsTipoGasto = () => {
+    const options = [
+      {
+        id: 1,
+        nombre: "Reembolso",
+      },
+      {
+        id: 2,
+        nombre: "Programación",
+      },
+      {
+        id: 5,
+        nombre: "Gastos por comprobar",
+      },
+    ]
+
+    const rubroAsimilados = dataProyecto.rubros_presupuestales.some(
+      (rp) => rp.id_rubro == 2
+    )
+    const rubroHonorarios = dataProyecto.rubros_presupuestales.some(
+      (rp) => rp.id_rubro == 3
+    )
+
+    if (rubroAsimilados) {
+      options.push({
+        id: 3,
+        nombre: "Asimilados a salarios",
+      })
+    }
+
+    if (rubroHonorarios) {
+      options.push({
+        id: 4,
+        nombre: "Honorarios profesionales",
+      })
+    }
+
+    return (
+      <>
+        {options.map(({ id, nombre }) => (
+          <option key={id} value={id}>
+            {nombre}
+          </option>
+        ))}
+      </>
+    )
+  }
+
   return (
     <RegistroContenedor>
       <div className="row mb-3">
@@ -325,11 +393,15 @@ const FormaSolicitudPresupuesto = () => {
               value={estadoForma.id_proyecto}
               disabled={Boolean(idProyecto)}
             >
-              {proyectosDB.map(({ id, id_alt, nombre }) => (
-                <option key={id} value={id}>
-                  {nombre} - {id_alt}
-                </option>
-              ))}
+              {proyectosDB.length > 0 ? (
+                proyectosDB.map(({ id, id_alt, nombre }) => (
+                  <option key={id} value={id}>
+                    {nombre} - {id_alt}
+                  </option>
+                ))
+              ) : (
+                <option value="0">No hay proyectos</option>
+              )}
             </select>
           </div>
         ) : (
@@ -352,11 +424,7 @@ const FormaSolicitudPresupuesto = () => {
             value={estadoForma.i_tipo_gasto}
             disabled={!modoEditar}
           >
-            <option value="1">Reembolso</option>
-            <option value="2">Programación</option>
-            <option value="3">Asimilado a salarios</option>
-            <option value="4">Honorarios profesionales</option>
-            <option value="5">Gastos por comprobar</option>
+            <OptionsTipoGasto />
           </select>
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
@@ -425,17 +493,6 @@ const FormaSolicitudPresupuesto = () => {
           />
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
-          <label className="form-label">RFC</label>
-          <input
-            className="form-control"
-            type="text"
-            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-            name="rfc"
-            value={estadoForma.rfc}
-            disabled={!modoEditar}
-          />
-        </div>
-        <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Proveedor</label>
           <input
             className="form-control"
@@ -495,7 +552,7 @@ const FormaSolicitudPresupuesto = () => {
             name="comprobante"
             accept=".xml"
             ref={fileInput}
-            disabled={!Boolean(Number(estadoForma.f_importe)) || !modoEditar}
+            disabled={!modoEditar}
           />
         </div>
         <div className="col-12 mb-3 table-responsive">
@@ -504,9 +561,8 @@ const FormaSolicitudPresupuesto = () => {
               <tr>
                 <th>Folio fiscal</th>
                 <th>Método de pago</th>
+                <th>Clave de pago</th>
                 <th>Forma de pago</th>
-                <th>Régimen fiscal</th>
-                <th>Subtotal</th>
                 <th>Impuestos retenedios</th>
                 <th>Total</th>
                 <th>
@@ -520,19 +576,17 @@ const FormaSolicitudPresupuesto = () => {
                   id,
                   folio_fiscal,
                   metodo_pago,
+                  clave_forma_pago,
                   forma_pago,
-                  regimen_fiscal,
-                  f_subtotal,
-                  f_total,
                   f_retenciones,
+                  f_total,
                 } = comprobante
                 return (
                   <tr key={folio_fiscal}>
                     <td>{folio_fiscal}</td>
                     <td>{metodo_pago}</td>
+                    <td>{clave_forma_pago}</td>
                     <td>{forma_pago}</td>
-                    <td>{regimen_fiscal}</td>
-                    <td>{f_subtotal}</td>
                     <td>{f_retenciones}</td>
                     <td>{f_total}</td>
                     <td>

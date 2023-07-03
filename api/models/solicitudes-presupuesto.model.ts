@@ -13,7 +13,6 @@ export interface ResSolicitudPresupuestoDB {
   id_banco: number
   banco: string
   titular_cuenta: string
-  rfc_titular: string
   email_titular: string
   proveedor: string
   descripcion_gasto: string

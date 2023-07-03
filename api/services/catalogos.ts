@@ -11,6 +11,7 @@ class CatalogosServices {
       const temas_sociales = CatalogosDB.obtenerTemasSociales()
       const rubros_presupuestales = CatalogosDB.obtenerRubrosPresupuestales()
       const bancos = CatalogosDB.obtenerBancos()
+      const metodos_pago = CatalogosDB.obtenerMetodosPagp()
 
       const resCombinadas = await Promise.all([
         paises,
@@ -18,6 +19,7 @@ class CatalogosServices {
         temas_sociales,
         rubros_presupuestales,
         bancos,
+        metodos_pago
       ])
 
       for (const rc of resCombinadas) {
@@ -29,7 +31,8 @@ class CatalogosServices {
         estados: resCombinadas[1].data,
         temas_sociales: resCombinadas[2].data,
         rubros_presupuestales: resCombinadas[3].data,
-        bancos: resCombinadas[4].data
+        bancos: resCombinadas[4].data,
+        metodos_pago: resCombinadas[5].data
       }
 
       return RespuestaController.exitosa(200, "Catálogos obtenidos con éxito", catalogos)
