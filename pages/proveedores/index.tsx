@@ -39,7 +39,7 @@ const Proveedores = () => {
       console.log(reProyectos.data)
     } else {
       const proyectos = reProyectos.data as ProyectoMin[]
-
+      setProyectosDB(proyectos)
       setSelectProyecto(proyectos[0]?.id || 0)
     }
   }

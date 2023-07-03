@@ -225,7 +225,7 @@ const Financiadores = () => {
                             <>
                               <BtnAccion
                                 margin="l"
-                                icono="bi-eye-fill"
+                                icono="bi-ui-checks"
                                 onclick={() =>
                                   router.push(
                                     `/proyectos/${id}/solicitudes-presupuesto/registro`
