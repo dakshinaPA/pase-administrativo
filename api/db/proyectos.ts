@@ -11,7 +11,7 @@ import { fechaActualAEpoch } from "@assets/utils/common"
 
 class ProyectoDB {
   static async obtenerVMin(queries: QueriesProyecto) {
-    const { id_responsable, id } = queries
+    const { id_responsable, id_coparte, id } = queries
 
     let query = `SELECT id, id_alt, nombre from proyectos WHERE b_activo=1`
 
@@ -21,6 +21,10 @@ class ProyectoDB {
 
     if (id_responsable) {
       query += ` AND id_responsable=${id_responsable}`
+    }
+
+    if (id_coparte) {
+      query += ` AND id_coparte=${id_coparte}`
     }
 
     try {

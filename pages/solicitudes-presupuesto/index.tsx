@@ -6,6 +6,7 @@ import { TablaContenedor } from "@components/Contenedores"
 import { ModalEliminar } from "@components/ModalEliminar"
 import {
   aMinuscula,
+  obtenerCopartes,
   obtenerProyectos,
   obtenerSolicitudes,
 } from "@assets/utils/common"
@@ -13,37 +14,70 @@ import { useAuth } from "@contexts/auth.context"
 import { ProyectoMin } from "@models/proyecto.model"
 import { SolicitudPresupuesto } from "@models/solicitud-presupuesto.model"
 import { BtnNeutro } from "@components/Botones"
+import { CoparteMin, QueriesCoparte } from "@models/coparte.model"
 
 const SolicitudesPresupuesto = () => {
   const { user } = useAuth()
-  if (!user || user.id_rol != 3) return null
+  if (!user) return null
   const router = useRouter()
+  const [copartesDB, setCopartesDB] = useState<CoparteMin[]>([])
   const [proyectosDB, setProyectosDB] = useState<ProyectoMin[]>([])
   const [solicitudesDB, setSolicitudesDB] = useState<SolicitudPresupuesto[]>([])
   const [solicitudAeliminar, setSolicitudAEliminar] = useState<number>(0)
+  const [selectCoparte, setSelectCoparte] = useState(0)
   const [selectProyecto, setSelectProyecto] = useState(0)
   const [showModalEliminar, setShowModalEliminar] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [inputBusqueda, setInputBusqueda] = useState<string>("")
 
   useEffect(() => {
-    cargarProyectosUsuario()
+    cargarData()
   }, [])
+
+  useEffect(() => {
+    if (selectCoparte) {
+      cargarProyectosDB()
+    }
+  }, [selectCoparte])
 
   useEffect(() => {
     cargarSolicitudes()
   }, [selectProyecto])
 
-  const cargarProyectosUsuario = async () => {
-    const reProyectos = await obtenerProyectos({ id_responsable: user.id })
-    if (reProyectos.error) {
-      console.log(reProyectos.data)
+  const cargarData = async () => {
+    if (user.id_rol != 3) {
+      cargarCopartesDB()
     } else {
-      const proyectos = reProyectos.data as ProyectoMin[]
-      setProyectosDB(proyectos)
-      if (proyectos.length) {
-        setSelectProyecto(proyectos[0].id)
-      }
+      cargarProyectosDB()
+    }
+  }
+
+  const cargarCopartesDB = async () => {
+    const query: QueriesCoparte = user.id_rol == 2 ? { id_admin: user.id } : {}
+
+    const reCopartesDB = await obtenerCopartes(query)
+    if (reCopartesDB.error) {
+      console.log(reCopartesDB.data)
+    } else {
+      const copartesDB = reCopartesDB.data as CoparteMin[]
+      setCopartesDB(copartesDB)
+      setSelectCoparte(copartesDB[0]?.id || 0)
+    }
+  }
+
+  const cargarProyectosDB = async () => {
+    const query =
+      user.id_rol == 3
+        ? { id_responsable: user.id }
+        : { id_coparte: selectCoparte }
+
+    const reProyectosDB = await obtenerProyectos(query)
+    if (reProyectosDB.error) {
+      console.log(reProyectosDB.data)
+    } else {
+      const proyectosDB = reProyectosDB.data as ProyectoMin[]
+      setProyectosDB(proyectosDB)
+      setSelectProyecto(proyectosDB[0]?.id || 0)
     }
   }
 
@@ -97,14 +131,39 @@ const SolicitudesPresupuesto = () => {
   return (
     <TablaContenedor>
       <div className="row mb-2">
-        <div className="col-12 col-md-6 col-lg-2 mb-3">
-          <BtnNeutro
-            texto="Registrar +"
-            onclick={() => router.push("/solicitudes-presupuesto/registro")}
-            margin={false}
-            width={true}
-          />
-        </div>
+        {user.id_rol == 3 && (
+          <div className="col-12 col-md-6 col-lg-2 mb-3">
+            <BtnNeutro
+              texto="Registrar +"
+              onclick={() => router.push("/solicitudes-presupuesto/registro")}
+              margin={false}
+              width={true}
+            />
+          </div>
+        )}
+        {user.id_rol != 3 && (
+          <div className="col-12 col-md-6 col-lg-3 mb-3">
+            <select
+              className="form-control"
+              onChange={({ target: { value } }) =>
+                setSelectCoparte(Number(value))
+              }
+              value={selectCoparte}
+            >
+              {copartesDB.length > 0 ? (
+                copartesDB.map(({ id, nombre }) => (
+                  <option key={id} value={id}>
+                    {nombre}
+                  </option>
+                ))
+              ) : (
+                <option value="0" disabled>
+                  No hay copartes
+                </option>
+              )}
+            </select>
+          </div>
+        )}
         <div className="col-12 col-md-6 col-lg-3 mb-3">
           <select
             className="form-control"
@@ -113,15 +172,21 @@ const SolicitudesPresupuesto = () => {
             }
             value={selectProyecto}
           >
-            {proyectosDB.map(({ id, id_alt, nombre }) => (
-              <option key={id} value={id}>
-                {nombre} - {id_alt}
+            {proyectosDB.length > 0 ? (
+              proyectosDB.map(({ id, id_alt, nombre }) => (
+                <option key={id} value={id}>
+                  {nombre} - {id_alt}
+                </option>
+              ))
+            ) : (
+              <option value="0" disabled>
+                No hay proyectos
               </option>
-            ))}
+            )}
           </select>
         </div>
         <div className="d-none d-lg-block col mb-3"></div>
-        <div className="col-12 col-lg-4 mb-3">
+        {/* <div className="col-12 col-lg-4 mb-3">
           <div className="input-group">
             <input
               type="text"
@@ -135,7 +200,7 @@ const SolicitudesPresupuesto = () => {
               <i className="bi bi-search"></i>
             </span>
           </div>
-        </div>
+        </div> */}
       </div>
       {isLoading ? (
         <Loader />
