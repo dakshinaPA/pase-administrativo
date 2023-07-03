@@ -13,7 +13,7 @@ import {
 import { useAuth } from "@contexts/auth.context"
 import { ProyectoMin } from "@models/proyecto.model"
 import { SolicitudPresupuesto } from "@models/solicitud-presupuesto.model"
-import { BtnNeutro } from "@components/Botones"
+import { BtnAccion, BtnNeutro } from "@components/Botones"
 import { CoparteMin, QueriesCoparte } from "@models/coparte.model"
 
 const SolicitudesPresupuesto = () => {
@@ -250,23 +250,24 @@ const SolicitudesPresupuesto = () => {
                       <td>{estatus}</td>
                       <td>
                         <div className="d-flex">
-                          <button
-                            className="btn btn-dark btn-sm me-1"
-                            onClick={() =>
+                          <BtnAccion
+                            margin={false}
+                            icono="bi-eye-fill"
+                            onclick={() =>
                               router.push(
                                 `/proyectos/${id_proyecto}/solicitudes-presupuesto/${id}`
                               )
                             }
-                          >
-                            <i className="bi bi-eye-fill"></i>
-                          </button>
-
-                          <button
-                            className="btn btn-dark btn-sm"
-                            onClick={() => abrirModalEliminarSolicitud(id)}
-                          >
-                            <i className="bi bi-x-circle"></i>
-                          </button>
+                            title="ver detalle"
+                          />
+                          {user.id_rol != 3 && (
+                            <BtnAccion
+                              margin="l"
+                              icono="bi-x-circle"
+                              onclick={() => abrirModalEliminarSolicitud(id)}
+                              title="eliminar solicitud"
+                            />
+                          )}
                         </div>
                       </td>
                     </tr>

@@ -11,7 +11,7 @@ import {
 } from "@assets/utils/common"
 import { useAuth } from "@contexts/auth.context"
 import { ColaboradorProyecto, ProyectoMin } from "@models/proyecto.model"
-import { BtnNeutro } from "@components/Botones"
+import { BtnAccion, BtnNeutro } from "@components/Botones"
 
 const Colaboradores = () => {
   const { user } = useAuth()
@@ -42,9 +42,7 @@ const Colaboradores = () => {
     } else {
       const proyectos = reProyectos.data as ProyectoMin[]
       setProyectosDB(proyectos)
-      if (proyectos.length) {
-        setSelectProyecto(proyectos[0].id)
-      }
+      setSelectProyecto(proyectos[0]?.id || 0)
     }
   }
 
@@ -128,11 +126,17 @@ const Colaboradores = () => {
             }
             value={selectProyecto}
           >
-            {proyectosDB.map(({ id, id_alt, nombre }) => (
-              <option key={id} value={id}>
-                {nombre} - {id_alt}
+            {proyectosDB.length > 0 ? (
+              proyectosDB.map(({ id, id_alt, nombre }) => (
+                <option key={id} value={id}>
+                  {nombre} - {id_alt}
+                </option>
+              ))
+            ) : (
+              <option value="0" disabled>
+                No hay proyectos
               </option>
-            ))}
+            )}
           </select>
         </div>
         <div className="d-none d-lg-block col mb-3"></div>
@@ -203,23 +207,24 @@ const Colaboradores = () => {
                       <td>{dt_fin_servicio}</td>
                       <td>
                         <div className="d-flex">
-                          <button
-                            className="btn btn-dark btn-sm me-1"
-                            onClick={() =>
+                          <BtnAccion
+                            margin={false}
+                            icono="bi-eye-fill"
+                            onclick={() =>
                               router.push(
                                 `/proyectos/${id_proyecto}/colaboradores/${id}`
                               )
                             }
-                          >
-                            <i className="bi bi-eye-fill"></i>
-                          </button>
-
-                          <button
-                            className="btn btn-dark btn-sm"
-                            onClick={() => abrirModalEliminarColaborador(id)}
-                          >
-                            <i className="bi bi-x-circle"></i>
-                          </button>
+                            title="ver detalle"
+                          />
+                          {user.id_rol != 3 && (
+                            <BtnAccion
+                              margin="l"
+                              icono="bi-x-circle"
+                              onclick={() => abrirModalEliminarColaborador(id)}
+                              title="eliminar colaborador"
+                            />
+                          )}
                         </div>
                       </td>
                     </tr>
