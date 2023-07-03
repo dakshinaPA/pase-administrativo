@@ -17,7 +17,7 @@ import {
   QueriesCoparte,
 } from "@models/coparte.model"
 import { useAuth } from "@contexts/auth.context"
-import { BtnNeutro } from "@components/Botones"
+import { BtnAccion, BtnNeutro } from "@components/Botones"
 
 const Usuarios = () => {
   const { user } = useAuth()
@@ -277,19 +277,19 @@ const Usuarios = () => {
                       )}
                       <td>
                         <div className="d-flex">
-                          <button
-                            className="btn btn-dark btn-sm me-1"
-                            onClick={() => router.push(`/usuarios/${id}`)}
-                          >
-                            <i className="bi bi-eye-fill"></i>
-                          </button>
+                          <BtnAccion
+                            margin={false}
+                            icono="bi-eye-fill"
+                            onclick={() => router.push(`/usuarios/${id}`)}
+                            title="ver detalle"
+                          />
                           {user.id_rol == 1 && (
-                            <button
-                              className="btn btn-dark btn-sm"
-                              onClick={() => abrirModalEliminarUsuario(id)}
-                            >
-                              <i className="bi bi-x-circle"></i>
-                            </button>
+                            <BtnAccion
+                              margin="l"
+                              icono="bi-x-circle"
+                              onclick={() => abrirModalEliminarUsuario(id)}
+                              title="eliminar usuario"
+                            />
                           )}
                         </div>
                       </td>

@@ -12,7 +12,7 @@ import {
 import { Proyecto } from "@models/proyecto.model"
 import { useAuth } from "@contexts/auth.context"
 import { CoparteMin, QueriesCoparte } from "@models/coparte.model"
-import { BtnNeutro } from "@components/Botones"
+import { BtnAccion, BtnNeutro } from "@components/Botones"
 
 const Financiadores = () => {
   const { user } = useAuth()
@@ -211,62 +211,57 @@ const Financiadores = () => {
                       <td>...</td>
                       <td>
                         <div className="d-flex">
-                          <button
-                            className="btn btn-dark btn-sm"
-                            onClick={() =>
+                          <BtnAccion
+                            margin={false}
+                            icono="bi-eye-fill"
+                            onclick={() =>
                               router.push(
                                 `/copartes/${id_coparte}/proyectos/${id}`
                               )
                             }
                             title="ver detalle"
-                          >
-                            <i className="bi bi-eye-fill"></i>
-                          </button>
+                          />
                           {user.id == id_responsable && (
                             <>
-                              <button
-                                className="btn btn-dark btn-sm ms-1"
-                                onClick={() =>
+                              <BtnAccion
+                                margin="l"
+                                icono="bi-eye-fill"
+                                onclick={() =>
                                   router.push(
                                     `/proyectos/${id}/solicitudes-presupuesto/registro`
                                   )
                                 }
                                 title="registrar solicitud"
-                              >
-                                <i className="bi bi-file-earmark-text"></i>
-                              </button>
-                              <button
-                                className="btn btn-dark btn-sm ms-1"
-                                onClick={() =>
+                              />
+                              <BtnAccion
+                                margin="l"
+                                icono="bi-person-plus"
+                                onclick={() =>
                                   router.push(
                                     `/proyectos/${id}/colaboradores/registro`
                                   )
                                 }
                                 title="registrar colaborador"
-                              >
-                                <i className="bi bi-person-plus"></i>
-                              </button>
-                              <button
-                                className="btn btn-dark btn-sm ms-1"
-                                onClick={() =>
+                              />
+                              <BtnAccion
+                                margin="l"
+                                icono="bi-person-plus-fill"
+                                onclick={() =>
                                   router.push(
                                     `/proyectos/${id}/proveedores/registro`
                                   )
                                 }
                                 title="registrar proveedor"
-                              >
-                                <i className="bi bi-person-plus-fill"></i>
-                              </button>
+                              />
                             </>
                           )}
                           {user.id_rol == 1 && (
-                            <button
-                              className="btn btn-dark btn-sm ms-1"
-                              onClick={() => abrirModalEliminar(id)}
-                              title="eliminar"
-                            >
-                              <i className="bi bi-x-circle"></i>
-                            </button>
+                            <BtnAccion
+                              margin="l"
+                              icono="bi-x-circle"
+                              onclick={() => abrirModalEliminar(id)}
+                              title="eliminar proyecto"
+                            />
                           )}
                         </div>
                       </td>

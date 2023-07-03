@@ -81,18 +81,42 @@ const BtnNeutro = ({ margin, texto, onclick, width }: PropsBtnNeutro) => {
 
   let clases = "btn btn-outline-secondary"
 
-  if(margin) clases += ` ${margen()}`
-  if(width) clases += " w-100"
+  if (margin) clases += ` ${margen()}`
+  if (width) clases += " w-100"
 
   return (
-    <button
-      className={clases}
-      type="button"
-      onClick={onclick}
-    >
+    <button className={clases} type="button" onClick={onclick}>
       {texto}
     </button>
   )
 }
 
-export { BtnEditar, BtnCancelar, BtnRegistrar, BtnNeutro }
+interface PropsBtnAccion extends Btn {
+  onclick: () => void
+  icono: string
+  title: string
+}
+
+const BtnAccion = ({ margin, onclick, icono, title }: PropsBtnAccion) => {
+  const margen = () => {
+    switch (margin) {
+      case "l":
+        return "ms-1"
+      case "r":
+        return "me-1"
+      case false:
+        return ""
+    }
+  }
+
+  let clases = "btn btn-secondary btn-sm"
+  if (margin) clases += ` ${margen()}`
+
+  return (
+    <button className={clases} onClick={onclick} title={title}>
+      <i className={`bi ${icono}`}></i>
+    </button>
+  )
+}
+
+export { BtnEditar, BtnCancelar, BtnRegistrar, BtnNeutro, BtnAccion }

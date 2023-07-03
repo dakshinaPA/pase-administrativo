@@ -7,7 +7,7 @@ import { TablaContenedor } from "@components/Contenedores"
 import { aMinuscula, obtenerCopartes } from "@assets/utils/common"
 import { Coparte, QueriesCoparte } from "@models/coparte.model"
 import { useAuth } from "@contexts/auth.context"
-import { BtnNeutro } from "@components/Botones"
+import { BtnAccion, BtnNeutro } from "@components/Botones"
 
 const Financiadores = () => {
   const { user } = useAuth()
@@ -160,43 +160,39 @@ const Financiadores = () => {
                       <td>...</td>
                       <td>
                         <div className="d-flex">
-                          <button
-                            className="btn btn-dark btn-sm"
-                            onClick={() => router.push(`/copartes/${id}`)}
+                          <BtnAccion
+                            margin={false}
+                            icono="bi bi-eye-fill"
+                            onclick={() => router.push(`/copartes/${id}`)}
                             title="ver detalle"
-                          >
-                            <i className="bi bi-eye-fill"></i>
-                          </button>
-                          <button
-                            className="btn btn-dark btn-sm ms-1"
-                            onClick={() =>
+                          />
+                          <BtnAccion
+                            margin="l"
+                            icono="bi bi-person-plus"
+                            onclick={() =>
                               router.push(`/copartes/${id}/usuarios/registro`)
                             }
                             title="registrar usuario"
-                          >
-                            <i className="bi bi-person-plus"></i>
-                          </button>
+                          />
                           {user.id_rol == 2 && (
-                            <button
-                              className="btn btn-dark btn-sm ms-1"
-                              onClick={() =>
+                            <BtnAccion
+                              margin="l"
+                              icono="bi bi-file-earmark-text"
+                              onclick={() =>
                                 router.push(
                                   `/copartes/${id}/proyectos/registro`
                                 )
                               }
                               title="registrar proyecto"
-                            >
-                              <i className="bi bi-file-earmark-text"></i>
-                            </button>
+                            />
                           )}
                           {user.id_rol == 1 && (
-                            <button
-                              className="btn btn-dark btn-sm ms-1"
-                              onClick={() => abrirModalEliminar(id)}
+                            <BtnAccion
+                              margin="l"
+                              icono="bi bi-x-circle"
+                              onclick={() => abrirModalEliminar(id)}
                               title="eliminar usuario"
-                            >
-                              <i className="bi bi-x-circle"></i>
-                            </button>
+                            />
                           )}
                         </div>
                       </td>

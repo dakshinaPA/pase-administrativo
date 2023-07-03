@@ -26,7 +26,7 @@ import {
   obtenerProyectos,
   obtenerUsuariosCoparte,
 } from "@assets/utils/common"
-import { BtnCancelar, BtnEditar, BtnRegistrar } from "./Botones"
+import { BtnCancelar, BtnEditar, BtnNeutro, BtnRegistrar } from "./Botones"
 import { RubrosPresupuestalesDB } from "@api/models/catalogos.model"
 import {
   ActionTypes,
@@ -130,15 +130,14 @@ const Colaboradores = () => {
       <div className="col-12 mb-3 d-flex justify-content-between">
         <h3 className="color1 mb-0">Colaboradores</h3>
         {user.id == estadoForma.id_responsable && (
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={() =>
+          <BtnNeutro
+            texto="Registrar +"
+            onclick={() =>
               router.push(`/proyectos/${idProyecto}/colaboradores/registro`)
             }
-          >
-            Registrar +
-          </button>
+            margin={false}
+            width={false}
+          />
         )}
       </div>
       <div className="col-12 table-responsive">
@@ -212,15 +211,14 @@ const Proveedores = () => {
       <div className="col-12 mb-3 d-flex justify-content-between">
         <h3 className="color1 mb-0">Proveedores</h3>
         {user.id == estadoForma.id_responsable && (
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={() =>
+          <BtnNeutro
+            texto="Registrar +"
+            onclick={() =>
               router.push(`/proyectos/${idProyecto}/proveedores/registro`)
             }
-          >
-            Registrar +
-          </button>
+            margin={false}
+            width={false}
+          />
         )}
       </div>
       <div className="col-12 table-responsive">
@@ -288,17 +286,16 @@ const SolicitudesPresupuesto = () => {
       <div className="col-12 mb-3 d-flex justify-content-between">
         <h3 className="color1 mb-0">Solicitudes de presupuesto</h3>
         {user.id == estadoForma.id_responsable && (
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={() =>
+          <BtnNeutro
+            texto="Registrar +"
+            onclick={() =>
               router.push(
                 `/proyectos/${idProyecto}/solicitudes-presupuesto/registro`
               )
             }
-          >
-            Registrar +
-          </button>
+            margin={false}
+            width={false}
+          />
         )}
       </div>
       <div className="col-12 table-responsive">
@@ -427,9 +424,12 @@ const Notas = () => {
         {/* <textarea className="form-control"></textarea> */}
       </div>
       <div className="col-12 col-md-3 mb-3 text-end">
-        <button className="btn btn-secondary" onClick={agregar}>
-          Agregar nota +
-        </button>
+        <BtnNeutro
+          texto="Agregar nota +"
+          onclick={agregar}
+          margin={false}
+          width={false}
+        />
       </div>
     </div>
   )

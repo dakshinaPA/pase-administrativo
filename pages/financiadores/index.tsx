@@ -7,7 +7,7 @@ import { TablaContenedor } from "@components/Contenedores"
 import { aMinuscula } from "@assets/utils/common"
 import { Financiador } from "@models/financiador.model"
 import { useAuth } from "@contexts/auth.context"
-import { BtnNeutro } from "@components/Botones"
+import { BtnAccion, BtnNeutro } from "@components/Botones"
 
 const Financiadores = () => {
   const { user } = useAuth()
@@ -189,21 +189,19 @@ const Financiadores = () => {
                       <td>...</td>
                       <td>
                         <div className="d-flex">
-                          <button
-                            className="btn btn-dark btn-sm"
-                            onClick={() => router.push(`/financiadores/${id}`)}
+                          <BtnAccion
+                            margin={false}
+                            icono="bi-eye-fill"
+                            onclick={() => router.push(`/financiadores/${id}`)}
                             title="ver detalle"
-                          >
-                            <i className="bi bi-eye-fill"></i>
-                          </button>
+                          />
                           {user.id_rol == 1 && (
-                            <button
-                              className="btn btn-dark btn-sm ms-1"
-                              onClick={() => abrirModalEliminar(id)}
-                              title="eliminar"
-                            >
-                              <i className="bi bi-x-circle"></i>
-                            </button>
+                            <BtnAccion
+                              margin="l"
+                              icono="bi-x-circle"
+                              onclick={() => abrirModalEliminar(id)}
+                              title="eliminar financiador"
+                            />
                           )}
                         </div>
                       </td>
