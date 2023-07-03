@@ -11,15 +11,14 @@ import {
 } from "@assets/utils/common"
 import { useAuth } from "@contexts/auth.context"
 import { ProveedorProyecto, ProyectoMin } from "@models/proyecto.model"
+import { BtnNeutro } from "@components/Botones"
 
 const Proveedores = () => {
   const { user } = useAuth()
-  if (!user) return null
+  if (!user || user.id_rol != 3) return null
   const router = useRouter()
   const [proyectosDB, setProyectosDB] = useState<ProyectoMin[]>([])
-  const [proveedoresDB, setProveedoresDB] = useState<ProveedorProyecto[]>(
-    []
-  )
+  const [proveedoresDB, setProveedoresDB] = useState<ProveedorProyecto[]>([])
   const [proveedorAeliminar, setProveedorAEliminar] = useState<number>(0)
   const [selectProyecto, setSelectProyecto] = useState(0)
   const [showModalEliminar, setShowModalEliminar] = useState<boolean>(false)
@@ -41,7 +40,9 @@ const Proveedores = () => {
     } else {
       const proyectos = reProyectos.data as ProyectoMin[]
       setProyectosDB(proyectos)
-      setSelectProyecto(proyectos[0].id)
+      if (proyectos.length) {
+        setSelectProyecto(proyectos[0].id)
+      }
     }
   }
 
@@ -85,15 +86,12 @@ const Proveedores = () => {
     setShowModalEliminar(false)
   }
 
-  const proveedoresFiltrados = proveedoresDB.filter(
-    ({ nombre, email }) => {
-      const query = inputBusqueda.toLocaleLowerCase()
-      return (
-        aMinuscula(nombre).includes(query) ||
-        aMinuscula(email).includes(query)
-      )
-    }
-  )
+  const proveedoresFiltrados = proveedoresDB.filter(({ nombre, email }) => {
+    const query = inputBusqueda.toLocaleLowerCase()
+    return (
+      aMinuscula(nombre).includes(query) || aMinuscula(email).includes(query)
+    )
+  })
 
   const determinarNombreProveedorAEliminar = (): string => {
     const proveedorMatch = proveedoresDB.find(
@@ -108,15 +106,14 @@ const Proveedores = () => {
     <TablaContenedor>
       <div className="row mb-2">
         <div className="col-12 col-md-6 col-lg-2 mb-3">
-          <button
-            type="button"
-            className="btn btn-secondary w-100"
-            onClick={() => router.push("/proveedores/registro")}
-          >
-            Registrar +
-          </button>
+          <BtnNeutro
+            texto="Registrar +"
+            onclick={() => router.push("/proveedores/registro")}
+            margin={false}
+            width={true}
+          />
         </div>
-        <div className="col-12 col-md-6 col-lg-2 mb-3">
+        <div className="col-12 col-md-6 col-lg-3 mb-3">
           <select
             className="form-control"
             onChange={({ target: { value } }) =>
@@ -132,7 +129,7 @@ const Proveedores = () => {
           </select>
         </div>
         <div className="d-none d-lg-block col mb-3"></div>
-        <div className="col-12 col-md-6 col-lg-4 mb-3">
+        <div className="col-12 col-lg-4 mb-3">
           <div className="input-group">
             <input
               type="text"

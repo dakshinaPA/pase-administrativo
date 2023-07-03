@@ -7,10 +7,11 @@ import { TablaContenedor } from "@components/Contenedores"
 import { aMinuscula, obtenerCopartes } from "@assets/utils/common"
 import { Coparte, QueriesCoparte } from "@models/coparte.model"
 import { useAuth } from "@contexts/auth.context"
+import { BtnNeutro } from "@components/Botones"
 
 const Financiadores = () => {
   const { user } = useAuth()
-  if (!user) return null
+  if (!user || user.id_rol == 3) return null
   const router = useRouter()
   const [resultadosDB, setResultadosDB] = useState<Coparte[]>([])
   const [idAEliminar, setIdAEliminar] = useState<number>(0)
@@ -86,13 +87,12 @@ const Financiadores = () => {
     <TablaContenedor>
       <div className="row mb-3">
         <div className="col-12 col-md-2 mb-2">
-          <button
-            type="button"
-            className="btn btn-secondary w-100"
-            onClick={() => router.push("/copartes/registro")}
-          >
-            Registrar +
-          </button>
+          <BtnNeutro
+            texto="Registrar +"
+            onclick={() => router.push("/copartes/registro")}
+            margin={false}
+            width={true}
+          />
         </div>
         <div className="d-none d-md-block col-md-6 mb-2"></div>
         <div className="col-12 col-md-4 mb-2">

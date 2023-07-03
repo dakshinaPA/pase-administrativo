@@ -11,10 +11,11 @@ import {
 } from "@assets/utils/common"
 import { useAuth } from "@contexts/auth.context"
 import { ColaboradorProyecto, ProyectoMin } from "@models/proyecto.model"
+import { BtnNeutro } from "@components/Botones"
 
 const Colaboradores = () => {
   const { user } = useAuth()
-  if (!user) return null
+  if (!user || user.id_rol != 3) return null
   const router = useRouter()
   const [proyectosDB, setProyectosDB] = useState<ProyectoMin[]>([])
   const [colaboradoresDB, setColaboradoresDB] = useState<ColaboradorProyecto[]>(
@@ -41,7 +42,9 @@ const Colaboradores = () => {
     } else {
       const proyectos = reProyectos.data as ProyectoMin[]
       setProyectosDB(proyectos)
-      setSelectProyecto(proyectos[0].id)
+      if (proyectos.length) {
+        setSelectProyecto(proyectos[0].id)
+      }
     }
   }
 
@@ -110,15 +113,14 @@ const Colaboradores = () => {
     <TablaContenedor>
       <div className="row mb-2">
         <div className="col-12 col-md-6 col-lg-2 mb-3">
-          <button
-            type="button"
-            className="btn btn-secondary w-100"
-            onClick={() => router.push("/colaboradores/registro")}
-          >
-            Registrar +
-          </button>
+          <BtnNeutro
+            texto="Registrar +"
+            onclick={() => router.push("/colaboradores/registro")}
+            margin={false}
+            width={true}
+          />
         </div>
-        <div className="col-12 col-md-6 col-lg-2 mb-3">
+        <div className="col-12 col-md-6 col-lg-3 mb-3">
           <select
             className="form-control"
             onChange={({ target: { value } }) =>
@@ -134,7 +136,7 @@ const Colaboradores = () => {
           </select>
         </div>
         <div className="d-none d-lg-block col mb-3"></div>
-        <div className="col-12 col-md-6 col-lg-4 mb-3">
+        <div className="col-12 col-lg-4 mb-3">
           <div className="input-group">
             <input
               type="text"

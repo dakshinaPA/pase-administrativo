@@ -17,14 +17,14 @@ const ModalEliminar = ({ children, show, cancelar, aceptar }) => {
         <div className="p-2 text-end">
           <button
             type="button"
-            className="btn btn-secondary"
+            className="btn btn-outline-danger"
             onClick={cancelar}
           >
             Cancelar
           </button>
           <button
             type="button"
-            className="btn btn-secondary ms-2"
+            className="btn btn-outline-success ms-2"
             onClick={aceptar}
           >
             Aceptar

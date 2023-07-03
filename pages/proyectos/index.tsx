@@ -12,6 +12,7 @@ import {
 import { Proyecto } from "@models/proyecto.model"
 import { useAuth } from "@contexts/auth.context"
 import { CoparteMin, QueriesCoparte } from "@models/coparte.model"
+import { BtnNeutro } from "@components/Botones"
 
 const Financiadores = () => {
   const { user } = useAuth()
@@ -105,14 +106,16 @@ const Financiadores = () => {
     setShowModalEliminar(false)
   }
 
-  const busquedaFiltrados = proyectosDB.filter(({ id_alt }) => {
+  const busquedaFiltrados = proyectosDB.filter(({ id_alt, nombre }) => {
     const query = aMinuscula(inputBusqueda)
-    return aMinuscula(id_alt).includes(query)
+    return (
+      aMinuscula(id_alt).includes(query) || aMinuscula(nombre).includes(query)
+    )
   })
 
   const determinarNombreAEliminar = (): string => {
     const proyecto = proyectosDB.find((proyecto) => proyecto.id === idAEliminar)
-    return proyecto ? proyecto.id_alt : ""
+    return proyecto ? `${proyecto.id_alt} - ${proyecto.nombre}` : ""
   }
 
   return (
@@ -120,13 +123,12 @@ const Financiadores = () => {
       <div className="row mb-2">
         {user.id_rol == 2 && (
           <div className="col-12 col-md-6 col-lg-2 mb-3">
-            <button
-              type="button"
-              className="btn btn-secondary w-100"
-              onClick={() => router.push("/proyectos/registro")}
-            >
-              Registrar +
-            </button>
+            <BtnNeutro
+              texto="Registrar +"
+              onclick={() => router.push("/proyectos/registro")}
+              margin={false}
+              width={true}
+            />
           </div>
         )}
         {copartesDB.length > 0 && (
@@ -220,7 +222,7 @@ const Financiadores = () => {
                           >
                             <i className="bi bi-eye-fill"></i>
                           </button>
-                          {user.id == id_responsable  && (
+                          {user.id == id_responsable && (
                             <>
                               <button
                                 className="btn btn-dark btn-sm ms-1"

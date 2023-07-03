@@ -104,7 +104,7 @@ const estadoInicialForma: Coparte = {
 
 const FormaCoparte = () => {
   const { user } = useAuth()
-  if (!user) return null
+  if (!user || user.id_rol == 3) return null
   const { estados } = useCatalogos()
   const router = useRouter()
   const idCoparte = router.query.idC

@@ -11,7 +11,6 @@ import { BtnCancelar, BtnEditar, BtnRegistrar } from "./Botones"
 import { obtenerCopartes } from "@assets/utils/common"
 import { useAuth } from "@contexts/auth.context"
 
-
 type ActionTypes = "CARGA_INICIAL" | "HANDLE_CHANGE" | "HANDLE_CHANGE_COPARTE"
 
 interface ActionDispatch {
@@ -59,7 +58,7 @@ const estadoInicialForma: Usuario = {
 
 const FormaUsuario = () => {
   const { user } = useAuth()
-  if (!user) return null
+  if (!user || user.id_rol == 3) return null
   const router = useRouter()
   const idCoparte = Number(router.query.idC)
   const idUsuario = Number(router.query.id)
@@ -84,8 +83,8 @@ const FormaUsuario = () => {
       } else {
         const queryCopartes: QueriesCoparte =
           user.id_rol == 2 ? { id_admin: user.id } : {}
-        
-          reCopartes = obtenerCopartes(queryCopartes)
+
+        reCopartes = obtenerCopartes(queryCopartes)
       }
 
       const promesas = [reCopartes]

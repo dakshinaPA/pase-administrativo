@@ -7,10 +7,11 @@ import { TablaContenedor } from "@components/Contenedores"
 import { aMinuscula } from "@assets/utils/common"
 import { Financiador } from "@models/financiador.model"
 import { useAuth } from "@contexts/auth.context"
+import { BtnNeutro } from "@components/Botones"
 
 const Financiadores = () => {
   const { user } = useAuth()
-  if(!user) return null
+  if (!user || user.id_rol == 3) return null
   const router = useRouter()
   const [resultadosDB, setResultadosDB] = useState<Financiador[]>([])
   const [resultadosFiltrados, setResultadosFiltrados] = useState<Financiador[]>(
@@ -99,13 +100,12 @@ const Financiadores = () => {
       <div className="row mb-2">
         {user.id_rol == 1 && (
           <div className="col-12 col-md-4 col-lg-2 mb-3">
-            <button
-              type="button"
-              className="btn btn-secondary w-100"
-              onClick={() => router.push("/financiadores/registro")}
-            >
-              Registrar +
-            </button>
+            <BtnNeutro
+              texto="Registrar +"
+              onclick={() => router.push("/financiadores/registro")}
+              margin={false}
+              width={true}
+            />
           </div>
         )}
         {/* <div className="col-12 col-md-2 mb-2">

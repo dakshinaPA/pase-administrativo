@@ -17,10 +17,11 @@ import {
   QueriesCoparte,
 } from "@models/coparte.model"
 import { useAuth } from "@contexts/auth.context"
+import { BtnNeutro } from "@components/Botones"
 
 const Usuarios = () => {
   const { user } = useAuth()
-  if (!user) return null
+  if (!user || user.id_rol == 3) return null
   const router = useRouter()
   const [copartesDB, setCopartesDB] = useState<CoparteMin[]>([])
   const [usuariosDB, setUsuariosDB] = useState<Usuario[]>([])
@@ -169,13 +170,12 @@ const Usuarios = () => {
     <TablaContenedor>
       <div className="row mb-2">
         <div className="col-12 col-md-6 col-lg-2 mb-3">
-          <button
-            type="button"
-            className="btn btn-secondary w-100"
-            onClick={() => router.push("/usuarios/registro")}
-          >
-            Registrar +
-          </button>
+          <BtnNeutro
+            texto="Registrar +"
+            onclick={() => router.push("/usuarios/registro")}
+            margin={false}
+            width={true}
+          />
         </div>
         {user.id_rol == 1 && (
           <div className="col-12 col-md-6 col-lg-2 mb-3">

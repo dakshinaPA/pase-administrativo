@@ -51,7 +51,7 @@ const reducer = (
 
 const FormaProveedor = () => {
   const { user } = useAuth()
-  if (!user) return null
+  if (!user || user.id_rol != 3) return null
   const router = useRouter()
   const idProyecto = Number(router.query.id)
   const idProveedor = Number(router.query.idP)

@@ -204,9 +204,8 @@ const Colaboradores = () => {
 }
 
 const Proveedores = () => {
-  const { user } = useAuth()
+  const { estadoForma, idProyecto, user } = useProyecto()
   const router = useRouter()
-  const {estadoForma, idProyecto} = useProyecto()
 
   return (
     <div className="row mb-5">
@@ -281,9 +280,8 @@ const Proveedores = () => {
 }
 
 const SolicitudesPresupuesto = () => {
-  const { user } = useAuth()
+  const { estadoForma, idProyecto, user } = useProyecto()
   const router = useRouter()
-  const {estadoForma, idProyecto} = useProyecto()
 
   return (
     <div className="row mb-5">
@@ -353,15 +351,8 @@ const SolicitudesPresupuesto = () => {
   )
 }
 
-interface PropsNotas {
-  notas: NotaProyecto[]
-  refrescarNotas: () => void
-}
-
-const Notas = ({ notas, refrescarNotas }: PropsNotas) => {
-  const router = useRouter()
-  const idProyecto = Number(router.query.idP)
-  const { user } = useAuth()
+const Notas = () => {
+  const { estadoForma, idProyecto, user, dispatch } = useProyecto()
   const [mensajeNota, setMensajeNota] = useState<string>("")
   const inputNota = useRef(null)
 
@@ -370,9 +361,6 @@ const Notas = ({ notas, refrescarNotas }: PropsNotas) => {
       inputNota.current.focus()
       return
     }
-
-    //limpiar el input
-    setMensajeNota("")
 
     const cr = await ApiCall.post(`/proyectos/${idProyecto}/notas`, {
       id_usuario: user.id,
@@ -383,6 +371,22 @@ const Notas = ({ notas, refrescarNotas }: PropsNotas) => {
       console.log(cr.data)
     } else {
       refrescarNotas()
+      //limpiar el input
+      setMensajeNota("")
+    }
+  }
+
+  const refrescarNotas = async () => {
+    const re = await ApiCall.get(`/proyectos/${idProyecto}/notas`)
+
+    if (re.error) {
+      console.log(re.data)
+    } else {
+      const notasDB = re.data as NotaProyecto[]
+      dispatch({
+        type: "RECARGAR_NOTAS",
+        payload: notasDB,
+      })
     }
   }
 
@@ -401,7 +405,7 @@ const Notas = ({ notas, refrescarNotas }: PropsNotas) => {
             </tr>
           </thead>
           <tbody>
-            {notas.map(({ id, usuario, mensaje, dt_registro }) => (
+            {estadoForma.notas.map(({ id, usuario, mensaje, dt_registro }) => (
               <tr key={id}>
                 <td>{usuario}</td>
                 <td>{mensaje}</td>
@@ -572,20 +576,6 @@ const FormaProyecto = () => {
       type,
       payload: ev.target,
     })
-  }
-
-  const refrescarNotas = async () => {
-    const re = await ApiCall.get(`/proyectos/${idProyecto}/notas`)
-
-    if (re.error) {
-      console.log(re.data)
-    } else {
-      const notasDB = re.data as NotaProyecto[]
-      dispatch({
-        type: "RECARGAR_NOTAS",
-        payload: notasDB,
-      })
-    }
   }
 
   const mostrarFormaMinistracion = () => {
@@ -827,7 +817,7 @@ const FormaProyecto = () => {
           <Colaboradores />
           <Proveedores />
           <SolicitudesPresupuesto />
-          <Notas notas={estadoForma.notas} refrescarNotas={refrescarNotas} />
+          {user.id_rol != 3 && <Notas />}
         </>
       )}
     </RegistroContenedor>

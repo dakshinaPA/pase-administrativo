@@ -12,10 +12,11 @@ import {
 import { useAuth } from "@contexts/auth.context"
 import { ProyectoMin } from "@models/proyecto.model"
 import { SolicitudPresupuesto } from "@models/solicitud-presupuesto.model"
+import { BtnNeutro } from "@components/Botones"
 
 const SolicitudesPresupuesto = () => {
   const { user } = useAuth()
-  if (!user) return null
+  if (!user || user.id_rol != 3) return null
   const router = useRouter()
   const [proyectosDB, setProyectosDB] = useState<ProyectoMin[]>([])
   const [solicitudesDB, setSolicitudesDB] = useState<SolicitudPresupuesto[]>([])
@@ -40,7 +41,9 @@ const SolicitudesPresupuesto = () => {
     } else {
       const proyectos = reProyectos.data as ProyectoMin[]
       setProyectosDB(proyectos)
-      setSelectProyecto(proyectos[0].id)
+      if (proyectos.length) {
+        setSelectProyecto(proyectos[0].id)
+      }
     }
   }
 
@@ -91,28 +94,18 @@ const SolicitudesPresupuesto = () => {
   //   )
   // })
 
-  // const determinarNombreProveedorAEliminar = (): string => {
-  //   const proveedorMatch = solicitudesDB.find(
-  //     (solicitud) => solicitud.id === solicitudAeliminar
-  //   )
-  //   return proveedorMatch
-  //     ? `${proveedorMatch.nombre} ${proveedorMatch.nombre}`
-  //     : ""
-  // }
-
   return (
     <TablaContenedor>
       <div className="row mb-2">
         <div className="col-12 col-md-6 col-lg-2 mb-3">
-          <button
-            type="button"
-            className="btn btn-secondary w-100"
-            onClick={() => router.push("/solicitudes-presupuesto/registro")}
-          >
-            Registrar +
-          </button>
+          <BtnNeutro
+            texto="Registrar +"
+            onclick={() => router.push("/solicitudes-presupuesto/registro")}
+            margin={false}
+            width={true}
+          />
         </div>
-        <div className="col-12 col-md-6 col-lg-2 mb-3">
+        <div className="col-12 col-md-6 col-lg-3 mb-3">
           <select
             className="form-control"
             onChange={({ target: { value } }) =>
@@ -128,7 +121,7 @@ const SolicitudesPresupuesto = () => {
           </select>
         </div>
         <div className="d-none d-lg-block col mb-3"></div>
-        <div className="col-12 col-md-6 col-lg-4 mb-3">
+        <div className="col-12 col-lg-4 mb-3">
           <div className="input-group">
             <input
               type="text"
@@ -176,7 +169,7 @@ const SolicitudesPresupuesto = () => {
                     descripcion_gasto,
                     rubro,
                     f_importe,
-                    estatus
+                    estatus,
                   } = solicitud
 
                   return (

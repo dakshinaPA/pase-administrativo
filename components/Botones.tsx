@@ -61,4 +61,38 @@ const BtnRegistrar = ({ modalidad, margin }: PropsBtnRegistrar) => {
   )
 }
 
-export { BtnEditar, BtnCancelar, BtnRegistrar }
+interface PropsBtnNeutro extends Btn {
+  texto: string
+  onclick: () => void
+  width: boolean
+}
+
+const BtnNeutro = ({ margin, texto, onclick, width }: PropsBtnNeutro) => {
+  const margen = () => {
+    switch (margin) {
+      case "l":
+        return "ms-2"
+      case "r":
+        return "me-2"
+      case false:
+        return ""
+    }
+  }
+
+  let clases = "btn btn-outline-secondary"
+
+  if(margin) clases += ` ${margen()}`
+  if(width) clases += " w-100"
+
+  return (
+    <button
+      className={clases}
+      type="button"
+      onClick={onclick}
+    >
+      {texto}
+    </button>
+  )
+}
+
+export { BtnEditar, BtnCancelar, BtnRegistrar, BtnNeutro }

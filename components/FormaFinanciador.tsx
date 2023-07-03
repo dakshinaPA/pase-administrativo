@@ -110,7 +110,7 @@ const estadoInicialForma: Financiador = {
 
 const FormaFinanciador = () => {
   const { user } = useAuth()
-  if (!user) return null
+  if (!user || user.id_rol == 3) return null
   const { estados, paises } = useCatalogos()
   const router = useRouter()
   const idFinanciador = router.query.id
