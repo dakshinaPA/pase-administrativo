@@ -20,7 +20,11 @@ import {
   SolicitudPresupuesto,
 } from "@models/solicitud-presupuesto.model"
 import { useAuth } from "@contexts/auth.context"
-import { obtenerProyectos, obtenerSolicitudes } from "@assets/utils/common"
+import {
+  meses,
+  obtenerProyectos,
+  obtenerSolicitudes,
+} from "@assets/utils/common"
 
 type ActionTypes =
   | "CARGA_INICIAL"
@@ -29,6 +33,8 @@ type ActionTypes =
   | "QUITAR_FACTURA"
   | "CAMBIO_TIPO_GASTO"
   | "CAMBIO_TITULAR"
+  // | "LIMPIAR_DATOS_TITULAR"
+  | "CAMBIO_PROYECTO"
 
 interface ActionDispatch {
   type: ActionTypes
@@ -63,18 +69,35 @@ const reducer = (
         ...state,
         comprobantes: comprobantesFiltrados,
       }
+    case "CAMBIO_PROYECTO":
+      return {
+        ...state,
+        i_tipo_gasto: 0,
+        id_partida_presupuestal: 0,
+        id_titular: 0,
+        descripcion_gasto: "",
+      }
     case "CAMBIO_TIPO_GASTO":
       return {
         ...state,
-        id_partida_presupuestal: payload.id_partida_presupuestal,
-        id_titular: payload.id_titular,
+        id_partida_presupuestal: 0,
+        id_titular: 0,
+        descripcion_gasto: "",
       }
     case "CAMBIO_TITULAR":
       return {
         ...state,
         clabe: payload.clabe,
         id_banco: payload.id_banco,
+        proveedor: payload.proveedor,
       }
+    // case "LIMPIAR_DATOS_TITULAR":
+    //   return {
+    //     ...state,
+    //     clabe: "",
+    //     id_banco: 1,
+    //     proveedor: "",
+    //   }
     default:
       return state
   }
@@ -105,7 +128,7 @@ const FormaSolicitudPresupuesto = () => {
 
   const estadoInicialForma: SolicitudPresupuesto = {
     id_proyecto: 0,
-    i_tipo_gasto: 1,
+    i_tipo_gasto: 0,
     id_titular: 0,
     titular: "",
     clabe: "",
@@ -134,6 +157,10 @@ const FormaSolicitudPresupuesto = () => {
 
   useEffect(() => {
     cargarDataProyecto()
+    dispatch({
+      type: "CAMBIO_PROYECTO",
+      payload: null,
+    })
   }, [estadoForma.id_proyecto])
 
   useEffect(() => {
@@ -142,12 +169,45 @@ const FormaSolicitudPresupuesto = () => {
 
     switch (Number(estadoForma.i_tipo_gasto)) {
       case 1:
-        titulares = dataProyecto.colaboradores
-
-        const rubrosSinAsimilados = dataProyecto.rubros_presupuestales.filter(
+        //muestra todos colaboradores
+        titulares = dataProyecto.colaboradores.map((colaborador) => ({
+          ...colaborador,
+          nombre: `${colaborador.nombre} ${colaborador.apellido_paterno}`,
+        }))
+        partidas_presupuestales = dataProyecto.rubros_presupuestales.filter(
           (rp) => rp.id_rubro != 2
         )
-        partidas_presupuestales = rubrosSinAsimilados
+        break
+      case 2:
+        //muestra todos los proveedores
+        titulares = dataProyecto.proveedores
+        partidas_presupuestales = dataProyecto.rubros_presupuestales.filter(
+          (rp) => rp.id_rubro != 2
+        )
+        break
+      case 3:
+        //muestra solo colaboradores registrados como asimilados
+        titulares = dataProyecto.colaboradores
+          .filter((col) => col.i_tipo == 1)
+          .map((colaborador) => ({
+            ...colaborador,
+            nombre: `${colaborador.nombre} ${colaborador.apellido_paterno}`,
+          }))
+        partidas_presupuestales = dataProyecto.rubros_presupuestales.filter(
+          (rp) => rp.id_rubro == 2
+        )
+        break
+      case 4:
+        //muestra solo colaboradores registrados como asimilados
+        titulares = dataProyecto.colaboradores
+          .filter((col) => col.i_tipo == 2)
+          .map((colaborador) => ({
+            ...colaborador,
+            nombre: `${colaborador.nombre} ${colaborador.apellido_paterno}`,
+          }))
+        partidas_presupuestales = dataProyecto.rubros_presupuestales.filter(
+          (rp) => rp.id_rubro == 3
+        )
         break
       default:
     }
@@ -156,21 +216,40 @@ const FormaSolicitudPresupuesto = () => {
       partidas_presupuestales,
       titulares,
     })
-  }, [estadoForma.i_tipo_gasto, dataProyecto])
 
-  useEffect(() => {
     dispatch({
       type: "CAMBIO_TIPO_GASTO",
-      payload: {
-        id_partida_presupuestal:
-          dataTipoGasto.partidas_presupuestales[0]?.id_rubro || 0,
-        id_titular: dataTipoGasto.titulares[0]?.id || 0,
-      },
+      payload: null,
     })
-  }, [dataTipoGasto])
+  }, [estadoForma.i_tipo_gasto])
+
+  // useEffect(() => {
+  //   dispatch({
+  //     type: "CAMBIO_TIPO_GASTO",
+  //     payload: {
+  //       id_partida_presupuestal:
+  //         dataTipoGasto.partidas_presupuestales[0]?.id_rubro || 0,
+  //       id_titular: dataTipoGasto.titulares[0]?.id || 0,
+  //     },
+  //   })
+  // }, [dataTipoGasto])
 
   useEffect(() => {
-    if (!estadoForma.id_titular) return
+    if (!estadoForma.id_titular) {
+      // dispatch({
+      //   type: "LIMPIAR_DATOS_TITULAR",
+      //   payload: null,
+      // })
+      dispatch({
+        type: "CAMBIO_TITULAR",
+        payload: {
+          clabe: "",
+          id_banco: 1,
+          proveedor: "",
+        },
+      })
+      return
+    }
 
     const matchTitular = dataTipoGasto.titulares.find(
       (titular) => titular.id == estadoForma.id_titular
@@ -181,12 +260,22 @@ const FormaSolicitudPresupuesto = () => {
       return
     }
 
+    const payload = {
+      clabe: matchTitular.clabe,
+      id_banco: matchTitular.id_banco,
+      proveedor: "",
+    }
+
+    switch (Number(estadoForma.i_tipo_gasto)) {
+      case 2:
+      case 3:
+        payload.proveedor = matchTitular.nombre
+        break
+    }
+
     dispatch({
       type: "CAMBIO_TITULAR",
-      payload: {
-        clabe: matchTitular.clabe,
-        id_banco: matchTitular.id_banco,
-      },
+      payload,
     })
   }, [estadoForma.id_titular])
 
@@ -394,80 +483,23 @@ const FormaSolicitudPresupuesto = () => {
     return <Loader />
   }
 
-  const OptionsTipoGasto = () => {
-    const options = [
-      {
-        id: 1,
-        nombre: "Reembolso",
-      },
-      {
-        id: 2,
-        nombre: "Pago a proveedor",
-      },
-      {
-        id: 5,
-        nombre: "Gastos por comprobar",
-      },
-    ]
-
-    const rubroAsimilados = dataProyecto.rubros_presupuestales.some(
-      (rp) => rp.id_rubro == 2
-    )
-    const rubroHonorarios = dataProyecto.rubros_presupuestales.some(
-      (rp) => rp.id_rubro == 3
-    )
-
-    if (rubroAsimilados) {
-      options.push({
-        id: 3,
-        nombre: "Asimilados a salarios",
-      })
-    }
-
-    if (rubroHonorarios) {
-      options.push({
-        id: 4,
-        nombre: "Honorarios profesionales",
-      })
-    }
-
-    return (
-      <>
-        {options.map(({ id, nombre }) => (
-          <option key={id} value={id}>
-            {nombre}
-          </option>
-        ))}
-      </>
-    )
-  }
-
-  // let optionsTitularCuenta = []
-  // let optionsPartidaPresupuestal = []
-
-  // switch (Number(estadoForma.i_tipo_gasto)) {
-  //   case 1:
-  //     const colaboradoresAOption = dataProyecto.colaboradores.map(
-  //       (colaborador) => ({
-  //         id: colaborador.id,
-  //         nombre: `${colaborador.nombre} ${colaborador.apellido_paterno}`,
-  //       })
-  //     )
-  //     optionsTitularCuenta = colaboradoresAOption
-
-  //     const rubrosSinAsimilados = dataProyecto.rubros_presupuestales.filter(
-  //       (rp) => rp.id_rubro != 2
-  //     )
-  //     optionsPartidaPresupuestal = rubrosSinAsimilados
-  //     break
-  //   default:
-  // }
-
   const inputFileReembolso =
     estadoForma.i_tipo_gasto == 1 && estadoForma.comprobantes.length > 0
+  const esGastoAsimilados = estadoForma.i_tipo_gasto == 3
+  const disableInputFile =
+    !modoEditar || inputFileReembolso || esGastoAsimilados
 
-  const disableInputFile = !modoEditar || inputFileReembolso
+  const disableInputProveedor = [2, 3].includes(
+    Number(estadoForma.i_tipo_gasto)
+  )
 
+  const showTipoGastoAsimilados =
+    dataProyecto.rubros_presupuestales.some((rp) => rp.id_rubro == 2) &&
+    !!dataProyecto.colaboradores.filter((col) => col.i_tipo == 1).length
+
+  const showTipoGastoHonorarios =
+    dataProyecto.rubros_presupuestales.some((rp) => rp.id_rubro == 3) &&
+    !!dataProyecto.colaboradores.filter((col) => col.i_tipo == 2).length
 
   return (
     <RegistroContenedor>
@@ -537,7 +569,25 @@ const FormaSolicitudPresupuesto = () => {
             value={estadoForma.i_tipo_gasto}
             disabled={!modoEditar}
           >
-            <OptionsTipoGasto />
+            {/* <OptionsTipoGasto /> */}
+            <option value="0" disabled>
+              Selecciona una opción
+            </option>
+            {dataProyecto.colaboradores.length > 0 && (
+              <option value="1">Reembolso</option>
+            )}
+            {dataProyecto.proveedores.length > 0 && (
+              <option value="2">Pago a proveedor</option>
+            )}
+            {showTipoGastoAsimilados && (
+              <option value="3">Asimilados a salarios</option>
+            )}
+            {showTipoGastoHonorarios && (
+              <option value="4">
+                Honorarios profesionales (colaboradores)
+              </option>
+            )}
+            <option value="5">Gastos por comprobar</option>
           </select>
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
@@ -549,16 +599,15 @@ const FormaSolicitudPresupuesto = () => {
             value={estadoForma.id_partida_presupuestal}
             disabled={!modoEditar}
           >
-            {dataTipoGasto.partidas_presupuestales.length > 0 ? (
-              dataTipoGasto.partidas_presupuestales.map(
-                ({ id_rubro, nombre }) => (
-                  <option key={id_rubro} value={id_rubro}>
-                    {nombre}
-                  </option>
-                )
+            <option value="0" disabled>
+              Selecciona una opción
+            </option>
+            {dataTipoGasto.partidas_presupuestales.map(
+              ({ id_rubro, nombre }) => (
+                <option key={id_rubro} value={id_rubro}>
+                  {nombre}
+                </option>
               )
-            ) : (
-              <option value="">No hay opciones</option>
             )}
           </select>
         </div>
@@ -571,15 +620,14 @@ const FormaSolicitudPresupuesto = () => {
             value={estadoForma.id_titular}
             disabled={!modoEditar}
           >
-            {dataTipoGasto.titulares.length > 0 ? (
-              dataTipoGasto.titulares.map((titular) => (
-                <option key={titular.id} value={titular.id}>
-                  {titular.nombre}
-                </option>
-              ))
-            ) : (
-              <option value="">No hay opciones</option>
-            )}
+            <option value="0" disabled>
+              Selecciona una opción
+            </option>
+            {dataTipoGasto.titulares.map((titular) => (
+              <option key={titular.id} value={titular.id}>
+                {titular.nombre}
+              </option>
+            ))}
           </select>
           {/* <input
             className="form-control"
@@ -598,7 +646,7 @@ const FormaSolicitudPresupuesto = () => {
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="clabe"
             value={estadoForma.clabe}
-            disabled={!modoEditar}
+            disabled
           />
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
@@ -608,7 +656,7 @@ const FormaSolicitudPresupuesto = () => {
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="id_banco"
             value={estadoForma.id_banco}
-            disabled={!modoEditar}
+            disabled
           >
             {bancos.map(({ id, nombre }) => (
               <option key={id} value={id}>
@@ -636,20 +684,35 @@ const FormaSolicitudPresupuesto = () => {
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="proveedor"
             value={estadoForma.proveedor}
-            disabled={!modoEditar}
+            disabled={disableInputProveedor}
             placeholder="emisor de la factura"
           />
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Descricpión del gasto</label>
-          <input
-            className="form-control"
-            type="text"
-            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-            name="descripcion_gasto"
-            value={estadoForma.descripcion_gasto}
-            disabled={!modoEditar}
-          />
+          {[3].includes(Number(estadoForma.i_tipo_gasto)) ? (
+            <select
+              className="form-control"
+              onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+              name="descripcion_gasto"
+              value={estadoForma.descripcion_gasto}
+            >
+              {meses.map((mes) => (
+                <option key={mes} value={mes}>
+                  {mes}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              className="form-control"
+              type="text"
+              onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+              name="descripcion_gasto"
+              value={estadoForma.descripcion_gasto}
+              disabled={!modoEditar}
+            />
+          )}
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Importe</label>

@@ -17,7 +17,7 @@ export interface ComprobanteSolicitud {
   dt_registro?: string
 }
 
-export type TipoGastoSolicitud = 1 | 2 | 3 | 4 | 5
+export type TipoGastoSolicitud = 0 | 1 | 2 | 3 | 4 | 5
 
 export type EstatusSolicitud = 1 | 2 | 3 | 4 | 5
 
