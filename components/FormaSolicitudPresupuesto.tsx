@@ -2,9 +2,12 @@ import { useEffect, useState, useReducer, useRef } from "react"
 import { useRouter } from "next/router"
 import { ChangeEvent } from "@assets/models/formEvents.model"
 import {
+  ColaboradorProyecto,
   DataProyecto,
+  ProveedorProyecto,
   ProyectoMin,
   QueriesProyecto,
+  RubroMinistracion,
 } from "@models/proyecto.model"
 import { Loader } from "@components/Loader"
 import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
@@ -24,6 +27,8 @@ type ActionTypes =
   | "HANDLE_CHANGE"
   | "AGREGAR_FACTURA"
   | "QUITAR_FACTURA"
+  | "CAMBIO_TIPO_GASTO"
+  | "CAMBIO_TITULAR"
 
 interface ActionDispatch {
   type: ActionTypes
@@ -58,6 +63,18 @@ const reducer = (
         ...state,
         comprobantes: comprobantesFiltrados,
       }
+    case "CAMBIO_TIPO_GASTO":
+      return {
+        ...state,
+        id_partida_presupuestal: payload.id_partida_presupuestal,
+        id_titular: payload.id_titular,
+      }
+    case "CAMBIO_TITULAR":
+      return {
+        ...state,
+        clabe: payload.clabe,
+        id_banco: payload.id_banco,
+      }
     default:
       return state
   }
@@ -67,6 +84,16 @@ const estadoInicialDataProyecto: DataProyecto = {
   colaboradores: [],
   proveedores: [],
   rubros_presupuestales: [],
+}
+
+interface DataTipoGasto {
+  partidas_presupuestales: RubroMinistracion[]
+  titulares: ColaboradorProyecto[] | ProveedorProyecto[]
+}
+
+const estadoInicialDataTipoGasto: DataTipoGasto = {
+  partidas_presupuestales: [],
+  titulares: [],
 }
 
 const FormaSolicitudPresupuesto = () => {
@@ -79,6 +106,7 @@ const FormaSolicitudPresupuesto = () => {
   const estadoInicialForma: SolicitudPresupuesto = {
     id_proyecto: 0,
     i_tipo_gasto: 1,
+    id_titular: 0,
     titular: "",
     clabe: "",
     id_banco: 1,
@@ -94,6 +122,7 @@ const FormaSolicitudPresupuesto = () => {
   const [estadoForma, dispatch] = useReducer(reducer, estadoInicialForma)
   const [proyectosDB, setProyectosDB] = useState<ProyectoMin[]>([])
   const [dataProyecto, setDataProyecto] = useState(estadoInicialDataProyecto)
+  const [dataTipoGasto, setDataTipoGasto] = useState(estadoInicialDataTipoGasto)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [modoEditar, setModoEditar] = useState<boolean>(!idSolicitud)
   const modalidad = idSolicitud ? "EDITAR" : "CREAR"
@@ -106,6 +135,60 @@ const FormaSolicitudPresupuesto = () => {
   useEffect(() => {
     cargarDataProyecto()
   }, [estadoForma.id_proyecto])
+
+  useEffect(() => {
+    let partidas_presupuestales = []
+    let titulares = []
+
+    switch (Number(estadoForma.i_tipo_gasto)) {
+      case 1:
+        titulares = dataProyecto.colaboradores
+
+        const rubrosSinAsimilados = dataProyecto.rubros_presupuestales.filter(
+          (rp) => rp.id_rubro != 2
+        )
+        partidas_presupuestales = rubrosSinAsimilados
+        break
+      default:
+    }
+
+    setDataTipoGasto({
+      partidas_presupuestales,
+      titulares,
+    })
+  }, [estadoForma.i_tipo_gasto, dataProyecto])
+
+  useEffect(() => {
+    dispatch({
+      type: "CAMBIO_TIPO_GASTO",
+      payload: {
+        id_partida_presupuestal:
+          dataTipoGasto.partidas_presupuestales[0]?.id_rubro || 0,
+        id_titular: dataTipoGasto.titulares[0]?.id || 0,
+      },
+    })
+  }, [dataTipoGasto])
+
+  useEffect(() => {
+    if (!estadoForma.id_titular) return
+
+    const matchTitular = dataTipoGasto.titulares.find(
+      (titular) => titular.id == estadoForma.id_titular
+    )
+
+    if (!matchTitular) {
+      console.log(matchTitular)
+      return
+    }
+
+    dispatch({
+      type: "CAMBIO_TITULAR",
+      payload: {
+        clabe: matchTitular.clabe,
+        id_banco: matchTitular.id_banco,
+      },
+    })
+  }, [estadoForma.id_titular])
 
   const cargarData = async () => {
     setIsLoading(true)
@@ -257,6 +340,9 @@ const FormaSolicitudPresupuesto = () => {
         type: "AGREGAR_FACTURA",
         payload: dataComprobante,
       })
+
+      //limpiar el input
+      fileInput.current.value = ""
     }
 
     reader.readAsText(file)
@@ -316,7 +402,7 @@ const FormaSolicitudPresupuesto = () => {
       },
       {
         id: 2,
-        nombre: "Programación",
+        nombre: "Pago a proveedor",
       },
       {
         id: 5,
@@ -355,6 +441,33 @@ const FormaSolicitudPresupuesto = () => {
       </>
     )
   }
+
+  // let optionsTitularCuenta = []
+  // let optionsPartidaPresupuestal = []
+
+  // switch (Number(estadoForma.i_tipo_gasto)) {
+  //   case 1:
+  //     const colaboradoresAOption = dataProyecto.colaboradores.map(
+  //       (colaborador) => ({
+  //         id: colaborador.id,
+  //         nombre: `${colaborador.nombre} ${colaborador.apellido_paterno}`,
+  //       })
+  //     )
+  //     optionsTitularCuenta = colaboradoresAOption
+
+  //     const rubrosSinAsimilados = dataProyecto.rubros_presupuestales.filter(
+  //       (rp) => rp.id_rubro != 2
+  //     )
+  //     optionsPartidaPresupuestal = rubrosSinAsimilados
+  //     break
+  //   default:
+  // }
+
+  const inputFileReembolso =
+    estadoForma.i_tipo_gasto == 1 && estadoForma.comprobantes.length > 0
+
+  const disableInputFile = !modoEditar || inputFileReembolso
+
 
   return (
     <RegistroContenedor>
@@ -436,23 +549,46 @@ const FormaSolicitudPresupuesto = () => {
             value={estadoForma.id_partida_presupuestal}
             disabled={!modoEditar}
           >
-            {dataProyecto.rubros_presupuestales.map(({ id_rubro, nombre }) => (
-              <option key={id_rubro} value={id_rubro}>
-                {nombre}
-              </option>
-            ))}
+            {dataTipoGasto.partidas_presupuestales.length > 0 ? (
+              dataTipoGasto.partidas_presupuestales.map(
+                ({ id_rubro, nombre }) => (
+                  <option key={id_rubro} value={id_rubro}>
+                    {nombre}
+                  </option>
+                )
+              )
+            ) : (
+              <option value="">No hay opciones</option>
+            )}
           </select>
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
-          <label className="form-label">Titular</label>
-          <input
+          <label className="form-label">Titular cuenta</label>
+          <select
+            className="form-control"
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+            name="id_titular"
+            value={estadoForma.id_titular}
+            disabled={!modoEditar}
+          >
+            {dataTipoGasto.titulares.length > 0 ? (
+              dataTipoGasto.titulares.map((titular) => (
+                <option key={titular.id} value={titular.id}>
+                  {titular.nombre}
+                </option>
+              ))
+            ) : (
+              <option value="">No hay opciones</option>
+            )}
+          </select>
+          {/* <input
             className="form-control"
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="titular"
             value={estadoForma.titular}
             disabled={!modoEditar}
-          />
+          /> */}
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">CLABE</label>
@@ -552,7 +688,7 @@ const FormaSolicitudPresupuesto = () => {
             name="comprobante"
             accept=".xml"
             ref={fileInput}
-            disabled={!modoEditar}
+            disabled={disableInputFile}
           />
         </div>
         <div className="col-12 mb-3 table-responsive">

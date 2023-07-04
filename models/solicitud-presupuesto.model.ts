@@ -36,6 +36,7 @@ export interface SolicitudPresupuesto {
   // f_monto_comprobar: string
   i_estatus?: EstatusSolicitud
   estatus?: string
+  id_titular?: number
   titular: string
   clabe: string
   id_banco: number
