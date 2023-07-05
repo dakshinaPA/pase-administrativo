@@ -6,6 +6,7 @@ import { TablaContenedor } from "@components/Contenedores"
 import { ModalEliminar } from "@components/ModalEliminar"
 import {
   aMinuscula,
+  obtenerBadgeStatusSolicitud,
   obtenerCopartes,
   obtenerProyectos,
   obtenerSolicitudes,
@@ -119,22 +120,6 @@ const SolicitudesPresupuesto = () => {
   const cancelarEliminarSolicitud = () => {
     setSolicitudAEliminar(0)
     setShowModalEliminar(false)
-  }
-
-  const obtenerColorBadge = (i_status: number) => {
-
-    switch(i_status){
-      case 1:
-        return "primary"
-      case 2:
-        return "success"
-      case 3:
-        return "danger"
-      case 4:
-        return "info"
-      case 5:
-        return "warning"
-    }
   }
 
   // const solicitudesFiltradass = solicitudesDB.filter(({  }) => {
@@ -258,7 +243,7 @@ const SolicitudesPresupuesto = () => {
                     estatus,
                   } = solicitud
 
-                  const colorBadge = obtenerColorBadge(i_estatus)
+                  const colorBadge = obtenerBadgeStatusSolicitud(i_estatus)
 
                   return (
                     <tr key={id}>
@@ -273,7 +258,9 @@ const SolicitudesPresupuesto = () => {
                       <td>{f_importe}</td>
                       <td>{f_monto_comprobar}</td>
                       <td>
-                        <span className={`badge bg-${colorBadge}`}>{estatus}</span>
+                        <span className={`badge bg-${colorBadge}`}>
+                          {estatus}
+                        </span>
                       </td>
                       <td>
                         <div className="d-flex">

@@ -231,6 +231,21 @@ const meses = [
   "Diciembre",
 ]
 
+const obtenerBadgeStatusSolicitud = (i_status: number) => {
+  switch (i_status) {
+    case 1:
+      return "primary"
+    case 2:
+      return "success"
+    case 3:
+      return "danger"
+    case 4:
+      return "info"
+    case 5:
+      return "warning"
+  }
+}
+
 export {
   meses,
   determinarNombreArchivo,
@@ -249,4 +264,5 @@ export {
   obtenerSolicitudes,
   obtenerMinistraciones,
   fechaActualInputDate,
+  obtenerBadgeStatusSolicitud
 }

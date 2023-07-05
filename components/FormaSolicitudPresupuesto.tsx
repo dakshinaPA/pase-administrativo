@@ -22,6 +22,7 @@ import {
 import { useAuth } from "@contexts/auth.context"
 import {
   meses,
+  obtenerBadgeStatusSolicitud,
   obtenerProyectos,
   obtenerSolicitudes,
 } from "@assets/utils/common"
@@ -552,9 +553,15 @@ const FormaSolicitudPresupuesto = () => {
       </div>
       <FormaContenedor onSubmit={handleSubmit}>
         {modalidad === "EDITAR" && (
-          <div className="col-12 text-end mb-3">
+          <div className="col-12 mb-3">
             <h5>
-              <span className="badge bg-info">{estadoForma.estatus}</span>
+              <span
+                className={`badge bg-${obtenerBadgeStatusSolicitud(
+                  estadoForma.i_estatus
+                )}`}
+              >
+                {estadoForma.estatus}
+              </span>
             </h5>
           </div>
         )}
