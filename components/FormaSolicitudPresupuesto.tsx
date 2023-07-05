@@ -169,6 +169,8 @@ const FormaSolicitudPresupuesto = () => {
   }, [estadoForma.id_proyecto])
 
   useEffect(() => {
+    if (!estadoForma.i_tipo_gasto) return
+
     let partidas_presupuestales = []
     let titulares = []
     // let id_partida_presupuestal = 0
@@ -234,10 +236,10 @@ const FormaSolicitudPresupuesto = () => {
       titulares,
     })
 
-    dispatch({
-      type: "CAMBIO_TIPO_GASTO",
-      payload,
-    })
+    // dispatch({
+    //   type: "CAMBIO_TIPO_GASTO",
+    //   payload,
+    // })
   }, [estadoForma.i_tipo_gasto])
 
   // useEffect(() => {
@@ -298,9 +300,9 @@ const FormaSolicitudPresupuesto = () => {
 
     try {
       const promesas = [obtenerProyectosDB()]
-      if (modalidad === "EDITAR") {
-        promesas.push(obtenerSolicitudes(null, idSolicitud))
-      }
+      // if (modalidad === "EDITAR") {
+      //   promesas.push(obtenerSolicitudes(null, idSolicitud))
+      // }
 
       const resCombinadas = await Promise.all(promesas)
 
@@ -311,22 +313,30 @@ const FormaSolicitudPresupuesto = () => {
       const proyectosDB = resCombinadas[0].data as ProyectoMin[]
       setProyectosDB(proyectosDB)
 
-      if (modalidad === "EDITAR") {
-        const solicitud = resCombinadas[1].data[0] as SolicitudPresupuesto
+      dispatch({
+        type: "HANDLE_CHANGE",
+        payload: {
+          name: "id_proyecto",
+          value: idProyecto || proyectosDB[0]?.id || 0,
+        },
+      })
 
-        dispatch({
-          type: "CARGA_INICIAL",
-          payload: solicitud,
-        })
-      } else {
-        dispatch({
-          type: "HANDLE_CHANGE",
-          payload: {
-            name: "id_proyecto",
-            value: proyectosDB[0]?.id || 0,
-          },
-        })
-      }
+      // if (modalidad === "EDITAR") {
+      //   const solicitud = resCombinadas[1].data[0] as SolicitudPresupuesto
+
+      //   dispatch({
+      //     type: "CARGA_INICIAL",
+      //     payload: solicitud,
+      //   })
+      // } else {
+      //   dispatch({
+      //     type: "HANDLE_CHANGE",
+      //     payload: {
+      //       name: "id_proyecto",
+      //       value: proyectosDB[0]?.id || 0,
+      //     },
+      //   })
+      // }
     } catch (error) {
       console.log(error)
     }
@@ -349,6 +359,28 @@ const FormaSolicitudPresupuesto = () => {
     } else {
       const dataProyecto = reDataProyecto.data as DataProyecto
       setDataProyecto(dataProyecto)
+    }
+  }
+
+  useEffect(() => {
+    //validar que ya haya informacion de proyecto
+    if (!dataProyecto.rubros_presupuestales.length) return
+
+    if (modalidad === "EDITAR") {
+      obtener()
+    }
+  }, [dataProyecto])
+
+  const obtener = async () => {
+    const re = await obtenerSolicitudes(null, idSolicitud)
+    if (re.error) {
+      console.log(re.data)
+    } else {
+      const solicitud = re.data[0] as SolicitudPresupuesto
+      dispatch({
+        type: "CARGA_INICIAL",
+        payload: solicitud,
+      })
     }
   }
 
@@ -518,11 +550,10 @@ const FormaSolicitudPresupuesto = () => {
   const disableInputFile =
     !modoEditar || inputFileReembolso || esGastoAsimilados || noTipoGasto
 
-  const disableInputProveedor = estadoForma.i_tipo_gasto != 1
+  const disableInputProveedor = !modoEditar || estadoForma.i_tipo_gasto != 1
 
-  const disableSelectPartidaPresupuestal = [3, 4].includes(
-    Number(estadoForma.i_tipo_gasto)
-  )
+  const disableSelectPartidaPresupuestal =
+    !modoEditar || [3, 4].includes(Number(estadoForma.i_tipo_gasto))
 
   const showTipoGastoAsimilados =
     dataProyecto.rubros_presupuestales.some((rp) => rp.id_rubro == 2) &&
