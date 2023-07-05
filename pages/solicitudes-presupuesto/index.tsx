@@ -28,7 +28,7 @@ const SolicitudesPresupuesto = () => {
   const [selectProyecto, setSelectProyecto] = useState(0)
   const [showModalEliminar, setShowModalEliminar] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(false)
-  const [inputBusqueda, setInputBusqueda] = useState<string>("")
+  // const [inputBusqueda, setInputBusqueda] = useState<string>("")
 
   useEffect(() => {
     cargarData()
@@ -119,6 +119,22 @@ const SolicitudesPresupuesto = () => {
   const cancelarEliminarSolicitud = () => {
     setSolicitudAEliminar(0)
     setShowModalEliminar(false)
+  }
+
+  const obtenerColorBadge = (i_status: number) => {
+
+    switch(i_status){
+      case 1:
+        return "primary"
+      case 2:
+        return "success"
+      case 3:
+        return "danger"
+      case 4:
+        return "info"
+      case 5:
+        return "warning"
+    }
   }
 
   // const solicitudesFiltradass = solicitudesDB.filter(({  }) => {
@@ -212,12 +228,14 @@ const SolicitudesPresupuesto = () => {
                 <tr>
                   <th>#id</th>
                   <th>Tipo de gasto</th>
+                  <th>Partida presupuestal</th>
+                  <th>Titular</th>
                   <th>CLABE</th>
                   <th>Banco</th>
                   <th>Proveedor</th>
                   <th>Descripción</th>
-                  <th>Partida presupuestal</th>
                   <th>Importe</th>
+                  <th>Por comprobar</th>
                   <th>Estatus</th>
                   <th>Acciones</th>
                 </tr>
@@ -229,25 +247,34 @@ const SolicitudesPresupuesto = () => {
                     id_proyecto,
                     tipo_gasto,
                     clabe,
+                    titular_cuenta,
                     banco,
                     proveedor,
                     descripcion_gasto,
                     rubro,
                     f_importe,
+                    f_monto_comprobar,
+                    i_estatus,
                     estatus,
                   } = solicitud
+
+                  const colorBadge = obtenerColorBadge(i_estatus)
 
                   return (
                     <tr key={id}>
                       <td>{id}</td>
                       <td>{tipo_gasto}</td>
+                      <td>{rubro}</td>
+                      <td>{titular_cuenta}</td>
                       <td>{clabe}</td>
                       <td>{banco}</td>
                       <td>{proveedor}</td>
                       <td>{descripcion_gasto}</td>
-                      <td>{rubro}</td>
                       <td>{f_importe}</td>
-                      <td>{estatus}</td>
+                      <td>{f_monto_comprobar}</td>
+                      <td>
+                        <span className={`badge bg-${colorBadge}`}>{estatus}</span>
+                      </td>
                       <td>
                         <div className="d-flex">
                           <BtnAccion

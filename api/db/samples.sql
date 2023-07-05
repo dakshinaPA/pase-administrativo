@@ -95,13 +95,13 @@ INSERT INTO `rubros_presupuestales` (`nombre`) VALUES
 ('Materiales para proyecto'),
 ('Pagos al extranjero');
 
-CREATE TABLE `metodos_pago` (
+CREATE TABLE `formas_pago` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `clave` VARCHAR(2) NOT NULL,
   `nombre` VARCHAR(100) NOT NULL,
   PRIMARY KEY (`id`));
 
-INSERT INTO `metodos_pago` (`clave`, `nombre`) VALUES
+INSERT INTO `formas_pago` (`clave`, `nombre`) VALUES
 ('01', 'Efectivo'),
 ('02', 'Cheque nominativo'),
 ('03', 'Transferencia electrónica de fondos'),
@@ -469,7 +469,7 @@ CREATE TABLE `solicitudes_presupuesto` (
   `clabe` VARCHAR(18) NOT NULL,
   `id_banco` INT UNSIGNED NOT NULL,
   `titular_cuenta` VARCHAR(80) NOT NULL,
-  `email_titular` VARCHAR(50) NOT NULL,
+  `email` VARCHAR(50) NOT NULL,
   `proveedor` VARCHAR(50) NOT NULL DEFAULT '' COMMENT 'menos en gastos por comprobar',
   `descripcion_gasto` VARCHAR(300) NOT NULL,
   `id_partida_presupuestal` INT UNSIGNED NOT NULL COMMENT 'id proyecto_rubros_presupuestales',

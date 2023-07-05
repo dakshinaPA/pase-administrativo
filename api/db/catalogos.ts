@@ -57,8 +57,8 @@ class CatalogosDB {
     }
   }
 
-  static async obtenerMetodosPagp() {
-    let query = `SELECT id, clave, nombre FROM metodos_pago`
+  static async obtenerFormasPago() {
+    let query = `SELECT id, clave, nombre FROM formas_pago`
 
     try {
       const res = await queryDB(query)

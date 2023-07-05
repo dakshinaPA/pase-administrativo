@@ -13,6 +13,6 @@ export interface RubrosPresupuestalesDB extends CatalogoGenerico {}
 
 export interface BancosDB extends CatalogoGenerico {}
 
-export interface MetodosPagoDB extends CatalogoGenerico {
+export interface FormasPagoDB extends CatalogoGenerico {
   clave: string
 }

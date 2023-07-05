@@ -7,7 +7,7 @@ import {
   TemasSocialesDB,
   RubrosPresupuestalesDB,
   BancosDB,
-  MetodosPagoDB,
+  FormasPagoDB,
 } from "@api/models/catalogos.model"
 
 const CatalogosContext = createContext(null)
@@ -18,7 +18,7 @@ interface CatalogosDB {
   temas_sociales: TemasSocialesDB[]
   rubros_presupuestales: RubrosPresupuestalesDB[]
   bancos: BancosDB[]
-  metodos_pago: MetodosPagoDB[]
+  formas_pago: FormasPagoDB[]
 }
 
 const CatalogosProvider = ({ children }) => {
@@ -28,7 +28,7 @@ const CatalogosProvider = ({ children }) => {
     temas_sociales: [],
     rubros_presupuestales: [],
     bancos: [],
-    metodos_pago: []
+    formas_pago: []
   }
 
   const [catalogos, setCatalogos] = useState(estadoInicialCatalogos)

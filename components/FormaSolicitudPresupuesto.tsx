@@ -35,6 +35,7 @@ type ActionTypes =
   | "CAMBIO_TITULAR"
   // | "LIMPIAR_DATOS_TITULAR"
   | "CAMBIO_PROYECTO"
+  | "NUEVO_REGISTRO"
 
 interface ActionDispatch {
   type: ActionTypes
@@ -49,6 +50,7 @@ const reducer = (
 
   switch (type) {
     case "CARGA_INICIAL":
+    case "NUEVO_REGISTRO":
       return payload
     case "HANDLE_CHANGE":
       return {
@@ -74,15 +76,15 @@ const reducer = (
         ...state,
         i_tipo_gasto: 0,
         id_partida_presupuestal: 0,
-        id_titular: 0,
+        titular_cuenta: "",
         descripcion_gasto: "",
       }
     case "CAMBIO_TIPO_GASTO":
       return {
         ...state,
-        id_partida_presupuestal: 0,
-        id_titular: 0,
-        descripcion_gasto: "",
+        id_partida_presupuestal: payload.id_partida_presupuestal,
+        titular_cuenta: "",
+        descripcion_gasto: payload.descripcion_gasto,
       }
     case "CAMBIO_TITULAR":
       return {
@@ -129,8 +131,7 @@ const FormaSolicitudPresupuesto = () => {
   const estadoInicialForma: SolicitudPresupuesto = {
     id_proyecto: 0,
     i_tipo_gasto: 0,
-    id_titular: 0,
-    titular: "",
+    titular_cuenta: "",
     clabe: "",
     id_banco: 1,
     email: "",
@@ -141,7 +142,7 @@ const FormaSolicitudPresupuesto = () => {
     comprobantes: [],
   }
 
-  const { bancos, metodos_pago } = useCatalogos()
+  const { bancos, formas_pago } = useCatalogos()
   const [estadoForma, dispatch] = useReducer(reducer, estadoInicialForma)
   const [proyectosDB, setProyectosDB] = useState<ProyectoMin[]>([])
   const [dataProyecto, setDataProyecto] = useState(estadoInicialDataProyecto)
@@ -166,6 +167,11 @@ const FormaSolicitudPresupuesto = () => {
   useEffect(() => {
     let partidas_presupuestales = []
     let titulares = []
+    // let id_partida_presupuestal = 0
+    const payload = {
+      id_partida_presupuestal: 0,
+      descripcion_gasto: "",
+    }
 
     switch (Number(estadoForma.i_tipo_gasto)) {
       case 1:
@@ -173,7 +179,7 @@ const FormaSolicitudPresupuesto = () => {
         //muestra todos colaboradores
         titulares = dataProyecto.colaboradores.map((colaborador) => ({
           ...colaborador,
-          nombre: `${colaborador.nombre} ${colaborador.apellido_paterno}`,
+          nombre: `${colaborador.nombre} ${colaborador.apellido_paterno} ${colaborador.apellido_materno}`,
         }))
         partidas_presupuestales = dataProyecto.rubros_presupuestales.filter(
           (rp) => rp.id_rubro != 2
@@ -192,11 +198,13 @@ const FormaSolicitudPresupuesto = () => {
           .filter((col) => col.i_tipo == 1)
           .map((colaborador) => ({
             ...colaborador,
-            nombre: `${colaborador.nombre} ${colaborador.apellido_paterno}`,
+            nombre: `${colaborador.nombre} ${colaborador.apellido_paterno} ${colaborador.apellido_materno}`,
           }))
         partidas_presupuestales = dataProyecto.rubros_presupuestales.filter(
           (rp) => rp.id_rubro == 2
         )
+        payload.id_partida_presupuestal = 2
+        payload.descripcion_gasto = "Enero"
         break
       case 4:
         //muestra solo colaboradores registrados como asimilados
@@ -204,11 +212,13 @@ const FormaSolicitudPresupuesto = () => {
           .filter((col) => col.i_tipo == 2)
           .map((colaborador) => ({
             ...colaborador,
-            nombre: `${colaborador.nombre} ${colaborador.apellido_paterno}`,
+            nombre: `${colaborador.nombre} ${colaborador.apellido_paterno} ${colaborador.apellido_materno}`,
           }))
         partidas_presupuestales = dataProyecto.rubros_presupuestales.filter(
           (rp) => rp.id_rubro == 3
         )
+        payload.id_partida_presupuestal = 3
+        payload.descripcion_gasto = "Enero"
         break
       case 5:
         break
@@ -222,7 +232,7 @@ const FormaSolicitudPresupuesto = () => {
 
     dispatch({
       type: "CAMBIO_TIPO_GASTO",
-      payload: null,
+      payload,
     })
   }, [estadoForma.i_tipo_gasto])
 
@@ -238,7 +248,7 @@ const FormaSolicitudPresupuesto = () => {
   // }, [dataTipoGasto])
 
   useEffect(() => {
-    if (!estadoForma.id_titular) {
+    if (!estadoForma.titular_cuenta) {
       dispatch({
         type: "CAMBIO_TITULAR",
         payload: {
@@ -251,7 +261,7 @@ const FormaSolicitudPresupuesto = () => {
     }
 
     const matchTitular = dataTipoGasto.titulares.find(
-      (titular) => titular.id == estadoForma.id_titular
+      (titular_cuenta) => titular_cuenta.nombre == estadoForma.titular_cuenta
     )
 
     if (!matchTitular) {
@@ -277,7 +287,7 @@ const FormaSolicitudPresupuesto = () => {
       type: "CAMBIO_TITULAR",
       payload,
     })
-  }, [estadoForma.id_titular])
+  }, [estadoForma.titular_cuenta])
 
   const cargarData = async () => {
     setIsLoading(true)
@@ -372,7 +382,7 @@ const FormaSolicitudPresupuesto = () => {
   }
 
   const asignarIdFormaPAgo = (clave: string) => {
-    const metodoMatch = metodos_pago.find((mp) => mp.clave == clave)
+    const metodoMatch = formas_pago.find((mp) => mp.clave == clave)
 
     return {
       id: metodoMatch?.id || 0,
@@ -454,7 +464,7 @@ const FormaSolicitudPresupuesto = () => {
     ev.preventDefault()
     console.log(estadoForma)
 
-    return
+    // return
 
     setIsLoading(true)
     const { error, data, mensaje } =
@@ -464,14 +474,21 @@ const FormaSolicitudPresupuesto = () => {
     if (error) {
       console.log(data)
     } else {
-      if (modalidad === "CREAR") {
-        router.push(
-          //@ts-ignore
-          `/proyectos/${estadoForma.id_proyecto}/solicitudes-presupuesto/${data.idInsertado}`
-        )
-      } else {
-        setModoEditar(false)
-      }
+      // if (modalidad === "CREAR") {
+      //   router.push(
+      //     //@ts-ignore
+      //     `/proyectos/${estadoForma.id_proyecto}/solicitudes-presupuesto/${data.idInsertado}`
+      //   )
+      // } else {
+      //   setModoEditar(false)
+      // }
+      dispatch({
+        type: "NUEVO_REGISTRO",
+        payload: {
+          ...estadoInicialForma,
+          id_proyecto: proyectosDB[0]?.id || 0,
+        },
+      })
     }
   }
 
@@ -493,10 +510,15 @@ const FormaSolicitudPresupuesto = () => {
     [1, 4].includes(Number(estadoForma.i_tipo_gasto)) &&
     estadoForma.comprobantes.length > 0
   const esGastoAsimilados = estadoForma.i_tipo_gasto == 3
+  const noTipoGasto = !estadoForma.i_tipo_gasto
   const disableInputFile =
-    !modoEditar || inputFileReembolso || esGastoAsimilados
+    !modoEditar || inputFileReembolso || esGastoAsimilados || noTipoGasto
 
   const disableInputProveedor = estadoForma.i_tipo_gasto != 1
+
+  const disableSelectPartidaPresupuestal = [3, 4].includes(
+    Number(estadoForma.i_tipo_gasto)
+  )
 
   const showTipoGastoAsimilados =
     dataProyecto.rubros_presupuestales.some((rp) => rp.id_rubro == 2) &&
@@ -592,7 +614,9 @@ const FormaSolicitudPresupuesto = () => {
                 Honorarios profesionales (colaboradores)
               </option>
             )}
-            <option value="5">Gastos por comprobar</option>
+            {dataProyecto.colaboradores.length > 0 && (
+              <option value="5">Gastos por comprobar</option>
+            )}
           </select>
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
@@ -602,7 +626,7 @@ const FormaSolicitudPresupuesto = () => {
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="id_partida_presupuestal"
             value={estadoForma.id_partida_presupuestal}
-            disabled={!modoEditar}
+            disabled={disableSelectPartidaPresupuestal}
           >
             <option value="0" disabled>
               Selecciona una opción
@@ -621,16 +645,16 @@ const FormaSolicitudPresupuesto = () => {
           <select
             className="form-control"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-            name="id_titular"
-            value={estadoForma.id_titular}
+            name="titular_cuenta"
+            value={estadoForma.titular_cuenta}
             disabled={!modoEditar}
           >
-            <option value="0" disabled>
+            <option value="" disabled>
               Selecciona una opción
             </option>
-            {dataTipoGasto.titulares.map((titular) => (
-              <option key={titular.id} value={titular.id}>
-                {titular.nombre}
+            {dataTipoGasto.titulares.map((titular_cuenta) => (
+              <option key={titular_cuenta.id} value={titular_cuenta.nombre}>
+                {titular_cuenta.nombre}
               </option>
             ))}
           </select>
@@ -638,8 +662,8 @@ const FormaSolicitudPresupuesto = () => {
             className="form-control"
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-            name="titular"
-            value={estadoForma.titular}
+            name="titular_cuenta"
+            value={estadoForma.titular_cuenta}
             disabled={!modoEditar}
           /> */}
         </div>

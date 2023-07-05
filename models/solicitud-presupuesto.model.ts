@@ -33,11 +33,10 @@ export interface SolicitudPresupuesto {
   id_partida_presupuestal: number //id rubro
   rubro?: string
   f_importe: string
-  // f_monto_comprobar: string
+  f_monto_comprobar?: number
   i_estatus?: EstatusSolicitud
   estatus?: string
-  id_titular?: number
-  titular: string
+  titular_cuenta: string
   clabe: string
   id_banco: number
   banco?: string

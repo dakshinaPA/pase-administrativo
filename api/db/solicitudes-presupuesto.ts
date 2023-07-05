@@ -12,14 +12,16 @@ class SolicitudesPresupuestoDB {
     const { id, id_proyecto, id_responsable } = queries
 
     let query = `SELECT sp.id, sp.id_proyecto, sp.i_tipo_gasto, sp.clabe, sp.id_banco, sp.titular_cuenta,
-    sp.email_titular, sp.proveedor, sp.descripcion_gasto, sp.id_partida_presupuestal, sp.f_importe, sp.i_estatus, sp.dt_registro,
+    sp.email, sp.proveedor, sp.descripcion_gasto, sp.id_partida_presupuestal, sp.f_importe, sp.i_estatus, sp.dt_registro,
     p.id_alt proyecto, p.id_responsable,
     b.nombre banco,
-    r.nombre rubro
+    r.nombre rubro,
+    SUM(spc.f_total) f_total_comprobaciones
     FROM solicitudes_presupuesto sp
     JOIN proyectos p ON sp.id_proyecto=p.id
     JOIN bancos b ON sp.id_banco=b.id
     JOIN rubros_presupuestales r ON sp.id_partida_presupuestal=r.id
+    JOIN solicitud_presupuesto_comprobantes spc ON spc.id_solicitud_presupuesto=sp.id
     WHERE sp.b_activo=1`
 
     if (id_proyecto) {
@@ -30,9 +32,11 @@ class SolicitudesPresupuestoDB {
       query += ` AND sp.id=${id}`
     }
 
-    if (id_responsable) {
-      query += ` AND p.id_responsable=${id}`
-    }
+    query += " GROUP BY sp.id"
+
+    // if (id_responsable) {
+    //   query += ` AND p.id_responsable=${id}`
+    // }
 
     try {
       const res = await queryDB(query)
@@ -48,7 +52,7 @@ class SolicitudesPresupuestoDB {
       i_tipo_gasto,
       clabe,
       id_banco,
-      titular,
+      titular_cuenta,
       email,
       proveedor,
       descripcion_gasto,
@@ -57,15 +61,15 @@ class SolicitudesPresupuestoDB {
       // f_monto_comprobar,
     } = data
 
-    const query = `INSERT INTO solicitudes_presupuesto (id_proyecto, i_tipo_gasto, clabe, id_banco, titular_cuenta, rfc_titular, email_titular, proveedor,
-      descripcion_gasto, id_partida_presupuestal, f_importe, i_estatus, dt_registro ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    const query = `INSERT INTO solicitudes_presupuesto (id_proyecto, i_tipo_gasto, clabe, id_banco, titular_cuenta, email, proveedor,
+      descripcion_gasto, id_partida_presupuestal, f_importe, i_estatus, dt_registro ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
     const placeHolders = [
       id_proyecto,
       i_tipo_gasto,
       clabe,
       id_banco,
-      titular,
+      titular_cuenta,
       email,
       proveedor,
       descripcion_gasto,
@@ -127,26 +131,22 @@ class SolicitudesPresupuestoDB {
   ) {
     const {
       folio_fiscal,
-      f_subtotal,
       f_total,
       f_retenciones,
-      regimen_fiscal,
-      forma_pago,
-      metodo_pago
+      i_metodo_pago,
+      id_forma_pago,
     } = data
 
-    const query = `INSERT INTO solicitud_presupuesto_comprobantes ( id_solicitud_presupuesto, folio_fiscal, f_subtotal, f_total,
-      f_retenciones, regimen_fiscal, forma_pago, metodo_pago, dt_registro ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ? )`
+    const query = `INSERT INTO solicitud_presupuesto_comprobantes ( id_solicitud_presupuesto, folio_fiscal, f_total,
+      f_retenciones, i_metodo_pago, id_forma_pago, dt_registro ) VALUES ( ?, ?, ?, ?, ?, ?, ? )`
 
     const placeHolders = [
       id_solicitud,
       folio_fiscal,
-      f_subtotal,
       f_total,
       f_retenciones,
-      regimen_fiscal,
-      forma_pago,
-      metodo_pago,
+      i_metodo_pago,
+      id_forma_pago,
       fechaActualAEpoch()
     ]
 
