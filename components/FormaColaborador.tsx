@@ -236,8 +236,6 @@ const FormaColaborador = () => {
               </select>
             </div>
           </div>
-        </div>
-        <div className="col-12">
           <div className="row">
             <div className="col-12 col-md-6 col-lg-4 mb-3">
               <label className="form-label">Nombre</label>
@@ -273,10 +271,8 @@ const FormaColaborador = () => {
               />
             </div>
           </div>
-        </div>
-        <div className="col-12">
           <div className="row">
-            <div className="col-12 col-md-6 col-lg-3 mb-3">
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
               <label className="form-label">Tipo</label>
               <select
                 className="form-control"
@@ -300,7 +296,7 @@ const FormaColaborador = () => {
                 disabled={!modoEditar}
               />
             </div>
-            <div className="col-7 col-lg-3 mb-3">
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
               <label className="form-label">Banco</label>
               <select
                 className="form-control"
@@ -316,7 +312,7 @@ const FormaColaborador = () => {
                 ))}
               </select>
             </div>
-            <div className="col-5 col-lg-2 mb-3">
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
               <label className="form-label">Monto total</label>
               <input
                 className="form-control"
@@ -329,8 +325,6 @@ const FormaColaborador = () => {
               />
             </div>
           </div>
-        </div>
-        <div className="col-12">
           <div className="row">
             <div className="col-12 col-md-6 col-lg-4 mb-3">
               <label className="form-label">Email</label>
@@ -389,50 +383,54 @@ const FormaColaborador = () => {
               />
             </div>
           </div>
-        </div>
-        <div className="col-12 col-lg-4 mb-3">
-          <label className="form-label">Nombre servicio</label>
-          <input
-            className="form-control"
-            type="text"
-            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-            name="nombre_servicio"
-            value={estadoForma.nombre_servicio}
-            disabled={!modoEditar}
-          />
-        </div>
-        <div className="col-12 col-lg-8 mb-3">
-          <label className="form-label">Descricpión servicio</label>
-          <input
-            className="form-control"
-            type="text"
-            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-            name="descripcion_servicio"
-            value={estadoForma.descripcion_servicio}
-            disabled={!modoEditar}
-          />
-        </div>
-        <div className="col-12 col-md-6 col-lg-4 mb-3">
-          <label className="form-label">Inicio servicio</label>
-          <input
-            className="form-control"
-            type="date"
-            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-            name="dt_inicio_servicio"
-            value={estadoForma.dt_inicio_servicio}
-            disabled={!modoEditar}
-          />
-        </div>
-        <div className="col-12 col-md-6 col-lg-4 mb-3">
-          <label className="form-label">Fin servicio</label>
-          <input
-            className="form-control"
-            type="date"
-            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-            name="dt_fin_servicio"
-            value={estadoForma.dt_fin_servicio}
-            disabled={!modoEditar}
-          />
+          <div className="row">
+            <div className="col-12 col-lg-4 mb-3">
+              <label className="form-label">Nombre servicio</label>
+              <input
+                className="form-control"
+                type="text"
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+                name="nombre_servicio"
+                value={estadoForma.nombre_servicio}
+                disabled={!modoEditar}
+              />
+            </div>
+            <div className="col-12 col-lg-8 mb-3">
+              <label className="form-label">Descricpión servicio</label>
+              <input
+                className="form-control"
+                type="text"
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+                name="descripcion_servicio"
+                value={estadoForma.descripcion_servicio}
+                disabled={!modoEditar}
+              />
+            </div>
+          </div>
+          <div className="row">
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label">Inicio servicio</label>
+              <input
+                className="form-control"
+                type="date"
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+                name="dt_inicio_servicio"
+                value={estadoForma.dt_inicio_servicio}
+                disabled={!modoEditar}
+              />
+            </div>
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label">Fin servicio</label>
+              <input
+                className="form-control"
+                type="date"
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+                name="dt_fin_servicio"
+                value={estadoForma.dt_fin_servicio}
+                disabled={!modoEditar}
+              />
+            </div>
+          </div>
         </div>
         <div className="col-12">
           <hr />

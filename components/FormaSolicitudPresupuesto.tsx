@@ -169,6 +169,7 @@ const FormaSolicitudPresupuesto = () => {
 
     switch (Number(estadoForma.i_tipo_gasto)) {
       case 1:
+      case 5:
         //muestra todos colaboradores
         titulares = dataProyecto.colaboradores.map((colaborador) => ({
           ...colaborador,
@@ -209,6 +210,8 @@ const FormaSolicitudPresupuesto = () => {
           (rp) => rp.id_rubro == 3
         )
         break
+      case 5:
+        break
       default:
     }
 
@@ -236,10 +239,6 @@ const FormaSolicitudPresupuesto = () => {
 
   useEffect(() => {
     if (!estadoForma.id_titular) {
-      // dispatch({
-      //   type: "LIMPIAR_DATOS_TITULAR",
-      //   payload: null,
-      // })
       dispatch({
         type: "CAMBIO_TITULAR",
         payload: {
@@ -269,6 +268,7 @@ const FormaSolicitudPresupuesto = () => {
     switch (Number(estadoForma.i_tipo_gasto)) {
       case 2:
       case 3:
+      case 4:
         payload.proveedor = matchTitular.nombre
         break
     }
@@ -392,15 +392,12 @@ const FormaSolicitudPresupuesto = () => {
         "application/xml"
       )
 
-      console.log(xml)
+      // console.log(xml)
 
       const [comprobante] = xml.getElementsByTagName("cfdi:Comprobante")
       const [timbre] = xml.getElementsByTagName("tfd:TimbreFiscalDigital")
 
       // const [emisor] = comprobante.getElementsByTagName("cfdi:Emisor")
-
-      // console.log(comprobante)
-      // console.log(emisor)
 
       const folio_fiscal = timbre.getAttribute("UUID")
       const metodo_pago = comprobante.getAttribute("MetodoPago") as
@@ -413,6 +410,18 @@ const FormaSolicitudPresupuesto = () => {
       // const regimen_fiscal = emisor.getAttribute("RegimenFiscal")
 
       const formaPago = asignarIdFormaPAgo(clave_forma_pago)
+
+      //limpiar el input
+      fileInput.current.value = ""
+
+      //revisar que folio fiscal no se repita
+      const marchFolioFiscal = estadoForma.comprobantes.find(
+        (comprobante) => comprobante.folio_fiscal == folio_fiscal
+      )
+      if (marchFolioFiscal) {
+        console.log("folio repetido")
+        return
+      }
 
       const dataComprobante: ComprobanteSolicitud = {
         folio_fiscal,
@@ -429,9 +438,6 @@ const FormaSolicitudPresupuesto = () => {
         type: "AGREGAR_FACTURA",
         payload: dataComprobante,
       })
-
-      //limpiar el input
-      fileInput.current.value = ""
     }
 
     reader.readAsText(file)
@@ -484,14 +490,13 @@ const FormaSolicitudPresupuesto = () => {
   }
 
   const inputFileReembolso =
-    estadoForma.i_tipo_gasto == 1 && estadoForma.comprobantes.length > 0
+    [1, 4].includes(Number(estadoForma.i_tipo_gasto)) &&
+    estadoForma.comprobantes.length > 0
   const esGastoAsimilados = estadoForma.i_tipo_gasto == 3
   const disableInputFile =
     !modoEditar || inputFileReembolso || esGastoAsimilados
 
-  const disableInputProveedor = [2, 3].includes(
-    Number(estadoForma.i_tipo_gasto)
-  )
+  const disableInputProveedor = estadoForma.i_tipo_gasto != 1
 
   const showTipoGastoAsimilados =
     dataProyecto.rubros_presupuestales.some((rp) => rp.id_rubro == 2) &&
@@ -690,7 +695,7 @@ const FormaSolicitudPresupuesto = () => {
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Descricpión del gasto</label>
-          {[3].includes(Number(estadoForma.i_tipo_gasto)) ? (
+          {[3, 4].includes(Number(estadoForma.i_tipo_gasto)) ? (
             <select
               className="form-control"
               onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
