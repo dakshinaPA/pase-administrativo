@@ -124,7 +124,7 @@ const estadoInicialDataTipoGasto: DataTipoGasto = {
 
 const FormaSolicitudPresupuesto = () => {
   const { user } = useAuth()
-  if (!user || user.id_rol != 3) return null
+  if (!user) return null
   const router = useRouter()
   const idProyecto = Number(router.query.id)
   const idSolicitud = Number(router.query.idS)
@@ -140,6 +140,7 @@ const FormaSolicitudPresupuesto = () => {
     descripcion_gasto: "",
     id_partida_presupuestal: 0,
     f_importe: "0",
+    i_estatus: 1,
     comprobantes: [],
   }
 
@@ -148,6 +149,7 @@ const FormaSolicitudPresupuesto = () => {
   const [proyectosDB, setProyectosDB] = useState<ProyectoMin[]>([])
   const [dataProyecto, setDataProyecto] = useState(estadoInicialDataProyecto)
   const [dataTipoGasto, setDataTipoGasto] = useState(estadoInicialDataTipoGasto)
+  const [estatus, setEstatus] = useState(1)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [modoEditar, setModoEditar] = useState<boolean>(!idSolicitud)
   const modalidad = idSolicitud ? "EDITAR" : "CREAR"
@@ -496,36 +498,50 @@ const FormaSolicitudPresupuesto = () => {
     })
   }
 
+  const cambiarStatus = async () => {
+    
+    dispatch({
+      type: "HANDLE_CHANGE",
+      payload: {
+        name: "i_estatus",
+        value: estatus
+      }
+    })
+  }
+
   const handleSubmit = async (ev: React.SyntheticEvent) => {
     ev.preventDefault()
     console.log(estadoForma)
 
-    // return
-
     setIsLoading(true)
-    const { error, data, mensaje } =
-      modalidad === "EDITAR" ? await editar() : await registrar()
-    setIsLoading(false)
 
-    if (error) {
-      console.log(data)
+    if (user.id_rol == 2) {
+      await cambiarStatus()
     } else {
-      // if (modalidad === "CREAR") {
-      //   router.push(
-      //     //@ts-ignore
-      //     `/proyectos/${estadoForma.id_proyecto}/solicitudes-presupuesto/${data.idInsertado}`
-      //   )
-      // } else {
-      //   setModoEditar(false)
-      // }
-      dispatch({
-        type: "NUEVO_REGISTRO",
-        payload: {
-          ...estadoInicialForma,
-          id_proyecto: proyectosDB[0]?.id || 0,
-        },
-      })
+      const { error, data, mensaje } =
+        modalidad === "EDITAR" ? await editar() : await registrar()
+
+      if (error) {
+        console.log(data)
+      } else {
+        if (modalidad === "CREAR") {
+          // router.push(
+          //   //@ts-ignore
+          //   `/proyectos/${estadoForma.id_proyecto}/solicitudes-presupuesto/${data.idInsertado}`
+          // )
+          dispatch({
+            type: "NUEVO_REGISTRO",
+            payload: {
+              ...estadoInicialForma,
+              id_proyecto: proyectosDB[0]?.id || 0,
+            },
+          })
+        } else {
+          setModoEditar(false)
+        }
+      }
     }
+    setIsLoading(false)
   }
 
   const montoComprobar = () => {
@@ -577,7 +593,8 @@ const FormaSolicitudPresupuesto = () => {
           </div>
           {!modoEditar &&
             idSolicitud &&
-            user.id === estadoForma.id_responsable && (
+            user.id === estadoForma.id_responsable &&
+            estadoForma.i_estatus == 1 && (
               <BtnEditar onClick={() => setModoEditar(true)} />
             )}
         </div>
@@ -805,6 +822,23 @@ const FormaSolicitudPresupuesto = () => {
             disabled
           />
         </div>
+        {user.id_rol == 2 && (
+          <div className="col-12 col-md-6 col-lg-4 mb-3">
+            <label className="form-label">Cambiar estatus</label>
+            <select
+              className="form-control"
+              // onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+              onChange={(e) => setEstatus(Number(e.target.value))}
+              value={estatus}
+            >
+              <option value="1">En revisión</option>
+              <option value="2">Autorizada</option>
+              <option value="3">Rechazada</option>
+              <option value="4">Procesada</option>
+              <option value="5">Devolución</option>
+            </select>
+          </div>
+        )}
         <div className="col-12">
           <hr />
         </div>
@@ -875,12 +909,13 @@ const FormaSolicitudPresupuesto = () => {
             </tbody>
           </table>
         </div>
-        {modoEditar && (
-          <div className="col-12 text-end">
-            <BtnCancelar onclick={cancelar} margin={"r"} />
-            <BtnRegistrar modalidad={modalidad} margin={false} />
-          </div>
-        )}
+        {modoEditar ||
+          (user.id_rol && (
+            <div className="col-12 text-end">
+              <BtnCancelar onclick={cancelar} margin={"r"} />
+              <BtnRegistrar modalidad={modalidad} margin={false} />
+            </div>
+          ))}
       </FormaContenedor>
     </RegistroContenedor>
   )
