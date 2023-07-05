@@ -114,8 +114,11 @@ class SolicitudesPresupuestoDB {
   }
 
   static async obtenerComprobantes(id_solicitud: number) {
-    let query = `SELECT id, folio_fiscal, f_subtotal, f_total, f_retenciones, regimen_fiscal, forma_pago, metodo_pago,
-      dt_registro FROM solicitud_presupuesto_comprobantes WHERE id_solicitud_presupuesto=${id_solicitud} AND b_activo=1`
+    let query = `SELECT spc.id, spc.folio_fiscal, spc.f_total, spc.f_retenciones, spc.i_metodo_pago, spc.id_forma_pago, spc.dt_registro,
+      fp.nombre forma_pago, fp.clave clave_forma_pago
+      FROM solicitud_presupuesto_comprobantes spc
+      JOIN formas_pago fp ON spc.id_forma_pago = fp.id
+      WHERE spc.id_solicitud_presupuesto=${id_solicitud} AND spc.b_activo=1`
 
     try {
       const res = await queryDB(query)

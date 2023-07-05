@@ -75,8 +75,7 @@ class SolicitudesPresupuestoServices {
           let comprobantes: ComprobanteSolicitud[] = null
 
           if (id_solicitud) {
-            const reComprobantes =
-              await SolicitudesPresupuestoDB.obtenerComprobantes(id_solicitud)
+            const reComprobantes = await this.obtenerComprobantes(id_solicitud)
             if (reComprobantes.error) throw reComprobantes.data
             comprobantes = reComprobantes.data as ComprobanteSolicitud[]
           }
@@ -98,7 +97,8 @@ class SolicitudesPresupuestoServices {
             proveedor,
             descripcion_gasto,
             f_importe,
-            f_monto_comprobar: Number(f_importe) - Number(f_total_comprobaciones),
+            f_monto_comprobar:
+              Number(f_importe) - Number(f_total_comprobaciones),
             i_estatus,
             estatus: this.obtenerEstatus(i_estatus),
             dt_registro,
@@ -187,6 +187,41 @@ class SolicitudesPresupuestoServices {
       200,
       "Solicitud de presupuesto borrada con éxito",
       dl.data
+    )
+  }
+
+  static async obtenerComprobantes(id_solicitud: number) {
+
+    const determinarMetodoPago = (i_metodo_pago: number)=> {
+
+      let metodo_pago: "PUE" | "PPD" = "PUE"
+
+      if(i_metodo_pago == 2){
+        metodo_pago = "PPD"
+      }
+
+      return metodo_pago
+    }
+
+    const re = await SolicitudesPresupuestoDB.obtenerComprobantes(id_solicitud)
+    if (re.error) {
+      return RespuestaController.fallida(
+        400,
+        "Error al obtener comprobantes de solicitud",
+        re.data
+      )
+    }
+
+    const comprobantes = re.data as ComprobanteSolicitud[]
+    const comprobantesHidratados: ComprobanteSolicitud[] = comprobantes.map( comprobante => ({
+      ...comprobante,
+      metodo_pago: determinarMetodoPago(comprobante.i_metodo_pago)
+    }))
+
+    return RespuestaController.exitosa(
+      200,
+      "Comprobantes de solicitud obtenidos con éxito",
+      comprobantesHidratados
     )
   }
 }

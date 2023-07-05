@@ -158,10 +158,13 @@ const FormaSolicitudPresupuesto = () => {
 
   useEffect(() => {
     cargarDataProyecto()
-    dispatch({
-      type: "CAMBIO_PROYECTO",
-      payload: null,
-    })
+
+    if (modalidad === "CREAR") {
+      dispatch({
+        type: "CAMBIO_PROYECTO",
+        payload: null,
+      })
+    }
   }, [estadoForma.id_proyecto])
 
   useEffect(() => {
