@@ -2,7 +2,7 @@
     --color-primario: #683f72;
     --color-secundario: #eaba37;;
     --color-ternario: #a9c030;
-    --color-forma: #ececec;
+    --color-cuaternario: #9f9f9f;
 }
 
 ul {
@@ -15,9 +15,9 @@ a {
   text-decoration: none;
 }
 
-.colorForma {
+/* .colorForma {
     background-color: var(--color-forma);
-}
+} */
 
 .colorHeader {
     background-color: var(--color-primario);
@@ -30,10 +30,15 @@ a {
 .bg1{background-color: var(--color-primario);}
 .bg2{background-color: var(--color-secundario);}
 .bg3{background-color: var(--color-ternario);}
+.bg4{background-color: var(--color-cuaternario);}
 
 .tablaNoWrap {
   overflow-x: auto;
   white-space: nowrap;
+}
+
+.bg-forma {
+  background-color: #9f9f9f;
 }
 
 .main_contenedor {
@@ -43,16 +48,42 @@ a {
 
 .main_contenedor > div:nth-child(1){
   flex: 0 0 250px;
-  border: 1px solid gray;
+  /* border: 1px solid gray; */
+  background-color: var(--color-ternario);
 }
 
 .main_contenedor > div:nth-child(2){
   flex: 1;
   overflow-y: auto;
   position: relative;
+  background-color: #fcfcfc;
 }
 
+.panel-menu-item {
+  background-color: var(--color-ternario);
+  /* color: var(--color-primario); */
+  color: white;
+  font-weight: bold;
+}
 
+.panel-menu-subitem {
+  background-color: var(--color-secundario);
+}
+
+.panel-menu-subitem a {
+  color: var(--color-primario);
+}
+
+.panel-menu-subitem a:hover {
+  background-color: var(--color-primario);
+  color: white;
+}
+
+.accordion-button:not(.collapsed) {
+  background-color: var(--color-ternario);
+  color: var(--color-primario);
+  box-shadow: inset 0 calc(-1 * var(--bs-accordion-border-width)) 0 var(--bs-accordion-border-color);
+}
 
 /* @media only screen and (max-width: 992px) {
 

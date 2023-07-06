@@ -24,7 +24,7 @@ const MainHeader = memo(() => {
         ></i>
       </Link>
       <div>
-        <span className="color3">
+        <span className="color2">
           {nombre} {apellido_paterno} {apellido_materno}
         </span>
         <button

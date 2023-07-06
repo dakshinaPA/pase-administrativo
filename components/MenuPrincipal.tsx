@@ -23,9 +23,9 @@ const MenuPrincipal = () => {
       {user?.id_rol != 3 && (
         <>
           <div className="accordion-item">
-            <h2 className="accordion-header">
+            <h3 className="accordion-header">
               <button
-                className="accordion-button collapsed"
+                className="accordion-button collapsed panel-menu-item"
                 type="button"
                 data-bs-toggle="collapse"
                 data-bs-target="#flush-collapse1"
@@ -34,13 +34,13 @@ const MenuPrincipal = () => {
               >
                 Usuarios
               </button>
-            </h2>
+            </h3>
             <div
               id="flush-collapse1"
               className="accordion-collapse collapse"
               // data-bs-parent="#accordionFlush"
             >
-              <div className="accordion-body">
+              <div className="accordion-body panel-menu-subitem">
                 <nav>
                   <ul>
                     <li>
@@ -62,7 +62,7 @@ const MenuPrincipal = () => {
           <div className="accordion-item">
             <h2 className="accordion-header">
               <button
-                className="accordion-button collapsed"
+                className="accordion-button collapsed panel-menu-item"
                 type="button"
                 data-bs-toggle="collapse"
                 data-bs-target="#flush-collapse2"
@@ -95,7 +95,7 @@ const MenuPrincipal = () => {
           <div className="accordion-item">
             <h2 className="accordion-header">
               <button
-                className="accordion-button collapsed"
+                className="accordion-button collapsed panel-menu-item"
                 type="button"
                 data-bs-toggle="collapse"
                 data-bs-target="#flush-collapse3"
@@ -129,7 +129,7 @@ const MenuPrincipal = () => {
       <div className="accordion-item">
         <h2 className="accordion-header">
           <button
-            className="accordion-button collapsed"
+            className="accordion-button collapsed panel-menu-item"
             type="button"
             data-bs-toggle="collapse"
             data-bs-target="#flush-collapse4"
@@ -162,7 +162,7 @@ const MenuPrincipal = () => {
       <div className="accordion-item">
         <h2 className="accordion-header">
           <button
-            className="accordion-button collapsed"
+            className="accordion-button collapsed panel-menu-item"
             type="button"
             data-bs-toggle="collapse"
             data-bs-target="#flush-collapse5"
@@ -197,7 +197,7 @@ const MenuPrincipal = () => {
           <div className="accordion-item">
             <h2 className="accordion-header">
               <button
-                className="accordion-button collapsed"
+                className="accordion-button collapsed panel-menu-item"
                 type="button"
                 data-bs-toggle="collapse"
                 data-bs-target="#flush-collapse6"
@@ -228,7 +228,7 @@ const MenuPrincipal = () => {
           <div className="accordion-item">
             <h2 className="accordion-header">
               <button
-                className="accordion-button collapsed"
+                className="accordion-button collapsed panel-menu-item"
                 type="button"
                 data-bs-toggle="collapse"
                 data-bs-target="#flush-collapse7"
