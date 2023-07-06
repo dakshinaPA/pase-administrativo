@@ -22,7 +22,10 @@ const Login = () => {
   }
 
   return (
-    <form className={`p-3 mt-5 colorForma ${styles.loginForm}`} onSubmit={onSubmit}>
+    <form
+      className={`mt-5 px-2 py-4 border ${styles.loginForm}`}
+      onSubmit={onSubmit}
+    >
       <div className="mb-3">
         <label className="form-label">Usuario</label>
         <input
@@ -45,8 +48,9 @@ const Login = () => {
         />
       </div>
       <div className="text-center">
-        <button type="submit" className="btn btn-secondary">
+        <button type="submit" className="btn btn-outline-secondary">
           Ingresar
+          <i className="bi bi-box-arrow-in-left ms-2"></i>
         </button>
       </div>
       {error.hay && (
@@ -57,52 +61,6 @@ const Login = () => {
         </div>
       )}
     </form>
-  )
-
-  return (
-    <div className="container">
-      <div className="row">
-        <div className="col-12 col-lg-4"></div>
-        <div className="col-12 col-lg-4">
-          <form className="p-3 colorForma" onSubmit={onSubmit}>
-            <div className="mb-3">
-              <label className="form-label">Usuario</label>
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Ingresa tu correo electrónico"
-                name="email"
-                value={estadoForma.email}
-                onChange={onInputChange}
-              />
-            </div>
-            <div className="mb-3">
-              <label className="form-label">Contraseña</label>
-              <input
-                type="password"
-                className="form-control"
-                name="password"
-                value={estadoForma.password}
-                onChange={onInputChange}
-              />
-            </div>
-            <div className="text-center mb-3">
-              <button type="submit" className="btn btn-secondary">
-                Ingresar
-              </button>
-            </div>
-            {error.hay && (
-              <div className="col-12 mb-3">
-                <div className="alert alert-warning text-center" role="alert">
-                  {error.mensaje}
-                </div>
-              </div>
-            )}
-          </form>
-        </div>
-        <div className="col-12 col-lg-4"></div>
-      </div>
-    </div>
   )
 }
 

@@ -21,12 +21,19 @@ import {
 import { useCatalogos } from "@contexts/catalogos.context"
 import {
   inputDateAformato,
+  obtenerBadgeStatusSolicitud,
   obtenerCopartes,
   obtenerFinanciadores,
   obtenerProyectos,
   obtenerUsuariosCoparte,
 } from "@assets/utils/common"
-import { BtnCancelar, BtnEditar, BtnNeutro, BtnRegistrar } from "./Botones"
+import {
+  BtnAccion,
+  BtnCancelar,
+  BtnEditar,
+  BtnNeutro,
+  BtnRegistrar,
+} from "./Botones"
 import { RubrosPresupuestalesDB } from "@api/models/catalogos.model"
 import {
   ActionTypes,
@@ -93,23 +100,20 @@ const TablaMinistraciones = () => {
                 <td>{f_monto}</td>
                 <td>
                   {modoEditar && !showFormaMinistracion && id && (
-                    <button
-                      type="button"
-                      className="btn btn-dark btn-sm"
+                    <BtnAccion
+                      margin={false}
+                      icono="bi-pencil"
+                      onclick={() => editarMinistracion(id)}
                       title="editar ministración"
-                      onClick={() => editarMinistracion(id)}
-                    >
-                      <i className="bi bi-pencil"></i>
-                    </button>
+                    />
                   )}
                   {!id && (
-                    <button
-                      type="button"
-                      className="btn btn-dark btn-sm"
-                      onClick={() => quitarMinistracion(i_numero)}
-                    >
-                      <i className="bi bi-x-circle"></i>
-                    </button>
+                    <BtnAccion
+                      margin={false}
+                      icono="bi-x-circle"
+                      onclick={() => quitarMinistracion(i_numero)}
+                      title="editar ministración"
+                    />
                   )}
                 </td>
               </tr>
@@ -181,16 +185,16 @@ const Colaboradores = () => {
                   <td>{banco}</td>
                   <td>{f_monto_total}</td>
                   <td>
-                    <button
-                      className="btn btn-dark btn-sm"
-                      onClick={() =>
+                    <BtnAccion
+                      margin={false}
+                      icono="bi bi-eye-fill"
+                      onclick={() =>
                         router.push(
                           `/proyectos/${idProyecto}/colaboradores/${id}`
                         )
                       }
-                    >
-                      <i className="bi bi-eye-fill"></i>
-                    </button>
+                      title="ver colaborador"
+                    />
                   </td>
                 </tr>
               )
@@ -256,16 +260,16 @@ const Proveedores = () => {
                   <td>{clabe}</td>
                   <td>{banco}</td>
                   <td>
-                    <button
-                      className="btn btn-dark btn-sm"
-                      onClick={() =>
+                    <BtnAccion
+                      margin={false}
+                      icono="bi bi-eye-fill"
+                      onclick={() =>
                         router.push(
                           `/proyectos/${idProyecto}/proveedores/${id}`
                         )
                       }
-                    >
-                      <i className="bi bi-eye-fill"></i>
-                    </button>
+                      title="ver proveedor"
+                    />
                   </td>
                 </tr>
               )
@@ -302,11 +306,14 @@ const SolicitudesPresupuesto = () => {
         <table className="table">
           <thead className="table-light">
             <tr>
+              <th>Tipo gasto</th>
+              <th>Partida presupuestal</th>
               <th>Descripción gasto</th>
-              <th>Tipo</th>
-              <th>Rubro</th>
               <th>Proveedor</th>
+              <th>Titular cuenta</th>
               <th>Importe</th>
+              <th>Monto a comprobar</th>
+              <th>Estatus</th>
               <th>Acciones</th>
             </tr>
           </thead>
@@ -314,29 +321,44 @@ const SolicitudesPresupuesto = () => {
             {estadoForma.solicitudes_presupuesto.map(
               ({
                 id,
-                descripcion_gasto,
                 tipo_gasto,
                 rubro,
+                descripcion_gasto,
                 proveedor,
+                titular_cuenta,
                 f_importe,
+                f_monto_comprobar,
+                i_estatus,
+                estatus,
               }) => (
                 <tr key={id}>
-                  <td>{descripcion_gasto}</td>
                   <td>{tipo_gasto}</td>
                   <td>{rubro}</td>
+                  <td>{descripcion_gasto}</td>
                   <td>{proveedor}</td>
+                  <td>{titular_cuenta}</td>
                   <td>{f_importe}</td>
+                  <td>{f_monto_comprobar}</td>
                   <td>
-                    <button
-                      className="btn btn-dark btn-sm"
-                      onClick={() =>
+                    <span
+                      className={`badge bg-${obtenerBadgeStatusSolicitud(
+                        i_estatus
+                      )}`}
+                    >
+                      {estatus}
+                    </span>
+                  </td>
+                  <td>
+                    <BtnAccion
+                      margin={false}
+                      icono="bi bi-eye-fill"
+                      onclick={() =>
                         router.push(
                           `/proyectos/${idProyecto}/solicitudes-presupuesto/${id}`
                         )
                       }
-                    >
-                      <i className="bi bi-eye-fill"></i>
-                    </button>
+                      title="ver proveedor"
+                    />
                   </td>
                 </tr>
               )
@@ -794,13 +816,12 @@ const FormaProyecto = () => {
         <div className="col-12 mb-3 d-flex justify-content-between">
           <h4 className="color1 mb-0">Ministraciones</h4>
           {showBtnNuevaMinistracion && (
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={mostrarFormaMinistracion}
-            >
-              Nueva ministración +
-            </button>
+            <BtnNeutro
+              margin={false}
+              texto="Nueva ministración +"
+              width={false}
+              onclick={mostrarFormaMinistracion}
+            />
           )}
         </div>
         <TablaMinistraciones />

@@ -8,7 +8,13 @@ import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
 import { BtnBack } from "@components/BtnBack"
 import { ApiCall } from "@assets/utils/apiCalls"
 import { useCatalogos } from "@contexts/catalogos.context"
-import { BtnCancelar, BtnEditar, BtnRegistrar } from "./Botones"
+import {
+  BtnAccion,
+  BtnCancelar,
+  BtnEditar,
+  BtnNeutro,
+  BtnRegistrar,
+} from "./Botones"
 import { useAuth } from "@contexts/auth.context"
 import { obtenerUsuariosXRol } from "@assets/utils/common"
 
@@ -521,15 +527,14 @@ const FormaCoparte = () => {
               <h2 className="color1 mb-0">Usuarios</h2>
               {(estadoForma.administrador.id == user.id ||
                 user.id_rol == 1) && (
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() =>
+                <BtnNeutro
+                  margin={false}
+                  texto="Registrar +"
+                  width={false}
+                  onclick={() =>
                     router.push(`/copartes/${idCoparte}/usuarios/registro`)
                   }
-                >
-                  Registrar +
-                </button>
+                />
               )}
             </div>
             <div className="col-12 table-responsive">
@@ -570,18 +575,14 @@ const FormaCoparte = () => {
                           ></i>
                         </td>
                         <td>
-                          <button
-                            className="btn btn-dark btn-sm"
-                            onClick={() =>
+                          <BtnAccion
+                            margin={false}
+                            icono="bi bi-eye-fill"
+                            onclick={() =>
                               router.push(`/usuarios/${id_usuario}`)
                             }
-                            disabled={
-                              estadoForma.administrador.id != user.id &&
-                              user.id_rol != 1
-                            }
-                          >
-                            <i className="bi bi-eye-fill"></i>
-                          </button>
+                            title="ver usuario"
+                          />
                         </td>
                       </tr>
                     )
@@ -595,15 +596,14 @@ const FormaCoparte = () => {
             <div className="col-12 mb-3 d-flex justify-content-between">
               <h2 className="color1 mb-0">Proyectos</h2>
               {estadoForma.administrador.id == user.id && (
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() =>
+                <BtnNeutro
+                  margin={false}
+                  texto="Registrar +"
+                  width={false}
+                  onclick={() =>
                     router.push(`/copartes/${idCoparte}/proyectos/registro`)
                   }
-                >
-                  Registrar +
-                </button>
+                />
               )}
             </div>
             <div className="col-12 table-responsive">
@@ -640,16 +640,16 @@ const FormaCoparte = () => {
                         <td>{i_beneficiados}</td>
                         <td>{responsable}</td>
                         <td>
-                          <button
-                            className="btn btn-dark btn-sm"
-                            onClick={() =>
+                          <BtnAccion
+                            margin={false}
+                            icono="bi bi-eye-fill"
+                            onclick={() =>
                               router.push(
                                 `/copartes/${idCoparte}/proyectos/${id}`
                               )
                             }
-                          >
-                            <i className="bi bi-eye-fill"></i>
-                          </button>
+                            title="ver proyecto"
+                          />
                         </td>
                       </tr>
                     )
@@ -697,9 +697,12 @@ const FormaCoparte = () => {
               {/* <textarea className="form-control"></textarea> */}
             </div>
             <div className="col-12 col-md-3 mb-3 text-end">
-              <button className="btn btn-secondary" onClick={agregarNota}>
-                Agregar nota +
-              </button>
+              <BtnNeutro
+                margin={false}
+                texto="Agregar nota +"
+                width={false}
+                onclick={agregarNota}
+              />
             </div>
           </div>
         </>

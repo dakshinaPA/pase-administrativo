@@ -72,10 +72,14 @@ a {
 
 .panel-menu-subitem a {
   color: var(--color-primario);
+  display: block;
+  padding: 0 5px 0;
+  width: 100%;
+  border-radius: 5px;
 }
 
 .panel-menu-subitem a:hover {
-  background-color: var(--color-primario);
+  background-color: var(--color-cuaternario);
   color: white;
 }
 

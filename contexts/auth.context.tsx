@@ -23,16 +23,21 @@ const AuthProvider = ({ children }) => {
   const [error, setError] = useState(estadoInicialError)
   const router = useRouter()
 
+  // useEffect(() => {
+  //   login({
+  //     // email: "omar.maldo.vi@gmail.com",
+  //     // password: "123",
+  //     email: 'jaimerope@gmail.com',
+  //     password: '123'
+  //     // email: 'iflores@dakshina.org.mx',
+  //     // password: '123'
+  //   })
+  // }, [])
+
   useEffect(() => {
-    login({
-      // email: "omar.maldo.vi@gmail.com",
-      // password: "123",
-      email: 'jaimerope@gmail.com',
-      password: '123'
-      // email: 'iflores@dakshina.org.mx',
-      // password: '123'
-    })
-  }, [])
+    const route = user ? "/" : "/login"
+    router.push(route)
+  }, [user])
 
   const login = async (dataUsuario) => {
     try {
@@ -43,13 +48,12 @@ const AuthProvider = ({ children }) => {
         setError({ hay: true, mensaje })
       } else {
         const usuario = data[0] as UsuarioLogin
-        const userTest: UsuarioLogin = {
-          ...usuario,
-          // id_rol: 3,
-          // id: 7
-        }
-        setUser(userTest)
-        router.push("/")
+        // const userTest: UsuarioLogin = {
+        //   ...usuario,
+        //   // id_rol: 3,
+        //   // id: 7
+        // }
+        setUser(usuario)
       }
     } catch (error) {
       console.log(error)
@@ -58,7 +62,6 @@ const AuthProvider = ({ children }) => {
 
   const logOut = () => {
     setUser(null)
-    router.push("/login")
   }
 
   const limpiarError = () => setError(estadoInicialError)

@@ -1,5 +1,5 @@
 import { RubrosPresupuestalesDB } from "@api/models/catalogos.model"
-import { BtnCancelar, BtnRegistrar } from "./Botones"
+import { BtnAccion, BtnCancelar, BtnNeutro, BtnRegistrar } from "./Botones"
 import { useProyecto } from "@contexts/proyecto.context"
 import { useCatalogos } from "@contexts/catalogos.context"
 import { MinistracionProyecto, RubroMinistracion } from "@models/proyecto.model"
@@ -20,7 +20,7 @@ const FormaMinistracion = () => {
     formaMinistracion,
     // estaInicialdFormaMinistracion,
     setFormaMinistracion,
-    setModoEditar
+    setModoEditar,
   } = useProyecto()
   const { rubros_presupuestales } = useCatalogos()
 
@@ -291,7 +291,7 @@ const FormaMinistracion = () => {
 
   return (
     <div className="col-12 mb-3" ref={formMinistracion}>
-      <div className="row border py-3">
+      <div className="row py-3 rounded" style={{ backgroundColor: "#f6f6f6" }}>
         <div className="col-12 col-lg-4">
           <div className="mb-3">
             <label className="form-label">Número</label>
@@ -392,13 +392,12 @@ const FormaMinistracion = () => {
                     </td>
                     <td>
                       {id_rubro != 1 && (
-                        <button
-                          type="button"
-                          className="btn btn-dark btn-sm"
-                          onClick={() => quitarRubro(id_rubro)}
-                        >
-                          <i className="bi bi-x-circle"></i>
-                        </button>
+                        <BtnAccion
+                          margin={false}
+                          icono="bi-x-circle"
+                          onclick={() => quitarRubro(id_rubro)}
+                          title="editar ministración"
+                        />
                       )}
                     </td>
                   </tr>
@@ -456,13 +455,12 @@ const FormaMinistracion = () => {
         <div className="col-12 d-flex justify-content-between">
           <BtnCancelar onclick={cerrarForma} margin={false} />
           {!formaMinistracion.id ? (
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={handleAgregar}
-            >
-              Agregar ministración +
-            </button>
+            <BtnNeutro
+              margin={false}
+              texto="Agregar ministración"
+              width={false}
+              onclick={handleAgregar}
+            />
           ) : (
             <button
               type="button"

@@ -71,7 +71,7 @@ const MenuPrincipal = () => {
               </button>
             </h2>
             <div id="flush-collapse2" className="accordion-collapse collapse">
-              <div className="accordion-body">
+              <div className="accordion-body panel-menu-subitem">
                 <nav>
                   <ul>
                     <li>
@@ -104,7 +104,7 @@ const MenuPrincipal = () => {
               </button>
             </h2>
             <div id="flush-collapse3" className="accordion-collapse collapse">
-              <div className="accordion-body">
+              <div className="accordion-body panel-menu-subitem">
                 <nav>
                   <ul>
                     <li>
@@ -138,7 +138,7 @@ const MenuPrincipal = () => {
           </button>
         </h2>
         <div id="flush-collapse4" className="accordion-collapse collapse">
-          <div className="accordion-body">
+          <div className="accordion-body panel-menu-subitem">
             <nav>
               <ul>
                 <li>
@@ -171,7 +171,7 @@ const MenuPrincipal = () => {
           </button>
         </h2>
         <div id="flush-collapse5" className="accordion-collapse collapse">
-          <div className="accordion-body">
+          <div className="accordion-body panel-menu-subitem">
             <nav>
               <ul>
                 <li>
@@ -206,7 +206,7 @@ const MenuPrincipal = () => {
               </button>
             </h2>
             <div id="flush-collapse6" className="accordion-collapse collapse">
-              <div className="accordion-body">
+              <div className="accordion-body panel-menu-subitem">
                 <nav>
                   <ul>
                     <li>
@@ -237,7 +237,7 @@ const MenuPrincipal = () => {
               </button>
             </h2>
             <div id="flush-collapse7" className="accordion-collapse collapse">
-              <div className="accordion-body">
+              <div className="accordion-body panel-menu-subitem">
                 <nav>
                   <ul>
                     <li>
