@@ -191,12 +191,10 @@ class SolicitudesPresupuestoServices {
   }
 
   static async obtenerComprobantes(id_solicitud: number) {
-
-    const determinarMetodoPago = (i_metodo_pago: number)=> {
-
+    const determinarMetodoPago = (i_metodo_pago: number) => {
       let metodo_pago: "PUE" | "PPD" = "PUE"
 
-      if(i_metodo_pago == 2){
+      if (i_metodo_pago == 2) {
         metodo_pago = "PPD"
       }
 
@@ -213,15 +211,42 @@ class SolicitudesPresupuestoServices {
     }
 
     const comprobantes = re.data as ComprobanteSolicitud[]
-    const comprobantesHidratados: ComprobanteSolicitud[] = comprobantes.map( comprobante => ({
-      ...comprobante,
-      metodo_pago: determinarMetodoPago(comprobante.i_metodo_pago)
-    }))
+    const comprobantesHidratados: ComprobanteSolicitud[] = comprobantes.map(
+      (comprobante) => ({
+        ...comprobante,
+        metodo_pago: determinarMetodoPago(comprobante.i_metodo_pago),
+      })
+    )
 
     return RespuestaController.exitosa(
       200,
       "Comprobantes de solicitud obtenidos con éxito",
       comprobantesHidratados
+    )
+  }
+
+  static async actualizarEstatus(id_solicitud: number, i_estatus: EstatusSolicitud) {
+    const up = await SolicitudesPresupuestoDB.actualizarEstatus(
+      id_solicitud,
+      i_estatus
+    )
+    if (up.error) {
+      return RespuestaController.fallida(
+        400,
+        "Error al actualziar estatus de solicitud de presupuesto",
+        up.data
+      )
+    }
+
+    const res = {
+      i_estatus,
+      estatus: this.obtenerEstatus(i_estatus)
+    }
+
+    return RespuestaController.exitosa(
+      200,
+      "Estatus de solicitud de presupuesto actualizada con éxito",
+      res
     )
   }
 }

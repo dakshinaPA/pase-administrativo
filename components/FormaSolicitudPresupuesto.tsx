@@ -34,7 +34,7 @@ type ActionTypes =
   | "QUITAR_FACTURA"
   | "CAMBIO_TIPO_GASTO"
   | "CAMBIO_TITULAR"
-  // | "LIMPIAR_DATOS_TITULAR"
+  | "CAMBIO_ESTATUS"
   | "CAMBIO_PROYECTO"
   | "NUEVO_REGISTRO"
 
@@ -94,13 +94,12 @@ const reducer = (
         id_banco: payload.id_banco,
         proveedor: payload.proveedor,
       }
-    // case "LIMPIAR_DATOS_TITULAR":
-    //   return {
-    //     ...state,
-    //     clabe: "",
-    //     id_banco: 1,
-    //     proveedor: "",
-    //   }
+    case "CAMBIO_ESTATUS":
+      return {
+        ...state,
+        i_estatus: payload.i_estatus,
+        estatus: payload.estatus
+      }
     default:
       return state
   }
@@ -130,7 +129,8 @@ const FormaSolicitudPresupuesto = () => {
   const idSolicitud = Number(router.query.idS)
 
   const estadoInicialForma: SolicitudPresupuesto = {
-    id_proyecto: 0,
+    id_proyecto: idProyecto || 0,
+    proyecto: "",
     i_tipo_gasto: 0,
     titular_cuenta: "",
     clabe: "",
@@ -238,22 +238,13 @@ const FormaSolicitudPresupuesto = () => {
       titulares,
     })
 
-    // dispatch({
-    //   type: "CAMBIO_TIPO_GASTO",
-    //   payload,
-    // })
+    if (modalidad === "CREAR") {
+      dispatch({
+        type: "CAMBIO_TIPO_GASTO",
+        payload,
+      })
+    }
   }, [estadoForma.i_tipo_gasto])
-
-  // useEffect(() => {
-  //   dispatch({
-  //     type: "CAMBIO_TIPO_GASTO",
-  //     payload: {
-  //       id_partida_presupuestal:
-  //         dataTipoGasto.partidas_presupuestales[0]?.id_rubro || 0,
-  //       id_titular: dataTipoGasto.titulares[0]?.id || 0,
-  //     },
-  //   })
-  // }, [dataTipoGasto])
 
   useEffect(() => {
     if (!estadoForma.titular_cuenta) {
@@ -298,52 +289,31 @@ const FormaSolicitudPresupuesto = () => {
   }, [estadoForma.titular_cuenta])
 
   const cargarData = async () => {
-    setIsLoading(true)
+    if (modalidad === "CREAR") {
+      setIsLoading(true)
 
-    try {
-      const promesas = [obtenerProyectosDB()]
-      // if (modalidad === "EDITAR") {
-      //   promesas.push(obtenerSolicitudes(null, idSolicitud))
-      // }
+      try {
+        const reProyectos = await obtenerProyectosDB()
+        if (reProyectos.error) throw reProyectos.data
 
-      const resCombinadas = await Promise.all(promesas)
+        const proyectosDB = reProyectos.data as ProyectoMin[]
+        setProyectosDB(proyectosDB)
 
-      for (const rc of resCombinadas) {
-        if (rc.error) throw rc.data
+        if (!idProyecto) {
+          dispatch({
+            type: "HANDLE_CHANGE",
+            payload: {
+              name: "id_proyecto",
+              value: proyectosDB[0]?.id || 0,
+            },
+          })
+        }
+      } catch (error) {
+        console.log(error)
       }
 
-      const proyectosDB = resCombinadas[0].data as ProyectoMin[]
-      setProyectosDB(proyectosDB)
-
-      dispatch({
-        type: "HANDLE_CHANGE",
-        payload: {
-          name: "id_proyecto",
-          value: idProyecto || proyectosDB[0]?.id || 0,
-        },
-      })
-
-      // if (modalidad === "EDITAR") {
-      //   const solicitud = resCombinadas[1].data[0] as SolicitudPresupuesto
-
-      //   dispatch({
-      //     type: "CARGA_INICIAL",
-      //     payload: solicitud,
-      //   })
-      // } else {
-      //   dispatch({
-      //     type: "HANDLE_CHANGE",
-      //     payload: {
-      //       name: "id_proyecto",
-      //       value: proyectosDB[0]?.id || 0,
-      //     },
-      //   })
-      // }
-    } catch (error) {
-      console.log(error)
+      setIsLoading(false)
     }
-
-    setIsLoading(false)
   }
 
   const cargarDataProyecto = async () => {
@@ -365,10 +335,8 @@ const FormaSolicitudPresupuesto = () => {
   }
 
   useEffect(() => {
-    //validar que ya haya informacion de proyecto
-    if (!dataProyecto.rubros_presupuestales.length) return
-
-    if (modalidad === "EDITAR") {
+    //validar que se ejecute solo 1 vez antes de cargar la info de solicitud
+    if (modalidad === "EDITAR" && !!dataProyecto.rubros_presupuestales.length) {
       obtener()
     }
   }, [dataProyecto])
@@ -383,6 +351,8 @@ const FormaSolicitudPresupuesto = () => {
         type: "CARGA_INICIAL",
         payload: solicitud,
       })
+
+      setEstatus(solicitud.i_estatus)
     }
   }
 
@@ -498,49 +468,35 @@ const FormaSolicitudPresupuesto = () => {
     })
   }
 
-  const cambiarStatus = async () => {
-    
-    dispatch({
-      type: "HANDLE_CHANGE",
-      payload: {
-        name: "i_estatus",
-        value: estatus
-      }
-    })
-  }
-
   const handleSubmit = async (ev: React.SyntheticEvent) => {
     ev.preventDefault()
     console.log(estadoForma)
 
     setIsLoading(true)
 
-    if (user.id_rol == 2) {
-      await cambiarStatus()
-    } else {
-      const { error, data, mensaje } =
-        modalidad === "EDITAR" ? await editar() : await registrar()
+    const { error, data, mensaje } =
+      modalidad === "EDITAR" ? await editar() : await registrar()
 
-      if (error) {
-        console.log(data)
+    if (error) {
+      console.log(data)
+    } else {
+      if (modalidad === "CREAR") {
+        // router.push(
+        //   //@ts-ignore
+        //   `/proyectos/${estadoForma.id_proyecto}/solicitudes-presupuesto/${data.idInsertado}`
+        // )
+        dispatch({
+          type: "NUEVO_REGISTRO",
+          payload: {
+            ...estadoInicialForma,
+            id_proyecto: proyectosDB[0]?.id || 0,
+          },
+        })
       } else {
-        if (modalidad === "CREAR") {
-          // router.push(
-          //   //@ts-ignore
-          //   `/proyectos/${estadoForma.id_proyecto}/solicitudes-presupuesto/${data.idInsertado}`
-          // )
-          dispatch({
-            type: "NUEVO_REGISTRO",
-            payload: {
-              ...estadoInicialForma,
-              id_proyecto: proyectosDB[0]?.id || 0,
-            },
-          })
-        } else {
-          setModoEditar(false)
-        }
+        setModoEditar(false)
       }
     }
+
     setIsLoading(false)
   }
 
@@ -552,6 +508,30 @@ const FormaSolicitudPresupuesto = () => {
 
     const totalAComprobar = Number(estadoForma.f_importe) - totalComprobaciones
     return totalAComprobar.toFixed(2)
+  }
+
+  const actualizarEstatus = async (ev: ChangeEvent) => {
+    const i_estatus = Number(ev.target.value)
+
+    setEstatus(i_estatus)
+
+    const upEstatus = await ApiCall.put(
+      `/solicitudes-presupuesto/${idSolicitud}/cambiar-estatus`,
+      { i_estatus }
+    )
+    if (upEstatus.error) {
+      console.log(upEstatus.data)
+    } else {
+      const nuevoEstatus = upEstatus.data as SolicitudPresupuesto
+
+      dispatch({
+        type: "CAMBIO_ESTATUS",
+        payload: {
+          i_estatus: nuevoEstatus.i_estatus,
+          estatus: nuevoEstatus.estatus,
+        },
+      })
+    }
   }
 
   if (isLoading) {
@@ -639,7 +619,6 @@ const FormaSolicitudPresupuesto = () => {
             <label className="form-label">Proyecto</label>
             <input
               className="form-control"
-              type="text"
               value={estadoForma.proyecto}
               disabled
             />
@@ -827,8 +806,7 @@ const FormaSolicitudPresupuesto = () => {
             <label className="form-label">Cambiar estatus</label>
             <select
               className="form-control"
-              // onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-              onChange={(e) => setEstatus(Number(e.target.value))}
+              onChange={actualizarEstatus}
               value={estatus}
             >
               <option value="1">En revisión</option>
@@ -909,13 +887,12 @@ const FormaSolicitudPresupuesto = () => {
             </tbody>
           </table>
         </div>
-        {modoEditar ||
-          (user.id_rol && (
-            <div className="col-12 text-end">
-              <BtnCancelar onclick={cancelar} margin={"r"} />
-              <BtnRegistrar modalidad={modalidad} margin={false} />
-            </div>
-          ))}
+        {modoEditar && (
+          <div className="col-12 text-end">
+            <BtnCancelar onclick={cancelar} margin={"r"} />
+            <BtnRegistrar modalidad={modalidad} margin={false} />
+          </div>
+        )}
       </FormaContenedor>
     </RegistroContenedor>
   )

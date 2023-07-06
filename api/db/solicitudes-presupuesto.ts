@@ -3,6 +3,7 @@ import {
   SolicitudPresupuesto,
   ComprobanteSolicitud,
   QueriesSolicitud,
+  EstatusSolicitud,
 } from "@models/solicitud-presupuesto.model"
 import { RespuestaDB } from "@api/utils/response"
 import { fechaActualAEpoch } from "@assets/utils/common"
@@ -13,7 +14,7 @@ class SolicitudesPresupuestoDB {
 
     let query = `SELECT sp.id, sp.id_proyecto, sp.i_tipo_gasto, sp.clabe, sp.id_banco, sp.titular_cuenta,
     sp.email, sp.proveedor, sp.descripcion_gasto, sp.id_partida_presupuestal, sp.f_importe, sp.i_estatus, sp.dt_registro,
-    p.id_alt proyecto, p.id_responsable,
+    CONCAT(p.id_alt, ' - ', p.nombre) proyecto, p.id_responsable,
     b.nombre banco,
     r.nombre rubro,
     SUM(spc.f_total) f_total_comprobaciones
@@ -150,8 +151,21 @@ class SolicitudesPresupuestoDB {
       f_retenciones,
       i_metodo_pago,
       id_forma_pago,
-      fechaActualAEpoch()
+      fechaActualAEpoch(),
     ]
+
+    try {
+      const res = await queryDBPlaceHolder(query, placeHolders)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
+
+  static async actualizarEstatus(id: number, i_estatus: EstatusSolicitud) {
+    const query = `UPDATE solicitudes_presupuesto SET i_estatus=? WHERE id=? LIMIT 1`
+
+    const placeHolders = [i_estatus, id]
 
     try {
       const res = await queryDBPlaceHolder(query, placeHolders)
