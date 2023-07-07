@@ -4,7 +4,11 @@ interface Btn {
 
 const BtnEditar = ({ onClick }) => {
   return (
-    <button type="button" className="btn btn-outline-secondary" onClick={onClick}>
+    <button
+      type="button"
+      className="btn btn-outline-secondary"
+      onClick={onClick}
+    >
       Editar
       <i className="bi bi-pencil ms-2"></i>
     </button>
@@ -113,7 +117,7 @@ const BtnAccion = ({ margin, onclick, icono, title }: PropsBtnAccion) => {
   if (margin) clases += ` ${margen()}`
 
   return (
-    <button className={clases} onClick={onclick} title={title}>
+    <button className={clases} onClick={onclick} title={title} type="button">
       <i className={`bi ${icono}`}></i>
     </button>
   )

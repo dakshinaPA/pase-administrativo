@@ -232,7 +232,7 @@ const meses = [
 ]
 
 const obtenerBadgeStatusSolicitud = (i_status: number) => {
-  switch (i_status) {
+  switch (Number(i_status)) {
     case 1:
       return "primary"
     case 2:
@@ -243,6 +243,21 @@ const obtenerBadgeStatusSolicitud = (i_status: number) => {
       return "info"
     case 5:
       return "warning"
+  }
+}
+
+const obtenerEstatusSolicitud = (i_estatus: number) => {
+  switch (Number(i_estatus)) {
+    case 1:
+      return "Revisión"
+    case 2:
+      return "Autorizada"
+    case 3:
+      return "Rechazada"
+    case 4:
+      return "Procesada"
+    case 5:
+      return "Devolución"
   }
 }
 
@@ -264,5 +279,6 @@ export {
   obtenerSolicitudes,
   obtenerMinistraciones,
   fechaActualInputDate,
-  obtenerBadgeStatusSolicitud
+  obtenerBadgeStatusSolicitud,
+  obtenerEstatusSolicitud
 }

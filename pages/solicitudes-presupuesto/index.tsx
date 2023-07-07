@@ -256,7 +256,7 @@ const SolicitudesPresupuesto = () => {
                       <td>{proveedor}</td>
                       <td>{descripcion_gasto}</td>
                       <td>{f_importe}</td>
-                      <td>{f_monto_comprobar}</td>
+                      <td>{Number(f_monto_comprobar).toFixed(2)}</td>
                       <td>
                         <span className={`badge bg-${colorBadge}`}>
                           {estatus}
@@ -274,7 +274,7 @@ const SolicitudesPresupuesto = () => {
                             }
                             title="ver detalle"
                           />
-                          {user.id_rol != 3 && (
+                          {user.id_rol == 1 && (
                             <BtnAccion
                               margin="l"
                               icono="bi-x-circle"

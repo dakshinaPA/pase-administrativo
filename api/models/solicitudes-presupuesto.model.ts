@@ -6,7 +6,7 @@ import {
 export interface ResSolicitudPresupuestoDB {
   id?: number
   id_proyecto: number
-  id_responsable?: number
+  id_responsable: number
   proyecto: string
   i_tipo_gasto: TipoGastoSolicitud
   clabe: string

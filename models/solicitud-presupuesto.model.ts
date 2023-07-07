@@ -12,8 +12,11 @@ export interface ComprobanteSolicitud {
   i_metodo_pago: 1 | 2 // 1.PUE 2.PPD
   metodo_pago?: "PUE" | "PPD"
   id_forma_pago: number
-  clave_forma_pago: string
+  clave_forma_pago?: string
   forma_pago?: string
+  id_regimen_fiscal: number
+  clave_regimen_fiscal?: string
+  regimen_fiscal?: string
   dt_registro?: string
 }
 
@@ -33,7 +36,7 @@ export interface SolicitudPresupuesto {
   id_partida_presupuestal: number //id rubro
   rubro?: string
   f_importe: string
-  f_monto_comprobar?: number
+  f_monto_comprobar?: string
   i_estatus?: EstatusSolicitud
   estatus?: string
   titular_cuenta: string

@@ -125,6 +125,33 @@ INSERT INTO `formas_pago` (`clave`, `nombre`) VALUES
 ('31', 'Intermediario pagos'),
 ('99', 'Por definir');
 
+CREATE TABLE `regimenes_fiscales` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `clave` VARCHAR(3) NOT NULL,
+  `nombre` VARCHAR(100) NOT NULL,
+  PRIMARY KEY (`id`));
+
+INSERT INTO `regimenes_fiscales` (`clave`, `nombre`) VALUES
+('601', 'General de Ley Personas Morales'),
+('603', 'Personas Morales con Fines no Lucrativos'),
+('605', 'Sueldos y Salarios e Ingresos Asimilados a Salarios'),
+('606', 'Arrendamiento'),
+('607', 'Régimen de Enajenación o Adquisición de Bienes'),
+('608', 'Demás ingresos'),
+('610', 'Residentes en el Extranjero sin Establecimiento Permanente en México'),
+('611', 'Ingresos por Dividendos (socios y accionistas)'),
+('612', 'Personas Físicas con Actividades Empresariales y Profesionales'),
+('614', 'Ingresos por intereses'),
+('615', 'Régimen de los ingresos por obtención de premios'),
+('616', 'Sin obligaciones fiscales'),
+('620', 'Sociedades Cooperativas de Producción que optan por diferir sus ingresos'),
+('621', 'Incorporación Fiscal'),
+('622', 'Actividades Agrícolas, Ganaderas, Silvícolas y Pesqueras'),
+('623', 'Opcional para Grupos de Sociedades'),
+('624', 'Coordinados'),
+('625', 'Régimen de las Actividades Empresariales con ingresos a través de Plataformas Tecnológicas'),
+('626', 'Régimen Simplificado de Confianza');
+
 
 
 --------------------------------------------------------
@@ -486,15 +513,17 @@ CREATE TABLE `solicitudes_presupuesto` (
 CREATE TABLE `solicitud_presupuesto_comprobantes` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `id_solicitud_presupuesto` INT UNSIGNED NOT NULL,
-  `folio_fiscal` VARCHAR(40) NOT NULL,
+  `folio_fiscal` VARCHAR(40) UNIQUE NOT NULL,
   `f_total` VARCHAR(20) NOT NULL,
   `f_retenciones` VARCHAR(20) NOT NULL,
   `i_metodo_pago` TINYINT UNSIGNED NOT NULL COMMENT '1.- PUE, 2.PPD',
   `id_forma_pago`INT UNSIGNED NOT NULL,
+  `id_regimen_fiscal`INT UNSIGNED NOT NULL,
   `b_activo` TINYINT UNSIGNED NOT NULL DEFAULT 1,
   `dt_registro` VARCHAR(10) NOT NULL,
   PRIMARY KEY (`id`),
   INDEX (`id_forma_pago`),
+  INDEX (`id_regimen_fiscal`),
   INDEX (`id_solicitud_presupuesto`));
 
 ------------------------------------------------------

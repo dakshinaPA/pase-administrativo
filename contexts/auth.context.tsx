@@ -23,20 +23,18 @@ const AuthProvider = ({ children }) => {
   const [error, setError] = useState(estadoInicialError)
   const router = useRouter()
 
-  // useEffect(() => {
-  //   login({
-  //     // email: "omar.maldo.vi@gmail.com",
-  //     // password: "123",
-  //     email: 'jaimerope@gmail.com',
-  //     password: '123'
-  //     // email: 'iflores@dakshina.org.mx',
-  //     // password: '123'
-  //   })
-  // }, [])
-
   useEffect(() => {
-    const route = user ? "/" : "/login"
-    router.push(route)
+    if (!user) {
+      router.push("/login")
+    } else {
+      if (user.id_rol == 1) {
+        router.push("/copartes")
+      } else if (user.id_rol == 2) {
+        router.push("/solicitudes-presupuesto")
+      } else {
+        router.push("/proyectos")
+      }
+    }
   }, [user])
 
   const login = async (dataUsuario) => {

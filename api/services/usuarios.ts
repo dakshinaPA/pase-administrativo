@@ -42,7 +42,7 @@ class UsuariosServices {
         )
       }
     } catch (error) {
-      return RespuestaController.fallida(400, "Error al hacer login", null)
+      return RespuestaController.fallida(400, "Error al hacer login", error)
     }
   }
 

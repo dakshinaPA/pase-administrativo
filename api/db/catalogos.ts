@@ -67,6 +67,17 @@ class CatalogosDB {
       return RespuestaDB.fallida(error)
     }
   }
+
+  static async obtenerRegimenesFiscales() {
+    let query = `SELECT id, clave, nombre FROM regimenes_fiscales`
+
+    try {
+      const res = await queryDB(query)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
 }
 
 export { CatalogosDB }

@@ -14,7 +14,7 @@ import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
 import { BtnBack } from "@components/BtnBack"
 import { ApiCall } from "@assets/utils/apiCalls"
 import { useCatalogos } from "@contexts/catalogos.context"
-import { BtnCancelar, BtnEditar, BtnRegistrar } from "./Botones"
+import { BtnAccion, BtnCancelar, BtnEditar, BtnRegistrar } from "./Botones"
 import {
   ComprobanteSolicitud,
   SolicitudPresupuesto,
@@ -23,6 +23,7 @@ import { useAuth } from "@contexts/auth.context"
 import {
   meses,
   obtenerBadgeStatusSolicitud,
+  obtenerEstatusSolicitud,
   obtenerProyectos,
   obtenerSolicitudes,
 } from "@assets/utils/common"
@@ -98,7 +99,7 @@ const reducer = (
       return {
         ...state,
         i_estatus: payload.i_estatus,
-        estatus: payload.estatus
+        estatus: payload.estatus,
       }
     default:
       return state
@@ -132,6 +133,7 @@ const FormaSolicitudPresupuesto = () => {
     id_proyecto: idProyecto || 0,
     proyecto: "",
     i_tipo_gasto: 0,
+    tipo_gasto: "",
     titular_cuenta: "",
     clabe: "",
     id_banco: 1,
@@ -139,21 +141,23 @@ const FormaSolicitudPresupuesto = () => {
     proveedor: "",
     descripcion_gasto: "",
     id_partida_presupuestal: 0,
+    rubro: "",
     f_importe: "0",
     i_estatus: 1,
     comprobantes: [],
   }
 
-  const { bancos, formas_pago } = useCatalogos()
+  const { bancos, formas_pago, regimenes_fiscales } = useCatalogos()
   const [estadoForma, dispatch] = useReducer(reducer, estadoInicialForma)
   const [proyectosDB, setProyectosDB] = useState<ProyectoMin[]>([])
   const [dataProyecto, setDataProyecto] = useState(estadoInicialDataProyecto)
   const [dataTipoGasto, setDataTipoGasto] = useState(estadoInicialDataTipoGasto)
-  const [estatus, setEstatus] = useState(1)
+  // const [estatus, setEstatus] = useState(1)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [modoEditar, setModoEditar] = useState<boolean>(!idSolicitud)
   const modalidad = idSolicitud ? "EDITAR" : "CREAR"
   const fileInput = useRef(null)
+  const estatusCarga = useRef(null)
 
   useEffect(() => {
     cargarData()
@@ -190,7 +194,7 @@ const FormaSolicitudPresupuesto = () => {
           nombre: `${colaborador.nombre} ${colaborador.apellido_paterno} ${colaborador.apellido_materno}`,
         }))
         partidas_presupuestales = dataProyecto.rubros_presupuestales.filter(
-          (rp) => rp.id_rubro != 2
+          (rp) => ![1, 2].includes(rp.id_rubro)
         )
         break
       case 2:
@@ -227,8 +231,6 @@ const FormaSolicitudPresupuesto = () => {
         )
         payload.id_partida_presupuestal = 3
         payload.descripcion_gasto = "Enero"
-        break
-      case 5:
         break
       default:
     }
@@ -288,6 +290,26 @@ const FormaSolicitudPresupuesto = () => {
     })
   }, [estadoForma.titular_cuenta])
 
+  useEffect(() => {
+    // si es un reembolso el importe debe conincidir con las comprobaciones
+    if (estadoForma.i_tipo_gasto == 1) {
+      dispatch({
+        type: "HANDLE_CHANGE",
+        payload: {
+          name: "f_importe",
+          value: obtenerTotalComprobaciones().toFixed(2),
+        },
+      })
+    }
+  }, [estadoForma.comprobantes.length])
+
+  useEffect(() => {
+    //validar que se ejecute solo 1 vez antes de cargar la info de solicitud
+    if (modalidad === "EDITAR" && !!dataProyecto.rubros_presupuestales.length) {
+      obtener()
+    }
+  }, [dataProyecto])
+
   const cargarData = async () => {
     if (modalidad === "CREAR") {
       setIsLoading(true)
@@ -334,13 +356,6 @@ const FormaSolicitudPresupuesto = () => {
     }
   }
 
-  useEffect(() => {
-    //validar que se ejecute solo 1 vez antes de cargar la info de solicitud
-    if (modalidad === "EDITAR" && !!dataProyecto.rubros_presupuestales.length) {
-      obtener()
-    }
-  }, [dataProyecto])
-
   const obtener = async () => {
     const re = await obtenerSolicitudes(null, idSolicitud)
     if (re.error) {
@@ -352,7 +367,9 @@ const FormaSolicitudPresupuesto = () => {
         payload: solicitud,
       })
 
-      setEstatus(solicitud.i_estatus)
+      // setEstatus(solicitud.i_estatus)
+      // para que se mantenga el badge
+      estatusCarga.current = solicitud.i_estatus
     }
   }
 
@@ -398,6 +415,24 @@ const FormaSolicitudPresupuesto = () => {
     }
   }
 
+  const obtenerRegimenXClave = (clave: string) => {
+    const regimenMatch = regimenes_fiscales.find((rf) => rf.clave == clave)
+
+    return {
+      id: regimenMatch?.id || 0,
+      nombre: regimenMatch?.nombre || "",
+    }
+  }
+
+  const obtenerTotalComprobaciones = () => {
+    const totalComprobaciones = estadoForma.comprobantes.reduce(
+      (acum, actual) => acum + Number(actual.f_total),
+      0
+    )
+
+    return totalComprobaciones
+  }
+
   const agregarFactura = (ev) => {
     const [file] = ev.target.files
 
@@ -414,35 +449,51 @@ const FormaSolicitudPresupuesto = () => {
 
       const [comprobante] = xml.getElementsByTagName("cfdi:Comprobante")
       const [timbre] = xml.getElementsByTagName("tfd:TimbreFiscalDigital")
+      const [emisor] = xml.getElementsByTagName("cfdi:Emisor")
+      const impuestos = xml.getElementsByTagName("cfdi:Impuestos")
 
-      // const [emisor] = comprobante.getElementsByTagName("cfdi:Emisor")
+      let f_retenciones = ""
 
-      const folio_fiscal = timbre.getAttribute("UUID")
-      const metodo_pago = comprobante.getAttribute("MetodoPago") as
-        | "PUE"
-        | "PPD"
-      const clave_forma_pago = comprobante.getAttribute("FormaPago")
-      // const f_subtotal = comprobante.getAttribute("SubTotal")
-      const f_retenciones = comprobante.getAttribute("Descuento")
-      const f_total = comprobante.getAttribute("Total")
-      // const regimen_fiscal = emisor.getAttribute("RegimenFiscal")
+      //a veces impuestos es mas de un tag y hay que buscarlo
+      for (const imp of impuestos) {
+        const retenciones = imp.getAttribute("TotalImpuestosRetenidos")
+        if (retenciones) {
+          f_retenciones = retenciones
+        }
+      }
+
+      const folio_fiscal = timbre?.getAttribute("UUID") || ""
+      const metodo_pago =
+        (comprobante?.getAttribute("MetodoPago") as "PUE" | "PPD") || ""
+      const clave_forma_pago = comprobante?.getAttribute("FormaPago") || ""
+      const f_total = comprobante?.getAttribute("Total") || ""
+      const clave_regimen_fiscal = emisor?.getAttribute("RegimenFiscal") || ""
 
       const formaPago = asignarIdFormaPAgo(clave_forma_pago)
+      const regimenFiscal = obtenerRegimenXClave(clave_regimen_fiscal)
 
       //limpiar el input
       fileInput.current.value = ""
 
+      if (!folio_fiscal || !metodo_pago || !f_total || !clave_regimen_fiscal) {
+        console.log("no se identificaron los datos de la factura")
+        return
+      }
+
       //revisar que folio fiscal no se repita
-      const marchFolioFiscal = estadoForma.comprobantes.find(
+      const matchFolioFiscal = estadoForma.comprobantes.find(
         (comprobante) => comprobante.folio_fiscal == folio_fiscal
       )
-      if (marchFolioFiscal) {
+      if (matchFolioFiscal) {
         console.log("folio repetido")
         return
       }
 
       const dataComprobante: ComprobanteSolicitud = {
         folio_fiscal,
+        id_regimen_fiscal: regimenFiscal.id,
+        regimen_fiscal: regimenFiscal.nombre,
+        clave_regimen_fiscal,
         i_metodo_pago: asignarIMetodoPago(metodo_pago),
         metodo_pago,
         id_forma_pago: formaPago.id,
@@ -493,6 +544,7 @@ const FormaSolicitudPresupuesto = () => {
           },
         })
       } else {
+        estatusCarga.current = estadoForma.i_estatus
         setModoEditar(false)
       }
     }
@@ -500,56 +552,54 @@ const FormaSolicitudPresupuesto = () => {
     setIsLoading(false)
   }
 
-  const montoComprobar = () => {
-    const totalComprobaciones = estadoForma.comprobantes.reduce(
-      (acum, actual) => acum + Number(actual.f_total),
-      0
-    )
+  // const actualizarEstatus = async (ev: ChangeEvent) => {
+  //   const i_estatus = Number(ev.target.value)
 
-    const totalAComprobar = Number(estadoForma.f_importe) - totalComprobaciones
-    return totalAComprobar.toFixed(2)
-  }
+  //   setEstatus(i_estatus)
 
-  const actualizarEstatus = async (ev: ChangeEvent) => {
-    const i_estatus = Number(ev.target.value)
+  //   const upEstatus = await ApiCall.put(
+  //     `/solicitudes-presupuesto/${idSolicitud}/cambiar-estatus`,
+  //     { i_estatus }
+  //   )
+  //   if (upEstatus.error) {
+  //     console.log(upEstatus.data)
+  //   } else {
+  //     const nuevoEstatus = upEstatus.data as SolicitudPresupuesto
 
-    setEstatus(i_estatus)
-
-    const upEstatus = await ApiCall.put(
-      `/solicitudes-presupuesto/${idSolicitud}/cambiar-estatus`,
-      { i_estatus }
-    )
-    if (upEstatus.error) {
-      console.log(upEstatus.data)
-    } else {
-      const nuevoEstatus = upEstatus.data as SolicitudPresupuesto
-
-      dispatch({
-        type: "CAMBIO_ESTATUS",
-        payload: {
-          i_estatus: nuevoEstatus.i_estatus,
-          estatus: nuevoEstatus.estatus,
-        },
-      })
-    }
-  }
+  //     dispatch({
+  //       type: "CAMBIO_ESTATUS",
+  //       payload: {
+  //         i_estatus: nuevoEstatus.i_estatus,
+  //         estatus: nuevoEstatus.estatus,
+  //       },
+  //     })
+  //   }
+  // }
 
   if (isLoading) {
     return <Loader />
   }
 
-  const inputFileReembolso =
-    [1, 4].includes(Number(estadoForma.i_tipo_gasto)) &&
-    estadoForma.comprobantes.length > 0
+  // const inputFileReembolso =
+  //   [1, 4].includes(Number(estadoForma.i_tipo_gasto)) &&
+  //   estadoForma.comprobantes.length > 0
+
+  const disableInputImporte =
+    !modoEditar || estadoForma.i_tipo_gasto == 1 || user.id_rol != 3
+
   const esGastoAsimilados = estadoForma.i_tipo_gasto == 3
   const noTipoGasto = !estadoForma.i_tipo_gasto
-  const disableInputFile =
-    !modoEditar || inputFileReembolso || esGastoAsimilados || noTipoGasto
+  const disableInputFile = !modoEditar || esGastoAsimilados || noTipoGasto
 
-  const disableInputProveedor = !modoEditar || estadoForma.i_tipo_gasto != 1
+  const disableInputProveedor =
+    !modoEditar || estadoForma.i_tipo_gasto != 1 || user.id_rol != 3 || estadoForma.i_estatus != 1
 
-  const disableSelectPartidaPresupuestal =
-    !modoEditar || [3, 4].includes(Number(estadoForma.i_tipo_gasto))
+  const disableSelectPartidaPresupuestal = [3, 4].includes(
+    Number(estadoForma.i_tipo_gasto)
+  )
+
+  const disableInputXEstatus =
+    !modoEditar || user.id_rol != 3 || estadoForma.i_estatus != 1
 
   const showTipoGastoAsimilados =
     dataProyecto.rubros_presupuestales.some((rp) => rp.id_rubro == 2) &&
@@ -558,6 +608,11 @@ const FormaSolicitudPresupuesto = () => {
   const showTipoGastoHonorarios =
     dataProyecto.rubros_presupuestales.some((rp) => rp.id_rubro == 3) &&
     !!dataProyecto.colaboradores.filter((col) => col.i_tipo == 2).length
+
+  const showBtnEditar =
+    !modoEditar &&
+    idSolicitud &&
+    (user.id === estadoForma.id_responsable || [1, 2].includes(user.id_rol))
 
   return (
     <RegistroContenedor>
@@ -571,112 +626,124 @@ const FormaSolicitudPresupuesto = () => {
               </h2>
             )}
           </div>
-          {!modoEditar &&
-            idSolicitud &&
-            user.id === estadoForma.id_responsable &&
-            estadoForma.i_estatus == 1 && (
-              <BtnEditar onClick={() => setModoEditar(true)} />
-            )}
+          {showBtnEditar && <BtnEditar onClick={() => setModoEditar(true)} />}
         </div>
       </div>
       <FormaContenedor onSubmit={handleSubmit}>
-        {modalidad === "EDITAR" && (
+        {modalidad === "EDITAR" && estatusCarga.current && (
           <div className="col-12 mb-3">
             <h5>
               <span
                 className={`badge bg-${obtenerBadgeStatusSolicitud(
-                  estadoForma.i_estatus
+                  estatusCarga.current
                 )}`}
               >
-                {estadoForma.estatus}
+                {obtenerEstatusSolicitud(estatusCarga.current)}
               </span>
             </h5>
           </div>
         )}
         {modalidad === "CREAR" ? (
-          <div className="col-12 col-md-6 col-lg-4 mb-3">
-            <label className="form-label">Proyecto</label>
-            <select
-              className="form-control"
-              onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-              name="id_proyecto"
-              value={estadoForma.id_proyecto}
-              disabled={Boolean(idProyecto)}
-            >
-              {proyectosDB.length > 0 ? (
-                proyectosDB.map(({ id, id_alt, nombre }) => (
-                  <option key={id} value={id}>
-                    {nombre} - {id_alt}
-                  </option>
-                ))
-              ) : (
-                <option value="0">No hay proyectos</option>
-              )}
-            </select>
-          </div>
-        ) : (
-          <div className="col-12 col-md-6 col-lg-4 mb-3">
-            <label className="form-label">Proyecto</label>
-            <input
-              className="form-control"
-              value={estadoForma.proyecto}
-              disabled
-            />
-          </div>
-        )}
-        <div className="col-12 col-md-6 col-lg-4 mb-3">
-          <label className="form-label">Tipo de gasto</label>
-          <select
-            className="form-control"
-            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-            name="i_tipo_gasto"
-            value={estadoForma.i_tipo_gasto}
-            disabled={!modoEditar}
-          >
-            {/* <OptionsTipoGasto /> */}
-            <option value="0" disabled>
-              Selecciona una opción
-            </option>
-            {dataProyecto.colaboradores.length > 0 && (
-              <option value="1">Reembolso</option>
-            )}
-            {dataProyecto.proveedores.length > 0 && (
-              <option value="2">Pago a proveedor</option>
-            )}
-            {showTipoGastoAsimilados && (
-              <option value="3">Asimilados a salarios</option>
-            )}
-            {showTipoGastoHonorarios && (
-              <option value="4">
-                Honorarios profesionales (colaboradores)
-              </option>
-            )}
-            {dataProyecto.colaboradores.length > 0 && (
-              <option value="5">Gastos por comprobar</option>
-            )}
-          </select>
-        </div>
-        <div className="col-12 col-md-6 col-lg-4 mb-3">
-          <label className="form-label">Partida presupuestal</label>
-          <select
-            className="form-control"
-            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-            name="id_partida_presupuestal"
-            value={estadoForma.id_partida_presupuestal}
-            disabled={disableSelectPartidaPresupuestal}
-          >
-            <option value="0" disabled>
-              Selecciona una opción
-            </option>
-            {dataTipoGasto.partidas_presupuestales.map(
-              ({ id_rubro, nombre }) => (
-                <option key={id_rubro} value={id_rubro}>
-                  {nombre}
+          <>
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label">Proyecto</label>
+              <select
+                className="form-control"
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+                name="id_proyecto"
+                value={estadoForma.id_proyecto}
+              >
+                {proyectosDB.length > 0 ? (
+                  proyectosDB.map(({ id, id_alt, nombre }) => (
+                    <option key={id} value={id}>
+                      {nombre} - {id_alt}
+                    </option>
+                  ))
+                ) : (
+                  <option value="0">No hay proyectos</option>
+                )}
+              </select>
+            </div>
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label">Tipo de gasto</label>
+              <select
+                className="form-control"
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+                name="i_tipo_gasto"
+                value={estadoForma.i_tipo_gasto}
+              >
+                <option value="0" disabled>
+                  Selecciona una opción
                 </option>
-              )
-            )}
-          </select>
-        </div>
+                {dataProyecto.colaboradores.length > 0 && (
+                  <option value="1">Reembolso</option>
+                )}
+                {dataProyecto.proveedores.length > 0 && (
+                  <option value="2">Pago a proveedor</option>
+                )}
+                {showTipoGastoAsimilados && (
+                  <option value="3">Asimilados a salarios</option>
+                )}
+                {showTipoGastoHonorarios && (
+                  <option value="4">
+                    Honorarios profesionales (colaboradores)
+                  </option>
+                )}
+                {dataProyecto.colaboradores.length > 0 && (
+                  <option value="5">Gastos por comprobar</option>
+                )}
+              </select>
+            </div>
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label">Partida presupuestal</label>
+              <select
+                className="form-control"
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+                name="id_partida_presupuestal"
+                value={estadoForma.id_partida_presupuestal}
+                disabled={disableSelectPartidaPresupuestal}
+              >
+                <option value="0" disabled>
+                  Selecciona una opción
+                </option>
+                {dataTipoGasto.partidas_presupuestales.map(
+                  ({ id_rubro, nombre }) => (
+                    <option key={id_rubro} value={id_rubro}>
+                      {nombre}
+                    </option>
+                  )
+                )}
+              </select>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label">Proyecto</label>
+              <input
+                className="form-control"
+                value={estadoForma.proyecto}
+                disabled
+              />
+            </div>
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label">Tipo de gasto</label>
+              <input
+                className="form-control"
+                value={estadoForma.tipo_gasto}
+                disabled
+              />
+            </div>
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label">Partida presupuestal</label>
+              <input
+                className="form-control"
+                value={estadoForma.rubro}
+                disabled
+              />
+            </div>
+          </>
+        )}
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Titular cuenta</label>
           <select
@@ -684,7 +751,7 @@ const FormaSolicitudPresupuesto = () => {
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="titular_cuenta"
             value={estadoForma.titular_cuenta}
-            disabled={!modoEditar}
+            disabled={disableInputXEstatus}
           >
             <option value="" disabled>
               Selecciona una opción
@@ -695,14 +762,6 @@ const FormaSolicitudPresupuesto = () => {
               </option>
             ))}
           </select>
-          {/* <input
-            className="form-control"
-            type="text"
-            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-            name="titular_cuenta"
-            value={estadoForma.titular_cuenta}
-            disabled={!modoEditar}
-          /> */}
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">CLABE</label>
@@ -739,7 +798,7 @@ const FormaSolicitudPresupuesto = () => {
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="email"
             value={estadoForma.email}
-            disabled={!modoEditar}
+            disabled={disableInputXEstatus}
           />
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
@@ -762,6 +821,7 @@ const FormaSolicitudPresupuesto = () => {
               onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
               name="descripcion_gasto"
               value={estadoForma.descripcion_gasto}
+              disabled={disableInputXEstatus}
             >
               {meses.map((mes) => (
                 <option key={mes} value={mes}>
@@ -776,7 +836,7 @@ const FormaSolicitudPresupuesto = () => {
               onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
               name="descripcion_gasto"
               value={estadoForma.descripcion_gasto}
-              disabled={!modoEditar}
+              disabled={disableInputXEstatus}
             />
           )}
         </div>
@@ -788,7 +848,7 @@ const FormaSolicitudPresupuesto = () => {
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="f_importe"
             value={estadoForma.f_importe}
-            disabled={!modoEditar}
+            disabled={disableInputImporte}
           />
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
@@ -796,18 +856,21 @@ const FormaSolicitudPresupuesto = () => {
           <input
             className="form-control"
             type="text"
-            name="f_monto_comprobar"
-            value={montoComprobar()}
+            value={(
+              Number(estadoForma.f_importe) - obtenerTotalComprobaciones()
+            ).toFixed(2)}
             disabled
           />
         </div>
-        {user.id_rol == 2 && (
+        {user.id_rol != 3 && (
           <div className="col-12 col-md-6 col-lg-4 mb-3">
-            <label className="form-label">Cambiar estatus</label>
+            <label className="form-label">Estatus</label>
             <select
               className="form-control"
-              onChange={actualizarEstatus}
-              value={estatus}
+              name="i_estatus"
+              onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+              value={estadoForma.i_estatus}
+              disabled={!modoEditar}
             >
               <option value="1">En revisión</option>
               <option value="2">Autorizada</option>
@@ -841,20 +904,24 @@ const FormaSolicitudPresupuesto = () => {
             <thead>
               <tr>
                 <th>Folio fiscal</th>
+                <th>Régimen fiscal</th>
                 <th>Método de pago</th>
-                <th>Clave de pago</th>
                 <th>Forma de pago</th>
                 <th>Impuestos retenedios</th>
                 <th>Total</th>
-                <th>
-                  <i className="bi bi-trash"></i>
-                </th>
+                {modoEditar && (
+                  <th>
+                    <i className="bi bi-trash"></i>
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody>
               {estadoForma.comprobantes.map((comprobante) => {
                 const {
                   id,
+                  clave_regimen_fiscal,
+                  regimen_fiscal,
                   folio_fiscal,
                   metodo_pago,
                   clave_forma_pago,
@@ -865,22 +932,25 @@ const FormaSolicitudPresupuesto = () => {
                 return (
                   <tr key={folio_fiscal}>
                     <td>{folio_fiscal}</td>
+                    <td>
+                      {clave_regimen_fiscal} - {regimen_fiscal}
+                    </td>
                     <td>{metodo_pago}</td>
-                    <td>{clave_forma_pago}</td>
-                    <td>{forma_pago}</td>
+                    <td>
+                      {clave_forma_pago} - {forma_pago}
+                    </td>
                     <td>{f_retenciones}</td>
                     <td>{f_total}</td>
-                    <td>
-                      {!id && (
-                        <button
-                          type="button"
-                          className="btn btn-dark btn-sm"
-                          onClick={() => quitarFactura(folio_fiscal)}
-                        >
-                          <i className="bi bi-x-circle"></i>
-                        </button>
-                      )}
-                    </td>
+                    {modoEditar && (
+                      <td>
+                        <BtnAccion
+                          margin={false}
+                          icono="bi-x-circle"
+                          onclick={() => quitarFactura(folio_fiscal)}
+                          title="eliminar factura"
+                        />
+                      </td>
+                    )}
                   </tr>
                 )
               })}
