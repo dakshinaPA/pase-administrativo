@@ -3,8 +3,8 @@ import mysql from "mysql2"
 // const connectionDB = mysql.createConnection({
 //     host: 'dakshina.cdnpwxaawgds.us-east-1.rds.amazonaws.com',
 //     user: 'admin',
-//     password: 'Dakshina23',
-//     database: 'test',
+//     password: 'Xat97511',
+//     database: 'dakshina',
 //     port: '3306'
 // })
 
@@ -20,6 +20,7 @@ const connectionDB = require('mysql2').createPool({
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
+  port: "3306",
   // waitForConnections: true,
   connectionLimit: 10,
   // maxIdle: 10, // max idle connections, the default value is the same as `connectionLimit`
@@ -35,6 +36,9 @@ const connectionDB = require('mysql2').createPool({
 
 export { connectionDB }
 
-//mysql -h dakshina.cdnpwxaawgds.us-east-1.rds.amazonaws.com -P 3306 -u admin -p
+
+
+//mysql -h dakshina.cyt6walgkcp2.us-east-2.rds.amazonaws.com -u admin -p
+//mysql -h dakshina.cyt6walgkcp2.us-east-2.rds.amazonaws.com -P 3306 -u admin -p
 // mysql --user="root" --host="dakshina.cdnpwxaawgds.us-east-1.rds.amazonaws.com" --password="Dakshina23" --execute='SHOW VARIABLES LIKE "max_connections";'
 // mysql --user="admin" --host="dakshina.cdnpwxaawgds.us-east-1.rds.amazonaws.com" --password="Dakshina23" --execute='SET GLOBAL max_connections = 500;'

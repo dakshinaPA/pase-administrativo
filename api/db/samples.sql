@@ -252,7 +252,7 @@ CREATE TABLE `usuarios` (
   INDEX (`id_rol`));
 
 INSERT INTO `usuarios` (`nombre`, `apellido_paterno`, `apellido_materno`, `email`, `telefono`, `password`, `id_rol`, `dt_registro`) 
-VALUES ('Omar', 'Maldonado', 'Villanueva', 'omar.maldo.vi@gmail.com', '7221223344', '123', 1, '1685385164');
+VALUES ('Isabel', 'Flores', 'Cerón', 'iflores@dakshina.org.mx', '5552334455', '123', 1, '1685385164');
 
 
 -------------------------------------------------------
@@ -532,6 +532,7 @@ CREATE TABLE `solicitud_presupuesto_comprobantes` (
 TRUNCATE TABLE coparte_direccion;
 TRUNCATE TABLE coparte_usuarios;
 TRUNCATE TABLE copartes;
+TRUNCATE TABLE coparte_notas;
 
 TRUNCATE TABLE usuarios;
 
@@ -542,12 +543,18 @@ TRUNCATE TABLE financiadores;
 
 TRUNCATE TABLE proyectos;
 TRUNCATE TABLE proyecto_ministraciones;
+TRUNCATE TABLE proyecto_notas;
 TRUNCATE TABLE ministracion_rubros_presupuestales;
+
 TRUNCATE TABLE colaboradores;
 TRUNCATE TABLE colaborador_direccion;
+
 TRUNCATE TABLE proveedores;
 TRUNCATE TABLE proveedor_direccion;
+
 TRUNCATE TABLE solicitudes_presupuesto;
 TRUNCATE TABLE solicitud_presupuesto_comprobantes;
 TRUNCATE TABLE proyecto_notas;
 
+-- mysqldump -u root -p dakshina > dakshina.sql 
+-- mysql  -h dakshina.cyt6walgkcp2.us-east-2.rds.amazonaws.com -u admin -p dakshina < dakshina.sql
