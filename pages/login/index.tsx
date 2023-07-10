@@ -1,4 +1,4 @@
-import { useAuth } from "../contexts/auth.context"
+import { useAuth } from "@contexts/auth.context"
 import { useForm } from "@hooks/useForm"
 import styles from "@components/styles/LoginForm.module.css"
 

@@ -8,10 +8,10 @@ const App = ({ children }) => {
   const { user } = useAuth()
   const router = useRouter()
 
-  useEffect(() => {
+  // useEffect(() => {
 
-    if(!user) router.push("/login")
-  }, [])
+  //   if(!user) router.push("/login")
+  // }, [])
 
   return (
     <>
