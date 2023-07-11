@@ -17,6 +17,7 @@ import {
 } from "./Botones"
 import { useAuth } from "@contexts/auth.context"
 import { obtenerUsuariosXRol } from "@assets/utils/common"
+import { TooltipInfo } from "./Tooltip"
 
 type ActionTypes =
   | "CARGAR_DATA"
@@ -154,7 +155,7 @@ const FormaCoparte = () => {
         //setear en el select a primer admin en la lista
         dispatch({
           type: "ADMINISTRADOR",
-          value: [undefined, adminsDB[0].id],
+          value: [undefined, adminsDB[0]?.id || 0],
         })
       }
     } catch (error) {
@@ -307,7 +308,8 @@ const FormaCoparte = () => {
           </select>
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
-          <label className="form-label">Representante legal</label>
+          <label className="form-label me-1">Representante legal</label>
+          <TooltipInfo texto="Nombre completo del representante legal" />
           <input
             className="form-control"
             type="text"
@@ -318,13 +320,13 @@ const FormaCoparte = () => {
           />
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
-          <label className="form-label">RFC</label>
+          <label className="form-label me-1">RFC</label>
+          <TooltipInfo texto="RFC de la organización" />
           <input
             className="form-control"
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="rfc"
-            placeholder="de la organización"
             value={estadoForma.rfc}
             disabled={!modoEditar || estadoForma.i_estatus_legal != 1}
           />
@@ -491,7 +493,8 @@ const FormaCoparte = () => {
               />
             </div>
             <div className="col-12 col-md-6 col-lg-4 mb-3">
-              <label className="form-label">Password</label>
+              <label className="form-label me-1">Password</label>
+              <TooltipInfo texto="Para ingresar a la plataforma" />
               <input
                 className="form-control"
                 type="text"

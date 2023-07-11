@@ -21,6 +21,7 @@ import {
 import { useCatalogos } from "@contexts/catalogos.context"
 import {
   inputDateAformato,
+  montoALocaleString,
   obtenerBadgeStatusSolicitud,
   obtenerCopartes,
   obtenerFinanciadores,
@@ -89,7 +90,9 @@ const TablaMinistraciones = () => {
                           return (
                             <tr key={id_rubro}>
                               <td>{nombre}</td>
-                              <td className="w-25">{f_monto}</td>
+                              <td className="w-25">
+                                {montoALocaleString(f_monto)}
+                              </td>
                             </tr>
                           )
                         }
@@ -97,7 +100,7 @@ const TablaMinistraciones = () => {
                     </tbody>
                   </table>
                 </td>
-                <td>{f_monto}</td>
+                <td>{montoALocaleString(f_monto)}</td>
                 <td>
                   {modoEditar && !showFormaMinistracion && id && (
                     <BtnAccion
@@ -183,7 +186,7 @@ const Colaboradores = () => {
                   <td>{rfc}</td>
                   <td>{clabe}</td>
                   <td>{banco}</td>
-                  <td>{f_monto_total}</td>
+                  <td>{montoALocaleString(f_monto_total)}</td>
                   <td>
                     <BtnAccion
                       margin={false}
@@ -337,8 +340,8 @@ const SolicitudesPresupuesto = () => {
                   <td>{descripcion_gasto}</td>
                   <td>{proveedor}</td>
                   <td>{titular_cuenta}</td>
-                  <td>{f_importe}</td>
-                  <td>{f_monto_comprobar}</td>
+                  <td>{montoALocaleString(f_importe)}</td>
+                  <td>{montoALocaleString(f_monto_comprobar)}</td>
                   <td>
                     <span
                       className={`badge bg-${obtenerBadgeStatusSolicitud(

@@ -112,7 +112,7 @@ const FormaUsuario = () => {
           type: "HANDLE_CHANGE_COPARTE",
           payload: {
             name: "id_coparte",
-            value: copartesDB[0].id,
+            value: copartesDB[0]?.id || 0,
           },
         })
       }

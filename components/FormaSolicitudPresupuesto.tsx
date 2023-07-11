@@ -532,17 +532,14 @@ const FormaSolicitudPresupuesto = () => {
       console.log(data)
     } else {
       if (modalidad === "CREAR") {
-        // router.push(
-        //   //@ts-ignore
-        //   `/proyectos/${estadoForma.id_proyecto}/solicitudes-presupuesto/${data.idInsertado}`
-        // )
-        dispatch({
-          type: "NUEVO_REGISTRO",
-          payload: {
-            ...estadoInicialForma,
-            id_proyecto: proyectosDB[0]?.id || 0,
-          },
-        })
+        router.push(`/solicitudes-presupuesto`)
+        // dispatch({
+        //   type: "NUEVO_REGISTRO",
+        //   payload: {
+        //     ...estadoInicialForma,
+        //     id_proyecto: proyectosDB[0]?.id || 0,
+        //   },
+        // })
       } else {
         estatusCarga.current = estadoForma.i_estatus
         setModoEditar(false)
@@ -592,7 +589,10 @@ const FormaSolicitudPresupuesto = () => {
   const disableInputFile = !modoEditar || esGastoAsimilados || noTipoGasto
 
   const disableInputProveedor =
-    !modoEditar || estadoForma.i_tipo_gasto != 1 || user.id_rol != 3 || estadoForma.i_estatus != 1
+    !modoEditar ||
+    estadoForma.i_tipo_gasto != 1 ||
+    user.id_rol != 3 ||
+    estadoForma.i_estatus != 1
 
   const disableSelectPartidaPresupuestal = [3, 4].includes(
     Number(estadoForma.i_tipo_gasto)

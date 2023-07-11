@@ -1,4 +1,4 @@
-import { use, useEffect, useReducer, useState } from "react"
+import { useEffect, useReducer, useRef, useState } from "react"
 import { useRouter } from "next/router"
 import { ChangeEvent } from "@assets/models/formEvents.model"
 import {
@@ -88,6 +88,7 @@ const FormaColaborador = () => {
   const { estados, bancos } = useCatalogos()
   const [estadoForma, dispatch] = useReducer(reducer, estadoInicialForma)
   const [proyectosDB, setProyectosDB] = useState<ProyectoMin[]>([])
+  const [dtFinMax, setDtFinMax] = useState("")
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [modoEditar, setModoEditar] = useState<boolean>(!idColaborador)
   const modalidad = idColaborador ? "EDITAR" : "CREAR"
@@ -95,6 +96,13 @@ const FormaColaborador = () => {
   useEffect(() => {
     cargarData()
   }, [])
+
+  useEffect(() => {
+    if (!estadoForma.dt_inicio_servicio) return
+
+    const dtLimite = estadoForma.i_tipo == 1 ? dtInicioMasSeisMeses() : ""
+    setDtFinMax(dtLimite)
+  }, [estadoForma.dt_inicio_servicio, estadoForma.i_tipo])
 
   const cargarData = async () => {
     setIsLoading(true)
@@ -166,6 +174,27 @@ const FormaColaborador = () => {
       type,
       payload: { name, value },
     })
+  }
+
+  const dtInicioMasSeisMeses = () => {
+    const dtInicio = new Date(estadoForma.dt_inicio_servicio)
+    const dtFinEpoch = new Date(estadoForma.dt_inicio_servicio).setMonth(
+      dtInicio.getMonth() + 6
+    )
+
+    const dtFin = new Date(0)
+    dtFin.setUTCMilliseconds(dtFinEpoch)
+    const [month, day, year] = dtFin
+      .toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      })
+      .split("/")
+
+    const dtAFormatoInput = `${year}-${month}-${day}`
+
+    return dtAFormatoInput
   }
 
   const handleSubmit = async (ev: React.SyntheticEvent) => {
@@ -427,6 +456,7 @@ const FormaColaborador = () => {
                 onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
                 name="dt_fin_servicio"
                 value={estadoForma.dt_fin_servicio}
+                max={dtFinMax}
                 disabled={!modoEditar}
               />
             </div>

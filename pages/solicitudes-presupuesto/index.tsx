@@ -6,6 +6,8 @@ import { TablaContenedor } from "@components/Contenedores"
 import { ModalEliminar } from "@components/ModalEliminar"
 import {
   aMinuscula,
+  epochAFecha,
+  montoALocaleString,
   obtenerBadgeStatusSolicitud,
   obtenerCopartes,
   obtenerProyectos,
@@ -122,6 +124,20 @@ const SolicitudesPresupuesto = () => {
     setShowModalEliminar(false)
   }
 
+  const f_total_solicitudes = String(
+    solicitudesDB.reduce(
+      (acum, solicitud) => acum + Number(solicitud.f_importe),
+      0
+    )
+  )
+
+  const f_total_comprobar = String(
+    solicitudesDB.reduce(
+      (acum, solicitud) => acum + Number(solicitud.f_monto_comprobar),
+      0
+    )
+  )
+
   // const solicitudesFiltradass = solicitudesDB.filter(({  }) => {
   //   const query = inputBusqueda.toLocaleLowerCase()
   //   return (
@@ -222,10 +238,17 @@ const SolicitudesPresupuesto = () => {
                   <th>Importe</th>
                   <th>Por comprobar</th>
                   <th>Estatus</th>
+                  <th>Fecha registro</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
               <tbody>
+                <tr>
+                  <td colSpan={8}>Total</td>
+                  <td>{montoALocaleString(f_total_solicitudes)}</td>
+                  <td>{montoALocaleString(f_total_comprobar)}</td>
+                  <td colSpan={3}></td>
+                </tr>
                 {solicitudesDB.map((solicitud) => {
                   const {
                     id,
@@ -241,6 +264,7 @@ const SolicitudesPresupuesto = () => {
                     f_monto_comprobar,
                     i_estatus,
                     estatus,
+                    dt_registro,
                   } = solicitud
 
                   const colorBadge = obtenerBadgeStatusSolicitud(i_estatus)
@@ -255,13 +279,14 @@ const SolicitudesPresupuesto = () => {
                       <td>{banco}</td>
                       <td>{proveedor}</td>
                       <td>{descripcion_gasto}</td>
-                      <td>{f_importe}</td>
-                      <td>{Number(f_monto_comprobar).toFixed(2)}</td>
+                      <td>{montoALocaleString(f_importe)}</td>
+                      <td>{montoALocaleString(f_monto_comprobar)}</td>
                       <td>
                         <span className={`badge bg-${colorBadge}`}>
                           {estatus}
                         </span>
                       </td>
+                      <td>{epochAFecha(dt_registro)}</td>
                       <td>
                         <div className="d-flex">
                           <BtnAccion

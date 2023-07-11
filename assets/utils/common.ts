@@ -21,6 +21,10 @@ const determinarNombreArchivo = (archivo) => {
 
 const aMinuscula = (clave: string) => clave.toLowerCase()
 
+const montoALocaleString = (f_monto: string ) => {
+  return Number(f_monto).toLocaleString()
+}
+
 const epochAFecha = (epoch: string): string => {
   let fecha_registro = new Date(Number(epoch) * 1000)
   return fecha_registro.toLocaleDateString("es-MX", {
@@ -280,5 +284,6 @@ export {
   obtenerMinistraciones,
   fechaActualInputDate,
   obtenerBadgeStatusSolicitud,
-  obtenerEstatusSolicitud
+  obtenerEstatusSolicitud,
+  montoALocaleString
 }

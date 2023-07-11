@@ -44,5 +44,6 @@ export interface SolicitudPresupuesto {
   id_banco: number
   banco?: string
   email: string
+  dt_registro?: string
   comprobantes?: ComprobanteSolicitud[]
 }

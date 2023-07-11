@@ -205,7 +205,7 @@ const Financiadores = () => {
                       <td>{nombre}</td>
                       <td>{financiador}</td>
                       <td>{tipo_financiamiento}</td>
-                      <td>{f_monto_total}</td>
+                      <td>{Number(f_monto_total).toLocaleString()}</td>
                       <td>{i_beneficiados}</td>
                       <td>{responsable}</td>
                       <td>...</td>
