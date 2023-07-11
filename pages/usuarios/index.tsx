@@ -266,12 +266,12 @@ const Usuarios = () => {
                       {rolUsuarioSelect == 3 && (
                         <>
                           <td>{coparte?.cargo}</td>
-                          <td>
-                            <i
-                              className={`bi ${
-                                coparte?.b_enlace ? "bi-check" : "bi-x"
-                              }`}
-                            ></i>
+                          <td className="icono-enlace">
+                            {coparte?.b_enlace ? (
+                              <i className="bi bi-check"></i>
+                            ) : (
+                              <i className="bi bi-x"></i>
+                            )}
                           </td>
                         </>
                       )}

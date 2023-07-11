@@ -243,12 +243,6 @@ const SolicitudesPresupuesto = () => {
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td colSpan={8}>Total</td>
-                  <td>{montoALocaleString(f_total_solicitudes)}</td>
-                  <td>{montoALocaleString(f_total_comprobar)}</td>
-                  <td colSpan={3}></td>
-                </tr>
                 {solicitudesDB.map((solicitud) => {
                   const {
                     id,
@@ -312,6 +306,18 @@ const SolicitudesPresupuesto = () => {
                     </tr>
                   )
                 })}
+                <tr>
+                  <td colSpan={8} className="fw-bold">
+                    Totales
+                  </td>
+                  <td className="fw-bold">
+                    {montoALocaleString(f_total_solicitudes)}
+                  </td>
+                  <td className="fw-bold">
+                    {montoALocaleString(f_total_comprobar)}
+                  </td>
+                  <td colSpan={3}></td>
+                </tr>
               </tbody>
             </table>
           </div>

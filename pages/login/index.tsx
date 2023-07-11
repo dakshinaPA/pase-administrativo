@@ -23,11 +23,11 @@ const Login = () => {
 
   return (
     <form
-      className={`mt-5 px-2 py-4 border ${styles.loginForm}`}
+      className={`mt-5 px-2 py-4 ${styles.loginForm}`}
       onSubmit={onSubmit}
     >
       <div className="mb-3">
-        <label className="form-label">Usuario</label>
+        <label className="form-label color1 fw-bold">Usuario</label>
         <input
           type="text"
           className="form-control"
@@ -38,7 +38,7 @@ const Login = () => {
         />
       </div>
       <div className="mb-3">
-        <label className="form-label">Contraseña</label>
+        <label className="form-label color1 fw-bold">Contraseña</label>
         <input
           type="password"
           className="form-control"

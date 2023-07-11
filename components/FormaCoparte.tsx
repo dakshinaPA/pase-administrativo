@@ -572,10 +572,12 @@ const FormaCoparte = () => {
                         <td>{cargo}</td>
                         <td>{email}</td>
                         <td>{telefono}</td>
-                        <td>
-                          <i
-                            className={b_enlace ? "bi bi-check" : "bi bi-x"}
-                          ></i>
+                        <td className="icono-enlace">
+                          {b_enlace ? (
+                            <i className="bi bi-check"></i>
+                          ) : (
+                            <i className="bi bi-x"></i>
+                          )}
                         </td>
                         <td>
                           <BtnAccion
