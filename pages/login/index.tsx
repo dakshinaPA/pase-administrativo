@@ -48,7 +48,7 @@ const Login = () => {
         />
       </div>
       <div className="text-center">
-        <button type="submit" className="btn btn-outline-secondary">
+        <button type="submit" className="btn btn-outline-secondary w-100">
           Ingresar
           <i className="bi bi-box-arrow-in-left ms-2"></i>
         </button>

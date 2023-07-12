@@ -58,6 +58,8 @@ const SolicitudesPresupuesto = () => {
   }
 
   const cargarCopartesDB = async () => {
+    setIsLoading(true)
+
     const query: QueriesCoparte = user.id_rol == 2 ? { id_admin: user.id } : {}
 
     const reCopartesDB = await obtenerCopartes(query)
@@ -71,6 +73,8 @@ const SolicitudesPresupuesto = () => {
   }
 
   const cargarProyectosDB = async () => {
+    setIsLoading(true)
+
     const query =
       user.id_rol == 3
         ? { id_responsable: user.id }
@@ -96,6 +100,8 @@ const SolicitudesPresupuesto = () => {
       const solicitudesDB = reSolicitudes.data as SolicitudPresupuesto[]
       setSolicitudesDB(solicitudesDB)
     }
+
+    setIsLoading(false)
   }
 
   const abrirModalEliminarSolicitud = (id: number) => {
