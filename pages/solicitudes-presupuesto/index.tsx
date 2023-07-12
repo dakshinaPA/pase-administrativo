@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useRef, useState } from "react"
 import { ApiCall } from "@assets/utils/apiCalls"
 import { useRouter } from "next/router"
 import { Loader } from "@components/Loader"
@@ -33,6 +33,7 @@ const SolicitudesPresupuesto = () => {
   const [showModalEliminar, setShowModalEliminar] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   // const [inputBusqueda, setInputBusqueda] = useState<string>("")
+  const aExcel = useRef(null)
 
   useEffect(() => {
     cargarData()
@@ -244,10 +245,17 @@ const SolicitudesPresupuesto = () => {
           </select>
         </div>
         <div className="d-none d-lg-block col mb-3 text-end">
-          <button className="btn btn-outline-secondary" type="button" onClick={descargarExcel}>
+          <button
+            className="btn btn-outline-secondary"
+            type="button"
+            onClick={descargarExcel}
+          >
             Exportar
             <i className="bi bi-file-earmark-excel ms-1"></i>
           </button>
+          <a ref={aExcel} className="d-none" href="" download="solicitudes.xls">
+            Exportar
+          </a>
         </div>
         {/* <div className="col-12 col-lg-4 mb-3">
           <div className="input-group">

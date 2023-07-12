@@ -1,4 +1,12 @@
-export const crearExcel = (settings) => {
+import * as XLSX from "xlsx";
+
+interface CrearExcelProps {
+  nombreHoja: string
+  nombreArchivo: string
+  data: string[][]
+}
+
+export const crearExcel = (settings: CrearExcelProps) => {
 
   const { nombreHoja, nombreArchivo, data } = settings
 
