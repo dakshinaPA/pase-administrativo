@@ -1,0 +1,18 @@
+.filtros_contenedor {
+  position: relative;
+}
+
+.filtro {
+  position: absolute;
+  left: 0;
+  top: 100%;
+  width: 100%;
+  padding: 0 0.75rem;
+  z-index: 1;
+}
+
+.filtro > div {
+  background-color: white;
+  box-shadow: 1px 1px 7px gray;
+  border-radius: 5px;
+}

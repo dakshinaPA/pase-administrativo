@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react"
+import React, { ChangeEvent, useEffect, useRef, useState } from "react"
 import { ApiCall } from "@assets/utils/apiCalls"
 import { useRouter } from "next/router"
 import { Loader } from "@components/Loader"
@@ -19,6 +19,102 @@ import { ProyectoMin } from "@models/proyecto.model"
 import { SolicitudPresupuesto } from "@models/solicitud-presupuesto.model"
 import { BtnAccion, BtnNeutro } from "@components/Botones"
 import { CoparteMin, QueriesCoparte } from "@models/coparte.model"
+import styles from "@components/styles/Filtros.module.css"
+
+const Filtros = ({show, setShow}) => {
+
+  const estadoInicialForma = {
+    estatus: 0,
+    titular: "",
+    dt_inicio: "",
+    dt_fin: "",
+  }
+
+  const [estaforma, setEstadoForma] = useState(estadoInicialForma)
+
+  useEffect(() => {
+
+    setEstadoForma(estadoInicialForma)
+  }, [show])
+
+  const handleChange = (ev) => {
+
+    const { name, value } = ev.target
+
+    setEstadoForma( prevState => ({
+      ...prevState,
+      [name]: value
+    }))
+  }
+
+  const buscarSolicitudes = () => {
+    console.log(estaforma)
+    setShow(false)
+  }
+
+  if(!show) return null
+
+  return (
+    <div className={styles.filtro}>
+      <div className="border px-2 py-3">
+        <div className="mb-3">
+          <label className="form-label">Status</label>
+          <select
+            className="form-control"
+            name="estatus"
+            onChange={handleChange}
+            value={estaforma.estatus}
+          >
+            <option value="0">Todos</option>
+            <option value="1">Revisión</option>
+            <option value="2">Autorizada</option>
+            <option value="3">Rechazada</option>
+            <option value="4">Procesada</option>
+            <option value="3">Devolución</option>
+          </select>
+        </div>
+        <div className="mb-3">
+          <label className="form-label">Titular cuenta</label>
+          <input
+            className="form-control"
+            type="text"
+            name="titular"
+            onChange={handleChange}
+            value={estaforma.titular}
+          />
+        </div>
+        <div className="mb-3">
+          <label className="form-label">Fecha inicio</label>
+          <input
+            className="form-control"
+            type="date"
+            name="dt_inicio"
+            onChange={handleChange}
+            value={estaforma.dt_inicio}
+          />
+        </div>
+        <div className="mb-3">
+          <label className="form-label">Fecha fin</label>
+          <input
+            className="form-control"
+            type="date"
+            name="dt_fin"
+            onChange={handleChange}
+            value={estaforma.dt_fin}
+          />
+        </div>
+        <button
+          type="button"
+          className="btn btn-outline-secondary w-100"
+          onClick={buscarSolicitudes}
+        >
+          Buscar
+          <i className="bi bi-search ms-2"></i>
+        </button>
+      </div>
+    </div>
+  )
+}
 
 const SolicitudesPresupuesto = () => {
   const { user } = useAuth()
@@ -31,6 +127,7 @@ const SolicitudesPresupuesto = () => {
   const [selectCoparte, setSelectCoparte] = useState(0)
   const [selectProyecto, setSelectProyecto] = useState(0)
   const [showModalEliminar, setShowModalEliminar] = useState<boolean>(false)
+  const [showFiltros, setShowFiltros] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   // const [inputBusqueda, setInputBusqueda] = useState<string>("")
   const aExcel = useRef(null)
@@ -70,6 +167,8 @@ const SolicitudesPresupuesto = () => {
       setCopartesDB(copartesDB)
       setSelectCoparte(copartesDB[0]?.id || 0)
     }
+
+    setIsLoading(false)
   }
 
   const cargarProyectosDB = async () => {
@@ -88,10 +187,14 @@ const SolicitudesPresupuesto = () => {
       setProyectosDB(proyectosDB)
       setSelectProyecto(proyectosDB[0]?.id || 0)
     }
+
+    setIsLoading(false)
   }
 
   const cargarSolicitudes = async () => {
     if (!selectProyecto) return
+
+    setIsLoading(true)
 
     const reSolicitudes = await obtenerSolicitudes(selectProyecto)
     if (reSolicitudes.error) {
@@ -186,28 +289,42 @@ const SolicitudesPresupuesto = () => {
     })
   }
 
-  // const solicitudesFiltradass = solicitudesDB.filter(({  }) => {
+  // const solicitudesFiltradass = solicitudesDB.filter(({ titular_cuenta }) => {
   //   const query = inputBusqueda.toLocaleLowerCase()
-  //   return (
-  //     aMinuscula(nombre).includes(query) || aMinuscula(email).includes(query)
-  //   )
+  //   return aMinuscula(titular_cuenta).includes(query)
   // })
 
   return (
     <TablaContenedor>
-      <div className="row mb-2">
-        {user.id_rol == 3 && (
-          <div className="col-12 col-md-6 col-lg-2 mb-3">
+      <div className="row mb-3">
+        <div className="col-6">
+          {user.id_rol == 3 && (
             <BtnNeutro
               texto="Registrar +"
               onclick={() => router.push("/solicitudes-presupuesto/registro")}
               margin={false}
-              width={true}
+              width={false}
             />
-          </div>
-        )}
+          )}
+        </div>
+        <div className="col-6 text-end">
+          <button
+            className="btn btn-outline-secondary"
+            type="button"
+            onClick={descargarExcel}
+          >
+            Exportar
+            <i className="bi bi-file-earmark-excel ms-1"></i>
+          </button>
+          <a ref={aExcel} className="d-none" href="" download="solicitudes.xls">
+            Exportar
+          </a>
+        </div>
+      </div>
+      <div className="row">
         {user.id_rol != 3 && (
-          <div className="col-12 col-md-6 col-lg-3 mb-3">
+          <div className="col-12 col-sm-6 col-xl-3 mb-3">
+            <label className="form-label">Coparte</label>
             <select
               className="form-control"
               onChange={({ target: { value } }) =>
@@ -229,7 +346,8 @@ const SolicitudesPresupuesto = () => {
             </select>
           </div>
         )}
-        <div className="col-12 col-md-6 col-lg-3 mb-3">
+        <div className="col-12 col-sm-6 col-xl-3 mb-3">
+          <label className="form-label">Proyecto</label>
           <select
             className="form-control"
             onChange={({ target: { value } }) =>
@@ -250,26 +368,27 @@ const SolicitudesPresupuesto = () => {
             )}
           </select>
         </div>
-        <div className="d-none d-lg-block col mb-3 text-end">
+        <div className="col d-none d-xl-block mb-3"></div>
+        <div
+          className={`col-12 col-sm-6 col-xl-3 mb-3 d-flex align-items-end ${styles.filtros_contenedor}`}
+        >
           <button
-            className="btn btn-outline-secondary"
             type="button"
-            onClick={descargarExcel}
+            className={`btn btn-outline-secondary w-100`}
+            onClick={() => setShowFiltros(!showFiltros)}
           >
-            Exportar
-            <i className="bi bi-file-earmark-excel ms-1"></i>
+            Filtros
+            <i className="bi bi-funnel ms-1"></i>
           </button>
-          <a ref={aExcel} className="d-none" href="" download="solicitudes.xls">
-            Exportar
-          </a>
+          <Filtros show={showFiltros} setShow={setShowFiltros} />
         </div>
-        {/* <div className="col-12 col-lg-4 mb-3">
+        {/* <div className="col-12 col-sm-6 col-xl-3 mb-3 d-flex align-items-end">
           <div className="input-group">
             <input
               type="text"
               name="busqueda"
               className="form-control"
-              placeholder="Buscar registro"
+              placeholder="Buscar titular"
               value={inputBusqueda}
               onChange={({ target: { value } }) => setInputBusqueda(value)}
             />
@@ -282,7 +401,7 @@ const SolicitudesPresupuesto = () => {
       {isLoading ? (
         <Loader />
       ) : (
-        <div className="row">
+        <div className="row pt-3">
           <div className="col-12 table-responsive">
             <table className="table">
               <thead>
