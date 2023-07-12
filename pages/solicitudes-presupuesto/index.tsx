@@ -13,6 +13,7 @@ import {
   obtenerProyectos,
   obtenerSolicitudes,
 } from "@assets/utils/common"
+import { crearExcel } from "@assets/utils/crearExcel"
 import { useAuth } from "@contexts/auth.context"
 import { ProyectoMin } from "@models/proyecto.model"
 import { SolicitudPresupuesto } from "@models/solicitud-presupuesto.model"
@@ -138,6 +139,46 @@ const SolicitudesPresupuesto = () => {
     )
   )
 
+  const descargarExcel = () => {
+    const encabezado = [
+      "Tipo de gasto",
+      "Rubro",
+      "Titular de la cuenta",
+      "CLABE",
+      "Banco",
+      "Descricpión del gasto",
+      "Proveedor",
+      "Fecha de registro",
+      "Estatus",
+      "Importe",
+      "Monto a comprobar",
+    ]
+
+    const solicituesAArray = solicitudesDB.map((solicitud) => {
+      return [
+        solicitud.tipo_gasto,
+        solicitud.rubro,
+        solicitud.titular_cuenta,
+        solicitud.clabe,
+        solicitud.banco,
+        solicitud.descripcion_gasto,
+        solicitud.proveedor,
+        epochAFecha(solicitud.dt_registro),
+        solicitud.estatus,
+        solicitud.f_importe,
+        solicitud.f_monto_comprobar,
+      ]
+    })
+
+    const dataSheet = [encabezado, ...solicituesAArray]
+
+    crearExcel({
+      nombreHoja: "Libro 1",
+      nombreArchivo: "solicitudes.xlsx",
+      data: dataSheet,
+    })
+  }
+
   // const solicitudesFiltradass = solicitudesDB.filter(({  }) => {
   //   const query = inputBusqueda.toLocaleLowerCase()
   //   return (
@@ -202,7 +243,12 @@ const SolicitudesPresupuesto = () => {
             )}
           </select>
         </div>
-        <div className="d-none d-lg-block col mb-3"></div>
+        <div className="d-none d-lg-block col mb-3 text-end">
+          <button className="btn btn-outline-secondary" type="button" onClick={descargarExcel}>
+            Exportar
+            <i className="bi bi-file-earmark-excel ms-1"></i>
+          </button>
+        </div>
         {/* <div className="col-12 col-lg-4 mb-3">
           <div className="input-group">
             <input
