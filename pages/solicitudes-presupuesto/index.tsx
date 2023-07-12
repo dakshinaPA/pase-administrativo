@@ -21,8 +21,7 @@ import { BtnAccion, BtnNeutro } from "@components/Botones"
 import { CoparteMin, QueriesCoparte } from "@models/coparte.model"
 import styles from "@components/styles/Filtros.module.css"
 
-const Filtros = ({show, setShow}) => {
-
+const Filtros = ({ show, setShow }) => {
   const estadoInicialForma = {
     estatus: 0,
     titular: "",
@@ -33,17 +32,15 @@ const Filtros = ({show, setShow}) => {
   const [estaforma, setEstadoForma] = useState(estadoInicialForma)
 
   useEffect(() => {
-
     setEstadoForma(estadoInicialForma)
   }, [show])
 
   const handleChange = (ev) => {
-
     const { name, value } = ev.target
 
-    setEstadoForma( prevState => ({
+    setEstadoForma((prevState) => ({
       ...prevState,
-      [name]: value
+      [name]: value,
     }))
   }
 
@@ -52,13 +49,13 @@ const Filtros = ({show, setShow}) => {
     setShow(false)
   }
 
-  if(!show) return null
+  if (!show) return null
 
   return (
     <div className={styles.filtro}>
       <div className="border px-2 py-3">
         <div className="mb-3">
-          <label className="form-label">Status</label>
+          <label className="form-label color1 fw-semibold">Estatus</label>
           <select
             className="form-control"
             name="estatus"
@@ -74,7 +71,9 @@ const Filtros = ({show, setShow}) => {
           </select>
         </div>
         <div className="mb-3">
-          <label className="form-label">Titular cuenta</label>
+          <label className="form-label color1 fw-semibold">
+            Titular cuenta
+          </label>
           <input
             className="form-control"
             type="text"
@@ -84,7 +83,7 @@ const Filtros = ({show, setShow}) => {
           />
         </div>
         <div className="mb-3">
-          <label className="form-label">Fecha inicio</label>
+          <label className="form-label color1 fw-semibold">Fecha inicio</label>
           <input
             className="form-control"
             type="date"
@@ -94,7 +93,7 @@ const Filtros = ({show, setShow}) => {
           />
         </div>
         <div className="mb-3">
-          <label className="form-label">Fecha fin</label>
+          <label className="form-label color1 fw-semibold">Fecha fin</label>
           <input
             className="form-control"
             type="date"
