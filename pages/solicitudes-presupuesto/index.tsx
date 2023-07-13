@@ -5,7 +5,6 @@ import { Loader } from "@components/Loader"
 import { TablaContenedor } from "@components/Contenedores"
 import { ModalEliminar } from "@components/ModalEliminar"
 import {
-  aMinuscula,
   epochAFecha,
   montoALocaleString,
   obtenerBadgeStatusSolicitud,
