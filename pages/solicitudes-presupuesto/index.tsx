@@ -301,7 +301,7 @@ const SolicitudesPresupuesto = () => {
     <TablaContenedor>
       <div className="row">
         {user.id_rol == 3 && (
-          <div className="col-12 col-sm-6 col-lg-3 col-xl-2 mb-3 d-flex align-items-end">
+          <div className="col-12 col-sm-6 col-lg-3 col-xl-2 mb-3">
             <BtnNeutro
               texto="Registrar +"
               onclick={() => router.push("/solicitudes-presupuesto/registro")}
@@ -312,7 +312,6 @@ const SolicitudesPresupuesto = () => {
         )}
         {user.id_rol != 3 && (
           <div className="col-12 col-sm-6 col-lg-3 mb-3">
-            <label className="form-label">Coparte</label>
             <select
               className="form-control"
               onChange={({ target: { value } }) =>
@@ -332,7 +331,6 @@ const SolicitudesPresupuesto = () => {
           </div>
         )}
         <div className="col-12 col-sm-6 col-lg-3 mb-3">
-          <label className="form-label">Proyecto</label>
           <select
             className="form-control"
             onChange={({ target: { value } }) =>
@@ -349,7 +347,7 @@ const SolicitudesPresupuesto = () => {
           </select>
         </div>
         <div
-          className={`col-12 col-sm-6 col-lg-3 mb-3 d-flex align-items-end ${styles.filtros_contenedor}`}
+          className={`col-12 col-sm-6 col-lg-3 mb-3 ${styles.filtros_contenedor}`}
         >
           <button
             type="button"
@@ -362,7 +360,7 @@ const SolicitudesPresupuesto = () => {
           <Filtros show={showFiltros} setShow={setShowFiltros} />
         </div>
         <div className="col d-none d-xl-block"></div>
-        <div className="col-12 col-sm-6 col-lg-3 col-xl-2 mb-3 d-flex align-items-end">
+        <div className="col-12 col-sm-6 col-lg-3 col-xl-2 mb-3">
           <button
             className="btn btn-outline-secondary w-100"
             type="button"
