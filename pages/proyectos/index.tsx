@@ -31,9 +31,7 @@ const Financiadores = () => {
   }, [])
 
   useEffect(() => {
-    if (selectCoparte) {
-      cargarProyectosCoparte(selectCoparte)
-    }
+    cargarProyectosCoparte()
   }, [selectCoparte])
 
   const abrirModalEliminar = (id: number) => {
@@ -53,10 +51,12 @@ const Financiadores = () => {
         const reCopartes = await obtenerCopartes(queryCopartes)
         if (reCopartes.error) throw reCopartes.data
 
-        const resCopartes = reCopartes.data as CoparteMin[]
+        const copartesDB = reCopartes.data as CoparteMin[]
 
-        setCopartesDB(resCopartes)
-        setSelectCoparte(resCopartes[0].id)
+        setCopartesDB(copartesDB)
+        if (copartesDB.length == 1) {
+          setSelectCoparte(copartesDB[0]?.id)
+        }
       } else {
         //cargar proyecto de usuario coparte
         const reProyectos = await obtenerProyectos({
@@ -74,13 +74,22 @@ const Financiadores = () => {
     setIsLoading(false)
   }
 
-  const cargarProyectosCoparte = async (id_coparte: number) => {
-    const reProyectos = await obtenerProyectos({ id_coparte, min: false })
+  const cargarProyectosCoparte = async () => {
+    if (!selectCoparte) return
+
+    setIsLoading(true)
+
+    const reProyectos = await obtenerProyectos({
+      id_coparte: selectCoparte,
+      min: false,
+    })
     if (reProyectos.error) {
       console.log(reProyectos.data)
     } else {
       setProyectosDB(reProyectos.data as Proyecto[])
     }
+
+    setIsLoading(false)
   }
 
   const eliminarFinanciador = async () => {
@@ -122,7 +131,7 @@ const Financiadores = () => {
     <TablaContenedor>
       <div className="row mb-2">
         {user.id_rol == 2 && (
-          <div className="col-12 col-md-6 col-lg-2 mb-3">
+          <div className="col-12 col-sm-6 col-lg-3 col-xl-2 mb-3">
             <BtnNeutro
               texto="Registrar +"
               onclick={() => router.push("/proyectos/registro")}
@@ -131,13 +140,16 @@ const Financiadores = () => {
             />
           </div>
         )}
-        {copartesDB.length > 0 && (
-          <div className="col-12 col-md-6 col-lg-3 mb-3">
+        {user.id_rol != 3 && (
+          <div className="col-12 col-sm-6 col-lg-4 col-xl-3 mb-3">
             <select
               className="form-control"
               value={selectCoparte}
               onChange={({ target }) => setSelectCoparte(Number(target.value))}
             >
+              <option value="0" disabled>
+                Selecciona coparte
+              </option>
               {copartesDB.map(({ id, nombre }) => (
                 <option key={id} value={id}>
                   {nombre}
@@ -147,7 +159,7 @@ const Financiadores = () => {
           </div>
         )}
         <div className="d-none d-lg-block col mb-3"></div>
-        <div className="col-12 col-lg-4 mb-2">
+        <div className="col-12 col-sm-6 col-lg-4 mb-2">
           <div className="input-group">
             <input
               type="text"

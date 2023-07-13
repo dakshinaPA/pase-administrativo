@@ -46,6 +46,7 @@ const Usuarios = () => {
   }
 
   const cargarUsuarios = async () => {
+
     setIsLoading(true)
 
     try {
@@ -102,6 +103,9 @@ const Usuarios = () => {
   }
 
   const obtenerCopartesDB = async () => {
+
+    setIsLoading(true)
+
     const queryCopartes: QueriesCoparte =
       user.id_rol == 2 ? { id_admin: user.id } : {}
 
@@ -112,8 +116,12 @@ const Usuarios = () => {
     } else {
       const copartesDB = data as CoparteMin[]
       setCopartesDB(copartesDB)
-      setCoparteSelect(copartesDB[0]?.id || 0)
+      if(copartesDB.length == 1){
+        setCoparteSelect(copartesDB[0].id || 0)
+      }
     }
+
+    setIsLoading(false)
   }
 
   const eliminarUsuario = async () => {
@@ -141,6 +149,7 @@ const Usuarios = () => {
 
   const handleCambioRol = ({ target }) => {
     setRolUsuarioSelect(target.value)
+    setCoparteSelect(0)
   }
 
   const handleCambioCoparte = ({ target }) => {
@@ -169,7 +178,7 @@ const Usuarios = () => {
   return (
     <TablaContenedor>
       <div className="row mb-2">
-        <div className="col-12 col-md-6 col-lg-2 mb-3">
+        <div className="col-12 col-sm-6 col-lg-4 col-xl-2 mb-3">
           <BtnNeutro
             texto="Registrar +"
             onclick={() => router.push("/usuarios/registro")}
@@ -178,7 +187,7 @@ const Usuarios = () => {
           />
         </div>
         {user.id_rol == 1 && (
-          <div className="col-12 col-md-6 col-lg-2 mb-3">
+          <div className="col-12 col-sm-6 col-lg-4 col-xl-2 mb-3">
             <select
               className="form-control"
               onChange={handleCambioRol}
@@ -190,13 +199,14 @@ const Usuarios = () => {
             </select>
           </div>
         )}
-        <div className="col-12 col-md-6 col-lg-2 mb-3">
+        <div className="col-12 col-sm-6 col-lg-4 col-xl-2 mb-3">
           {rolUsuarioSelect == 3 && (
             <select
               className="form-control"
               value={coparteSelect}
               onChange={handleCambioCoparte}
             >
+              <option value="0" disabled>Selecciona coparte</option>
               {copartesDB.map(({ id, nombre }) => (
                 <option key={id} value={id}>
                   {nombre}
@@ -205,8 +215,8 @@ const Usuarios = () => {
             </select>
           )}
         </div>
-        <div className="d-none d-lg-block col mb-3"></div>
-        <div className="col-12 col-md-6 col-lg-4 mb-3">
+        <div className="col d-none d-xl-block mb-3"></div>
+        <div className="col-12 col-sm-6 col-lg-6 col-xl-4 mb-3">
           <div className="input-group">
             <input
               type="text"

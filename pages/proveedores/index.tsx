@@ -34,18 +34,26 @@ const Proveedores = () => {
   }, [selectProyecto])
 
   const cargarProyectosUsuario = async () => {
+    setIsLoading(true)
+
     const reProyectos = await obtenerProyectos({ id_responsable: user.id })
     if (reProyectos.error) {
       console.log(reProyectos.data)
     } else {
-      const proyectos = reProyectos.data as ProyectoMin[]
-      setProyectosDB(proyectos)
-      setSelectProyecto(proyectos[0]?.id || 0)
+      const proyectosDB = reProyectos.data as ProyectoMin[]
+      setProyectosDB(proyectosDB)
+      if (proyectosDB.length == 1) {
+        setSelectProyecto(proyectosDB[0].id || 0)
+      }
     }
+
+    setIsLoading(false)
   }
 
   const cargarProveedores = async () => {
     if (!selectProyecto) return
+
+    setIsLoading(true)
 
     const reProveedores = await obtenerProveedores(selectProyecto)
     if (reProveedores.error) {
@@ -54,6 +62,8 @@ const Proveedores = () => {
       const proveedoresDB = reProveedores.data as ProveedorProyecto[]
       setProveedoresDB(proveedoresDB)
     }
+
+    setIsLoading(false)
   }
 
   const abrirModalEliminarProveedor = (id: number) => {
@@ -103,7 +113,7 @@ const Proveedores = () => {
   return (
     <TablaContenedor>
       <div className="row mb-2">
-        <div className="col-12 col-md-6 col-lg-2 mb-3">
+        <div className="col-12 col-sm-6 col-lg-3 col-xl-2 mb-3">
           <BtnNeutro
             texto="Registrar +"
             onclick={() => router.push("/proveedores/registro")}
@@ -111,7 +121,7 @@ const Proveedores = () => {
             width={true}
           />
         </div>
-        <div className="col-12 col-md-6 col-lg-3 mb-3">
+        <div className="col-12 col-sm-6 col-lg-4 col-xl-3 mb-3">
           <select
             className="form-control"
             onChange={({ target: { value } }) =>
@@ -119,21 +129,16 @@ const Proveedores = () => {
             }
             value={selectProyecto}
           >
-            {proyectosDB.length > 0 ? (
-              proyectosDB.map(({ id, id_alt, nombre }) => (
-                <option key={id} value={id}>
-                  {nombre} - {id_alt}
-                </option>
-              ))
-            ) : (
-              <option value="0" disabled>
-                No hay proyectos
+            <option value="0" disabled>Selecciona proyecto</option>
+            {proyectosDB.map(({ id, id_alt, nombre }) => (
+              <option key={id} value={id}>
+                {nombre} - {id_alt}
               </option>
-            )}
+            ))}
           </select>
         </div>
-        <div className="d-none d-lg-block col mb-3"></div>
-        <div className="col-12 col-lg-4 mb-3">
+        <div className="d-none d-xl-block col mb-3"></div>
+        <div className="col-12 col-lg-5 col-xl-4 mb-3">
           <div className="input-group">
             <input
               type="text"

@@ -6,6 +6,7 @@ import { TablaContenedor } from "@components/Contenedores"
 import { ModalEliminar } from "@components/ModalEliminar"
 import {
   aMinuscula,
+  inputDateAformato,
   obtenerColaboradores,
   obtenerProyectos,
 } from "@assets/utils/common"
@@ -36,18 +37,26 @@ const Colaboradores = () => {
   }, [selectProyecto])
 
   const cargarProyectosUsuario = async () => {
+    setIsLoading(true)
+
     const reProyectos = await obtenerProyectos({ id_responsable: user.id })
     if (reProyectos.error) {
       console.log(reProyectos.data)
     } else {
-      const proyectos = reProyectos.data as ProyectoMin[]
-      setProyectosDB(proyectos)
-      setSelectProyecto(proyectos[0]?.id || 0)
+      const proyectosDB = reProyectos.data as ProyectoMin[]
+      setProyectosDB(proyectosDB)
+      if (proyectosDB.length == 1) {
+        setSelectProyecto(proyectosDB[0].id || 0)
+      }
     }
+
+    setIsLoading(false)
   }
 
   const cargarColaboradores = async () => {
     if (!selectProyecto) return
+
+    setIsLoading(true)
 
     const reColaboradores = await obtenerColaboradores(selectProyecto)
     if (reColaboradores.error) {
@@ -56,6 +65,8 @@ const Colaboradores = () => {
       const colaboradoresDB = reColaboradores.data as ColaboradorProyecto[]
       setColaboradoresDB(colaboradoresDB)
     }
+
+    setIsLoading(false)
   }
 
   const abrirModalEliminarColaborador = (id: number) => {
@@ -110,7 +121,7 @@ const Colaboradores = () => {
   return (
     <TablaContenedor>
       <div className="row mb-2">
-        <div className="col-12 col-md-6 col-lg-2 mb-3">
+        <div className="col-12 col-sm-6 col-lg-3 col-xl-2 mb-3">
           <BtnNeutro
             texto="Registrar +"
             onclick={() => router.push("/colaboradores/registro")}
@@ -118,7 +129,7 @@ const Colaboradores = () => {
             width={true}
           />
         </div>
-        <div className="col-12 col-md-6 col-lg-3 mb-3">
+        <div className="col-12 col-sm-6 col-lg-4 col-xl-3 mb-3">
           <select
             className="form-control"
             onChange={({ target: { value } }) =>
@@ -126,21 +137,16 @@ const Colaboradores = () => {
             }
             value={selectProyecto}
           >
-            {proyectosDB.length > 0 ? (
-              proyectosDB.map(({ id, id_alt, nombre }) => (
-                <option key={id} value={id}>
-                  {nombre} - {id_alt}
-                </option>
-              ))
-            ) : (
-              <option value="0" disabled>
-                No hay proyectos
+            <option value="0" disabled>Selecciona proyecto</option>
+            {proyectosDB.map(({ id, id_alt, nombre }) => (
+              <option key={id} value={id}>
+                {nombre} - {id_alt}
               </option>
-            )}
+            ))}
           </select>
         </div>
-        <div className="d-none d-lg-block col mb-3"></div>
-        <div className="col-12 col-lg-4 mb-3">
+        <div className="d-none d-xl-block col mb-3"></div>
+        <div className="col-12 col-lg-5 col-xl-4 mb-3">
           <div className="input-group">
             <input
               type="text"
@@ -203,8 +209,8 @@ const Colaboradores = () => {
                       <td>{email}</td>
                       <td>{telefono}</td>
                       <td>{f_monto_total}</td>
-                      <td>{dt_inicio_servicio}</td>
-                      <td>{dt_fin_servicio}</td>
+                      <td>{inputDateAformato(dt_inicio_servicio)}</td>
+                      <td>{inputDateAformato(dt_fin_servicio)}</td>
                       <td>
                         <div className="d-flex">
                           <BtnAccion

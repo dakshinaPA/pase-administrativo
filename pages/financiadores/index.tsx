@@ -21,21 +21,10 @@ const Financiadores = () => {
   const [showModalEliminar, setShowModalEliminar] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [inputBusqueda, setInputBusqueda] = useState<string>("")
-  // const [tipoSelect, setTipoSelect] = useState<number>(0)
 
   useEffect(() => {
     obtenerTodos()
   }, [])
-
-  // useEffect(() => {
-  //   let tiposFiltrados = resultadosDB
-  //   if (tipoSelect !== 0) {
-  //     tiposFiltrados = resultadosDB.filter(
-  //       ({ i_tipo }) => i_tipo === tipoSelect
-  //     )
-  //   }
-  //   setResultadosFiltrados(tiposFiltrados)
-  // }, [tipoSelect])
 
   const abrirModalEliminar = (id: number) => {
     setIdAEliminar(id)
@@ -99,7 +88,7 @@ const Financiadores = () => {
     <TablaContenedor>
       <div className="row mb-2">
         {user.id_rol == 1 && (
-          <div className="col-12 col-md-4 col-lg-2 mb-3">
+          <div className="col-12 col-sm-6 col-lg-3 col-xl-2 mb-3">
             <BtnNeutro
               texto="Registrar +"
               onclick={() => router.push("/financiadores/registro")}
@@ -108,19 +97,12 @@ const Financiadores = () => {
             />
           </div>
         )}
-        {/* <div className="col-12 col-md-2 mb-2">
-          <select
-            className="form-control"
-            value={tipoSelect}
-            onChange={({ target }) => setTipoSelect(Number(target.value))}
-          >
-            <option value="0">Todos</option>
-            <option value="1">Aliado</option>
-            <option value="2">Idependiente</option>
-          </select>
-        </div> */}
-        <div className="d-none d-md-block col mb-3"></div>
-        <div className="col-12 col-md-6 col-lg-4 mb-3">
+        {user.id_rol == 2 ? (
+          <div className="col d-none d-sm-block mb-3"></div>
+        ) : (
+          <div className="col d-none d-lg-block mb-3"></div>
+        )}
+        <div className="col-12 col-sm-6 col-xl-4 mb-3">
           <div className="input-group">
             <input
               type="text"

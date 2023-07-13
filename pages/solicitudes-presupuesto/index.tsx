@@ -164,7 +164,9 @@ const SolicitudesPresupuesto = () => {
     } else {
       const copartesDB = reCopartesDB.data as CoparteMin[]
       setCopartesDB(copartesDB)
-      setSelectCoparte(copartesDB[0]?.id || 0)
+      if(copartesDB.length == 1){
+        setSelectCoparte(copartesDB[0].id || 0)
+      }
     }
 
     setIsLoading(false)
@@ -184,7 +186,9 @@ const SolicitudesPresupuesto = () => {
     } else {
       const proyectosDB = reProyectosDB.data as ProyectoMin[]
       setProyectosDB(proyectosDB)
-      setSelectProyecto(proyectosDB[0]?.id || 0)
+      if(proyectosDB.length == 1){
+        setSelectProyecto(proyectosDB[0].id || 0)
+      }
     }
 
     setIsLoading(false)
@@ -295,34 +299,19 @@ const SolicitudesPresupuesto = () => {
 
   return (
     <TablaContenedor>
-      <div className="row mb-3">
-        <div className="col-6">
-          {user.id_rol == 3 && (
+      <div className="row">
+        {user.id_rol == 3 && (
+          <div className="col-12 col-sm-6 col-lg-3 col-xl-2 mb-3 d-flex align-items-end">
             <BtnNeutro
               texto="Registrar +"
               onclick={() => router.push("/solicitudes-presupuesto/registro")}
               margin={false}
-              width={false}
+              width={true}
             />
-          )}
-        </div>
-        <div className="col-6 text-end">
-          <button
-            className="btn btn-outline-secondary"
-            type="button"
-            onClick={descargarExcel}
-          >
-            Exportar
-            <i className="bi bi-file-earmark-excel ms-1"></i>
-          </button>
-          <a ref={aExcel} className="d-none" href="" download="solicitudes.xls">
-            Exportar
-          </a>
-        </div>
-      </div>
-      <div className="row">
+          </div>
+        )}
         {user.id_rol != 3 && (
-          <div className="col-12 col-sm-6 col-xl-3 mb-3">
+          <div className="col-12 col-sm-6 col-lg-3 mb-3">
             <label className="form-label">Coparte</label>
             <select
               className="form-control"
@@ -331,21 +320,18 @@ const SolicitudesPresupuesto = () => {
               }
               value={selectCoparte}
             >
-              {copartesDB.length > 0 ? (
-                copartesDB.map(({ id, nombre }) => (
-                  <option key={id} value={id}>
-                    {nombre}
-                  </option>
-                ))
-              ) : (
-                <option value="0" disabled>
-                  No hay copartes
+              <option value="0" disabled>
+                Selecciona coparte
+              </option>
+              {copartesDB.map(({ id, nombre }) => (
+                <option key={id} value={id}>
+                  {nombre}
                 </option>
-              )}
+              ))}
             </select>
           </div>
         )}
-        <div className="col-12 col-sm-6 col-xl-3 mb-3">
+        <div className="col-12 col-sm-6 col-lg-3 mb-3">
           <label className="form-label">Proyecto</label>
           <select
             className="form-control"
@@ -354,22 +340,16 @@ const SolicitudesPresupuesto = () => {
             }
             value={selectProyecto}
           >
-            {proyectosDB.length > 0 ? (
-              proyectosDB.map(({ id, id_alt, nombre }) => (
-                <option key={id} value={id}>
-                  {nombre} - {id_alt}
-                </option>
-              ))
-            ) : (
-              <option value="0" disabled>
-                No hay proyectos
+            <option value="0" disabled>Selecciona proyecto</option>
+            {proyectosDB.map(({ id, id_alt, nombre }) => (
+              <option key={id} value={id}>
+                {nombre} - {id_alt}
               </option>
-            )}
+            ))}
           </select>
         </div>
-        <div className="col d-none d-xl-block mb-3"></div>
         <div
-          className={`col-12 col-sm-6 col-xl-3 mb-3 d-flex align-items-end ${styles.filtros_contenedor}`}
+          className={`col-12 col-sm-6 col-lg-3 mb-3 d-flex align-items-end ${styles.filtros_contenedor}`}
         >
           <button
             type="button"
@@ -380,6 +360,20 @@ const SolicitudesPresupuesto = () => {
             <i className="bi bi-funnel ms-1"></i>
           </button>
           <Filtros show={showFiltros} setShow={setShowFiltros} />
+        </div>
+        <div className="col d-none d-xl-block"></div>
+        <div className="col-12 col-sm-6 col-lg-3 col-xl-2 mb-3 d-flex align-items-end">
+          <button
+            className="btn btn-outline-secondary w-100"
+            type="button"
+            onClick={descargarExcel}
+          >
+            Exportar
+            <i className="bi bi-file-earmark-excel ms-1"></i>
+          </button>
+          <a ref={aExcel} className="d-none" href="" download="solicitudes.xls">
+            Exportar
+          </a>
         </div>
         {/* <div className="col-12 col-sm-6 col-xl-3 mb-3 d-flex align-items-end">
           <div className="input-group">
@@ -400,7 +394,7 @@ const SolicitudesPresupuesto = () => {
       {isLoading ? (
         <Loader />
       ) : (
-        <div className="row pt-3">
+        <div className="row">
           <div className="col-12 table-responsive">
             <table className="table">
               <thead>
