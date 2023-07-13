@@ -47,3 +47,8 @@ export interface SolicitudPresupuesto {
   dt_registro?: string
   comprobantes?: ComprobanteSolicitud[]
 }
+
+export interface PayloadCambioEstatus {
+  i_estatus: EstatusSolicitud
+  ids_solicitudes: number[]
+}

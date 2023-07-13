@@ -4,6 +4,7 @@ import {
   ComprobanteSolicitud,
   QueriesSolicitud,
   EstatusSolicitud,
+  PayloadCambioEstatus,
 } from "@models/solicitud-presupuesto.model"
 import { RespuestaDB } from "@api/utils/response"
 import { fechaActualAEpoch } from "@assets/utils/common"
@@ -98,7 +99,7 @@ class SolicitudesPresupuestoDB {
       proveedor,
       descripcion_gasto,
       f_importe,
-      i_estatus
+      i_estatus,
     } = data
 
     const query = `UPDATE solicitudes_presupuesto SET clabe=?, id_banco=?, titular_cuenta=?,
@@ -206,6 +207,27 @@ class SolicitudesPresupuestoDB {
 
     try {
       const res = await queryDBPlaceHolder(query, placeHolders)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
+
+  static async cambiarEstatus(payload: PayloadCambioEstatus) {
+    const { i_estatus, ids_solicitudes } = payload
+
+    let query = `UPDATE solicitudes_presupuesto SET i_estatus=${i_estatus} WHERE id IN (`
+
+    const idsAstring = ids_solicitudes
+      .map((id, index) =>
+        index == ids_solicitudes.length - 1 ? `${id})` : `${id},`
+      )
+      .join("")
+
+    query += idsAstring
+
+    try {
+      const res = await queryDB(query)
       return RespuestaDB.exitosa(res)
     } catch (error) {
       return RespuestaDB.fallida(error)

@@ -153,11 +153,14 @@ const FormaSolicitudPresupuesto = () => {
   const [dataProyecto, setDataProyecto] = useState(estadoInicialDataProyecto)
   const [dataTipoGasto, setDataTipoGasto] = useState(estadoInicialDataTipoGasto)
   // const [estatus, setEstatus] = useState(1)
+  const [aceptarTerminos, setAceptarTerminos] = useState(false)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [modoEditar, setModoEditar] = useState<boolean>(!idSolicitud)
   const modalidad = idSolicitud ? "EDITAR" : "CREAR"
-  const fileInput = useRef(null)
   const estatusCarga = useRef(null)
+
+  const fileInput = useRef(null)
+  const cbAceptaTerminos = useRef(null)
 
   useEffect(() => {
     cargarData()
@@ -519,8 +522,22 @@ const FormaSolicitudPresupuesto = () => {
     })
   }
 
+  const pasaValidaciones = () => {
+    let NoError = true
+
+    if (!aceptarTerminos) {
+      NoError = false
+      cbAceptaTerminos.current.focus()
+    }
+
+    return NoError
+  }
+
   const handleSubmit = async (ev: React.SyntheticEvent) => {
     ev.preventDefault()
+
+    if (!pasaValidaciones()) return
+
     console.log(estadoForma)
 
     setIsLoading(true)
@@ -880,6 +897,20 @@ const FormaSolicitudPresupuesto = () => {
             </select>
           </div>
         )}
+        <div className="col-12 mb-3">
+          <div className="form-check">
+            <input
+              type="checkbox"
+              className="form-check-input"
+              onChange={() => setAceptarTerminos(!aceptarTerminos)}
+              ref={cbAceptaTerminos}
+              checked={aceptarTerminos}
+            />
+            <label className="form-check-label">
+              Acepto los términos y condiciones
+            </label>
+          </div>
+        </div>
         <div className="col-12">
           <hr />
         </div>

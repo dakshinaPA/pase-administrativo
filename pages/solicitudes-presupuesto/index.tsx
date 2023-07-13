@@ -15,7 +15,11 @@ import {
 import { crearExcel } from "@assets/utils/crearExcel"
 import { useAuth } from "@contexts/auth.context"
 import { ProyectoMin } from "@models/proyecto.model"
-import { SolicitudPresupuesto } from "@models/solicitud-presupuesto.model"
+import {
+  EstatusSolicitud,
+  PayloadCambioEstatus,
+  SolicitudPresupuesto,
+} from "@models/solicitud-presupuesto.model"
 import { BtnAccion, BtnNeutro } from "@components/Botones"
 import { CoparteMin, QueriesCoparte } from "@models/coparte.model"
 import styles from "@components/styles/Filtros.module.css"
@@ -126,8 +130,11 @@ const SolicitudesPresupuesto = () => {
   const [selectProyecto, setSelectProyecto] = useState(0)
   const [showModalEliminar, setShowModalEliminar] = useState<boolean>(false)
   const [showFiltros, setShowFiltros] = useState<boolean>(false)
+  const [idsCambioStatus, setIdsCambioStatus] = useState<
+    Record<number, boolean>
+  >({})
+  const [nuevoEstatus, setNuevoEstatus] = useState(0)
   const [isLoading, setIsLoading] = useState<boolean>(false)
-  // const [inputBusqueda, setInputBusqueda] = useState<string>("")
   const aExcel = useRef(null)
 
   useEffect(() => {
@@ -163,7 +170,7 @@ const SolicitudesPresupuesto = () => {
     } else {
       const copartesDB = reCopartesDB.data as CoparteMin[]
       setCopartesDB(copartesDB)
-      if(copartesDB.length == 1){
+      if (copartesDB.length == 1) {
         setSelectCoparte(copartesDB[0].id || 0)
       }
     }
@@ -185,7 +192,7 @@ const SolicitudesPresupuesto = () => {
     } else {
       const proyectosDB = reProyectosDB.data as ProyectoMin[]
       setProyectosDB(proyectosDB)
-      if(proyectosDB.length == 1){
+      if (proyectosDB.length == 1) {
         setSelectProyecto(proyectosDB[0].id || 0)
       }
     }
@@ -204,6 +211,41 @@ const SolicitudesPresupuesto = () => {
     } else {
       const solicitudesDB = reSolicitudes.data as SolicitudPresupuesto[]
       setSolicitudesDB(solicitudesDB)
+
+      //set del objeto de las solicitudes para cambios de estatus
+      const objIdsSolicitudes = {}
+      for (const solicitud of solicitudesDB) {
+        objIdsSolicitudes[solicitud.id] = false
+      }
+      setIdsCambioStatus(objIdsSolicitudes)
+    }
+
+    setIsLoading(false)
+  }
+
+  const cambiarEstatusSolicitudes = async (i_estatus: EstatusSolicitud) => {
+    const idsAarray = Object.entries(idsCambioStatus)
+    //filtrar los ids que fueron seleccionaos
+    const IdsSeleccionadosFiltrados = idsAarray
+      .filter((id) => !!id[1])
+      .map((id) => Number(id[0]))
+
+    setIsLoading(true)
+
+    const payload: PayloadCambioEstatus = {
+      i_estatus,
+      ids_solicitudes: IdsSeleccionadosFiltrados,
+    }
+
+    const upEstatus = await ApiCall.put(
+      "/solicitudes-presupuesto/cambio-estatus",
+      payload
+    )
+
+    if (upEstatus.error) {
+      console.log(upEstatus.data)
+    } else {
+      cargarSolicitudes()
     }
 
     setIsLoading(false)
@@ -291,6 +333,29 @@ const SolicitudesPresupuesto = () => {
     })
   }
 
+  const seleccionarSolicitud = (checked: boolean, id_solicitud: number) => {
+    setIdsCambioStatus((prevState) => ({
+      ...prevState,
+      [id_solicitud]: checked,
+    }))
+  }
+
+  const seleccionarTodasSolicitudes = (checked: boolean) => {
+    setIdsCambioStatus((prevState) => {
+      const nuevoObjeto = {}
+
+      for (const key in prevState) {
+        nuevoObjeto[key] = checked
+      }
+
+      return nuevoObjeto
+    })
+  }
+
+  const showSelectCambioStatus = Object.entries(idsCambioStatus).some(
+    (id) => !!id[1]
+  )
+
   // const solicitudesFiltradass = solicitudesDB.filter(({ titular_cuenta }) => {
   //   const query = inputBusqueda.toLocaleLowerCase()
   //   return aMinuscula(titular_cuenta).includes(query)
@@ -337,7 +402,9 @@ const SolicitudesPresupuesto = () => {
             }
             value={selectProyecto}
           >
-            <option value="0" disabled>Selecciona proyecto</option>
+            <option value="0" disabled>
+              Selecciona proyecto
+            </option>
             {proyectosDB.map(({ id, id_alt, nombre }) => (
               <option key={id} value={id}>
                 {nombre} - {id_alt}
@@ -372,21 +439,32 @@ const SolicitudesPresupuesto = () => {
             Exportar
           </a>
         </div>
-        {/* <div className="col-12 col-sm-6 col-xl-3 mb-3 d-flex align-items-end">
-          <div className="input-group">
-            <input
-              type="text"
-              name="busqueda"
-              className="form-control"
-              placeholder="Buscar titular"
-              value={inputBusqueda}
-              onChange={({ target: { value } }) => setInputBusqueda(value)}
-            />
-            <span className="input-group-text">
-              <i className="bi bi-search"></i>
-            </span>
+        {showSelectCambioStatus && (
+          <div className="col-12 mb-3">
+            <div className="row">
+              <div className="col"></div>
+              <div className="col-12 col-sm-6 col-xl-4">
+                <select
+                  className="form-control"
+                  onChange={({ target }) =>
+                    cambiarEstatusSolicitudes(
+                      Number(target.value) as EstatusSolicitud
+                    )
+                  }
+                  value={nuevoEstatus}
+                >
+                  <option value="0" disabled>
+                    Selecciona estatus
+                  </option>
+                  <option value="2">Autorizada</option>
+                  <option value="3">Rechazada</option>
+                  <option value="4">Procesada</option>
+                  <option value="5">Devolución</option>
+                </select>
+              </div>
+            </div>
           </div>
-        </div> */}
+        )}
       </div>
       {isLoading ? (
         <Loader />
@@ -408,6 +486,16 @@ const SolicitudesPresupuesto = () => {
                   <th>Por comprobar</th>
                   <th>Estatus</th>
                   <th>Fecha registro</th>
+                  <th>
+                    <input
+                      type="checkbox"
+                      className="form-check-input"
+                      onChange={({ target }) =>
+                        seleccionarTodasSolicitudes(target.checked)
+                      }
+                      // checked={showSelectCambioStatus}
+                    />
+                  </th>
                   <th>Acciones</th>
                 </tr>
               </thead>
@@ -451,6 +539,16 @@ const SolicitudesPresupuesto = () => {
                       </td>
                       <td>{epochAFecha(dt_registro)}</td>
                       <td>
+                        <input
+                          type="checkbox"
+                          className="form-check-input"
+                          onChange={({ target }) =>
+                            seleccionarSolicitud(target.checked, id)
+                          }
+                          checked={idsCambioStatus[id]}
+                        />
+                      </td>
+                      <td>
                         <div className="d-flex">
                           <BtnAccion
                             margin={false}
@@ -485,7 +583,7 @@ const SolicitudesPresupuesto = () => {
                   <td className="fw-bold">
                     {montoALocaleString(f_total_comprobar)}
                   </td>
-                  <td colSpan={3}></td>
+                  <td colSpan={4}></td>
                 </tr>
               </tbody>
             </table>

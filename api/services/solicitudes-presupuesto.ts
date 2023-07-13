@@ -7,6 +7,7 @@ import {
   EstatusSolicitud,
   ComprobanteSolicitud,
   QueriesSolicitud,
+  PayloadCambioEstatus,
 } from "@models/solicitud-presupuesto.model"
 import { obtenerEstatusSolicitud } from "@assets/utils/common"
 
@@ -306,6 +307,24 @@ class SolicitudesPresupuestoServices {
       200,
       "Estatus de solicitud de presupuesto actualizada con éxito",
       res
+    )
+  }
+  
+  static async cambiarEstatus(payload: PayloadCambioEstatus) {
+    const up = await SolicitudesPresupuestoDB.cambiarEstatus(payload)
+
+    if (up.error) {
+      return RespuestaController.fallida(
+        400,
+        "Error al actualziar estatus de solicitudes de presupuesto",
+        up.data
+      )
+    }
+
+    return RespuestaController.exitosa(
+      200,
+      "Estatus de solicitudes de presupuesto actualizados con éxito",
+      null
     )
   }
 }
