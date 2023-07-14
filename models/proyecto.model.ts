@@ -99,10 +99,18 @@ export interface Proyecto extends ProyectoMin {
   responsable?: string
   id_tema_social: number
   tema_social?: string
+  id_sector_beneficiado: number
+  sector_beneficiado?: string
   i_tipo_financiamiento: number
   tipo_financiamiento?: string
   f_monto_total: string
   i_beneficiados: number
+  id_estado: number
+  estado?: string
+  municipio: string
+  descripcion: string
+  dt_inicio: string
+  dt_fin: string
   dt_registro?: string
   ministraciones: MinistracionProyecto[]
   colaboradores?: ColaboradorProyecto[]

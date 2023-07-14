@@ -493,7 +493,7 @@ const SolicitudesPresupuesto = () => {
                       onChange={({ target }) =>
                         seleccionarTodasSolicitudes(target.checked)
                       }
-                      // checked={showSelectCambioStatus}
+                      checked={showSelectCambioStatus}
                     />
                   </th>
                   <th>Acciones</th>

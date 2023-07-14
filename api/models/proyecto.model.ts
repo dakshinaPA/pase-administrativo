@@ -11,8 +11,16 @@ export interface ResProyectoDB {
   responsable: string
   id_tema_social: number
   tema_social: string
+  id_sector_beneficiado: number
+  sector_beneficiado: string
   f_monto_total: string
   i_tipo_financiamiento: number
   i_beneficiados: number
+  id_estado: number
+  estado?: string
+  municipio: string
+  descripcion: string
+  dt_inicio: string
+  dt_fin: string
   dt_registro: string
 }

@@ -40,13 +40,15 @@ class ProyectoDB {
     id_proyecto: number,
     id_responsable: number
   ) {
-    let query = `SELECT p.id, p.id_financiador, p.id_coparte, p.id_responsable, p.id_alt, p.nombre, p.id_tema_social,
-      p.i_tipo_financiamiento, p.i_beneficiados, p.dt_registro,
+    let query = `SELECT p.id, p.id_financiador, p.id_coparte, p.id_responsable, p.id_alt, p.nombre, p.id_tema_social, p.id_sector_beneficiado,
+      p.i_tipo_financiamiento, p.i_beneficiados, p.id_estado, p.municipio, p.descripcion, p.dt_inicio, p.dt_fin, p.dt_registro,
       SUM(mrp.f_monto) f_monto_total,
       f.nombre financiador,
       c.nombre coparte, c.id_administrador,
       CONCAT(u.nombre, ' ', u.apellido_paterno) responsable,
-      ts.nombre tema_social
+      ts.nombre tema_social,
+      e.nombre estado,
+      e.nombre sector_beneficiado
       FROM proyectos p
       JOIN proyecto_ministraciones pm ON p.id = pm.id_proyecto
       JOIN ministracion_rubros_presupuestales mrp ON pm.id = mrp.id_ministracion
@@ -54,6 +56,8 @@ class ProyectoDB {
       JOIN copartes c ON p.id_coparte = c.id
       JOIN usuarios u ON p.id_responsable = u.id
       JOIN temas_sociales ts ON p.id_tema_social = ts.id
+      JOIN estados e ON p.id_estado = e.id
+      JOIN sectores_beneficiados sb ON p.id_sector_beneficiado = sb.id
       WHERE p.b_activo = 1 AND mrp.b_activo = 1`
 
     if (id_coparte) {
@@ -80,18 +84,24 @@ class ProyectoDB {
 
   static async crear(data: Proyecto) {
     const {
-      id_coparte,
       id_financiador,
+      id_coparte,
       id_responsable,
       id_alt,
       nombre,
       id_tema_social,
+      id_sector_beneficiado,
       i_tipo_financiamiento,
       i_beneficiados,
+      id_estado,
+      municipio,
+      descripcion,
+      dt_inicio,
+      dt_fin,
     } = data
 
-    const query = `INSERT INTO proyectos ( id_financiador, id_coparte, id_responsable, id_alt, nombre, id_tema_social,
-      i_tipo_financiamiento, i_beneficiados, dt_registro) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ? )`
+    const query = `INSERT INTO proyectos ( id_financiador, id_coparte, id_responsable, id_alt, nombre, id_tema_social, id_sector_beneficiado,
+      i_tipo_financiamiento, i_beneficiados, id_estado, municipio, descripcion, dt_inicio, dt_fin, dt_registro) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )`
 
     const placeHolders = [
       id_financiador,
@@ -100,8 +110,14 @@ class ProyectoDB {
       id_alt,
       nombre,
       id_tema_social,
+      id_sector_beneficiado,
       i_tipo_financiamiento,
       i_beneficiados,
+      id_estado,
+      municipio,
+      descripcion,
+      dt_inicio,
+      dt_fin,
       fechaActualAEpoch(),
     ]
 
@@ -118,17 +134,29 @@ class ProyectoDB {
       id_responsable,
       nombre,
       id_tema_social,
+      id_sector_beneficiado,
       i_beneficiados,
+      id_estado,
+      municipio,
+      descripcion,
+      dt_inicio,
+      dt_fin
     } = data
 
-    const query = `UPDATE proyectos SET id_responsable=?, nombre=?, id_tema_social=?,
-      i_beneficiados=? WHERE id=? LIMIT 1`
+    const query = `UPDATE proyectos SET id_responsable=?, nombre=?, id_tema_social=?, id_sector_beneficiado=?,
+      i_beneficiados=?, id_estado=?, municipio=?, descripcion=?, dt_inicio=?, dt_fin=? WHERE id=? LIMIT 1`
 
     const placeHolders = [
       id_responsable,
       nombre,
       id_tema_social,
+      id_sector_beneficiado,
       i_beneficiados,
+      id_estado,
+      municipio,
+      descripcion,
+      dt_inicio,
+      dt_fin,
       id_proyecto,
     ]
 

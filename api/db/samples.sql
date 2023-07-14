@@ -152,6 +152,14 @@ INSERT INTO `regimenes_fiscales` (`clave`, `nombre`) VALUES
 ('625', 'Régimen de las Actividades Empresariales con ingresos a través de Plataformas Tecnológicas'),
 ('626', 'Régimen Simplificado de Confianza');
 
+CREATE TABLE `sectores_beneficiados` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `nombre` VARCHAR(100) NOT NULL,
+  PRIMARY KEY (`id`));
+
+INSERT INTO `sectores_beneficiados` (`nombre`) VALUES
+('Sector prueba 1'),
+('Sector prueba 2')
 
 
 --------------------------------------------------------
@@ -368,14 +376,22 @@ CREATE TABLE `proyectos` (
   `id_alt` VARCHAR(20) UNIQUE NOT NULL,
   `nombre` VARCHAR(70) UNIQUE NOT NULL,
   `id_tema_social` INT UNSIGNED NOT NULL,
+  `id_sector_beneficiado` INT UNSIGNED NOT NULL,
   `i_tipo_financiamiento` TINYINT UNSIGNED NOT NULL COMMENT '1.estipendio, 2.unica ministracion, 3.varias ministraciones, 4.multi anual',
   `i_beneficiados` INT UNSIGNED NOT NULL,
+  `id_estado` INT UNSIGNED NOT NULL COMMENT 'estado de accion',
+  `municipio` VARCHAR(70) NOT NULL COMMENT 'municipio de accion',
+  `descripcion` TEXT NOT NULL,
+  `dt_inicio` VARCHAR(10) NOT NULL COMMENT 'inicio de ejecucion',
+  `dt_fin` VARCHAR(10) NOT NULL COMMENT 'fin de ejecucion',
   `b_activo` TINYINT UNSIGNED NOT NULL DEFAULT 1,
   `dt_registro` VARCHAR(10) NOT NULL,
   PRIMARY KEY (`id`),
   INDEX (`id_financiador`),
   INDEX (`id_coparte`),
   INDEX (`id_tema_social`),
+  INDEX (`id_sector_beneficiado`),
+  INDEX (`id_estado`),
   INDEX (`id_responsable`));
 
   CREATE TABLE `proyecto_ministraciones` (
@@ -554,7 +570,7 @@ TRUNCATE TABLE proveedor_direccion;
 
 TRUNCATE TABLE solicitudes_presupuesto;
 TRUNCATE TABLE solicitud_presupuesto_comprobantes;
-TRUNCATE TABLE proyecto_notas;
+
 
 -- mysqldump -u root -p dakshina > dakshina.sql 
 -- mysql  -h dakshina.cyt6walgkcp2.us-east-2.rds.amazonaws.com -u admin -p dakshina < dakshina.sql

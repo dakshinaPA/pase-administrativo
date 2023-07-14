@@ -42,6 +42,7 @@ import {
   useProyecto,
 } from "@contexts/proyecto.context"
 import { FormaMinistracion } from "./FromaMinistracion"
+import { TooltipInfo } from "./Tooltip"
 
 const TablaMinistraciones = () => {
   const {
@@ -461,8 +462,6 @@ const Notas = () => {
 }
 
 const FormaProyecto = () => {
-  const { temas_sociales } = useCatalogos()
-
   const {
     estadoForma,
     dispatch,
@@ -479,6 +478,7 @@ const FormaProyecto = () => {
   } = useProyecto()
 
   const router = useRouter()
+  const { temas_sociales, sectores_beneficiados, estados } = useCatalogos()
   const [financiadoresDB, setFinanciadoresDB] = useState<FinanciadorMin[]>([])
   const [copartesDB, setCopartesDB] = useState<CoparteMin[]>([])
   const [usuariosCoparteDB, setUsuariosCoparteDB] = useState<
@@ -495,8 +495,6 @@ const FormaProyecto = () => {
   }, [estadoForma.id_coparte])
 
   useEffect(() => {
-    // if (modalidad === "CREAR") {
-    // }
     const montoTotalProyecto = estadoForma.ministraciones.reduce(
       (acum, ministracion) => acum + Number(ministracion.f_monto),
       0
@@ -747,9 +745,6 @@ const FormaProyecto = () => {
             value={estadoForma.id_responsable}
             disabled={!modoEditar}
           >
-            {/* <option value="0" disabled>
-              Selecciona usuario
-            </option> */}
             {usuariosCoparteDB.map(
               ({ id, id_usuario, nombre, apellido_paterno }) => (
                 <option key={id} value={id_usuario}>
@@ -791,6 +786,75 @@ const FormaProyecto = () => {
           </select>
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label">Sector beneficiado</label>
+          <select
+            className="form-control"
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+            name="id_sector_beneficiado"
+            value={estadoForma.id_sector_beneficiado}
+            disabled={!modoEditar}
+          >
+            {sectores_beneficiados.map(({ id, nombre }) => (
+              <option key={id} value={id}>
+                {nombre}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label me-1">Estado</label>
+          <TooltipInfo texto="Estado de acción del proyecto" />
+          <select
+            className="form-control"
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+            name="id_estado"
+            value={estadoForma.id_estado}
+            disabled={!modoEditar}
+          >
+            {estados.map(({ id, nombre }) => (
+              <option key={id} value={id}>
+                {nombre}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label me-1">Municipio</label>
+          <TooltipInfo texto="Municipio de acción del proyecto" />
+          <input
+            className="form-control"
+            type="text"
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+            name="municipio"
+            value={estadoForma.municipio}
+            disabled={!modoEditar}
+          />
+        </div>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label me-1">Fecha inicio</label>
+          <TooltipInfo texto="Inicio de la ejecución del proyecto" />
+          <input
+            className="form-control"
+            type="date"
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+            name="dt_inicio"
+            value={estadoForma.dt_inicio}
+            disabled={!modoEditar}
+          />
+        </div>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label me-1">Fecha fin</label>
+          <TooltipInfo texto="Fin de la ejecución del proyecto" />
+          <input
+            className="form-control"
+            type="date"
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+            name="dt_fin"
+            value={estadoForma.dt_fin}
+            disabled={!modoEditar}
+          />
+        </div>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Beneficiados</label>
           <input
             className="form-control"
@@ -810,6 +874,16 @@ const FormaProyecto = () => {
             name="f_monto_total"
             value={estadoForma.f_monto_total}
             disabled
+          />
+        </div>
+        <div className="col-12 mb-3">
+          <label className="form-label me-1">Descricpción</label>
+          <textarea
+            className="form-control"
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+            name="descripcion"
+            value={estadoForma.descripcion}
+            disabled={!modoEditar}
           />
         </div>
         <div className="col-12">

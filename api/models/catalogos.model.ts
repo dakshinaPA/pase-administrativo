@@ -20,3 +20,5 @@ export interface FormasPagoDB extends CatalogoGenerico {
 export interface RegimenesFiscalesDB extends CatalogoGenerico {
   clave: string
 }
+
+export interface SectoresBeneficiadosDB extends CatalogoGenerico {}

@@ -9,6 +9,7 @@ import {
   BancosDB,
   FormasPagoDB,
   RegimenesFiscalesDB,
+  SectoresBeneficiadosDB,
 } from "@api/models/catalogos.model"
 
 const CatalogosContext = createContext(null)
@@ -21,6 +22,7 @@ interface CatalogosDB {
   bancos: BancosDB[]
   formas_pago: FormasPagoDB[]
   regimenes_fiscales: RegimenesFiscalesDB[]
+  sectores_beneficiados: SectoresBeneficiadosDB[]
 }
 
 const CatalogosProvider = ({ children }) => {
@@ -31,7 +33,8 @@ const CatalogosProvider = ({ children }) => {
     rubros_presupuestales: [],
     bancos: [],
     formas_pago: [],
-    regimenes_fiscales: []
+    regimenes_fiscales: [],
+    sectores_beneficiados: []
   }
 
   const [catalogos, setCatalogos] = useState(estadoInicialCatalogos)
