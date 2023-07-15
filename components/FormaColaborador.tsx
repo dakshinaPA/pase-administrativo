@@ -51,7 +51,7 @@ const reducer = (
 
 const FormaColaborador = () => {
   const { user } = useAuth()
-  if (!user || user.id_rol != 3) return null
+  if (!user) return null
   const router = useRouter()
   const idProyecto = Number(router.query.id)
   const idColaborador = Number(router.query.idC)

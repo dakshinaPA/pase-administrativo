@@ -669,6 +669,7 @@ const FormaSolicitudPresupuesto = () => {
                 onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
                 name="id_proyecto"
                 value={estadoForma.id_proyecto}
+                disabled={Boolean(idProyecto)}
               >
                 {proyectosDB.length > 0 ? (
                   proyectosDB.map(({ id, id_alt, nombre }) => (

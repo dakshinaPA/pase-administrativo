@@ -64,7 +64,7 @@ const TablaMinistraciones = () => {
             <th>Fecha de recepción</th>
             <th>Rubros</th>
             <th>Monto</th>
-            <th>Acciones</th>
+            {modoEditar && <th>Acciones</th>}
           </tr>
         </thead>
         <tbody>
@@ -125,6 +125,35 @@ const TablaMinistraciones = () => {
           )}
         </tbody>
       </table>
+    </div>
+  )
+}
+
+const Saldos = () => {
+  return (
+    <div className="row mb-5">
+      <div className="col-12 mb-3">
+        <h3 className="color1 mb-0">Saldos</h3>
+      </div>
+      <div className="col-12 table-responsive">
+        <table className="table">
+          <thead className="table-light">
+            <tr>
+              <th>Solicitado transferido</th>
+              <th>Impuestos pagados</th>
+              <th>35% ISR</th>
+              <th>Gestión financiera</th>
+              <th>Total ejecutado por proyecto</th>
+              <th>Total del proyecto</th>
+              <th>Avance del financiamiento</th>
+              <th>Remanente</th>
+            </tr>
+          </thead>
+          <tbody>
+
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }
@@ -660,7 +689,9 @@ const FormaProyecto = () => {
         !(estadoForma.ministraciones.length > 0)))
 
   const showBtnEditar =
-    !modoEditar && idProyecto && estadoForma.id_administrador == user.id
+    !modoEditar &&
+    idProyecto &&
+    (estadoForma.id_administrador == user.id || user.id_rol == 1)
 
   if (isLoading) {
     return <Loader />
@@ -674,9 +705,7 @@ const FormaProyecto = () => {
             <BtnBack navLink="/proyectos" />
             {!idProyecto && <h2 className="color1 mb-0">Registrar proyecto</h2>}
           </div>
-          {showBtnEditar && !showFormaMinistracion && (
-            <BtnEditar onClick={() => setModoEditar(true)} />
-          )}
+          {showBtnEditar && <BtnEditar onClick={() => setModoEditar(true)} />}
         </div>
       </div>
       <FormaContenedor onSubmit={handleSubmit}>
@@ -912,6 +941,7 @@ const FormaProyecto = () => {
       </FormaContenedor>
       {modalidad === "EDITAR" && (
         <>
+          <Saldos />
           <Colaboradores />
           <Proveedores />
           <SolicitudesPresupuesto />

@@ -83,6 +83,10 @@ export interface NotaProyecto {
   dt_registro: string
 }
 
+export interface SaldoProyecto {
+  f_solicitado_transferido: number
+}
+
 export interface ProyectoMin {
   id?: number
   id_alt: string
@@ -103,7 +107,7 @@ export interface Proyecto extends ProyectoMin {
   sector_beneficiado?: string
   i_tipo_financiamiento: number
   tipo_financiamiento?: string
-  f_monto_total: string
+  f_monto_total: number
   i_beneficiados: number
   id_estado: number
   estado?: string
@@ -112,6 +116,7 @@ export interface Proyecto extends ProyectoMin {
   dt_inicio: string
   dt_fin: string
   dt_registro?: string
+  saldo?: SaldoProyecto
   ministraciones: MinistracionProyecto[]
   colaboradores?: ColaboradorProyecto[]
   proveedores?: ProveedorProyecto[]

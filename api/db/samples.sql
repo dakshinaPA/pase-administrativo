@@ -516,7 +516,7 @@ CREATE TABLE `solicitudes_presupuesto` (
   `proveedor` VARCHAR(50) NOT NULL DEFAULT '' COMMENT 'menos en gastos por comprobar',
   `descripcion_gasto` VARCHAR(300) NOT NULL,
   `id_partida_presupuestal` INT UNSIGNED NOT NULL COMMENT 'id proyecto_rubros_presupuestales',
-  `f_importe` VARCHAR(20) NOT NULL,
+  `f_importe` FLOAT UNSIGNED NOT NULL,
   -- `f_monto_comprobar` VARCHAR(20) NOT NULL COMMENT 'diferencia entre importe y gastos comprobados',
   `i_estatus` TINYINT UNSIGNED NOT NULL DEFAULT 1 COMMENT '1. revision, 2.autorizada, 3.rechazada, 4.procesada, 5.devolucion',
   `b_activo` TINYINT UNSIGNED NOT NULL DEFAULT 1,
@@ -574,3 +574,6 @@ TRUNCATE TABLE solicitud_presupuesto_comprobantes;
 
 -- mysqldump -u root -p dakshina > dakshina.sql 
 -- mysql  -h dakshina.cyt6walgkcp2.us-east-2.rds.amazonaws.com -u admin -p dakshina < dakshina.sql
+
+
+SELECT p.id,

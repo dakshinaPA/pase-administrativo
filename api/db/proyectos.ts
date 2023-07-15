@@ -42,23 +42,20 @@ class ProyectoDB {
   ) {
     let query = `SELECT p.id, p.id_financiador, p.id_coparte, p.id_responsable, p.id_alt, p.nombre, p.id_tema_social, p.id_sector_beneficiado,
       p.i_tipo_financiamiento, p.i_beneficiados, p.id_estado, p.municipio, p.descripcion, p.dt_inicio, p.dt_fin, p.dt_registro,
-      SUM(mrp.f_monto) f_monto_total,
       f.nombre financiador,
       c.nombre coparte, c.id_administrador,
       CONCAT(u.nombre, ' ', u.apellido_paterno) responsable,
       ts.nombre tema_social,
       e.nombre estado,
-      e.nombre sector_beneficiado
+      sb.nombre sector_beneficiado
       FROM proyectos p
-      JOIN proyecto_ministraciones pm ON p.id = pm.id_proyecto
-      JOIN ministracion_rubros_presupuestales mrp ON pm.id = mrp.id_ministracion
       JOIN financiadores f ON p.id_financiador = f.id
       JOIN copartes c ON p.id_coparte = c.id
       JOIN usuarios u ON p.id_responsable = u.id
       JOIN temas_sociales ts ON p.id_tema_social = ts.id
       JOIN estados e ON p.id_estado = e.id
       JOIN sectores_beneficiados sb ON p.id_sector_beneficiado = sb.id
-      WHERE p.b_activo = 1 AND mrp.b_activo = 1`
+      WHERE p.b_activo = 1`
 
     if (id_coparte) {
       query += ` AND p.id_coparte = ${id_coparte}`
@@ -71,8 +68,6 @@ class ProyectoDB {
     if (id_responsable) {
       query += ` AND p.id_responsable=${id_responsable}`
     }
-
-    query += " GROUP BY p.id"
 
     try {
       const res = await queryDB(query)

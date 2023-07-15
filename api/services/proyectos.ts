@@ -17,6 +17,7 @@ import { SolicitudPresupuesto } from "@models/solicitud-presupuesto.model"
 import { ResProyectoDB } from "@api/models/proyecto.model"
 import { epochAFecha } from "@assets/utils/common"
 import { ResDB } from "@api/models/respuestas.model"
+import solicitudesPresupuesto from "pages/api/solicitudes-presupuesto"
 
 class ProyectosServices {
   static async obtenerVMin(queries: QueriesProyecto) {
@@ -78,7 +79,6 @@ class ProyectosServices {
             id_sector_beneficiado,
             sector_beneficiado,
             tema_social,
-            f_monto_total,
             i_tipo_financiamiento,
             i_beneficiados,
             id_estado,
@@ -90,39 +90,55 @@ class ProyectosServices {
             dt_registro,
           } = proyecto
 
-          let ministraciones: MinistracionProyecto[] = null
+          let ministraciones: MinistracionProyecto[] = []
           let colaboradores: ColaboradorProyecto[] = null
           let proveedores: ProveedorProyecto[] = null
-          let solicitudes: SolicitudPresupuesto[] = null
+          let solicitudes: SolicitudPresupuesto[] = []
           let notas: NotaProyecto[] = null
+
+          const reMinistraciones = this.obtenerMinistraciones(id)
+          const reSolicitudes = SolicitudesPresupuestoServices.obtener({
+            id_proyecto: id,
+          })
+
+          const promesas = [reMinistraciones, reSolicitudes]
 
           if (id_proyecto) {
             const reColaboradores = ColaboradorServices.obtener(id_proyecto)
             const reProveedores = ProveedorServices.obtener(id_proyecto)
-            const reMinistraciones = this.obtenerMinistraciones(id_proyecto)
-            const reSolicitudes = SolicitudesPresupuestoServices.obtener({
-              id_proyecto,
-            })
             const reNotas = this.obtenerNotas(id_proyecto)
 
-            const resCombinadas = await Promise.all([
-              reColaboradores,
-              reProveedores,
-              reMinistraciones,
-              reSolicitudes,
-              reNotas,
-            ])
+            promesas.push(reColaboradores, reProveedores, reNotas)
+          }
 
-            for (const rc of resCombinadas) {
-              if (rc.error) throw rc.data
-            }
+          const resCombinadas = await Promise.all(promesas)
 
-            colaboradores = resCombinadas[0].data as ColaboradorProyecto[]
-            proveedores = resCombinadas[1].data as ProveedorProyecto[]
-            ministraciones = resCombinadas[2].data as MinistracionProyecto[]
-            solicitudes = resCombinadas[3].data as SolicitudPresupuesto[]
+          for (const rc of resCombinadas) {
+            if (rc.error) throw rc.data
+          }
+
+          ministraciones = resCombinadas[0].data as MinistracionProyecto[]
+          solicitudes = resCombinadas[1].data as SolicitudPresupuesto[]
+
+          if (id_proyecto) {
+            colaboradores = resCombinadas[2].data as ColaboradorProyecto[]
+            proveedores = resCombinadas[3].data as ProveedorProyecto[]
             notas = resCombinadas[4].data as NotaProyecto[]
           }
+
+          const f_monto_total = ministraciones
+            .map((ministracion) =>
+              ministracion.rubros_presupuestales.reduce(
+                (acum, rubro) => acum + Number(rubro.f_monto),
+                0
+              )
+            )
+            .reduce((acum, sumaRubros) => acum + sumaRubros, 0)
+
+          const f_solicitado_transferido = solicitudes.reduce(
+            (acum, solicitud) => acum + Number(solicitud.f_importe),
+            0
+          )
 
           return {
             id,
@@ -152,6 +168,10 @@ class ProyectosServices {
             descripcion,
             dt_inicio,
             dt_fin,
+            saldo: {
+              f_solicitado_transferido,
+              f_impuestos_pagados: 0,
+            },
             ministraciones,
             colaboradores,
             proveedores,
