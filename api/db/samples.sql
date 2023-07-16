@@ -574,6 +574,3 @@ TRUNCATE TABLE solicitud_presupuesto_comprobantes;
 
 -- mysqldump -u root -p dakshina > dakshina.sql 
 -- mysql  -h dakshina.cyt6walgkcp2.us-east-2.rds.amazonaws.com -u admin -p dakshina < dakshina.sql
-
-
-SELECT p.id,

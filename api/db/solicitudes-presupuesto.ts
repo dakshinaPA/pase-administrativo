@@ -18,7 +18,8 @@ class SolicitudesPresupuestoDB {
     CONCAT(p.id_alt, ' - ', p.nombre) proyecto, p.id_responsable,
     b.nombre banco,
     r.nombre rubro,
-    SUM(spc.f_total) f_total_comprobaciones
+    SUM(spc.f_total) f_total_comprobaciones,
+    SUM(spc.f_retenciones) f_total_impuestos_retenidos
     FROM solicitudes_presupuesto sp
     JOIN proyectos p ON sp.id_proyecto=p.id
     JOIN bancos b ON sp.id_banco=b.id

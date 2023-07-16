@@ -92,7 +92,7 @@ const TablaMinistraciones = () => {
                             <tr key={id_rubro}>
                               <td>{nombre}</td>
                               <td className="w-25">
-                                {montoALocaleString(f_monto)}
+                                {montoALocaleString(Number(f_monto))}
                               </td>
                             </tr>
                           )
@@ -360,7 +360,7 @@ const SolicitudesPresupuesto = () => {
                 proveedor,
                 titular_cuenta,
                 f_importe,
-                f_monto_comprobar,
+                saldo,
                 i_estatus,
                 estatus,
               }) => (
@@ -371,7 +371,7 @@ const SolicitudesPresupuesto = () => {
                   <td>{proveedor}</td>
                   <td>{titular_cuenta}</td>
                   <td>{montoALocaleString(f_importe)}</td>
-                  <td>{montoALocaleString(f_monto_comprobar)}</td>
+                  <td>{montoALocaleString(saldo.f_monto_comprobar)}</td>
                   <td>
                     <span
                       className={`badge bg-${obtenerBadgeStatusSolicitud(

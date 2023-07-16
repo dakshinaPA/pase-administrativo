@@ -135,10 +135,30 @@ class ProyectosServices {
             )
             .reduce((acum, sumaRubros) => acum + sumaRubros, 0)
 
-          const f_solicitado_transferido = solicitudes.reduce(
-            (acum, solicitud) => acum + Number(solicitud.f_importe),
-            0
-          )
+          const f_pa = ministraciones
+            .map(
+              (ministracion) =>
+                ministracion.rubros_presupuestales.find(
+                  (rp) => rp.id_rubro == 1
+                )?.f_monto || 0
+            )
+            .reduce((acum, f_monto) => acum + Number(f_monto), 0)
+
+          let f_solicitado = 0
+          let f_comprobado = 0
+          let f_retenciones = 0
+
+          for (const solicitud of solicitudes) {
+            f_solicitado += solicitud.f_importe
+            f_comprobado += solicitud.saldo.f_total_comprobaciones
+            f_retenciones += solicitud.saldo.f_total_impuestos_retenidos
+          }
+
+          const f_por_comprobar = f_solicitado - f_comprobado
+          const f_isr = f_por_comprobar * 0.35
+          const f_ejecutado = f_solicitado + f_retenciones + f_isr + f_pa
+          const f_remanente = f_monto_total - f_ejecutado
+          const p_avance = `${(f_ejecutado * 100 / f_monto_total).toFixed(2)}%`
 
           return {
             id,
@@ -169,8 +189,15 @@ class ProyectosServices {
             dt_inicio,
             dt_fin,
             saldo: {
-              f_solicitado_transferido,
-              f_impuestos_pagados: 0,
+              f_solicitado,
+              f_comprobado,
+              f_por_comprobar,
+              f_isr,
+              f_retenciones,
+              f_pa,
+              f_ejecutado, 
+              f_remanente,
+              p_avance
             },
             ministraciones,
             colaboradores,

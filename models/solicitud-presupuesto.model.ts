@@ -24,6 +24,12 @@ export type TipoGastoSolicitud = 0 | 1 | 2 | 3 | 4 | 5
 
 export type EstatusSolicitud = 1 | 2 | 3 | 4 | 5
 
+export interface SaldoSolicitud {
+  f_total_comprobaciones: number
+  f_monto_comprobar: number
+  f_total_impuestos_retenidos: number
+}
+
 export interface SolicitudPresupuesto {
   id?: number
   id_proyecto: number
@@ -35,8 +41,7 @@ export interface SolicitudPresupuesto {
   descripcion_gasto: string
   id_partida_presupuestal: number //id rubro
   rubro?: string
-  f_importe: string
-  f_monto_comprobar?: string
+  f_importe: number
   i_estatus?: EstatusSolicitud
   estatus?: string
   titular_cuenta: string
@@ -44,6 +49,7 @@ export interface SolicitudPresupuesto {
   id_banco: number
   banco?: string
   email: string
+  saldo?: SaldoSolicitud
   dt_registro?: string
   comprobantes?: ComprobanteSolicitud[]
 }

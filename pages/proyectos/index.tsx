@@ -6,6 +6,7 @@ import { ModalEliminar } from "@components/ModalEliminar"
 import { TablaContenedor } from "@components/Contenedores"
 import {
   aMinuscula,
+  montoALocaleString,
   obtenerCopartes,
   obtenerProyectos,
 } from "@assets/utils/common"
@@ -186,12 +187,18 @@ const Financiadores = () => {
                   <th>#id</th>
                   <th>Alt id</th>
                   <th>Nombre</th>
-                  <th>Financiador</th>
+                  <th>Responsable</th>
                   <th>Tipo financiamiento</th>
                   <th>Monto total</th>
-                  <th>Beneficiados</th>
-                  <th>Responsable</th>
-                  <th>Activo</th>
+                  <th>Solicitado</th>
+                  <th>Comprobado</th>
+                  <th>Por comprobar</th>
+                  <th>ISR (35%)</th>
+                  <th>Retenciones</th>
+                  <th>PA</th>
+                  <th>Total ejecutado</th>
+                  <th>Remanente</th>
+                  <th>Avance</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
@@ -206,7 +213,7 @@ const Financiadores = () => {
                     financiador,
                     tipo_financiamiento,
                     f_monto_total,
-                    i_beneficiados,
+                    saldo,
                     responsable,
                   } = proyecto
 
@@ -215,12 +222,18 @@ const Financiadores = () => {
                       <td>{id}</td>
                       <td>{id_alt}</td>
                       <td>{nombre}</td>
-                      <td>{financiador}</td>
-                      <td>{tipo_financiamiento}</td>
-                      <td>{Number(f_monto_total).toLocaleString()}</td>
-                      <td>{i_beneficiados}</td>
                       <td>{responsable}</td>
-                      <td>...</td>
+                      <td>{tipo_financiamiento}</td>
+                      <td>{montoALocaleString(f_monto_total)}</td>
+                      <td>{montoALocaleString(saldo.f_solicitado)}</td>
+                      <td>{montoALocaleString(saldo.f_comprobado)}</td>
+                      <td>{montoALocaleString(saldo.f_por_comprobar)}</td>
+                      <td>{montoALocaleString(saldo.f_isr)}</td>
+                      <td>{montoALocaleString(saldo.f_retenciones)}</td>
+                      <td>{montoALocaleString(saldo.f_pa)}</td>
+                      <td>{montoALocaleString(saldo.f_ejecutado)}</td>
+                      <td>{montoALocaleString(saldo.f_remanente)}</td>
+                      <td>{saldo.p_avance}</td>
                       <td>
                         <div className="d-flex">
                           <BtnAccion

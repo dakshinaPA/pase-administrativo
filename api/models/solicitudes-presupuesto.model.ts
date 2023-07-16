@@ -19,7 +19,8 @@ export interface ResSolicitudPresupuestoDB {
   id_partida_presupuestal: number
   rubro: string
   f_importe: string
-  f_total_comprobaciones: string
+  f_total_comprobaciones: number
+  f_total_impuestos_retenidos: number
   i_estatus: EstatusSolicitud
   dt_registro: string
 }

@@ -1,13 +1,12 @@
-import * as XLSX from "xlsx";
+import * as XLSX from "xlsx"
 
 interface CrearExcelProps {
   nombreHoja: string
   nombreArchivo: string
-  data: string[][]
+  data: (string | number)[][]
 }
 
 export const crearExcel = (settings: CrearExcelProps) => {
-
   const { nombreHoja, nombreArchivo, data } = settings
 
   const workbook = XLSX.utils.book_new()

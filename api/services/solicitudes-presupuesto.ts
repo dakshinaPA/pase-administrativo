@@ -70,6 +70,7 @@ class SolicitudesPresupuestoServices {
             rubro,
             f_importe,
             f_total_comprobaciones,
+            f_total_impuestos_retenidos,
             i_estatus,
             dt_registro,
           } = solicitud
@@ -98,13 +99,15 @@ class SolicitudesPresupuestoServices {
             rubro,
             proveedor,
             descripcion_gasto,
-            f_importe,
-            f_monto_comprobar: String(
-              Number(f_importe) - Number(f_total_comprobaciones)
-            ),
+            f_importe: Number(f_importe),
             i_estatus,
             estatus: obtenerEstatusSolicitud(i_estatus),
             dt_registro,
+            saldo: {
+              f_total_comprobaciones,
+              f_monto_comprobar: Number(f_importe) - f_total_comprobaciones,
+              f_total_impuestos_retenidos
+            },
             comprobantes,
           }
         })

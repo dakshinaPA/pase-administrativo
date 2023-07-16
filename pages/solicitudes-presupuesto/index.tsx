@@ -279,20 +279,6 @@ const SolicitudesPresupuesto = () => {
     setShowModalEliminar(false)
   }
 
-  const f_total_solicitudes = String(
-    solicitudesDB.reduce(
-      (acum, solicitud) => acum + Number(solicitud.f_importe),
-      0
-    )
-  )
-
-  const f_total_comprobar = String(
-    solicitudesDB.reduce(
-      (acum, solicitud) => acum + Number(solicitud.f_monto_comprobar),
-      0
-    )
-  )
-
   const descargarExcel = () => {
     const encabezado = [
       "Tipo de gasto",
@@ -320,7 +306,7 @@ const SolicitudesPresupuesto = () => {
         epochAFecha(solicitud.dt_registro),
         solicitud.estatus,
         solicitud.f_importe,
-        solicitud.f_monto_comprobar,
+        solicitud.saldo.f_monto_comprobar,
       ]
     })
 
@@ -350,6 +336,18 @@ const SolicitudesPresupuesto = () => {
 
       return nuevoObjeto
     })
+  }
+
+  let totalSolicitado = 0
+  let totalComprobado = 0
+  let totalComprobar = 0
+  let totalRetenido = 0
+
+  for (const solicitud of solicitudesDB) {
+    totalSolicitado += solicitud.f_importe
+    totalComprobado += solicitud.saldo.f_total_comprobaciones
+    totalComprobar += solicitud.saldo.f_monto_comprobar
+    totalRetenido += solicitud.saldo.f_total_impuestos_retenidos
   }
 
   const showSelectCambioStatus = Object.entries(idsCambioStatus).some(
@@ -478,41 +476,59 @@ const SolicitudesPresupuesto = () => {
                   <th>Tipo de gasto</th>
                   <th>Partida presupuestal</th>
                   <th>Titular</th>
-                  <th>CLABE</th>
-                  <th>Banco</th>
                   <th>Proveedor</th>
                   <th>Descripción</th>
-                  <th>Importe</th>
+                  <th>Importe solicitado</th>
+                  <th>Comprobado</th>
                   <th>Por comprobar</th>
+                  <th>Retenciones</th>
                   <th>Estatus</th>
                   <th>Fecha registro</th>
-                  <th>
-                    <input
-                      type="checkbox"
-                      className="form-check-input"
-                      onChange={({ target }) =>
-                        seleccionarTodasSolicitudes(target.checked)
-                      }
-                      checked={showSelectCambioStatus}
-                    />
-                  </th>
+                  {user.id_rol == 1 && (
+                    <th>
+                      <input
+                        type="checkbox"
+                        className="form-check-input"
+                        onChange={({ target }) =>
+                          seleccionarTodasSolicitudes(target.checked)
+                        }
+                        checked={showSelectCambioStatus}
+                      />
+                    </th>
+                  )}
                   <th>Acciones</th>
                 </tr>
               </thead>
               <tbody>
+                <tr>
+                  <td colSpan={6} className="fw-bold">
+                    Totales
+                  </td>
+                  <td className="fw-bold">
+                    {montoALocaleString(totalSolicitado)}
+                  </td>
+                  <td className="fw-bold">
+                    {montoALocaleString(totalComprobado)}
+                  </td>
+                  <td className="fw-bold">
+                    {montoALocaleString(totalComprobar)}
+                  </td>
+                  <td className="fw-bold">
+                    {montoALocaleString(totalRetenido)}
+                  </td>
+                  <td colSpan={user.id_rol == 1 ? 4 : 3}></td>
+                </tr>
                 {solicitudesDB.map((solicitud) => {
                   const {
                     id,
                     id_proyecto,
                     tipo_gasto,
-                    clabe,
                     titular_cuenta,
-                    banco,
                     proveedor,
                     descripcion_gasto,
                     rubro,
                     f_importe,
-                    f_monto_comprobar,
+                    saldo,
                     i_estatus,
                     estatus,
                     dt_registro,
@@ -526,28 +542,34 @@ const SolicitudesPresupuesto = () => {
                       <td>{tipo_gasto}</td>
                       <td>{rubro}</td>
                       <td>{titular_cuenta}</td>
-                      <td>{clabe}</td>
-                      <td>{banco}</td>
                       <td>{proveedor}</td>
                       <td>{descripcion_gasto}</td>
                       <td>{montoALocaleString(f_importe)}</td>
-                      <td>{montoALocaleString(f_monto_comprobar)}</td>
+                      <td>
+                        {montoALocaleString(saldo.f_total_comprobaciones)}
+                      </td>
+                      <td>{montoALocaleString(saldo.f_monto_comprobar)}</td>
+                      <td>
+                        {montoALocaleString(saldo.f_total_impuestos_retenidos)}
+                      </td>
                       <td>
                         <span className={`badge bg-${colorBadge}`}>
                           {estatus}
                         </span>
                       </td>
                       <td>{epochAFecha(dt_registro)}</td>
-                      <td>
-                        <input
-                          type="checkbox"
-                          className="form-check-input"
-                          onChange={({ target }) =>
-                            seleccionarSolicitud(target.checked, id)
-                          }
-                          checked={idsCambioStatus[id]}
-                        />
-                      </td>
+                      {user.id_rol == 1 && (
+                        <td>
+                          <input
+                            type="checkbox"
+                            className="form-check-input"
+                            onChange={({ target }) =>
+                              seleccionarSolicitud(target.checked, id)
+                            }
+                            checked={idsCambioStatus[id]}
+                          />
+                        </td>
+                      )}
                       <td>
                         <div className="d-flex">
                           <BtnAccion
@@ -573,18 +595,6 @@ const SolicitudesPresupuesto = () => {
                     </tr>
                   )
                 })}
-                <tr>
-                  <td colSpan={8} className="fw-bold">
-                    Totales
-                  </td>
-                  <td className="fw-bold">
-                    {montoALocaleString(f_total_solicitudes)}
-                  </td>
-                  <td className="fw-bold">
-                    {montoALocaleString(f_total_comprobar)}
-                  </td>
-                  <td colSpan={4}></td>
-                </tr>
               </tbody>
             </table>
           </div>

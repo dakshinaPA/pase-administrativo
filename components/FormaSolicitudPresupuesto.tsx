@@ -142,7 +142,7 @@ const FormaSolicitudPresupuesto = () => {
     descripcion_gasto: "",
     id_partida_presupuestal: 0,
     rubro: "",
-    f_importe: "0",
+    f_importe: 0,
     i_estatus: 1,
     comprobantes: [],
   }
@@ -153,7 +153,7 @@ const FormaSolicitudPresupuesto = () => {
   const [dataProyecto, setDataProyecto] = useState(estadoInicialDataProyecto)
   const [dataTipoGasto, setDataTipoGasto] = useState(estadoInicialDataTipoGasto)
   // const [estatus, setEstatus] = useState(1)
-  const [aceptarTerminos, setAceptarTerminos] = useState(false)
+  const [aceptarTerminos, setAceptarTerminos] = useState(Boolean(idSolicitud))
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [modoEditar, setModoEditar] = useState<boolean>(!idSolicitud)
   const modalidad = idSolicitud ? "EDITAR" : "CREAR"
@@ -525,7 +525,7 @@ const FormaSolicitudPresupuesto = () => {
   const pasaValidaciones = () => {
     let NoError = true
 
-    if (!aceptarTerminos) {
+    if (modalidad === "CREAR" && !aceptarTerminos) {
       NoError = false
       cbAceptaTerminos.current.focus()
     }
@@ -590,10 +590,6 @@ const FormaSolicitudPresupuesto = () => {
   //   }
   // }
 
-  if (isLoading) {
-    return <Loader />
-  }
-
   // const inputFileReembolso =
   //   [1, 4].includes(Number(estadoForma.i_tipo_gasto)) &&
   //   estadoForma.comprobantes.length > 0
@@ -630,6 +626,10 @@ const FormaSolicitudPresupuesto = () => {
     !modoEditar &&
     idSolicitud &&
     (user.id === estadoForma.id_responsable || [1, 2].includes(user.id_rol))
+
+  if (isLoading) {
+    return <Loader />
+  }
 
   return (
     <RegistroContenedor>
@@ -898,20 +898,22 @@ const FormaSolicitudPresupuesto = () => {
             </select>
           </div>
         )}
-        <div className="col-12 mb-3">
-          <div className="form-check">
-            <input
-              type="checkbox"
-              className="form-check-input"
-              onChange={() => setAceptarTerminos(!aceptarTerminos)}
-              ref={cbAceptaTerminos}
-              checked={aceptarTerminos}
-            />
-            <label className="form-check-label">
-              Acepto los términos y condiciones
-            </label>
+        {modalidad === "CREAR" && (
+          <div className="col-12 mb-3">
+            <div className="form-check">
+              <input
+                type="checkbox"
+                className="form-check-input"
+                onChange={() => setAceptarTerminos(!aceptarTerminos)}
+                ref={cbAceptaTerminos}
+                checked={aceptarTerminos}
+              />
+              <label className="form-check-label">
+                Acepto los términos y condiciones
+              </label>
+            </div>
           </div>
-        </div>
+        )}
         <div className="col-12">
           <hr />
         </div>

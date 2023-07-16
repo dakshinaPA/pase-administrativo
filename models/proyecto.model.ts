@@ -29,7 +29,7 @@ export interface ColaboradorProyecto {
   cp: string
   nombre_servicio: string
   descripcion_servicio: string
-  f_monto_total: string
+  f_monto_total: number
   dt_inicio_servicio: string
   dt_fin_servicio: string
   dt_registro?: string
@@ -59,7 +59,7 @@ export interface RubroMinistracion {
   id_ministracion?: number
   id_rubro: number
   nombre?: string
-  f_monto: string
+  f_monto: number
   b_activo?: boolean
 }
 
@@ -67,7 +67,7 @@ export interface MinistracionProyecto {
   id?: number
   id_proyecto?: number
   i_numero: number
-  f_monto: string
+  f_monto: number
   i_grupo: string
   dt_recepcion: string
   rubros_presupuestales: RubroMinistracion[]
@@ -84,7 +84,15 @@ export interface NotaProyecto {
 }
 
 export interface SaldoProyecto {
-  f_solicitado_transferido: number
+  f_solicitado: number
+  f_comprobado: number
+  f_por_comprobar: number
+  f_isr: number
+  f_retenciones: number
+  f_pa: number //pase administrativo es la suma de las gestiones financieras
+  f_ejecutado: number // suma de solicitado + retenciones + isr + gestion financiera
+  f_remanente: number
+  p_avance: string
 }
 
 export interface ProyectoMin {
