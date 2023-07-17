@@ -568,11 +568,10 @@ const FormaSolicitudPresupuesto = () => {
       const [emisor] = xml.getElementsByTagName("cfdi:Emisor")
       const impuestos = xml.getElementsByTagName("cfdi:Impuestos")
 
-      const folio_fiscal = timbre?.getAttribute("UUID") || ""
-
       //limpiar el input
       fileInput.current.value = ""
 
+      const folio_fiscal = timbre?.getAttribute("UUID") || ""
       // buscar si el folio que se quiere subir ya existe en base de datos
       const reFactura = await ApiCall.get(
         `/solicitudes-presupuesto/buscar-factura?folio=${folio_fiscal}`

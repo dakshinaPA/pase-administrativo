@@ -20,9 +20,9 @@ const Toast = ({ estado, cerrar }) => {
   }, [estado.show])
 
   return (
-    <span className={styles.toast} ref={spanToast}>
+    <small className={styles.toast} ref={spanToast}>
       {estado.mensaje}
-    </span>
+    </small>
   )
 }
 
