@@ -16,7 +16,7 @@ export interface ResColaboradoreDB {
   cp: string
   nombre_servicio: string
   descripcion_servicio: string
-  f_monto_total: string
+  f_monto_total: number
   dt_inicio_servicio: string
   dt_fin_servicio: string
   dt_registro: string

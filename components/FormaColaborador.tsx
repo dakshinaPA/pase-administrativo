@@ -71,7 +71,7 @@ const FormaColaborador = () => {
     cp: "",
     nombre_servicio: "",
     descripcion_servicio: "",
-    f_monto_total: "",
+    f_monto_total: 0,
     dt_inicio_servicio: "",
     dt_fin_servicio: "",
     direccion: {
