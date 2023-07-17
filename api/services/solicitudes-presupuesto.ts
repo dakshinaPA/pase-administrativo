@@ -8,8 +8,9 @@ import {
   ComprobanteSolicitud,
   QueriesSolicitud,
   PayloadCambioEstatus,
+  NotaSolicitud,
 } from "@models/solicitud-presupuesto.model"
-import { obtenerEstatusSolicitud } from "@assets/utils/common"
+import { epochAFecha, obtenerEstatusSolicitud } from "@assets/utils/common"
 
 class SolicitudesPresupuestoServices {
   static obtenerTipoGasto(i_tipo_gasto: TipoGastoSolicitud) {
@@ -76,11 +77,20 @@ class SolicitudesPresupuestoServices {
           } = solicitud
 
           let comprobantes: ComprobanteSolicitud[] = null
+          let notas: NotaSolicitud[] = null
 
           if (id_solicitud) {
-            const reComprobantes = await this.obtenerComprobantes(id_solicitud)
-            if (reComprobantes.error) throw reComprobantes.data
-            comprobantes = reComprobantes.data as ComprobanteSolicitud[]
+            const reComprobantes = this.obtenerComprobantes(id_solicitud)
+            const reNotas = this.obtenerNotas(id_solicitud)
+
+            const resCombinadas = await Promise.all([reComprobantes, reNotas])
+
+            for (const rc of resCombinadas) {
+              if (rc.error) throw rc.data
+            }
+
+            comprobantes = resCombinadas[0].data as ComprobanteSolicitud[]
+            notas = resCombinadas[1].data as NotaSolicitud[]
           }
 
           return {
@@ -106,9 +116,10 @@ class SolicitudesPresupuestoServices {
             saldo: {
               f_total_comprobaciones,
               f_monto_comprobar: Number(f_importe) - f_total_comprobaciones,
-              f_total_impuestos_retenidos
+              f_total_impuestos_retenidos,
             },
             comprobantes,
+            notas,
           }
         })
       )
@@ -182,12 +193,16 @@ class SolicitudesPresupuestoServices {
       }
 
       //checar si se borro algun comprobantes
-      const comprobantesActivosDB = reComprobantes.data as ComprobanteSolicitud[]
+      const comprobantesActivosDB =
+        reComprobantes.data as ComprobanteSolicitud[]
       for (const ca of comprobantesActivosDB) {
-        const matchVista = comprobantes.find( comprobante => comprobante.id == ca.id )
-        if(!matchVista){
-          const dlComprobante = await SolicitudesPresupuestoDB.borrarComprobante(ca.id)
-          if(dlComprobante.error) throw dlComprobante.data
+        const matchVista = comprobantes.find(
+          (comprobante) => comprobante.id == ca.id
+        )
+        if (!matchVista) {
+          const dlComprobante =
+            await SolicitudesPresupuestoDB.borrarComprobante(ca.id)
+          if (dlComprobante.error) throw dlComprobante.data
         }
       }
 
@@ -312,7 +327,7 @@ class SolicitudesPresupuestoServices {
       res
     )
   }
-  
+
   static async cambiarEstatus(payload: PayloadCambioEstatus) {
     const up = await SolicitudesPresupuestoDB.cambiarEstatus(payload)
 
@@ -328,6 +343,49 @@ class SolicitudesPresupuestoServices {
       200,
       "Estatus de solicitudes de presupuesto actualizados con éxito",
       null
+    )
+  }
+
+  static async obtenerNotas(id_solicitud: number) {
+    const re = await SolicitudesPresupuestoDB.obtenerNotas(id_solicitud)
+
+    if (re.error) {
+      return RespuestaController.fallida(
+        400,
+        "Error al obtener notas del financiador",
+        re.data
+      )
+    }
+
+    let notas = re.data as NotaSolicitud[]
+    notas = notas.map((nota) => {
+      return {
+        ...nota,
+        dt_registro: epochAFecha(nota.dt_registro),
+      }
+    })
+
+    return RespuestaController.exitosa(200, "consulta exitosa", notas)
+  }
+
+  static async crearNota(id_solicitud: number, data: NotaSolicitud) {
+    const cr = await SolicitudesPresupuestoDB.crearNota(id_solicitud, data)
+
+    if (cr.error) {
+      return RespuestaController.fallida(
+        400,
+        "Error al crear nota de solicitud",
+        cr.data
+      )
+    }
+
+    // @ts-ignore
+    const idInsertado = cr.data.insertId
+
+    return RespuestaController.exitosa(
+      201,
+      "Nota de solicitud creada con éxito",
+      { idInsertado }
     )
   }
 }

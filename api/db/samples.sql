@@ -542,6 +542,17 @@ CREATE TABLE `solicitud_presupuesto_comprobantes` (
   INDEX (`id_regimen_fiscal`),
   INDEX (`id_solicitud_presupuesto`));
 
+CREATE TABLE `solicitud_presupuesto_notas` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `id_solicitud` INT UNSIGNED NOT NULL,
+  `id_usuario` INT UNSIGNED NOT NULL,
+  `mensaje` TEXT NOT NULL,
+  `b_activo` TINYINT UNSIGNED NOT NULL DEFAULT 1,
+  `dt_registro` VARCHAR(10) NOT NULL,
+  PRIMARY KEY (`id`),
+  INDEX (`id_solicitud`),
+  INDEX (`id_usuario`));
+
 ------------------------------------------------------
 
 
@@ -570,6 +581,7 @@ TRUNCATE TABLE proveedor_direccion;
 
 TRUNCATE TABLE solicitudes_presupuesto;
 TRUNCATE TABLE solicitud_presupuesto_comprobantes;
+TRUNCATE TABLE solicitud_presupuesto_notas;
 
 
 -- mysqldump -u root -p dakshina > dakshina.sql 

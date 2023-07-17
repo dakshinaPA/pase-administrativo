@@ -130,27 +130,42 @@ const TablaMinistraciones = () => {
 }
 
 const Saldos = () => {
+  const { estadoForma } = useProyecto()
+
   return (
     <div className="row mb-5">
       <div className="col-12 mb-3">
-        <h3 className="color1 mb-0">Saldos</h3>
+        <h3 className="color1 mb-0">Saldo</h3>
       </div>
       <div className="col-12 table-responsive">
         <table className="table">
           <thead className="table-light">
             <tr>
-              <th>Solicitado transferido</th>
-              <th>Impuestos pagados</th>
-              <th>35% ISR</th>
-              <th>Gestión financiera</th>
-              <th>Total ejecutado por proyecto</th>
-              <th>Total del proyecto</th>
-              <th>Avance del financiamiento</th>
+              <th>Monto total</th>
+              <th>Solicitado</th>
+              <th>Comprobado</th>
+              <th>Por comprobar</th>
+              <th>ISR (35%)</th>
+              <th>Retenciones</th>
+              <th>PA</th>
+              <th>Total ejecutado</th>
               <th>Remanente</th>
+              <th>Avance</th>
             </tr>
           </thead>
           <tbody>
-
+            <tr>
+              <td>{montoALocaleString(estadoForma.f_monto_total)}</td>
+              <td>{montoALocaleString(estadoForma.saldo.f_solicitado)}</td>
+              <td>{montoALocaleString(estadoForma.saldo.f_comprobado)}</td>
+              <td>{montoALocaleString(estadoForma.saldo.f_por_comprobar)}</td>
+              <td>{montoALocaleString(estadoForma.saldo.f_isr)}</td>
+              <td>{montoALocaleString(estadoForma.saldo.f_retenciones)}</td>
+              <td>{montoALocaleString(estadoForma.saldo.f_pa)}</td>
+              <td>{montoALocaleString(estadoForma.saldo.f_ejecutado)}</td>
+              <td>{montoALocaleString(estadoForma.saldo.f_remanente)}</td>
+              <td>{estadoForma.saldo.p_avance}</td>
+            </tr>
           </tbody>
         </table>
       </div>

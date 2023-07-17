@@ -17,6 +17,7 @@ import { useCatalogos } from "@contexts/catalogos.context"
 import { BtnAccion, BtnCancelar, BtnEditar, BtnRegistrar } from "./Botones"
 import {
   ComprobanteSolicitud,
+  NotaSolicitud,
   SolicitudPresupuesto,
 } from "@models/solicitud-presupuesto.model"
 import { useAuth } from "@contexts/auth.context"
@@ -38,6 +39,7 @@ type ActionTypes =
   | "CAMBIO_ESTATUS"
   | "CAMBIO_PROYECTO"
   | "NUEVO_REGISTRO"
+  | "RECARGAR_NOTAS"
 
 interface ActionDispatch {
   type: ActionTypes
@@ -101,6 +103,11 @@ const reducer = (
         i_estatus: payload.i_estatus,
         estatus: payload.estatus,
       }
+    case "RECARGAR_NOTAS":
+      return {
+        ...state,
+        notas: payload,
+      }
     default:
       return state
   }
@@ -120,6 +127,91 @@ interface DataTipoGasto {
 const estadoInicialDataTipoGasto: DataTipoGasto = {
   partidas_presupuestales: [],
   titulares: [],
+}
+
+const Notas = ({ notas, dispatch }) => {
+  const router = useRouter()
+  const idSolicitud = Number(router.query.idS)
+  const { user } = useAuth()
+  const [mensajeNota, setMensajeNota] = useState<string>("")
+  const inputNota = useRef(null)
+
+  const agregarNota = async () => {
+    if (mensajeNota.length < 10) {
+      inputNota.current.focus()
+      return
+    }
+
+    const cr = await ApiCall.post(
+      `/solicitudes-presupuesto/${idSolicitud}/notas`,
+      {
+        id_usuario: user.id,
+        mensaje: mensajeNota,
+      }
+    )
+    if (cr.error) {
+      console.log(cr.data)
+    } else {
+      //limpiar el input
+      setMensajeNota("")
+
+      const re = await ApiCall.get(
+        `/solicitudes-presupuesto/${idSolicitud}/notas`
+      )
+      if (re.error) {
+        console.log(re.data)
+      } else {
+        const notasDB = re.data as NotaSolicitud[]
+        dispatch({
+          type: "RECARGAR_NOTAS",
+          payload: notasDB,
+        })
+      }
+    }
+  }
+
+  return (
+    <div className="row my-3">
+      <div className="col-12 mb-3">
+        <h3 className="color1 mb-0">Notas</h3>
+      </div>
+      <div className="col-12 table-responsive mb-3">
+        <table className="table">
+          <thead className="table-light">
+            <tr>
+              <th>Usuario</th>
+              <th>Mensaje</th>
+              <th>Fecha</th>
+            </tr>
+          </thead>
+          <tbody>
+            {notas.map(({ id, usuario, mensaje, dt_registro }) => (
+              <tr key={id}>
+                <td>{usuario}</td>
+                <td>{mensaje}</td>
+                <td>{dt_registro}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="col-12 col-md-9 mb-3">
+        <input
+          type="text"
+          className="form-control"
+          value={mensajeNota}
+          onChange={({ target }) => setMensajeNota(target.value)}
+          placeholder="mensaje de la nota"
+          ref={inputNota}
+        />
+      </div>
+      <div className="col-12 col-md-3 mb-3 text-end">
+        <button type="button" className="btn btn-secondary" onClick={agregarNota}>
+          Agregar nota +
+        </button>
+      </div>
+    </div>
+  )
 }
 
 const FormaSolicitudPresupuesto = () => {
@@ -145,6 +237,7 @@ const FormaSolicitudPresupuesto = () => {
     f_importe: 0,
     i_estatus: 1,
     comprobantes: [],
+    notas: [],
   }
 
   const { bancos, formas_pago, regimenes_fiscales } = useCatalogos()
@@ -996,6 +1089,9 @@ const FormaSolicitudPresupuesto = () => {
             <BtnCancelar onclick={cancelar} margin={"r"} />
             <BtnRegistrar modalidad={modalidad} margin={false} />
           </div>
+        )}
+        {modalidad === "EDITAR" && (
+          <Notas notas={estadoForma.notas} dispatch={dispatch} />
         )}
       </FormaContenedor>
     </RegistroContenedor>

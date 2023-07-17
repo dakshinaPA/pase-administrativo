@@ -55,7 +55,7 @@ interface ActionDispatch {
 interface FormaMinistracion {
   id?: number
   i_numero: number
-  f_monto: string
+  f_monto: number
   i_grupo: string
   dt_recepcion: string
   id_rubro: number
@@ -123,7 +123,7 @@ const ProyectoProvider = ({ children }) => {
     id_responsable: 0,
     id_alt: "",
     nombre: "",
-    f_monto_total: "0",
+    f_monto_total: 0,
     i_tipo_financiamiento: 1,
     id_tema_social: 1,
     id_sector_beneficiado: 1,
@@ -133,6 +133,17 @@ const ProyectoProvider = ({ children }) => {
     dt_inicio: "",
     dt_fin: "",
     i_beneficiados: 0,
+    saldo: {
+      f_solicitado: 0,
+      f_comprobado: 0,
+      f_por_comprobar: 0,
+      f_isr: 0,
+      f_retenciones: 0,
+      f_pa: 0,
+      f_ejecutado: 0,
+      f_remanente: 0,
+      p_avance: "0%",
+    },
     ministraciones: [],
     colaboradores: [],
     proveedores: [],
@@ -142,7 +153,7 @@ const ProyectoProvider = ({ children }) => {
 
   const estaInicialFormaMinistracion: FormaMinistracion = {
     i_numero: 1,
-    f_monto: "0",
+    f_monto: 0,
     i_grupo: "0",
     dt_recepcion: "",
     id_rubro: 0,

@@ -22,7 +22,7 @@ const determinarNombreArchivo = (archivo) => {
 const aMinuscula = (clave: string) => clave.toLowerCase()
 
 const montoALocaleString = (f_monto: number ) => {
-  return Number(f_monto.toFixed(2)).toLocaleString()
+  return Number(Number(f_monto).toFixed(2)).toLocaleString()
 }
 
 const epochAFecha = (epoch: string): string => {

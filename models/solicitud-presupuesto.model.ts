@@ -30,6 +30,15 @@ export interface SaldoSolicitud {
   f_total_impuestos_retenidos: number
 }
 
+export interface NotaSolicitud {
+  id?: number
+  id_solicitud: number
+  id_usuario: number
+  mensaje: string
+  usuario: string
+  dt_registro: string
+}
+
 export interface SolicitudPresupuesto {
   id?: number
   id_proyecto: number
@@ -52,6 +61,7 @@ export interface SolicitudPresupuesto {
   saldo?: SaldoSolicitud
   dt_registro?: string
   comprobantes?: ComprobanteSolicitud[]
+  notas?: NotaSolicitud[]
 }
 
 export interface PayloadCambioEstatus {

@@ -54,7 +54,7 @@ const FormaMinistracion = () => {
       )
     setFormaMinistracion((prevState) => ({
       ...prevState,
-      f_monto: String(montoMinistracionAagregar),
+      f_monto: montoMinistracionAagregar,
     }))
   }, [formaMinistracion.rubros_presupuestales])
 
@@ -65,10 +65,10 @@ const FormaMinistracion = () => {
   const handleChangeMinistracion = (ev: ChangeEvent) => {
     const { name, value } = ev.target
 
-    setFormaMinistracion({
-      ...formaMinistracion,
+    setFormaMinistracion((prevState) => ({
+      ...prevState,
       [name]: value,
-    })
+    }))
   }
 
   const agregarRubro = () => {
@@ -87,7 +87,7 @@ const FormaMinistracion = () => {
         {
           id_rubro: matchRubro.id,
           nombre: matchRubro.nombre,
-          f_monto: "",
+          f_monto: 0,
         },
       ],
     }))
@@ -98,8 +98,7 @@ const FormaMinistracion = () => {
     })
   }
 
-  const actualizarMontoRubro = (monto: string, id_rubro: number) => {
-    if (!Number(monto) && monto != "") return
+  const actualizarMontoRubro = (monto: number, id_rubro: number) => {
 
     const indexRubro = formaMinistracion.rubros_presupuestales.findIndex(
       (rp) => rp.id_rubro == id_rubro
@@ -121,54 +120,6 @@ const FormaMinistracion = () => {
     }))
   }
 
-  // const handleChangeRubro = (ev: ChangeEvent) => {
-  //   const { name, value } = ev.target
-
-  //   setFormaRubros((prevState) => {
-  //     return {
-  //       ...prevState,
-  //       [name]: value,
-  //     }
-  //   })
-  // }
-
-  // const agregarRubro = () => {
-  //   if (formaRubros.id_rubro == 0) {
-  //     selectRubro.current.focus()
-  //     return
-  //   }
-
-  //   if (!Number(formaRubros.f_monto)) {
-  //     inputMontoRubro.current.focus()
-  //     return
-  //   }
-
-  //   const rubroMatch = rubros_presupuestales.find(
-  //     (rp) => rp.id == formaRubros.id_rubro
-  //   )
-
-  //   if (!rubroMatch) return
-
-  //   const rubroAagregar: RubroMinistracion = {
-  //     id_rubro: formaRubros.id_rubro,
-  //     nombre: rubroMatch.nombre,
-  //     f_monto: formaRubros.f_monto,
-  //   }
-
-  //   setFormaMinistracion((prevState) => {
-  //     return {
-  //       ...prevState,
-  //       rubros_presupuestales: [
-  //         ...prevState.rubros_presupuestales,
-  //         rubroAagregar,
-  //       ],
-  //     }
-  //   })
-
-  //   //limpiar forma
-  //   setFormaRubros(estadoInicialdFormaRubros)
-  // }
-
   const quitarRubro = (id_rubro: number) => {
     const listaFiltrada = formaMinistracion.rubros_presupuestales.filter(
       (rubro) => rubro.id_rubro != id_rubro
@@ -181,8 +132,6 @@ const FormaMinistracion = () => {
   }
 
   const cerrarForma = () => {
-    // setFormaMinistracion(estaInicialdFormaMinistracion)
-    // setFormaRubros(estadoInicialdFormaRubros)
     setShowFormaMinistracion(false)
   }
 
@@ -386,7 +335,7 @@ const FormaMinistracion = () => {
                         className="form-control"
                         value={f_monto}
                         onChange={({ target: { value } }) =>
-                          actualizarMontoRubro(value, id_rubro)
+                          actualizarMontoRubro(Number(value), id_rubro)
                         }
                       />
                     </td>
@@ -407,51 +356,6 @@ const FormaMinistracion = () => {
             <tbody></tbody>
           </table>
         </div>
-        {/* <div className="col-12 col-lg-3 mb-3">
-          <div className="mb-3">
-            <label className="form-label">Rubro</label>
-            <select
-              className="form-control"
-              name="id_rubro"
-              value={formaRubros.id_rubro}
-              onChange={handleChangeRubro}
-              ref={selectRubro}
-            >
-              <option value="0" disabled>
-                Selecciona rubro
-              </option>
-              {formaMinistracion.rubros_presupuestales.length > 0 ? (
-                rubrosNoSeleccionados().map(({ id, nombre }) => (
-                  <option key={id} value={id}>
-                    {nombre}
-                  </option>
-                ))
-              ) : (
-                <RubroDefault />
-              )}
-            </select>
-          </div>
-          <div className="mb-3">
-            <label className="form-label">Monto</label>
-            <input
-              className="form-control"
-              type="text"
-              name="f_monto"
-              value={formaRubros.f_monto}
-              onChange={handleChangeRubro}
-              ref={inputMontoRubro}
-            />
-          </div>
-          <div>
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm w-100"
-              onClick={agregarRubro}
-            >
-              Agregar rubro +
-            </button>
-          </div>
-        </div> */}
         <div className="col-12 d-flex justify-content-between">
           <BtnCancelar onclick={cerrarForma} margin={false} />
           {!formaMinistracion.id ? (

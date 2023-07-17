@@ -5,6 +5,7 @@ import {
   QueriesSolicitud,
   EstatusSolicitud,
   PayloadCambioEstatus,
+  NotaSolicitud,
 } from "@models/solicitud-presupuesto.model"
 import { RespuestaDB } from "@api/utils/response"
 import { fechaActualAEpoch } from "@assets/utils/common"
@@ -229,6 +230,36 @@ class SolicitudesPresupuestoDB {
 
     try {
       const res = await queryDB(query)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
+
+  static async obtenerNotas(id_solicitud: number) {
+    let query = `SELECT spn.id, spn.mensaje, spn.dt_registro,
+      CONCAT(u.nombre, ' ', u.apellido_paterno) usuario
+      FROM solicitud_presupuesto_notas spn JOIN usuarios u ON spn.id_usuario = u.id
+      WHERE spn.id_solicitud=${id_solicitud} AND spn.b_activo=1`
+
+    try {
+      const res = await queryDB(query)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
+
+  static async crearNota(id_solicitud: number, data: NotaSolicitud) {
+    const { id_usuario, mensaje } = data
+
+    const query = `INSERT INTO solicitud_presupuesto_notas ( id_solicitud, id_usuario,
+      mensaje, dt_registro ) VALUES ( ?, ?, ?, ? )`
+
+    const placeHolders = [id_solicitud, id_usuario, mensaje, fechaActualAEpoch()]
+
+    try {
+      const res = await queryDBPlaceHolder(query, placeHolders)
       return RespuestaDB.exitosa(res)
     } catch (error) {
       return RespuestaDB.fallida(error)
