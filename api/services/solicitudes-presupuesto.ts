@@ -300,6 +300,35 @@ class SolicitudesPresupuestoServices {
     }
   }
 
+  static async buscarFactura(folio: string) {
+    try {
+      const re = await SolicitudesPresupuestoDB.buscarFactura(folio)
+      if (re.error) throw re.data
+
+      const folioEncontrando = re.data[0]
+
+      if (folioEncontrando) {
+        return RespuestaController.exitosa(
+          201,
+          "La factura seleccionada ya ha sido usada anteriormente",
+          true
+        )
+      } else {
+        return RespuestaController.exitosa(
+          201,
+          "La factura seleccionada no ha sido usada anteriormente",
+          false
+        )
+      }
+    } catch (error) {
+      return RespuestaController.fallida(
+        400,
+        "Error al buscar folio de factura",
+        error
+      )
+    }
+  }
+
   static async actualizarEstatus(
     id_solicitud: number,
     i_estatus: EstatusSolicitud

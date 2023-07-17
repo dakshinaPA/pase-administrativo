@@ -256,8 +256,26 @@ class SolicitudesPresupuestoDB {
     const query = `INSERT INTO solicitud_presupuesto_notas ( id_solicitud, id_usuario,
       mensaje, dt_registro ) VALUES ( ?, ?, ?, ? )`
 
-    const placeHolders = [id_solicitud, id_usuario, mensaje, fechaActualAEpoch()]
+    const placeHolders = [
+      id_solicitud,
+      id_usuario,
+      mensaje,
+      fechaActualAEpoch(),
+    ]
 
+    try {
+      const res = await queryDBPlaceHolder(query, placeHolders)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
+
+  static async buscarFactura(folio: string) {
+    const query =
+      "SELECT id, folio_fiscal FROM solicitud_presupuesto_comprobantes WHERE folio_fiscal=?"
+
+    const placeHolders = [folio]
     try {
       const res = await queryDBPlaceHolder(query, placeHolders)
       return RespuestaDB.exitosa(res)

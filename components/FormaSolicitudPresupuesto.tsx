@@ -28,6 +28,7 @@ import {
   obtenerProyectos,
   obtenerSolicitudes,
 } from "@assets/utils/common"
+import { Toast } from "./Toast"
 
 type ActionTypes =
   | "CARGA_INICIAL"
@@ -129,6 +130,11 @@ const estadoInicialDataTipoGasto: DataTipoGasto = {
   titulares: [],
 }
 
+const estaInicialToast = {
+  show: false,
+  mensaje: "",
+}
+
 const Notas = ({ notas, dispatch }) => {
   const router = useRouter()
   const idSolicitud = Number(router.query.idS)
@@ -206,7 +212,11 @@ const Notas = ({ notas, dispatch }) => {
         />
       </div>
       <div className="col-12 col-md-3 mb-3 text-end">
-        <button type="button" className="btn btn-secondary" onClick={agregarNota}>
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={agregarNota}
+        >
           Agregar nota +
         </button>
       </div>
@@ -245,8 +255,8 @@ const FormaSolicitudPresupuesto = () => {
   const [proyectosDB, setProyectosDB] = useState<ProyectoMin[]>([])
   const [dataProyecto, setDataProyecto] = useState(estadoInicialDataProyecto)
   const [dataTipoGasto, setDataTipoGasto] = useState(estadoInicialDataTipoGasto)
-  // const [estatus, setEstatus] = useState(1)
   const [aceptarTerminos, setAceptarTerminos] = useState(Boolean(idSolicitud))
+  const [toastState, setToastState] = useState(estaInicialToast)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [modoEditar, setModoEditar] = useState<boolean>(!idSolicitud)
   const modalidad = idSolicitud ? "EDITAR" : "CREAR"
@@ -482,7 +492,17 @@ const FormaSolicitudPresupuesto = () => {
   }
 
   const editar = async () => {
-    return ApiCall.put(`/solicitudes-presupuesto/${idSolicitud}`, estadoForma)
+    // cuando rol coparte hace una modificacion y su estatus es rechazada o devolucion,
+    // el status debe cambiar a revision nuevamente
+    let payload = estadoForma
+
+    if (user.id_rol == 3 && [3, 5].includes(estadoForma.i_estatus)) {
+      payload = {
+        ...payload,
+        i_estatus: 1,
+      }
+    }
+    return ApiCall.put(`/solicitudes-presupuesto/${idSolicitud}`, payload)
   }
 
   const cancelar = () => {
@@ -534,7 +554,7 @@ const FormaSolicitudPresupuesto = () => {
 
     const reader = new FileReader()
 
-    reader.onload = () => {
+    reader.onload = async () => {
       const parser = new DOMParser()
       const xml = parser.parseFromString(
         reader.result as string,
@@ -548,6 +568,28 @@ const FormaSolicitudPresupuesto = () => {
       const [emisor] = xml.getElementsByTagName("cfdi:Emisor")
       const impuestos = xml.getElementsByTagName("cfdi:Impuestos")
 
+      const folio_fiscal = timbre?.getAttribute("UUID") || ""
+
+      //limpiar el input
+      fileInput.current.value = ""
+
+      // buscar si el folio que se quiere subir ya existe en base de datos
+      const reFactura = await ApiCall.get(
+        `/solicitudes-presupuesto/buscar-factura?folio=${folio_fiscal}`
+      )
+      if (reFactura.error) {
+        console.log(reFactura.data)
+        return
+      } else {
+        if (reFactura.data) {
+          setToastState({
+            show: true,
+            mensaje: reFactura.mensaje,
+          })
+          return
+        }
+      }
+
       let f_retenciones = ""
 
       //a veces impuestos es mas de un tag y hay que buscarlo
@@ -558,7 +600,6 @@ const FormaSolicitudPresupuesto = () => {
         }
       }
 
-      const folio_fiscal = timbre?.getAttribute("UUID") || ""
       const metodo_pago =
         (comprobante?.getAttribute("MetodoPago") as "PUE" | "PPD") || ""
       const clave_forma_pago = comprobante?.getAttribute("FormaPago") || ""
@@ -567,9 +608,6 @@ const FormaSolicitudPresupuesto = () => {
 
       const formaPago = asignarIdFormaPAgo(clave_forma_pago)
       const regimenFiscal = obtenerRegimenXClave(clave_regimen_fiscal)
-
-      //limpiar el input
-      fileInput.current.value = ""
 
       if (!folio_fiscal || !metodo_pago || !f_total || !clave_regimen_fiscal) {
         console.log("no se identificaron los datos de la factura")
@@ -631,8 +669,7 @@ const FormaSolicitudPresupuesto = () => {
 
     if (!pasaValidaciones()) return
 
-    console.log(estadoForma)
-
+    // console.log(estadoForma)
     setIsLoading(true)
 
     const { error, data, mensaje } =
@@ -643,15 +680,9 @@ const FormaSolicitudPresupuesto = () => {
     } else {
       if (modalidad === "CREAR") {
         router.push(`/solicitudes-presupuesto`)
-        // dispatch({
-        //   type: "NUEVO_REGISTRO",
-        //   payload: {
-        //     ...estadoInicialForma,
-        //     id_proyecto: proyectosDB[0]?.id || 0,
-        //   },
-        // })
       } else {
-        estatusCarga.current = estadoForma.i_estatus
+        // estatusCarga.current = estadoForma.i_estatus
+        await obtener()
         setModoEditar(false)
       }
     }
@@ -659,40 +690,20 @@ const FormaSolicitudPresupuesto = () => {
     setIsLoading(false)
   }
 
-  // const actualizarEstatus = async (ev: ChangeEvent) => {
-  //   const i_estatus = Number(ev.target.value)
-
-  //   setEstatus(i_estatus)
-
-  //   const upEstatus = await ApiCall.put(
-  //     `/solicitudes-presupuesto/${idSolicitud}/cambiar-estatus`,
-  //     { i_estatus }
-  //   )
-  //   if (upEstatus.error) {
-  //     console.log(upEstatus.data)
-  //   } else {
-  //     const nuevoEstatus = upEstatus.data as SolicitudPresupuesto
-
-  //     dispatch({
-  //       type: "CAMBIO_ESTATUS",
-  //       payload: {
-  //         i_estatus: nuevoEstatus.i_estatus,
-  //         estatus: nuevoEstatus.estatus,
-  //       },
-  //     })
-  //   }
-  // }
-
   // const inputFileReembolso =
   //   [1, 4].includes(Number(estadoForma.i_tipo_gasto)) &&
   //   estadoForma.comprobantes.length > 0
 
   const disableInputImporte =
-    !modoEditar || estadoForma.i_tipo_gasto == 1 || user.id_rol != 3
+    !modoEditar ||
+    estadoForma.i_tipo_gasto == 1 ||
+    user.id_rol != 3 ||
+    [2, 4].includes(estadoForma.i_estatus)
 
   const esGastoAsimilados = estadoForma.i_tipo_gasto == 3
   const noTipoGasto = !estadoForma.i_tipo_gasto
-  const disableInputFile = !modoEditar || esGastoAsimilados || noTipoGasto
+  const disableInputFile =
+    !modoEditar || (esGastoAsimilados && user.id_rol == 3) || noTipoGasto
 
   const disableInputProveedor =
     !modoEditar ||
@@ -725,376 +736,384 @@ const FormaSolicitudPresupuesto = () => {
   }
 
   return (
-    <RegistroContenedor>
-      <div className="row mb-3">
-        <div className="col-12 d-flex justify-content-between">
-          <div>
-            {/* <BtnBack navLink="/solicitudes-presupuesto" /> */}
-            {modalidad === "CREAR" && (
-              <h2 className="color1 mb-0">
-                Registrar solicitud de presupuesto
-              </h2>
-            )}
-          </div>
-          {showBtnEditar && <BtnEditar onClick={() => setModoEditar(true)} />}
-        </div>
-      </div>
-      <FormaContenedor onSubmit={handleSubmit}>
-        {modalidad === "EDITAR" && estatusCarga.current && (
-          <div className="col-12 mb-3">
-            <h5>
-              <span
-                className={`badge bg-${obtenerBadgeStatusSolicitud(
-                  estatusCarga.current
-                )}`}
-              >
-                {obtenerEstatusSolicitud(estatusCarga.current)}
-              </span>
-            </h5>
-          </div>
-        )}
-        {modalidad === "CREAR" ? (
-          <>
-            <div className="col-12 col-md-6 col-lg-4 mb-3">
-              <label className="form-label">Proyecto</label>
-              <select
-                className="form-control"
-                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-                name="id_proyecto"
-                value={estadoForma.id_proyecto}
-                disabled={Boolean(idProyecto)}
-              >
-                {proyectosDB.length > 0 ? (
-                  proyectosDB.map(({ id, id_alt, nombre }) => (
-                    <option key={id} value={id}>
-                      {nombre} - {id_alt}
-                    </option>
-                  ))
-                ) : (
-                  <option value="0">No hay proyectos</option>
-                )}
-              </select>
+    <>
+      <RegistroContenedor>
+        <div className="row mb-3">
+          <div className="col-12 d-flex justify-content-between">
+            <div>
+              {/* <BtnBack navLink="/solicitudes-presupuesto" /> */}
+              {modalidad === "CREAR" && (
+                <h2 className="color1 mb-0">
+                  Registrar solicitud de presupuesto
+                </h2>
+              )}
             </div>
-            <div className="col-12 col-md-6 col-lg-4 mb-3">
-              <label className="form-label">Tipo de gasto</label>
-              <select
-                className="form-control"
-                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-                name="i_tipo_gasto"
-                value={estadoForma.i_tipo_gasto}
-              >
-                <option value="0" disabled>
-                  Selecciona una opción
-                </option>
-                {dataProyecto.colaboradores.length > 0 && (
-                  <option value="1">Reembolso</option>
-                )}
-                {dataProyecto.proveedores.length > 0 && (
-                  <option value="2">Pago a proveedor</option>
-                )}
-                {showTipoGastoAsimilados && (
-                  <option value="3">Asimilados a salarios</option>
-                )}
-                {showTipoGastoHonorarios && (
-                  <option value="4">
-                    Honorarios profesionales (colaboradores)
+            {showBtnEditar && <BtnEditar onClick={() => setModoEditar(true)} />}
+          </div>
+        </div>
+        <FormaContenedor onSubmit={handleSubmit}>
+          {modalidad === "EDITAR" && estatusCarga.current && (
+            <div className="col-12 mb-3">
+              <h5>
+                <span
+                  className={`badge bg-${obtenerBadgeStatusSolicitud(
+                    estatusCarga.current
+                  )}`}
+                >
+                  {obtenerEstatusSolicitud(estatusCarga.current)}
+                </span>
+              </h5>
+            </div>
+          )}
+          {modalidad === "CREAR" ? (
+            <>
+              <div className="col-12 col-md-6 col-lg-4 mb-3">
+                <label className="form-label">Proyecto</label>
+                <select
+                  className="form-control"
+                  onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+                  name="id_proyecto"
+                  value={estadoForma.id_proyecto}
+                  disabled={Boolean(idProyecto)}
+                >
+                  {proyectosDB.length > 0 ? (
+                    proyectosDB.map(({ id, id_alt, nombre }) => (
+                      <option key={id} value={id}>
+                        {nombre} - {id_alt}
+                      </option>
+                    ))
+                  ) : (
+                    <option value="0">No hay proyectos</option>
+                  )}
+                </select>
+              </div>
+              <div className="col-12 col-md-6 col-lg-4 mb-3">
+                <label className="form-label">Tipo de gasto</label>
+                <select
+                  className="form-control"
+                  onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+                  name="i_tipo_gasto"
+                  value={estadoForma.i_tipo_gasto}
+                >
+                  <option value="0" disabled>
+                    Selecciona una opción
                   </option>
-                )}
-                {dataProyecto.colaboradores.length > 0 && (
-                  <option value="5">Gastos por comprobar</option>
-                )}
-              </select>
-            </div>
-            <div className="col-12 col-md-6 col-lg-4 mb-3">
-              <label className="form-label">Partida presupuestal</label>
-              <select
-                className="form-control"
-                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-                name="id_partida_presupuestal"
-                value={estadoForma.id_partida_presupuestal}
-                disabled={disableSelectPartidaPresupuestal}
-              >
-                <option value="0" disabled>
-                  Selecciona una opción
-                </option>
-                {dataTipoGasto.partidas_presupuestales.map(
-                  ({ id_rubro, nombre }) => (
-                    <option key={id_rubro} value={id_rubro}>
-                      {nombre}
+                  {dataProyecto.colaboradores.length > 0 && (
+                    <option value="1">Reembolso</option>
+                  )}
+                  {dataProyecto.proveedores.length > 0 && (
+                    <option value="2">Pago a proveedor</option>
+                  )}
+                  {showTipoGastoAsimilados && (
+                    <option value="3">Asimilados a salarios</option>
+                  )}
+                  {showTipoGastoHonorarios && (
+                    <option value="4">
+                      Honorarios profesionales (colaboradores)
                     </option>
-                  )
-                )}
-              </select>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="col-12 col-md-6 col-lg-4 mb-3">
-              <label className="form-label">Proyecto</label>
-              <input
-                className="form-control"
-                value={estadoForma.proyecto}
-                disabled
-              />
-            </div>
-            <div className="col-12 col-md-6 col-lg-4 mb-3">
-              <label className="form-label">Tipo de gasto</label>
-              <input
-                className="form-control"
-                value={estadoForma.tipo_gasto}
-                disabled
-              />
-            </div>
-            <div className="col-12 col-md-6 col-lg-4 mb-3">
-              <label className="form-label">Partida presupuestal</label>
-              <input
-                className="form-control"
-                value={estadoForma.rubro}
-                disabled
-              />
-            </div>
-          </>
-        )}
-        <div className="col-12 col-md-6 col-lg-4 mb-3">
-          <label className="form-label">Titular cuenta</label>
-          <select
-            className="form-control"
-            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-            name="titular_cuenta"
-            value={estadoForma.titular_cuenta}
-            disabled={disableInputXEstatus}
-          >
-            <option value="" disabled>
-              Selecciona una opción
-            </option>
-            {dataTipoGasto.titulares.map((titular_cuenta) => (
-              <option key={titular_cuenta.id} value={titular_cuenta.nombre}>
-                {titular_cuenta.nombre}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="col-12 col-md-6 col-lg-4 mb-3">
-          <label className="form-label">CLABE</label>
-          <input
-            className="form-control"
-            type="text"
-            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-            name="clabe"
-            value={estadoForma.clabe}
-            disabled
-          />
-        </div>
-        <div className="col-12 col-md-6 col-lg-4 mb-3">
-          <label className="form-label">Banco</label>
-          <select
-            className="form-control"
-            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-            name="id_banco"
-            value={estadoForma.id_banco}
-            disabled
-          >
-            {bancos.map(({ id, nombre }) => (
-              <option key={id} value={id}>
-                {nombre}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="col-12 col-md-6 col-lg-4 mb-3">
-          <label className="form-label">Email</label>
-          <input
-            className="form-control"
-            type="text"
-            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-            name="email"
-            value={estadoForma.email}
-            disabled={disableInputXEstatus}
-          />
-        </div>
-        <div className="col-12 col-md-6 col-lg-4 mb-3">
-          <label className="form-label">Proveedor</label>
-          <input
-            className="form-control"
-            type="text"
-            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-            name="proveedor"
-            value={estadoForma.proveedor}
-            disabled={disableInputProveedor}
-            placeholder="emisor de la factura"
-          />
-        </div>
-        <div className="col-12 col-md-6 col-lg-4 mb-3">
-          <label className="form-label">Descricpión del gasto</label>
-          {[3, 4].includes(Number(estadoForma.i_tipo_gasto)) ? (
+                  )}
+                  {dataProyecto.colaboradores.length > 0 && (
+                    <option value="5">Gastos por comprobar</option>
+                  )}
+                </select>
+              </div>
+              <div className="col-12 col-md-6 col-lg-4 mb-3">
+                <label className="form-label">Partida presupuestal</label>
+                <select
+                  className="form-control"
+                  onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+                  name="id_partida_presupuestal"
+                  value={estadoForma.id_partida_presupuestal}
+                  disabled={disableSelectPartidaPresupuestal}
+                >
+                  <option value="0" disabled>
+                    Selecciona una opción
+                  </option>
+                  {dataTipoGasto.partidas_presupuestales.map(
+                    ({ id_rubro, nombre }) => (
+                      <option key={id_rubro} value={id_rubro}>
+                        {nombre}
+                      </option>
+                    )
+                  )}
+                </select>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="col-12 col-md-6 col-lg-4 mb-3">
+                <label className="form-label">Proyecto</label>
+                <input
+                  className="form-control"
+                  value={estadoForma.proyecto}
+                  disabled
+                />
+              </div>
+              <div className="col-12 col-md-6 col-lg-4 mb-3">
+                <label className="form-label">Tipo de gasto</label>
+                <input
+                  className="form-control"
+                  value={estadoForma.tipo_gasto}
+                  disabled
+                />
+              </div>
+              <div className="col-12 col-md-6 col-lg-4 mb-3">
+                <label className="form-label">Partida presupuestal</label>
+                <input
+                  className="form-control"
+                  value={estadoForma.rubro}
+                  disabled
+                />
+              </div>
+            </>
+          )}
+          <div className="col-12 col-md-6 col-lg-4 mb-3">
+            <label className="form-label">Titular cuenta</label>
             <select
               className="form-control"
               onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-              name="descripcion_gasto"
-              value={estadoForma.descripcion_gasto}
+              name="titular_cuenta"
+              value={estadoForma.titular_cuenta}
               disabled={disableInputXEstatus}
             >
-              {meses.map((mes) => (
-                <option key={mes} value={mes}>
-                  {mes}
+              <option value="" disabled>
+                Selecciona una opción
+              </option>
+              {dataTipoGasto.titulares.map((titular_cuenta) => (
+                <option key={titular_cuenta.id} value={titular_cuenta.nombre}>
+                  {titular_cuenta.nombre}
                 </option>
               ))}
             </select>
-          ) : (
+          </div>
+          <div className="col-12 col-md-6 col-lg-4 mb-3">
+            <label className="form-label">CLABE</label>
             <input
               className="form-control"
               type="text"
               onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-              name="descripcion_gasto"
-              value={estadoForma.descripcion_gasto}
-              disabled={disableInputXEstatus}
+              name="clabe"
+              value={estadoForma.clabe}
+              disabled
             />
-          )}
-        </div>
-        <div className="col-12 col-md-6 col-lg-4 mb-3">
-          <label className="form-label">Importe</label>
-          <input
-            className="form-control"
-            type="text"
-            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-            name="f_importe"
-            value={estadoForma.f_importe}
-            disabled={disableInputImporte}
-          />
-        </div>
-        <div className="col-12 col-md-6 col-lg-4 mb-3">
-          <label className="form-label">Monto a comprobar</label>
-          <input
-            className="form-control"
-            type="text"
-            value={(
-              Number(estadoForma.f_importe) - obtenerTotalComprobaciones()
-            ).toFixed(2)}
-            disabled
-          />
-        </div>
-        {user.id_rol != 3 && (
+          </div>
           <div className="col-12 col-md-6 col-lg-4 mb-3">
-            <label className="form-label">Estatus</label>
+            <label className="form-label">Banco</label>
             <select
               className="form-control"
-              name="i_estatus"
               onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-              value={estadoForma.i_estatus}
-              disabled={!modoEditar}
+              name="id_banco"
+              value={estadoForma.id_banco}
+              disabled
             >
-              <option value="1">En revisión</option>
-              <option value="2">Autorizada</option>
-              <option value="3">Rechazada</option>
-              <option value="4">Procesada</option>
-              <option value="5">Devolución</option>
+              {bancos.map(({ id, nombre }) => (
+                <option key={id} value={id}>
+                  {nombre}
+                </option>
+              ))}
             </select>
           </div>
-        )}
-        {modalidad === "CREAR" && (
-          <div className="col-12 mb-3">
-            <div className="form-check">
+          <div className="col-12 col-md-6 col-lg-4 mb-3">
+            <label className="form-label">Email</label>
+            <input
+              className="form-control"
+              type="text"
+              onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+              name="email"
+              value={estadoForma.email}
+              disabled={disableInputXEstatus}
+            />
+          </div>
+          <div className="col-12 col-md-6 col-lg-4 mb-3">
+            <label className="form-label">Proveedor</label>
+            <input
+              className="form-control"
+              type="text"
+              onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+              name="proveedor"
+              value={estadoForma.proveedor}
+              disabled={disableInputProveedor}
+              placeholder="emisor de la factura"
+            />
+          </div>
+          <div className="col-12 col-md-6 col-lg-4 mb-3">
+            <label className="form-label">Descricpión del gasto</label>
+            {[3, 4].includes(Number(estadoForma.i_tipo_gasto)) ? (
+              <select
+                className="form-control"
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+                name="descripcion_gasto"
+                value={estadoForma.descripcion_gasto}
+                disabled={disableInputXEstatus}
+              >
+                {meses.map((mes) => (
+                  <option key={mes} value={mes}>
+                    {mes}
+                  </option>
+                ))}
+              </select>
+            ) : (
               <input
-                type="checkbox"
-                className="form-check-input"
-                onChange={() => setAceptarTerminos(!aceptarTerminos)}
-                ref={cbAceptaTerminos}
-                checked={aceptarTerminos}
+                className="form-control"
+                type="text"
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+                name="descripcion_gasto"
+                value={estadoForma.descripcion_gasto}
+                disabled={disableInputXEstatus}
               />
-              <label className="form-check-label">
-                Acepto los términos y condiciones
-              </label>
+            )}
+          </div>
+          <div className="col-12 col-md-6 col-lg-4 mb-3">
+            <label className="form-label">Importe</label>
+            <input
+              className="form-control"
+              type="text"
+              onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+              name="f_importe"
+              value={estadoForma.f_importe}
+              disabled={disableInputImporte}
+            />
+          </div>
+          <div className="col-12 col-md-6 col-lg-4 mb-3">
+            <label className="form-label">Monto a comprobar</label>
+            <input
+              className="form-control"
+              type="text"
+              value={(
+                Number(estadoForma.f_importe) - obtenerTotalComprobaciones()
+              ).toFixed(2)}
+              disabled
+            />
+          </div>
+          {user.id_rol != 3 && (
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label">Estatus</label>
+              <select
+                className="form-control"
+                name="i_estatus"
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+                value={estadoForma.i_estatus}
+                disabled={!modoEditar}
+              >
+                <option value="1">En revisión</option>
+                <option value="2">Autorizada</option>
+                <option value="3">Rechazada</option>
+                <option value="4">Procesada</option>
+                <option value="5">Devolución</option>
+              </select>
             </div>
+          )}
+          {modalidad === "CREAR" && (
+            <div className="col-12 mb-3">
+              <div className="form-check">
+                <input
+                  type="checkbox"
+                  className="form-check-input"
+                  onChange={() => setAceptarTerminos(!aceptarTerminos)}
+                  ref={cbAceptaTerminos}
+                  checked={aceptarTerminos}
+                />
+                <label className="form-check-label">
+                  Acepto los términos y condiciones
+                </label>
+              </div>
+            </div>
+          )}
+          <div className="col-12">
+            <hr />
           </div>
-        )}
-        <div className="col-12">
-          <hr />
-        </div>
-        {/* Seccion comprobantes */}
-        <div className="col-12 mb-3">
-          <h4 className="color1 mb-0">Comprobantes</h4>
-        </div>
-        <div className="col-12 col-lg-4 mb-3">
-          <label className="form-label">Agregar factura</label>
-          <input
-            className="form-control"
-            type="file"
-            onChange={agregarFactura}
-            name="comprobante"
-            accept=".xml"
-            ref={fileInput}
-            disabled={disableInputFile}
-          />
-        </div>
-        <div className="col-12 mb-3 table-responsive">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Folio fiscal</th>
-                <th>Régimen fiscal</th>
-                <th>Método de pago</th>
-                <th>Forma de pago</th>
-                <th>Impuestos retenedios</th>
-                <th>Total</th>
-                {modoEditar && (
-                  <th>
-                    <i className="bi bi-trash"></i>
-                  </th>
-                )}
-              </tr>
-            </thead>
-            <tbody>
-              {estadoForma.comprobantes.map((comprobante) => {
-                const {
-                  id,
-                  clave_regimen_fiscal,
-                  regimen_fiscal,
-                  folio_fiscal,
-                  metodo_pago,
-                  clave_forma_pago,
-                  forma_pago,
-                  f_retenciones,
-                  f_total,
-                } = comprobante
-                return (
-                  <tr key={folio_fiscal}>
-                    <td>{folio_fiscal}</td>
-                    <td>
-                      {clave_regimen_fiscal} - {regimen_fiscal}
-                    </td>
-                    <td>{metodo_pago}</td>
-                    <td>
-                      {clave_forma_pago} - {forma_pago}
-                    </td>
-                    <td>{f_retenciones}</td>
-                    <td>{f_total}</td>
-                    {modoEditar && (
+          {/* Seccion comprobantes */}
+          <div className="col-12 mb-3">
+            <h4 className="color1 mb-0">Comprobantes</h4>
+          </div>
+          <div className="col-12 col-lg-4 mb-3">
+            <label className="form-label">Agregar factura</label>
+            <input
+              className="form-control"
+              type="file"
+              onChange={agregarFactura}
+              name="comprobante"
+              accept=".xml"
+              ref={fileInput}
+              disabled={disableInputFile}
+            />
+          </div>
+          <div className="col-12 mb-3 table-responsive">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Folio fiscal</th>
+                  <th>Régimen fiscal</th>
+                  <th>Método de pago</th>
+                  <th>Forma de pago</th>
+                  <th>Impuestos retenedios</th>
+                  <th>Total</th>
+                  {modoEditar && (
+                    <th>
+                      <i className="bi bi-trash"></i>
+                    </th>
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {estadoForma.comprobantes.map((comprobante) => {
+                  const {
+                    id,
+                    clave_regimen_fiscal,
+                    regimen_fiscal,
+                    folio_fiscal,
+                    metodo_pago,
+                    clave_forma_pago,
+                    forma_pago,
+                    f_retenciones,
+                    f_total,
+                  } = comprobante
+                  return (
+                    <tr key={folio_fiscal}>
+                      <td>{folio_fiscal}</td>
                       <td>
-                        <BtnAccion
-                          margin={false}
-                          icono="bi-x-circle"
-                          onclick={() => quitarFactura(folio_fiscal)}
-                          title="eliminar factura"
-                        />
+                        {clave_regimen_fiscal} - {regimen_fiscal}
                       </td>
-                    )}
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-        {modoEditar && (
-          <div className="col-12 text-end">
-            <BtnCancelar onclick={cancelar} margin={"r"} />
-            <BtnRegistrar modalidad={modalidad} margin={false} />
+                      <td>{metodo_pago}</td>
+                      <td>
+                        {clave_forma_pago} - {forma_pago}
+                      </td>
+                      <td>{f_retenciones}</td>
+                      <td>{f_total}</td>
+                      {modoEditar && (
+                        <td>
+                          <BtnAccion
+                            margin={false}
+                            icono="bi-x-circle"
+                            onclick={() => quitarFactura(folio_fiscal)}
+                            title="eliminar factura"
+                          />
+                        </td>
+                      )}
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
           </div>
-        )}
-        {modalidad === "EDITAR" && (
-          <Notas notas={estadoForma.notas} dispatch={dispatch} />
-        )}
-      </FormaContenedor>
-    </RegistroContenedor>
+          {modoEditar && (
+            <div className="col-12 text-end">
+              <BtnCancelar onclick={cancelar} margin={"r"} />
+              <BtnRegistrar modalidad={modalidad} margin={false} />
+            </div>
+          )}
+          {modalidad === "EDITAR" && (
+            <Notas notas={estadoForma.notas} dispatch={dispatch} />
+          )}
+        </FormaContenedor>
+      </RegistroContenedor>
+      <Toast
+        estado={toastState}
+        cerrar={() =>
+          setToastState((prevState) => ({ ...prevState, show: false }))
+        }
+      />
+    </>
   )
 }
 
