@@ -5,7 +5,9 @@ import { Loader } from "@components/Loader"
 import { TablaContenedor } from "@components/Contenedores"
 import { ModalEliminar } from "@components/ModalEliminar"
 import {
+  aMinuscula,
   epochAFecha,
+  inputDateAEpoch,
   montoALocaleString,
   obtenerBadgeStatusSolicitud,
   obtenerCopartes,
@@ -25,9 +27,16 @@ import { CoparteMin, QueriesCoparte } from "@models/coparte.model"
 import styles from "@components/styles/Filtros.module.css"
 import { TooltipInfo } from "@components/Tooltip"
 
-const Filtros = ({ show, setShow }) => {
-  const estadoInicialForma = {
-    estatus: 0,
+interface FiltrosSolicitud {
+  i_estatus: 0 | EstatusSolicitud
+  titular: string
+  dt_inicio: string
+  dt_fin: string
+}
+
+const Filtros = ({ show, setShow, aplicarFiltros }) => {
+  const estadoInicialForma: FiltrosSolicitud = {
+    i_estatus: 0,
     titular: "",
     dt_inicio: "",
     dt_fin: "",
@@ -49,7 +58,14 @@ const Filtros = ({ show, setShow }) => {
   }
 
   const buscarSolicitudes = () => {
-    console.log(estaforma)
+    const dataTranformada = {
+      i_estatus: Number(estaforma.i_estatus),
+      titular: estaforma.titular,
+      dt_inicio: estaforma.dt_inicio ? inputDateAEpoch(estaforma.dt_inicio) : 0,
+      dt_fin: estaforma.dt_fin ? inputDateAEpoch(estaforma.dt_fin) : 0,
+    }
+
+    aplicarFiltros(dataTranformada)
     setShow(false)
   }
 
@@ -62,9 +78,9 @@ const Filtros = ({ show, setShow }) => {
           <label className="form-label color1 fw-semibold">Estatus</label>
           <select
             className="form-control"
-            name="estatus"
+            name="i_estatus"
             onChange={handleChange}
-            value={estaforma.estatus}
+            value={estaforma.i_estatus}
           >
             <option value="0">Todos</option>
             <option value="1">Revisión</option>
@@ -371,13 +387,46 @@ const SolicitudesPresupuesto = () => {
     })
   }
 
+  const aplicarFiltros = (filtros: FiltrosSolicitud) => {
+    const { i_estatus, titular, dt_inicio, dt_fin } = filtros
+
+    const solicitudesFiltro = infoProyectoDB.solicitudes_presupuesto.filter(
+      (solicitud) => {
+        const condicionEstatus =
+          i_estatus > 0 ? solicitud.i_estatus === i_estatus : true
+        const condicionTitular = titular
+          ? aMinuscula(solicitud.titular_cuenta).includes(aMinuscula(titular))
+          : true
+        const condicionDtInicio = dt_inicio
+          ? solicitud.dt_registro >= dt_inicio
+          : true
+        const condicionDtFin = dt_fin
+          ? solicitud.dt_registro <= dt_fin
+          : true
+
+        return condicionEstatus && condicionTitular && condicionDtInicio && condicionDtFin
+      }
+    )
+
+    setSolicitudesFiltradas(solicitudesFiltro)
+    // if (i_estatus > 0) {
+
+    //   const solicitudesFiltro = infoProyectoDB.solicitudes_presupuesto.filter(
+    //     (solicitud) => solicitud.i_estatus == i_estatus
+    //   )
+    //   setSolicitudesFiltradas(solicitudesFiltro)
+    // } else {
+    //   setSolicitudesFiltradas(infoProyectoDB.solicitudes_presupuesto)
+    // }
+  }
+
   const showSelectCambioStatus = Object.entries(idsCambioStatus).some(
     (id) => !!id[1]
   )
 
   return (
     <TablaContenedor>
-      <div className="row mb-3">
+      <div className="row mb-2">
         {user.id_rol == 3 && (
           <div className="col-12 col-sm-6 col-lg-3 col-xl-2 mb-3">
             <BtnNeutro
@@ -437,7 +486,11 @@ const SolicitudesPresupuesto = () => {
             Filtros
             <i className="bi bi-funnel ms-1"></i>
           </button>
-          <Filtros show={showFiltros} setShow={setShowFiltros} />
+          <Filtros
+            show={showFiltros}
+            setShow={setShowFiltros}
+            aplicarFiltros={aplicarFiltros}
+          />
         </div>
         <div className="col d-none d-xl-block"></div>
         <div className="col-12 col-sm-6 col-lg-3 col-xl-2 mb-3">
@@ -497,7 +550,8 @@ const SolicitudesPresupuesto = () => {
                     <th>Por comprobar</th>
                     <th>ISR (35%)</th>
                     <th>Retenciones</th>
-                    <th>PA
+                    <th>
+                      PA
                       {/* <span className="me-1">PA</span>
                       <TooltipInfo texto="Gestión financiera de Dakshina" /> */}
                     </th>

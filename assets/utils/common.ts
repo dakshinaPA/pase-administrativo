@@ -39,6 +39,11 @@ const inputDateAformato = (fecha: string): string => {
   return `${dia}/${mes}/${anio}`
 }
 
+const inputDateAEpoch = (InputDate: string): number => {
+  const InputDateAFecha = new Date(InputDate).valueOf() / 1000
+  return InputDateAFecha
+}
+
 const fechaActualAEpoch = () => {
   const fechaHoyEpoch = Date.now()
   const fechaEpoch = (fechaHoyEpoch / 1000).toFixed()
@@ -272,4 +277,5 @@ export {
   obtenerBadgeStatusSolicitud,
   obtenerEstatusSolicitud,
   montoALocaleString,
+  inputDateAEpoch
 }
