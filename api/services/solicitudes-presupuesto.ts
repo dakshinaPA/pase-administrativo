@@ -102,6 +102,7 @@ class SolicitudesPresupuestoServices {
               f_total_comprobaciones,
               f_monto_comprobar: Number(f_importe) - f_total_comprobaciones,
               f_total_impuestos_retenidos,
+              f_total: Number(f_importe) + f_total_impuestos_retenidos
             },
             comprobantes,
             notas,

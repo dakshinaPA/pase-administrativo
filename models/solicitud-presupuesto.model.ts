@@ -28,6 +28,7 @@ export interface SaldoSolicitud {
   f_total_comprobaciones: number
   f_monto_comprobar: number
   f_total_impuestos_retenidos: number
+  f_total: number
 }
 
 export interface NotaSolicitud {

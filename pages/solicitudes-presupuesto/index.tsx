@@ -14,7 +14,7 @@ import {
 } from "@assets/utils/common"
 import { crearExcel } from "@assets/utils/crearExcel"
 import { useAuth } from "@contexts/auth.context"
-import { ProyectoMin } from "@models/proyecto.model"
+import { Proyecto, ProyectoMin } from "@models/proyecto.model"
 import {
   EstatusSolicitud,
   PayloadCambioEstatus,
@@ -23,6 +23,7 @@ import {
 import { BtnAccion, BtnNeutro } from "@components/Botones"
 import { CoparteMin, QueriesCoparte } from "@models/coparte.model"
 import styles from "@components/styles/Filtros.module.css"
+import { TooltipInfo } from "@components/Tooltip"
 
 const Filtros = ({ show, setShow }) => {
   const estadoInicialForma = {
@@ -124,7 +125,10 @@ const SolicitudesPresupuesto = () => {
   const router = useRouter()
   const [copartesDB, setCopartesDB] = useState<CoparteMin[]>([])
   const [proyectosDB, setProyectosDB] = useState<ProyectoMin[]>([])
-  const [solicitudesDB, setSolicitudesDB] = useState<SolicitudPresupuesto[]>([])
+  const [infoProyectoDB, setInfoProyectoDB] = useState<Proyecto>(null)
+  const [solicitudesFiltradas, setSolicitudesFiltradas] = useState<
+    SolicitudPresupuesto[]
+  >([])
   const [solicitudAeliminar, setSolicitudAEliminar] = useState<number>(0)
   const [selectCoparte, setSelectCoparte] = useState(0)
   const [selectProyecto, setSelectProyecto] = useState(0)
@@ -148,7 +152,8 @@ const SolicitudesPresupuesto = () => {
   }, [selectCoparte])
 
   useEffect(() => {
-    cargarSolicitudes()
+    // cargarSolicitudes()
+    cargarInfoProyecto()
   }, [selectProyecto])
 
   const cargarData = async () => {
@@ -200,17 +205,45 @@ const SolicitudesPresupuesto = () => {
     setIsLoading(false)
   }
 
-  const cargarSolicitudes = async () => {
+  // const cargarSolicitudes = async () => {
+  //   if (!selectProyecto) return
+
+  //   setIsLoading(true)
+
+  //   const reSolicitudes = await obtenerSolicitudes(selectProyecto)
+  //   if (reSolicitudes.error) {
+  //     console.log(reSolicitudes.data)
+  //   } else {
+  //     const solicitudesDB = reSolicitudes.data as SolicitudPresupuesto[]
+  //     setSolicitudesDB(solicitudesDB)
+
+  //     //set del objeto de las solicitudes para cambios de estatus
+  //     const objIdsSolicitudes = {}
+  //     for (const solicitud of solicitudesDB) {
+  //       objIdsSolicitudes[solicitud.id] = false
+  //     }
+  //     setIdsCambioStatus(objIdsSolicitudes)
+  //   }
+
+  //   setIsLoading(false)
+  // }
+
+  const cargarInfoProyecto = async () => {
     if (!selectProyecto) return
 
     setIsLoading(true)
 
-    const reSolicitudes = await obtenerSolicitudes(selectProyecto)
-    if (reSolicitudes.error) {
-      console.log(reSolicitudes.data)
+    const reProyecto = await obtenerProyectos({
+      id: selectProyecto,
+      min: false,
+    })
+    if (reProyecto.error) {
+      console.log(reProyecto.data)
     } else {
-      const solicitudesDB = reSolicitudes.data as SolicitudPresupuesto[]
-      setSolicitudesDB(solicitudesDB)
+      const infoProyecto = reProyecto.data[0] as Proyecto
+      const solicitudesDB = infoProyecto.solicitudes_presupuesto
+      setInfoProyectoDB(infoProyecto)
+      setSolicitudesFiltradas(solicitudesDB)
 
       //set del objeto de las solicitudes para cambios de estatus
       const objIdsSolicitudes = {}
@@ -245,7 +278,7 @@ const SolicitudesPresupuesto = () => {
     if (upEstatus.error) {
       console.log(upEstatus.data)
     } else {
-      cargarSolicitudes()
+      // cargarSolicitudes()
     }
 
     setIsLoading(false)
@@ -268,7 +301,7 @@ const SolicitudesPresupuesto = () => {
     if (error) {
       console.log(data)
     } else {
-      await cargarSolicitudes()
+      // await cargarSolicitudes()
     }
 
     setIsLoading(false)
@@ -294,7 +327,7 @@ const SolicitudesPresupuesto = () => {
       "Monto a comprobar",
     ]
 
-    const solicituesAArray = solicitudesDB.map((solicitud) => {
+    const solicituesAArray = solicitudesFiltradas.map((solicitud) => {
       return [
         solicitud.tipo_gasto,
         solicitud.rubro,
@@ -338,30 +371,13 @@ const SolicitudesPresupuesto = () => {
     })
   }
 
-  let totalSolicitado = 0
-  let totalComprobado = 0
-  let totalComprobar = 0
-  let totalRetenido = 0
-
-  for (const solicitud of solicitudesDB) {
-    totalSolicitado += solicitud.f_importe
-    totalComprobado += solicitud.saldo.f_total_comprobaciones
-    totalComprobar += solicitud.saldo.f_monto_comprobar
-    totalRetenido += solicitud.saldo.f_total_impuestos_retenidos
-  }
-
   const showSelectCambioStatus = Object.entries(idsCambioStatus).some(
     (id) => !!id[1]
   )
 
-  // const solicitudesFiltradass = solicitudesDB.filter(({ titular_cuenta }) => {
-  //   const query = inputBusqueda.toLocaleLowerCase()
-  //   return aMinuscula(titular_cuenta).includes(query)
-  // })
-
   return (
     <TablaContenedor>
-      <div className="row">
+      <div className="row mb-3">
         {user.id_rol == 3 && (
           <div className="col-12 col-sm-6 col-lg-3 col-xl-2 mb-3">
             <BtnNeutro
@@ -464,141 +480,183 @@ const SolicitudesPresupuesto = () => {
           </div>
         )}
       </div>
-      {isLoading ? (
-        <Loader />
-      ) : (
-        <div className="row">
-          <div className="col-12 table-responsive">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>#id</th>
-                  <th>Tipo de gasto</th>
-                  <th>Partida presupuestal</th>
-                  <th>Titular</th>
-                  <th>Proveedor</th>
-                  <th>Descripción</th>
-                  <th>Importe solicitado</th>
-                  <th>Comprobado</th>
-                  <th>Por comprobar</th>
-                  <th>Retenciones</th>
-                  <th>Estatus</th>
-                  <th>Fecha registro</th>
-                  {user.id_rol == 1 && (
-                    <th>
-                      <input
-                        type="checkbox"
-                        className="form-check-input"
-                        onChange={({ target }) =>
-                          seleccionarTodasSolicitudes(target.checked)
-                        }
-                        checked={showSelectCambioStatus}
-                      />
+      {isLoading && <Loader />}
+      {infoProyectoDB && (
+        <>
+          <div className="row mb-3">
+            <div className="col-12 mb-2">
+              <h4 className="color1 mb-0">Saldo del proyecto</h4>
+            </div>
+            <div className="col-12 table-responsive">
+              <table className="table">
+                <thead className="table-light">
+                  <tr>
+                    <th>Monto total</th>
+                    <th>Solicitado</th>
+                    <th>Comprobado</th>
+                    <th>Por comprobar</th>
+                    <th>ISR (35%)</th>
+                    <th>Retenciones</th>
+                    <th>PA
+                      {/* <span className="me-1">PA</span>
+                      <TooltipInfo texto="Gestión financiera de Dakshina" /> */}
                     </th>
-                  )}
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td colSpan={6} className="fw-bold">
-                    Totales
-                  </td>
-                  <td className="fw-bold">
-                    {montoALocaleString(totalSolicitado)}
-                  </td>
-                  <td className="fw-bold">
-                    {montoALocaleString(totalComprobado)}
-                  </td>
-                  <td className="fw-bold">
-                    {montoALocaleString(totalComprobar)}
-                  </td>
-                  <td className="fw-bold">
-                    {montoALocaleString(totalRetenido)}
-                  </td>
-                  <td colSpan={user.id_rol == 1 ? 4 : 3}></td>
-                </tr>
-                {solicitudesDB.map((solicitud) => {
-                  const {
-                    id,
-                    id_proyecto,
-                    tipo_gasto,
-                    titular_cuenta,
-                    proveedor,
-                    descripcion_gasto,
-                    rubro,
-                    f_importe,
-                    saldo,
-                    i_estatus,
-                    estatus,
-                    dt_registro,
-                  } = solicitud
-
-                  const colorBadge = obtenerBadgeStatusSolicitud(i_estatus)
-
-                  return (
-                    <tr key={id}>
-                      <td>{id}</td>
-                      <td>{tipo_gasto}</td>
-                      <td>{rubro}</td>
-                      <td>{titular_cuenta}</td>
-                      <td>{proveedor}</td>
-                      <td>{descripcion_gasto}</td>
-                      <td>{montoALocaleString(f_importe)}</td>
-                      <td>
-                        {montoALocaleString(saldo.f_total_comprobaciones)}
-                      </td>
-                      <td>{montoALocaleString(saldo.f_monto_comprobar)}</td>
-                      <td>
-                        {montoALocaleString(saldo.f_total_impuestos_retenidos)}
-                      </td>
-                      <td>
-                        <span className={`badge bg-${colorBadge}`}>
-                          {estatus}
-                        </span>
-                      </td>
-                      <td>{epochAFecha(dt_registro)}</td>
-                      {user.id_rol == 1 && (
-                        <td>
-                          <input
-                            type="checkbox"
-                            className="form-check-input"
-                            onChange={({ target }) =>
-                              seleccionarSolicitud(target.checked, id)
-                            }
-                            checked={idsCambioStatus[id]}
-                          />
-                        </td>
-                      )}
-                      <td>
-                        <div className="d-flex">
-                          <BtnAccion
-                            margin={false}
-                            icono="bi-eye-fill"
-                            onclick={() =>
-                              router.push(
-                                `/proyectos/${id_proyecto}/solicitudes-presupuesto/${id}`
-                              )
-                            }
-                            title="ver detalle"
-                          />
-                          {user.id_rol == 1 && (
-                            <BtnAccion
-                              margin="l"
-                              icono="bi-x-circle"
-                              onclick={() => abrirModalEliminarSolicitud(id)}
-                              title="eliminar solicitud"
-                            />
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+                    <th>Total ejecutado</th>
+                    <th>Remanente</th>
+                    <th>Avance</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>{montoALocaleString(infoProyectoDB.f_monto_total)}</td>
+                    <td>
+                      {montoALocaleString(infoProyectoDB.saldo.f_solicitado)}
+                    </td>
+                    <td>
+                      {montoALocaleString(infoProyectoDB.saldo.f_comprobado)}
+                    </td>
+                    <td>
+                      {montoALocaleString(infoProyectoDB.saldo.f_por_comprobar)}
+                    </td>
+                    <td>{montoALocaleString(infoProyectoDB.saldo.f_isr)}</td>
+                    <td>
+                      {montoALocaleString(infoProyectoDB.saldo.f_retenciones)}
+                    </td>
+                    <td>{montoALocaleString(infoProyectoDB.saldo.f_pa)}</td>
+                    <td>
+                      {montoALocaleString(infoProyectoDB.saldo.f_ejecutado)}
+                    </td>
+                    <td>
+                      {montoALocaleString(infoProyectoDB.saldo.f_remanente)}
+                    </td>
+                    <td>{infoProyectoDB.saldo.p_avance}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+          <div className="row">
+            <div className="col-12 mb-2">
+              <h4 className="color1 mb-0">Solicitudes</h4>
+            </div>
+            <div className="col-12 table-responsive">
+              <table className="table">
+                <thead className="table-light">
+                  <tr>
+                    <th>#id</th>
+                    <th>Tipo de gasto</th>
+                    <th>Partida presupuestal</th>
+                    <th>Titular</th>
+                    <th>Proveedor</th>
+                    <th>Descripción</th>
+                    <th>Importe solicitado</th>
+                    <th>Comprobado</th>
+                    <th>Por comprobar</th>
+                    <th>Retenciones</th>
+                    <th>Total</th>
+                    <th>Estatus</th>
+                    <th>Fecha registro</th>
+                    {user.id_rol == 1 && (
+                      <th>
+                        <input
+                          type="checkbox"
+                          className="form-check-input"
+                          onChange={({ target }) =>
+                            seleccionarTodasSolicitudes(target.checked)
+                          }
+                          checked={showSelectCambioStatus}
+                        />
+                      </th>
+                    )}
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {solicitudesFiltradas.map((solicitud) => {
+                    const {
+                      id,
+                      id_proyecto,
+                      tipo_gasto,
+                      titular_cuenta,
+                      proveedor,
+                      descripcion_gasto,
+                      rubro,
+                      f_importe,
+                      saldo,
+                      i_estatus,
+                      estatus,
+                      dt_registro,
+                    } = solicitud
+
+                    const colorBadge = obtenerBadgeStatusSolicitud(i_estatus)
+
+                    return (
+                      <tr key={id}>
+                        <td>{id}</td>
+                        <td>{tipo_gasto}</td>
+                        <td>{rubro}</td>
+                        <td>{titular_cuenta}</td>
+                        <td>{proveedor}</td>
+                        <td>{descripcion_gasto}</td>
+                        <td>{montoALocaleString(f_importe)}</td>
+                        <td>
+                          {montoALocaleString(saldo.f_total_comprobaciones)}
+                        </td>
+                        <td>{montoALocaleString(saldo.f_monto_comprobar)}</td>
+                        <td>
+                          {montoALocaleString(
+                            saldo.f_total_impuestos_retenidos
+                          )}
+                        </td>
+                        <td>{montoALocaleString(saldo.f_total)}</td>
+                        <td>
+                          <span className={`badge bg-${colorBadge}`}>
+                            {estatus}
+                          </span>
+                        </td>
+                        <td>{epochAFecha(dt_registro)}</td>
+                        {user.id_rol == 1 && (
+                          <td>
+                            <input
+                              type="checkbox"
+                              className="form-check-input"
+                              onChange={({ target }) =>
+                                seleccionarSolicitud(target.checked, id)
+                              }
+                              checked={idsCambioStatus[id]}
+                            />
+                          </td>
+                        )}
+                        <td>
+                          <div className="d-flex">
+                            <BtnAccion
+                              margin={false}
+                              icono="bi-eye-fill"
+                              onclick={() =>
+                                router.push(
+                                  `/proyectos/${id_proyecto}/solicitudes-presupuesto/${id}`
+                                )
+                              }
+                              title="ver detalle"
+                            />
+                            {user.id_rol == 1 && (
+                              <BtnAccion
+                                margin="l"
+                                icono="bi-x-circle"
+                                onclick={() => abrirModalEliminarSolicitud(id)}
+                                title="eliminar solicitud"
+                              />
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
       )}
       <ModalEliminar
         show={showModalEliminar}
