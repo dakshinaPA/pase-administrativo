@@ -28,21 +28,6 @@ class SolicitudesPresupuestoServices {
     }
   }
 
-  // static obtenerEstatus(i_estatus: EstatusSolicitud) {
-  //   switch (i_estatus) {
-  //     case 1:
-  //       return "Revisión"
-  //     case 2:
-  //       return "Autorizada"
-  //     case 3:
-  //       return "Rechazada"
-  //     case 4:
-  //       return "Procesada"
-  //     case 5:
-  //       return "Devolución"
-  //   }
-  // }
-
   static async obtener(queries: QueriesSolicitud) {
     const id_solicitud = Number(queries.id)
 

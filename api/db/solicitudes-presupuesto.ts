@@ -36,7 +36,7 @@ class SolicitudesPresupuestoDB {
       query += ` AND sp.id=${id}`
     }
 
-    query += " GROUP BY sp.id"
+    query += " GROUP BY sp.id ORDER by sp.dt_registro DESC"
 
     // if (id_responsable) {
     //   query += ` AND p.id_responsable=${id}`
