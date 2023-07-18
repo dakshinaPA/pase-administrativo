@@ -3,9 +3,13 @@ import { ResultsDB } from "@api/models/respuestas.model"
 
 const queryDB = (query: string): Promise<ResultsDB> => {
   return new Promise((resolve, reject) => {
-    connectionDB.query(query, (err, results, fields) => {
+    connectionDB.getConnection((err, connection) => {
       if (err) reject(err)
-      resolve(results)
+      connection.query(query, (err, results, fields) => {
+        connection.destroy()
+        if (err) reject(err)
+        resolve(results)
+      })
     })
   })
 }
@@ -15,9 +19,13 @@ const queryDBPlaceHolder = (
   placeHolders: Array<string | number>
 ): Promise<ResultsDB> => {
   return new Promise((resolve, reject) => {
-    connectionDB.query(query, placeHolders, (err, results, fields) => {
+    connectionDB.getConnection((err, connection) => {
       if (err) reject(err)
-      resolve(results)
+      connection.query(query, placeHolders, (err, results, fields) => {
+        connection.destroy()
+        if (err) reject(err)
+        resolve(results)
+      })
     })
   })
 }
