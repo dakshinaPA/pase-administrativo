@@ -171,14 +171,13 @@ const Colaboradores = () => {
               <thead>
                 <tr>
                   <th>#id</th>
+                  <th>Id empleado</th>
                   <th>Nombre</th>
-                  <th>Servicio</th>
                   <th>Tipo</th>
                   <th>Email</th>
+                  <th>Clabe</th>
+                  <th>Banco</th>
                   <th>Teléfono</th>
-                  <th>Monto</th>
-                  <th>Inicio servicio</th>
-                  <th>Fin servicio</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
@@ -187,30 +186,28 @@ const Colaboradores = () => {
                   const {
                     id,
                     id_proyecto,
+                    id_empleado,
                     nombre,
                     apellido_paterno,
-                    nombre_servicio,
                     tipo,
                     email,
+                    clabe,
+                    banco,
                     telefono,
-                    f_monto_total,
-                    dt_inicio_servicio,
-                    dt_fin_servicio,
                   } = colaborador
 
                   return (
                     <tr key={id}>
                       <td>{id}</td>
+                      <td>{id_empleado}</td>
                       <td>
                         {nombre} {apellido_paterno}
                       </td>
-                      <td>{nombre_servicio}</td>
                       <td>{tipo}</td>
                       <td>{email}</td>
+                      <td>{clabe}</td>
+                      <td>{banco}</td>
                       <td>{telefono}</td>
-                      <td>{f_monto_total}</td>
-                      <td>{inputDateAformato(dt_inicio_servicio)}</td>
-                      <td>{inputDateAformato(dt_fin_servicio)}</td>
                       <td>
                         <div className="d-flex">
                           <BtnAccion

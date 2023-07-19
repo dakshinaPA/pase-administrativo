@@ -2,6 +2,7 @@ export interface ResColaboradoreDB {
   id: number
   id_proyecto: number
   id_responsable: number
+  id_empleado: string
   nombre: string
   apellido_paterno: string
   apellido_materno: string
@@ -13,12 +14,6 @@ export interface ResColaboradoreDB {
   email: string
   rfc: string
   curp: string
-  cp: string
-  nombre_servicio: string
-  descripcion_servicio: string
-  f_monto_total: number
-  dt_inicio_servicio: string
-  dt_fin_servicio: string
   dt_registro: string
   id_direccion: number
   calle: string

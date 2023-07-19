@@ -46,7 +46,6 @@ const Usuarios = () => {
   }
 
   const cargarUsuarios = async () => {
-
     setIsLoading(true)
 
     try {
@@ -103,7 +102,6 @@ const Usuarios = () => {
   }
 
   const obtenerCopartesDB = async () => {
-
     setIsLoading(true)
 
     const queryCopartes: QueriesCoparte =
@@ -116,7 +114,7 @@ const Usuarios = () => {
     } else {
       const copartesDB = data as CoparteMin[]
       setCopartesDB(copartesDB)
-      if(copartesDB.length == 1){
+      if (copartesDB.length == 1) {
         setCoparteSelect(copartesDB[0].id || 0)
       }
     }
@@ -206,7 +204,9 @@ const Usuarios = () => {
               value={coparteSelect}
               onChange={handleCambioCoparte}
             >
-              <option value="0" disabled>Selecciona coparte</option>
+              <option value="0" disabled>
+                Selecciona coparte
+              </option>
               {copartesDB.map(({ id, nombre }) => (
                 <option key={id} value={id}>
                   {nombre}

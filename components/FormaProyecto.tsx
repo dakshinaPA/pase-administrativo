@@ -196,14 +196,13 @@ const Colaboradores = () => {
         <table className="table">
           <thead className="table-light">
             <tr>
+              <th>Id empleado</th>
               <th>Nombre</th>
               <th>Tipo</th>
-              <th>Servicio</th>
-              <th>Teléfono</th>
-              <th>RFC</th>
-              <th>CLABE</th>
+              <th>Email</th>
+              <th>Clabe</th>
               <th>Banco</th>
-              <th>Monto total</th>
+              <th>Teléfono</th>
               <th>Acciones</th>
             </tr>
           </thead>
@@ -211,27 +210,25 @@ const Colaboradores = () => {
             {estadoForma.colaboradores.map(
               ({
                 id,
+                id_empleado,
                 nombre,
                 apellido_paterno,
                 tipo,
-                nombre_servicio,
                 telefono,
-                rfc,
+                email,
                 clabe,
                 banco,
-                f_monto_total,
               }) => (
                 <tr key={id}>
+                  <td>{id_empleado}</td>
                   <td>
                     {nombre} {apellido_paterno}
                   </td>
                   <td>{tipo}</td>
-                  <td>{nombre_servicio}</td>
-                  <td>{telefono}</td>
-                  <td>{rfc}</td>
+                  <td>{email}</td>
                   <td>{clabe}</td>
                   <td>{banco}</td>
-                  <td>{montoALocaleString(f_monto_total)}</td>
+                  <td>{telefono}</td>
                   <td>
                     <BtnAccion
                       margin={false}

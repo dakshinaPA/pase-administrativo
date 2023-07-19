@@ -300,7 +300,7 @@ const FormaSolicitudPresupuesto = () => {
           nombre: `${colaborador.nombre} ${colaborador.apellido_paterno} ${colaborador.apellido_materno}`,
         }))
         partidas_presupuestales = dataProyecto.rubros_presupuestales.filter(
-          (rp) => ![1, 2].includes(rp.id_rubro)
+          (rp) => rp.id_rubro != 2 //![1, 2].includes(rp.id_rubro)
         )
         break
       case 2:

@@ -275,7 +275,7 @@ class ProyectoDB {
       JOIN rubros_presupuestales rp ON mrp.id_rubro = rp.id
       WHERE mrp.id_ministracion IN
       (SELECT pm.id FROM proyecto_ministraciones pm WHERE pm.id_proyecto=?)
-      AND mrp.b_activo=1`
+      AND mrp.id_rubro!=1 AND mrp.b_activo=1`
 
     const placeHolders = [id_proyecto]
 

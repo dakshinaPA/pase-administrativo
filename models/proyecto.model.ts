@@ -10,14 +10,26 @@ export interface QueriesProyecto {
   registro_solicitud?: boolean
 }
 
+export interface PeriodoServicioColaborador {
+  id?: number
+  i_numero_ministracion: number
+  f_monto: number
+  servicio: string
+  descripcion: string
+  dt_inicio: string
+  dt_fin: string
+  cp: string // cp de la direccion fiscal
+}
+
 export interface ColaboradorProyecto {
   id?: number
   id_proyecto?: number
   id_responsable?: number
+  id_empleado: string
   nombre: string
   apellido_paterno: string
   apellido_materno: string
-  i_tipo: 1 | 2
+  i_tipo: 1 | 2 | 3 // asimilado, honorarios, sin pago
   tipo?: string
   clabe: string
   id_banco: number
@@ -26,14 +38,9 @@ export interface ColaboradorProyecto {
   email: string
   rfc: string
   curp: string
-  cp: string
-  nombre_servicio: string
-  descripcion_servicio: string
-  f_monto_total: number
-  dt_inicio_servicio: string
-  dt_fin_servicio: string
   dt_registro?: string
   direccion: Direccion
+  periodos_servicio: PeriodoServicioColaborador[]
 }
 
 export interface ProveedorProyecto {

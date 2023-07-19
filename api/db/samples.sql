@@ -431,22 +431,17 @@ CREATE TABLE `proyectos` (
   CREATE TABLE `colaboradores` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
     `id_proyecto` INT UNSIGNED NOT NULL,
+    `id_empleado` VARCHAR(20) NOT NULL,
     `nombre` VARCHAR(50) NOT NULL,
     `apellido_paterno` VARCHAR(50) NOT NULL,
     `apellido_materno` VARCHAR(50) NOT NULL,
-    `i_tipo` TINYINT UNSIGNED NOT NULL COMMENT '1.asimilados, 2.honorarios',
+    `i_tipo` TINYINT UNSIGNED NOT NULL COMMENT '1.asimilados, 2.honorarios, 3.sin pago',
     `clabe` VARCHAR(18) NOT NULL,
     `id_banco` TINYINT UNSIGNED NOT NULL,
     `telefono` VARCHAR(10) NOT NULL,
     `email` VARCHAR(50) NOT NULL,
     `rfc` VARCHAR(20) NOT NULL,
     `curp` VARCHAR(20) NOT NULL,
-    `cp` VARCHAR(5) NOT NULL COMMENT 'el que aparece en constancia de situacion fiscal',
-    `nombre_servicio` VARCHAR(40) NOT NULL,
-    `descripcion_servicio` VARCHAR(150) NOT NULL,
-    `f_monto_total` VARCHAR(20) NOT NULL COMMENT 'total a pagar durante el proyecto',
-    `dt_inicio_servicio` VARCHAR(10) NOT NULL,
-    `dt_fin_servicio` VARCHAR(10) NOT NULL,
     `b_activo` TINYINT UNSIGNED NOT NULL DEFAULT 1,
     `dt_registro` VARCHAR(10) NOT NULL,
     PRIMARY KEY (`id`),
@@ -466,6 +461,21 @@ CREATE TABLE `proyectos` (
     PRIMARY KEY (`id`),
     INDEX (`id_colaborador`),
     INDEX (`id_estado`));
+
+  CREATE TABLE `colaborador_periodos_servicio` (
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `id_colaborador` INT UNSIGNED NOT NULL,
+    `i_numero_ministracion` INT UNSIGNED NOT NULL,
+    `f_monto` VARCHAR(20) NOT NULL COMMENT 'total a pagar durante el proyecto',
+    `servicio` VARCHAR(40) NOT NULL,
+    `descripcion` VARCHAR(150) NOT NULL,
+    `cp` VARCHAR(5) NOT NULL COMMENT 'el que aparece en constancia de situacion fiscal',
+    `dt_inicio` VARCHAR(10) NOT NULL,
+    `dt_fin` VARCHAR(10) NOT NULL,
+    `b_activo` TINYINT UNSIGNED NOT NULL DEFAULT 1,
+    `dt_registro` VARCHAR(10) NOT NULL,
+    PRIMARY KEY (`id`),
+    INDEX (`id_colaborador`));
 
 
 -----------------------------------------------------------
@@ -575,6 +585,7 @@ TRUNCATE TABLE ministracion_rubros_presupuestales;
 
 TRUNCATE TABLE colaboradores;
 TRUNCATE TABLE colaborador_direccion;
+TRUNCATE TABLE colaborador_periodos_servicio;
 
 TRUNCATE TABLE proveedores;
 TRUNCATE TABLE proveedor_direccion;
@@ -590,5 +601,5 @@ TRUNCATE TABLE solicitud_presupuesto_notas;
 -- show processlist;
 
 alter table usuarios modify column password varbinary(200) not null;
-update table usuarios set password=AES_ENCRYPT('123', 'dakshina23');
+update usuarios set password=AES_ENCRYPT('123', 'dakshina23');
 select id, nombre, CAST(AES_DECRYPT(password, 'dakshina23') AS CHAR) from usuarios;

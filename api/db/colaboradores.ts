@@ -1,13 +1,16 @@
 import { RespuestaDB } from "@api/utils/response"
 import { queryDB, queryDBPlaceHolder } from "./query"
-import { ColaboradorProyecto } from "@models/proyecto.model"
+import {
+  ColaboradorProyecto,
+  PeriodoServicioColaborador,
+} from "@models/proyecto.model"
 import { Direccion } from "@models/direccion.model"
 import { fechaActualAEpoch } from "@assets/utils/common"
 
 class ColaboradorDB {
   static async obtener(id_proyecto: number, id_colaborador?: number) {
-    let query = `SELECT c.id, c.id_proyecto, c.nombre, c.apellido_paterno, c.apellido_materno, c.i_tipo, c.clabe, c.id_banco, c.telefono, c.email, c.rfc,
-      c.curp, c.cp, c.nombre_servicio, c.descripcion_servicio, c.f_monto_total, c.dt_inicio_servicio, c.dt_fin_servicio, c.dt_registro,
+    let query = `SELECT c.id, c.id_proyecto, c.id_empleado, c.nombre, c.apellido_paterno, c.apellido_materno, c.i_tipo, c.clabe,
+      c.id_banco, c.telefono, c.email, c.rfc, c.curp, c.dt_registro,
       cd.id id_direccion, cd.calle, cd.numero_ext, cd.numero_int, cd.colonia, cd.municipio, cd.cp cp_direccion, cd.id_estado,
       p.id_responsable,  
       e.nombre estado,
@@ -38,6 +41,7 @@ class ColaboradorDB {
   static async crear(data: ColaboradorProyecto) {
     const {
       id_proyecto,
+      id_empleado,
       nombre,
       apellido_paterno,
       apellido_materno,
@@ -48,19 +52,14 @@ class ColaboradorDB {
       email,
       rfc,
       curp,
-      cp,
-      nombre_servicio,
-      descripcion_servicio,
-      f_monto_total,
-      dt_inicio_servicio,
-      dt_fin_servicio,
     } = data
 
-    const query = `INSERT INTO colaboradores ( id_proyecto, nombre, apellido_paterno, apellido_materno, i_tipo, clabe, id_banco, telefono, email, rfc, curp, cp, nombre_servicio,
-      descripcion_servicio, f_monto_total, dt_inicio_servicio, dt_fin_servicio, dt_registro ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )`
+    const query = `INSERT INTO colaboradores ( id_proyecto, id_empleado, nombre, apellido_paterno, apellido_materno, i_tipo, clabe,
+      id_banco, telefono, email, rfc, curp, dt_registro ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )`
 
     const placeHolders = [
       id_proyecto,
+      id_empleado,
       nombre,
       apellido_paterno,
       apellido_materno,
@@ -71,12 +70,6 @@ class ColaboradorDB {
       email,
       rfc,
       curp,
-      cp,
-      nombre_servicio,
-      descripcion_servicio,
-      f_monto_total,
-      dt_inicio_servicio,
-      dt_fin_servicio,
       fechaActualAEpoch(),
     ]
 
@@ -93,41 +86,27 @@ class ColaboradorDB {
       nombre,
       apellido_paterno,
       apellido_materno,
-      i_tipo,
       clabe,
       id_banco,
       telefono,
       email,
       rfc,
       curp,
-      cp,
-      nombre_servicio,
-      descripcion_servicio,
-      f_monto_total,
-      dt_inicio_servicio,
-      dt_fin_servicio,
     } = data
 
-    const query = `UPDATE colaboradores SET nombre=?, apellido_paterno=?, apellido_materno=?, i_tipo=?, clabe=?, id_banco=?, telefono=?, email=?, rfc=?, curp=?, cp=?, nombre_servicio=?,
-      descripcion_servicio=?, f_monto_total=?, dt_inicio_servicio=?, dt_fin_servicio=? WHERE id=?`
+    const query = `UPDATE colaboradores SET nombre=?, apellido_paterno=?, apellido_materno=?,
+      clabe=?, id_banco=?, telefono=?, email=?, rfc=?, curp=? WHERE id=?`
 
     const placeHolders = [
       nombre,
       apellido_paterno,
       apellido_materno,
-      i_tipo,
       clabe,
       id_banco,
       telefono,
       email,
       rfc,
       curp,
-      cp,
-      nombre_servicio,
-      descripcion_servicio,
-      f_monto_total,
-      dt_inicio_servicio,
-      dt_fin_servicio,
       id_colaborador,
     ]
 
@@ -199,6 +178,91 @@ class ColaboradorDB {
       municipio,
       cp,
       id_estado,
+      id,
+    ]
+
+    try {
+      const res = await queryDBPlaceHolder(query, placeHolders)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
+
+  static async obtenerPeriodoServicio(id_colaborador: number) {
+    const query = `SELECT id, i_numero_ministracion, f_monto, servicio, descripcion, cp, dt_inicio,
+      dt_fin, dt_registro FROM colaborador_periodos_servicio WHERE id_colaborador=? AND b_activo=1`
+
+    const placeHolders = [id_colaborador]
+
+    try {
+      const res = await queryDBPlaceHolder(query, placeHolders)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
+
+  static async crearPeriodoServicio(
+    id_colaborador: number,
+    data: PeriodoServicioColaborador
+  ) {
+    const {
+      i_numero_ministracion,
+      f_monto,
+      servicio,
+      descripcion,
+      cp,
+      dt_inicio,
+      dt_fin,
+    } = data
+
+    const query = `INSERT INTO colaborador_periodos_servicio ( id_colaborador, i_numero_ministracion, f_monto, servicio, descripcion, cp,
+      dt_inicio, dt_fin, dt_registro ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ? )`
+
+    const placeHolders = [
+      id_colaborador,
+      i_numero_ministracion,
+      f_monto,
+      servicio,
+      descripcion,
+      cp,
+      dt_inicio,
+      dt_fin,
+      fechaActualAEpoch(),
+    ]
+
+    try {
+      const res = await queryDBPlaceHolder(query, placeHolders)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
+
+  static async actualizarPeriodoServicio(data: PeriodoServicioColaborador) {
+    const {
+      id,
+      i_numero_ministracion,
+      f_monto,
+      servicio,
+      descripcion,
+      cp,
+      dt_inicio,
+      dt_fin,
+    } = data
+
+    const query = `UPDATE colaborador_periodos_servicio SET i_numero_ministracion=?, f_monto=?,
+    servicio=?, descripcion=?, cp=?, dt_inicio=?, dt_fin=? WHERE id=? LIMIT 1`
+
+    const placeHolders = [
+      i_numero_ministracion,
+      f_monto,
+      servicio,
+      descripcion,
+      cp,
+      dt_inicio,
+      dt_fin,
       id
     ]
 

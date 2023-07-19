@@ -11,11 +11,28 @@ import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
 import { BtnBack } from "@components/BtnBack"
 import { ApiCall } from "@assets/utils/apiCalls"
 import { useCatalogos } from "@contexts/catalogos.context"
-import { BtnCancelar, BtnEditar, BtnRegistrar } from "./Botones"
+import {
+  BtnAccion,
+  BtnCancelar,
+  BtnEditar,
+  BtnNeutro,
+  BtnRegistrar,
+} from "./Botones"
 import { useAuth } from "@contexts/auth.context"
-import { obtenerColaboradores, obtenerProyectos } from "@assets/utils/common"
+import {
+  inputDateAformato,
+  montoALocaleString,
+  obtenerColaboradores,
+  obtenerProyectos,
+} from "@assets/utils/common"
 
-type ActionTypes = "CARGA_INICIAL" | "HANDLE_CHANGE" | "HANDLE_CHANGE_DIRECCION"
+type ActionTypes =
+  | "CARGA_INICIAL"
+  | "HANDLE_CHANGE"
+  | "HANDLE_CHANGE_DIRECCION"
+  | "HANDLE_CHANGE_PERIODO"
+  | "AGREGAR_PERIODO"
+  | "QUITAR_PERIODO"
 
 interface ActionDispatch {
   type: ActionTypes
@@ -44,6 +61,25 @@ const reducer = (
           [payload.name]: payload.value,
         },
       }
+    case "AGREGAR_PERIODO":
+      return {
+        ...state,
+        periodos_servicio: [...state.periodos_servicio, payload],
+      }
+    case "QUITAR_PERIODO":
+      const nuevaLista = state.periodos_servicio.filter(
+        (periodo, index) => index != payload
+      )
+
+      return {
+        ...state,
+        periodos_servicio: nuevaLista,
+      }
+    case "HANDLE_CHANGE_PERIODO":
+      return {
+        ...state,
+        periodos_servicio: payload,
+      }
     default:
       return state
   }
@@ -58,22 +94,17 @@ const FormaColaborador = () => {
 
   const estadoInicialForma: ColaboradorProyecto = {
     id_proyecto: idProyecto || 0,
+    i_tipo: 1,
+    id_empleado: "",
     nombre: "",
     apellido_paterno: "",
     apellido_materno: "",
-    i_tipo: 1,
     clabe: "",
     id_banco: 1,
     telefono: "",
     email: "",
     rfc: "",
     curp: "",
-    cp: "",
-    nombre_servicio: "",
-    descripcion_servicio: "",
-    f_monto_total: 0,
-    dt_inicio_servicio: "",
-    dt_fin_servicio: "",
     direccion: {
       calle: "",
       numero_ext: "",
@@ -83,26 +114,39 @@ const FormaColaborador = () => {
       cp: "",
       id_estado: 1,
     },
+    periodos_servicio: [
+      {
+        i_numero_ministracion: 1,
+        f_monto: 0,
+        servicio: "",
+        descripcion: "",
+        dt_inicio: "",
+        dt_fin: "",
+        cp: "",
+      },
+    ],
   }
 
   const { estados, bancos } = useCatalogos()
   const [estadoForma, dispatch] = useReducer(reducer, estadoInicialForma)
   const [proyectosDB, setProyectosDB] = useState<ProyectoMin[]>([])
-  const [dtFinMax, setDtFinMax] = useState("")
+  // const [dtFinMax, setDtFinMax] = useState("")
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [modoEditar, setModoEditar] = useState<boolean>(!idColaborador)
   const modalidad = idColaborador ? "EDITAR" : "CREAR"
+  const estadoOriginalColaborador = useRef(null)
+  const tBodyPeriodos = useRef(null)
 
   useEffect(() => {
     cargarData()
   }, [])
 
-  useEffect(() => {
-    if (!estadoForma.dt_inicio_servicio) return
+  // useEffect(() => {
+  //   if (!estadoForma.dt_inicio_servicio) return
 
-    const dtLimite = estadoForma.i_tipo == 1 ? dtInicioMasSeisMeses() : ""
-    setDtFinMax(dtLimite)
-  }, [estadoForma.dt_inicio_servicio, estadoForma.i_tipo])
+  //   const dtLimite = estadoForma.i_tipo == 1 ? dtInicioMasSeisMeses() : ""
+  //   setDtFinMax(dtLimite)
+  // }, [estadoForma.dt_inicio_servicio, estadoForma.i_tipo])
 
   const cargarData = async () => {
     setIsLoading(true)
@@ -135,6 +179,9 @@ const FormaColaborador = () => {
       if (modalidad === "EDITAR") {
         const colaborador = resCombinadas[1].data[0] as ColaboradorProyecto
 
+        //mantener por si se cancela edicion
+        estadoOriginalColaborador.current = colaborador
+
         dispatch({
           type: "CARGA_INICIAL",
           payload: colaborador,
@@ -164,7 +211,17 @@ const FormaColaborador = () => {
   }
 
   const cancelar = () => {
-    modalidad === "EDITAR" ? setModoEditar(false) : router.back()
+    // modalidad === "EDITAR" ? setModoEditar(false) : router.back()
+    if(modalidad === "EDITAR"){
+      dispatch({
+        type: "CARGA_INICIAL",
+        payload: estadoOriginalColaborador.current,
+      })
+      setModoEditar(false)
+    }
+    else {
+      router.back()
+    }
   }
 
   const handleChange = (ev: ChangeEvent, type: ActionTypes) => {
@@ -176,29 +233,92 @@ const FormaColaborador = () => {
     })
   }
 
-  const dtInicioMasSeisMeses = () => {
-    const dtInicio = new Date(estadoForma.dt_inicio_servicio)
-    const dtFinEpoch = new Date(estadoForma.dt_inicio_servicio).setMonth(
-      dtInicio.getMonth() + 6
-    )
+  const handleChangePeriodo = (ev: ChangeEvent, index: number) => {
+    const { name, value } = ev.target
 
-    const dtFin = new Date(0)
-    dtFin.setUTCMilliseconds(dtFinEpoch)
-    const [month, day, year] = dtFin
-      .toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
+    const copiaPeriodos = [...estadoForma.periodos_servicio]
+    copiaPeriodos[index] = {
+      ...copiaPeriodos[index],
+      [name]: value,
+    }
+
+    dispatch({
+      type: "HANDLE_CHANGE_PERIODO",
+      payload: copiaPeriodos,
+    })
+  }
+
+  // const dtInicioMasSeisMeses = () => {
+  //   const dtInicio = new Date(estadoForma.dt_inicio_servicio)
+  //   const dtFinEpoch = new Date(estadoForma.dt_inicio_servicio).setMonth(
+  //     dtInicio.getMonth() + 6
+  //   )
+
+  //   const dtFin = new Date(0)
+  //   dtFin.setUTCMilliseconds(dtFinEpoch)
+  //   const [month, day, year] = dtFin
+  //     .toLocaleDateString("en-US", {
+  //       year: "numeric",
+  //       month: "2-digit",
+  //       day: "2-digit",
+  //     })
+  //     .split("/")
+
+  //   const dtAFormatoInput = `${year}-${month}-${day}`
+
+  //   return dtAFormatoInput
+  // }
+
+  const quitarPeriodoServicio = (index: number) => {
+    dispatch({
+      type: "QUITAR_PERIODO",
+      payload: index,
+    })
+  }
+
+  const agregarPeriodo = () => {
+    const ultimoPeriodo =
+      estadoForma.periodos_servicio[estadoForma.periodos_servicio.length - 1]
+    const clacularNumeroMinistracion =
+      Number(ultimoPeriodo?.i_numero_ministracion || 0) + 1
+
+    dispatch({
+      type: "AGREGAR_PERIODO",
+      payload: {
+        ...estadoInicialForma.periodos_servicio[0],
+        i_numero_ministracion: clacularNumeroMinistracion,
+        cp: ultimoPeriodo?.cp || "",
+      },
+    })
+  }
+
+  const validarPeriodos = (): boolean => {
+    try {
+      estadoForma.periodos_servicio.forEach((periodo, index) => {
+        if (!Number(periodo.i_numero_ministracion))
+          throw { index, campo: "i_numero_ministracion" }
+        if (!Number(periodo.f_monto)) throw { index, campo: "f_monto" }
+        if (!periodo.servicio) throw { index, campo: "servicio" }
+        if (!periodo.descripcion) throw { index, campo: "descripcion" }
+        if (!Number(periodo.cp) || periodo.cp.length != 5)
+          throw { index, campo: "cp" }
+        if (!periodo.dt_inicio) throw { index, campo: "dt_inicio" }
+        if (!periodo.dt_fin) throw { index, campo: "dt_fin" }
       })
-      .split("/")
-
-    const dtAFormatoInput = `${year}-${month}-${day}`
-
-    return dtAFormatoInput
+      return true
+    } catch (error) {
+      const tRows = tBodyPeriodos.current.querySelectorAll("tr")
+      const rowError = tRows[error.index]
+      const inputError = rowError.querySelector(`input[name=${error.campo}]`)
+      inputError.focus()
+      return false
+    }
   }
 
   const handleSubmit = async (ev: React.SyntheticEvent) => {
     ev.preventDefault()
+
+    if (!validarPeriodos()) return
     console.log(estadoForma)
 
     setIsLoading(true)
@@ -215,10 +335,16 @@ const FormaColaborador = () => {
           `/proyectos/${estadoForma.id_proyecto}/colaboradores/${data.idInsertado}`
         )
       } else {
+        dispatch({
+          type: "CARGA_INICIAL",
+          payload: data,
+        })
         setModoEditar(false)
       }
     }
   }
+
+  const showBtnEliminarPeriodo = estadoForma.periodos_servicio.length > 1
 
   if (isLoading) {
     return <Loader />
@@ -264,6 +390,31 @@ const FormaColaborador = () => {
                 )}
               </select>
             </div>
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label">Tipo</label>
+              <select
+                className="form-control"
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+                name="i_tipo"
+                value={estadoForma.i_tipo}
+                disabled={!!idProyecto}
+              >
+                <option value="1">Asimilado</option>
+                <option value="2">Honorarios</option>
+                <option value="2">Sin pago</option>
+              </select>
+            </div>
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label">ID empleado</label>
+              <input
+                className="form-control"
+                type="text"
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+                name="id_empleado"
+                value={estadoForma.id_empleado}
+                disabled={!modoEditar}
+              />
+            </div>
           </div>
           <div className="row">
             <div className="col-12 col-md-6 col-lg-4 mb-3">
@@ -299,21 +450,6 @@ const FormaColaborador = () => {
                 disabled={!modoEditar}
               />
             </div>
-          </div>
-          <div className="row">
-            <div className="col-12 col-md-6 col-lg-4 mb-3">
-              <label className="form-label">Tipo</label>
-              <select
-                className="form-control"
-                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-                name="i_tipo"
-                value={estadoForma.i_tipo}
-                disabled={!modoEditar}
-              >
-                <option value="1">Asimilado</option>
-                <option value="2">Honorarios</option>
-              </select>
-            </div>
             <div className="col-12 col-md-6 col-lg-4 mb-3">
               <label className="form-label">CLABE</label>
               <input
@@ -341,20 +477,6 @@ const FormaColaborador = () => {
                 ))}
               </select>
             </div>
-            <div className="col-12 col-md-6 col-lg-4 mb-3">
-              <label className="form-label">Monto total</label>
-              <input
-                className="form-control"
-                type="text"
-                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-                name="f_monto_total"
-                value={estadoForma.f_monto_total}
-                disabled={!modoEditar}
-                placeholder="presupuestado (incluyendo impuestos)"
-              />
-            </div>
-          </div>
-          <div className="row">
             <div className="col-12 col-md-6 col-lg-4 mb-3">
               <label className="form-label">Email</label>
               <input
@@ -399,68 +521,160 @@ const FormaColaborador = () => {
                 disabled={!modoEditar}
               />
             </div>
-            <div className="col-12 col-md-6 col-lg-4 mb-3">
-              <label className="form-label">CP</label>
-              <input
-                className="form-control"
-                type="text"
-                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-                name="cp"
-                value={estadoForma.cp}
-                disabled={!modoEditar}
-                placeholder="de la constancia de situación fiscal"
-              />
-            </div>
           </div>
+        </div>
+        <div className="col-12">
+          <hr />
+        </div>
+        <div className="col-12">
           <div className="row">
-            <div className="col-12 col-lg-4 mb-3">
-              <label className="form-label">Nombre servicio</label>
-              <input
-                className="form-control"
-                type="text"
-                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-                name="nombre_servicio"
-                value={estadoForma.nombre_servicio}
-                disabled={!modoEditar}
-              />
+            <div className="col-12 col-sm-6 col-lg-8 col-xl-10 mb-3">
+              <h4 className="color1 mb-0">Periodos de servicio</h4>
             </div>
-            <div className="col-12 col-lg-8 mb-3">
-              <label className="form-label">Descricpión servicio</label>
-              <input
-                className="form-control"
-                type="text"
-                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-                name="descripcion_servicio"
-                value={estadoForma.descripcion_servicio}
-                disabled={!modoEditar}
-              />
-            </div>
+            {modoEditar && (
+              <div className="col mb-3">
+                <BtnNeutro
+                  margin={false}
+                  width={true}
+                  texto="Agregar +"
+                  onclick={agregarPeriodo}
+                />
+              </div>
+            )}
           </div>
-          <div className="row">
-            <div className="col-12 col-md-6 col-lg-4 mb-3">
-              <label className="form-label">Inicio servicio</label>
-              <input
-                className="form-control"
-                type="date"
-                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-                name="dt_inicio_servicio"
-                value={estadoForma.dt_inicio_servicio}
-                disabled={!modoEditar}
-              />
-            </div>
-            <div className="col-12 col-md-6 col-lg-4 mb-3">
-              <label className="form-label">Fin servicio</label>
-              <input
-                className="form-control"
-                type="date"
-                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-                name="dt_fin_servicio"
-                value={estadoForma.dt_fin_servicio}
-                max={dtFinMax}
-                disabled={!modoEditar}
-              />
-            </div>
-          </div>
+        </div>
+        <div className="col-12 table-responsive">
+          <table className="table">
+            <thead>
+              <tr>
+                <th># Ministración</th>
+                <th>Monto</th>
+                <th>Servicio</th>
+                <th style={{ width: "300px" }}>Descricpión</th>
+                <th>
+                  CP
+                  <i
+                    title="Código postal de la constancia situación fiscal"
+                    className="bi bi-info-circle ms-1"
+                  ></i>
+                </th>
+                <th>Fecha inicio</th>
+                <th>Fecha fin</th>
+                {modoEditar && (
+                  <th>
+                    <i className="bi bi-trash"></i>
+                  </th>
+                )}
+              </tr>
+            </thead>
+            <tbody ref={tBodyPeriodos}>
+              {estadoForma.periodos_servicio.map((periodo, index) => {
+                const {
+                  id,
+                  i_numero_ministracion,
+                  f_monto,
+                  servicio,
+                  descripcion,
+                  cp,
+                  dt_inicio,
+                  dt_fin,
+                } = periodo
+
+                if (modoEditar) {
+                  return (
+                    <tr key={id || `periodo_${index}`}>
+                      <td>
+                        <input
+                          type="text"
+                          className="form-control"
+                          name="i_numero_ministracion"
+                          value={i_numero_ministracion}
+                          onChange={(e) => handleChangePeriodo(e, index)}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="text"
+                          className="form-control"
+                          name="f_monto"
+                          value={f_monto}
+                          onChange={(e) => handleChangePeriodo(e, index)}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="text"
+                          className="form-control"
+                          name="servicio"
+                          value={servicio}
+                          onChange={(e) => handleChangePeriodo(e, index)}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="text"
+                          className="form-control"
+                          name="descripcion"
+                          value={descripcion}
+                          onChange={(e) => handleChangePeriodo(e, index)}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="text"
+                          className="form-control"
+                          name="cp"
+                          value={cp}
+                          onChange={(e) => handleChangePeriodo(e, index)}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="date"
+                          className="form-control"
+                          name="dt_inicio"
+                          value={dt_inicio}
+                          onChange={(e) => handleChangePeriodo(e, index)}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="date"
+                          className="form-control"
+                          name="dt_fin"
+                          value={dt_fin}
+                          onChange={(e) => handleChangePeriodo(e, index)}
+                        />
+                      </td>
+                      <td>
+                        {showBtnEliminarPeriodo && !id && (
+                          <BtnAccion
+                            margin={false}
+                            icono="bi-x-circle"
+                            onclick={() => quitarPeriodoServicio(index)}
+                            title="eliminar usuario"
+                          />
+                        )}
+                      </td>
+                    </tr>
+                  )
+                }
+
+                //mostrar tabla sin inputs si no esta en modo edicion
+                return (
+                  <tr key={id}>
+                    <td>{i_numero_ministracion}</td>
+                    <td>{montoALocaleString(f_monto)}</td>
+                    <td>{servicio}</td>
+                    <td>{descripcion}</td>
+                    <td>{cp}</td>
+                    <td>{inputDateAformato(dt_inicio)}</td>
+                    <td>{inputDateAformato(dt_fin)}</td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
         </div>
         <div className="col-12">
           <hr />
