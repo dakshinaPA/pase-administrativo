@@ -4,13 +4,16 @@ import { LoginUsuario } from "@api/models/usuario.model"
 import { RespuestaDB } from "@api/utils/response"
 import { fechaActualAEpoch } from "@assets/utils/common"
 
+const encryptKey = 'dakshina23'
+
 class UsuarioDB {
   static async login({ email, password }: LoginUsuario) {
     const query = `SELECT id, nombre, apellido_paterno, apellido_materno, id_rol
-      FROM usuarios WHERE email=? AND password=? AND b_activo=1`
-    const placeHolders = [email, password]
+      FROM usuarios WHERE email=? AND password=AES_ENCRYPT(?,?) AND b_activo=1`
+    const placeHolders = [email, password, encryptKey]
 
     try {
+      // const res = await queryDBPlaceHolder(query, placeHolders)
       const res = await queryDBPlaceHolder(query, placeHolders)
       return RespuestaDB.exitosa(res)
     } catch (error) {
@@ -18,17 +21,6 @@ class UsuarioDB {
     }
   }
 
-  // static async loggear( idUsuario: number ) {
-
-  //     const query = `UPDATE usuarios SET login=1 WHERE id_usuario=${idUsuario} LIMIT 1`
-
-  //     try {
-  //         const res = await queryDB( query )
-  //         return RespuestaDB.exitosa( res )
-  //     } catch (error) {
-  //         return RespuestaDB.fallida( error )
-  //     }
-  // }
   static async obtenerVmin(id_rol: number) {
     let query = `SELECT id, nombre, apellido_paterno, apellido_materno
       FROM usuarios WHERE id_rol=${id_rol} AND b_activo = 1`
@@ -42,14 +34,7 @@ class UsuarioDB {
   }
 
   static async obtener(id_rol?: number, id_usuario?: number) {
-    // let query = `SELECT u.id, u.nombre, u.apellido_paterno, u.apellido_materno, u.email, u.telefono, u.password, u.id_rol,
-    //   r.nombre rol,
-    //   cu.b_enlace
-    //   FROM usuarios u
-    //   JOIN roles r ON u.id_rol = r.id
-    //   LEFT JOIN coparte_usuarios cu ON u.id = cu.id_usuario
-    //   WHERE u.b_activo=1`
-    let query = `SELECT u.id, u.nombre, u.apellido_paterno, u.apellido_materno, u.email, u.telefono, u.password, u.id_rol,
+    let query = `SELECT u.id, u.nombre, u.apellido_paterno, u.apellido_materno, u.email, u.telefono, CAST(AES_DECRYPT(u.password, '${encryptKey}') AS CHAR) password, u.id_rol,
       r.nombre rol
       FROM usuarios u
       JOIN roles r ON u.id_rol = r.id
@@ -62,10 +47,6 @@ class UsuarioDB {
     if (id_rol) {
       query += ` AND u.id_rol=${id_rol}`
     }
-
-    // if (id_coparte) {
-    //   query += ` AND cu.id_coparte=${id_coparte}`
-    // }
 
     try {
       const res = await queryDB(query)
@@ -87,7 +68,7 @@ class UsuarioDB {
     } = data
 
     const query = `INSERT INTO usuarios ( nombre, apellido_paterno, apellido_materno,
-    email, telefono, password, id_rol, dt_registro ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+    email, telefono, password, id_rol, dt_registro ) VALUES (?, ?, ?, ?, ?, AES_ENCRYPT(?,?), ?, ?)`
 
     const placeHolders = [
       nombre,
@@ -96,6 +77,7 @@ class UsuarioDB {
       email,
       telefono,
       password,
+      encryptKey,
       id_rol,
       fechaActualAEpoch(),
     ]
@@ -118,7 +100,7 @@ class UsuarioDB {
       password,
     } = data
 
-    const query = `UPDATE usuarios SET nombre=?, apellido_paterno=?, apellido_materno=?, email=?, telefono=?, password=? WHERE id=? LIMIT 1`
+    const query = `UPDATE usuarios SET nombre=?, apellido_paterno=?, apellido_materno=?, email=?, telefono=?, password=AES_ENCRYPT(?,?) WHERE id=? LIMIT 1`
     const placeHolders = [
       nombre,
       apellido_paterno,
@@ -126,6 +108,7 @@ class UsuarioDB {
       email,
       telefono,
       password,
+      encryptKey,
       id,
     ]
 

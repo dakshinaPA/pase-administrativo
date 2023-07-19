@@ -588,3 +588,7 @@ TRUNCATE TABLE solicitud_presupuesto_notas;
 -- mysql  -h dakshina.cyt6walgkcp2.us-east-2.rds.amazonaws.com -u admin -p dakshina < dakshina.sql
 -- show status where `variable_name` = 'Threads_connected';
 -- show processlist;
+
+alter table usuarios modify column password varbinary(200) not null;
+update table usuarios set password=AES_ENCRYPT('123', 'dakshina23');
+select id, nombre, CAST(AES_DECRYPT(password, 'dakshina23') AS CHAR) from usuarios;

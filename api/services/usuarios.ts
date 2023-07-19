@@ -21,17 +21,6 @@ class UsuariosServices {
       const [usuario] = data as ResUsuarioDB[]
       // encontró match con usuario
       if (usuario) {
-        // let copartes: CoparteUsuario[] = null
-
-        // const obtenerCoUs =
-        //   usuario.id_rol === 3
-        //     ? await UsuarioDB.obtenerCoparteCoparte(usuario.id)
-        //     : await UsuarioDB.obtenerCopartesAdministrador(usuario.id)
-
-        // if (obtenerCoUs.error) throw obtenerCoUs.data
-
-        // copartes = obtenerCoUs.data as CoparteUsuario[]
-
         return RespuestaController.exitosa(200, "Usuario encontrado", [usuario])
       } else {
         // no hubo error pero no hay match con usuario
@@ -46,12 +35,6 @@ class UsuariosServices {
     }
   }
 
-  // static async loggear( id: number ){
-
-  //     const res = await UsuarioDB.loggear( id )
-  //     console.log( `usuario loggeado ${!res.error}` )
-  //     return res
-  // }
   static async obtenerVmin(id_rol: number) {
     const re = await UsuarioDB.obtenerVmin(id_rol)
 
@@ -98,25 +81,6 @@ class UsuariosServices {
             if (reCoparteUsuario.error) throw reCoparteUsuario.data
             coparte = reCoparteUsuario.data[0] as CoparteUsuario
           }
-
-          // if (id_usuario && id_rol !== 1) {
-          //   const obtenerCoUs =
-          //     id_rol === 3
-          //       ? await UsuarioDB.obtenerCoparteCoparte(id)
-          //       : await UsuarioDB.obtenerCopartesAdministrador(id)
-
-          //   if (obtenerCoUs.error) throw obtenerCoUs.data
-
-          //   const copartesCoUS = obtenerCoUs.data as CoparteUsuario[]
-
-          //   copartes =
-          //     id_rol === 3
-          //       ? copartesCoUS.map((cop) => ({
-          //           ...cop,
-          //           b_enlace: Boolean(cop.b_enlace),
-          //         }))
-          //       : copartesCoUS
-          // }
 
           return {
             id,
