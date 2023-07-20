@@ -212,14 +212,13 @@ const FormaColaborador = () => {
 
   const cancelar = () => {
     // modalidad === "EDITAR" ? setModoEditar(false) : router.back()
-    if(modalidad === "EDITAR"){
+    if (modalidad === "EDITAR") {
       dispatch({
         type: "CARGA_INICIAL",
         payload: estadoOriginalColaborador.current,
       })
       setModoEditar(false)
-    }
-    else {
+    } else {
       router.back()
     }
   }
@@ -335,6 +334,7 @@ const FormaColaborador = () => {
           `/proyectos/${estadoForma.id_proyecto}/colaboradores/${data.idInsertado}`
         )
       } else {
+        estadoOriginalColaborador.current = data
         dispatch({
           type: "CARGA_INICIAL",
           payload: data,

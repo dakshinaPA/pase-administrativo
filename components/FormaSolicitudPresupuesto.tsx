@@ -122,7 +122,7 @@ const estadoInicialDataProyecto: DataProyecto = {
 
 interface DataTipoGasto {
   partidas_presupuestales: RubroMinistracion[]
-  titulares: ColaboradorProyecto[] | ProveedorProyecto[]
+  titulares: (ColaboradorProyecto | ProveedorProyecto)[]
 }
 
 const estadoInicialDataTipoGasto: DataTipoGasto = {
