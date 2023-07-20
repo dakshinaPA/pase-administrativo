@@ -3,7 +3,6 @@ import "bootstrap-icons/font/bootstrap-icons.css"
 import "../assets/css/main.css"
 import { AuthProvider } from "../contexts/auth.context"
 import { CatalogosProvider } from "../contexts/catalogos.context"
-// import { MainHeader } from "@components/MainHeader"
 import { useEffect } from "react"
 import { App } from "@components/App"
 

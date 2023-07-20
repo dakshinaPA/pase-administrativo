@@ -1,0 +1,9 @@
+.menu_cel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 75vw;
+  height: 100vh;
+  background-color: var(--color-ternario);
+  overflow-y: auto;
+}

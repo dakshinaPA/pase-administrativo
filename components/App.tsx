@@ -1,22 +1,27 @@
 import { useAuth } from "@contexts/auth.context"
 import { MainContenedor } from "./MainContenedor"
 import { MainHeader } from "./MainHeader"
-import { useEffect } from "react"
-import { useRouter } from "next/router"
+import { useState } from "react"
+import { MenuCelular } from "./MenuCelular"
 
 const App = ({ children }) => {
   const { user } = useAuth()
-  const router = useRouter()
+  const [showMenuCel, setShowMenuCel] = useState(false)
 
-  // useEffect(() => {
-
-  //   if(!user) router.push("/login")
-  // }, [])
+  const abrirMenu = () => setShowMenuCel(true)
+  const cerrarMenu = () => setShowMenuCel(false)
 
   return (
     <>
-      <MainHeader />
-      {user ? <MainContenedor>{children}</MainContenedor> : children}
+      <MainHeader abrirMenu={abrirMenu} />
+      {user ? (
+        <>
+          <MainContenedor>{children}</MainContenedor>
+          {showMenuCel && <MenuCelular cerrarMenu={cerrarMenu} />}
+        </>
+      ) : (
+        children
+      )}
     </>
   )
 }
