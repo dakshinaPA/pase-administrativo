@@ -141,12 +141,15 @@ const FormaColaborador = () => {
     cargarData()
   }, [])
 
-  // useEffect(() => {
-  //   if (!estadoForma.dt_inicio_servicio) return
+  useEffect(() => {
+    const payload =
+      estadoForma.i_tipo == 3 ? [] : estadoInicialForma.periodos_servicio
 
-  //   const dtLimite = estadoForma.i_tipo == 1 ? dtInicioMasSeisMeses() : ""
-  //   setDtFinMax(dtLimite)
-  // }, [estadoForma.dt_inicio_servicio, estadoForma.i_tipo])
+    dispatch({
+      type: "HANDLE_CHANGE_PERIODO",
+      payload,
+    })
+  }, [estadoForma.i_tipo])
 
   const cargarData = async () => {
     setIsLoading(true)
@@ -397,11 +400,11 @@ const FormaColaborador = () => {
                 onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
                 name="i_tipo"
                 value={estadoForma.i_tipo}
-                disabled={!!idProyecto}
+                disabled={!!idColaborador}
               >
                 <option value="1">Asimilado</option>
                 <option value="2">Honorarios</option>
-                <option value="2">Sin pago</option>
+                <option value="3">Sin pago</option>
               </select>
             </div>
             <div className="col-12 col-md-6 col-lg-4 mb-3">
@@ -523,159 +526,163 @@ const FormaColaborador = () => {
             </div>
           </div>
         </div>
-        <div className="col-12">
-          <hr />
-        </div>
-        <div className="col-12">
-          <div className="row">
-            <div className="col-12 col-sm-6 col-lg-8 col-xl-10 mb-3">
-              <h4 className="color1 mb-0">Periodos de servicio</h4>
+        {estadoForma.i_tipo != 3 && (
+          <>
+            <div className="col-12">
+              <hr />
             </div>
-            {modoEditar && (
-              <div className="col mb-3">
-                <BtnNeutro
-                  margin={false}
-                  width={true}
-                  texto="Agregar +"
-                  onclick={agregarPeriodo}
-                />
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="col-12 table-responsive">
-          <table className="table">
-            <thead>
-              <tr>
-                <th># Ministración</th>
-                <th>Monto</th>
-                <th>Servicio</th>
-                <th style={{ width: "300px" }}>Descricpión</th>
-                <th>
-                  CP
-                  <i
-                    title="Código postal de la constancia situación fiscal"
-                    className="bi bi-info-circle ms-1"
-                  ></i>
-                </th>
-                <th>Fecha inicio</th>
-                <th>Fecha fin</th>
+            <div className="col-12">
+              <div className="row">
+                <div className="col-12 col-sm-6 col-lg-8 col-xl-10 mb-3">
+                  <h4 className="color1 mb-0">Periodos de servicio</h4>
+                </div>
                 {modoEditar && (
-                  <th>
-                    <i className="bi bi-trash"></i>
-                  </th>
+                  <div className="col mb-3">
+                    <BtnNeutro
+                      margin={false}
+                      width={true}
+                      texto="Agregar +"
+                      onclick={agregarPeriodo}
+                    />
+                  </div>
                 )}
-              </tr>
-            </thead>
-            <tbody ref={tBodyPeriodos}>
-              {estadoForma.periodos_servicio.map((periodo, index) => {
-                const {
-                  id,
-                  i_numero_ministracion,
-                  f_monto,
-                  servicio,
-                  descripcion,
-                  cp,
-                  dt_inicio,
-                  dt_fin,
-                } = periodo
-
-                if (modoEditar) {
-                  return (
-                    <tr key={id || `periodo_${index}`}>
-                      <td>
-                        <input
-                          type="text"
-                          className="form-control"
-                          name="i_numero_ministracion"
-                          value={i_numero_ministracion}
-                          onChange={(e) => handleChangePeriodo(e, index)}
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="text"
-                          className="form-control"
-                          name="f_monto"
-                          value={f_monto}
-                          onChange={(e) => handleChangePeriodo(e, index)}
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="text"
-                          className="form-control"
-                          name="servicio"
-                          value={servicio}
-                          onChange={(e) => handleChangePeriodo(e, index)}
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="text"
-                          className="form-control"
-                          name="descripcion"
-                          value={descripcion}
-                          onChange={(e) => handleChangePeriodo(e, index)}
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="text"
-                          className="form-control"
-                          name="cp"
-                          value={cp}
-                          onChange={(e) => handleChangePeriodo(e, index)}
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="date"
-                          className="form-control"
-                          name="dt_inicio"
-                          value={dt_inicio}
-                          onChange={(e) => handleChangePeriodo(e, index)}
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="date"
-                          className="form-control"
-                          name="dt_fin"
-                          value={dt_fin}
-                          onChange={(e) => handleChangePeriodo(e, index)}
-                        />
-                      </td>
-                      <td>
-                        {showBtnEliminarPeriodo && !id && (
-                          <BtnAccion
-                            margin={false}
-                            icono="bi-x-circle"
-                            onclick={() => quitarPeriodoServicio(index)}
-                            title="eliminar usuario"
-                          />
-                        )}
-                      </td>
-                    </tr>
-                  )
-                }
-
-                //mostrar tabla sin inputs si no esta en modo edicion
-                return (
-                  <tr key={id}>
-                    <td>{i_numero_ministracion}</td>
-                    <td>{montoALocaleString(f_monto)}</td>
-                    <td>{servicio}</td>
-                    <td>{descripcion}</td>
-                    <td>{cp}</td>
-                    <td>{inputDateAformato(dt_inicio)}</td>
-                    <td>{inputDateAformato(dt_fin)}</td>
+              </div>
+            </div>
+            <div className="col-12 table-responsive">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th># Ministración</th>
+                    <th>Monto</th>
+                    <th>Servicio</th>
+                    <th style={{ width: "300px" }}>Descricpión</th>
+                    <th>
+                      CP
+                      <i
+                        title="Código postal de la constancia situación fiscal"
+                        className="bi bi-info-circle ms-1"
+                      ></i>
+                    </th>
+                    <th>Fecha inicio</th>
+                    <th>Fecha fin</th>
+                    {modoEditar && (
+                      <th>
+                        <i className="bi bi-trash"></i>
+                      </th>
+                    )}
                   </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
+                </thead>
+                <tbody ref={tBodyPeriodos}>
+                  {estadoForma.periodos_servicio.map((periodo, index) => {
+                    const {
+                      id,
+                      i_numero_ministracion,
+                      f_monto,
+                      servicio,
+                      descripcion,
+                      cp,
+                      dt_inicio,
+                      dt_fin,
+                    } = periodo
+
+                    if (modoEditar) {
+                      return (
+                        <tr key={id || `periodo_${index}`}>
+                          <td>
+                            <input
+                              type="text"
+                              className="form-control"
+                              name="i_numero_ministracion"
+                              value={i_numero_ministracion}
+                              onChange={(e) => handleChangePeriodo(e, index)}
+                            />
+                          </td>
+                          <td>
+                            <input
+                              type="text"
+                              className="form-control"
+                              name="f_monto"
+                              value={f_monto}
+                              onChange={(e) => handleChangePeriodo(e, index)}
+                            />
+                          </td>
+                          <td>
+                            <input
+                              type="text"
+                              className="form-control"
+                              name="servicio"
+                              value={servicio}
+                              onChange={(e) => handleChangePeriodo(e, index)}
+                            />
+                          </td>
+                          <td>
+                            <input
+                              type="text"
+                              className="form-control"
+                              name="descripcion"
+                              value={descripcion}
+                              onChange={(e) => handleChangePeriodo(e, index)}
+                            />
+                          </td>
+                          <td>
+                            <input
+                              type="text"
+                              className="form-control"
+                              name="cp"
+                              value={cp}
+                              onChange={(e) => handleChangePeriodo(e, index)}
+                            />
+                          </td>
+                          <td>
+                            <input
+                              type="date"
+                              className="form-control"
+                              name="dt_inicio"
+                              value={dt_inicio}
+                              onChange={(e) => handleChangePeriodo(e, index)}
+                            />
+                          </td>
+                          <td>
+                            <input
+                              type="date"
+                              className="form-control"
+                              name="dt_fin"
+                              value={dt_fin}
+                              onChange={(e) => handleChangePeriodo(e, index)}
+                            />
+                          </td>
+                          <td>
+                            {showBtnEliminarPeriodo && !id && (
+                              <BtnAccion
+                                margin={false}
+                                icono="bi-x-circle"
+                                onclick={() => quitarPeriodoServicio(index)}
+                                title="eliminar usuario"
+                              />
+                            )}
+                          </td>
+                        </tr>
+                      )
+                    }
+
+                    //mostrar tabla sin inputs si no esta en modo edicion
+                    return (
+                      <tr key={id}>
+                        <td>{i_numero_ministracion}</td>
+                        <td>{montoALocaleString(f_monto)}</td>
+                        <td>{servicio}</td>
+                        <td>{descripcion}</td>
+                        <td>{cp}</td>
+                        <td>{inputDateAformato(dt_inicio)}</td>
+                        <td>{inputDateAformato(dt_fin)}</td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
         <div className="col-12">
           <hr />
         </div>

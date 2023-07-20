@@ -83,6 +83,7 @@ class ColaboradorDB {
 
   static async actualizar(id_colaborador: number, data: ColaboradorProyecto) {
     const {
+      id_empleado,
       nombre,
       apellido_paterno,
       apellido_materno,
@@ -94,10 +95,11 @@ class ColaboradorDB {
       curp,
     } = data
 
-    const query = `UPDATE colaboradores SET nombre=?, apellido_paterno=?, apellido_materno=?,
+    const query = `UPDATE colaboradores SET id_empleado=?, nombre=?, apellido_paterno=?, apellido_materno=?,
       clabe=?, id_banco=?, telefono=?, email=?, rfc=?, curp=? WHERE id=?`
 
     const placeHolders = [
+      id_empleado,
       nombre,
       apellido_paterno,
       apellido_materno,

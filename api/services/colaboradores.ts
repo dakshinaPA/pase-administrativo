@@ -7,12 +7,14 @@ import {
 } from "@models/proyecto.model"
 
 class ColaboradorServices {
-  static obtenerTipo(id_tipo: 1 | 2) {
+  static obtenerTipo(id_tipo: 1 | 2| 3) {
     switch (id_tipo) {
       case 1:
         return "Asimilado"
       case 2:
         return "Honorarios"
+      case 3:
+        return "Sin pago"
     }
   }
 
