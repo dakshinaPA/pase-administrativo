@@ -23,7 +23,9 @@ class UsuarioDB {
 
   static async obtenerVmin(id_rol: number) {
     let query = `SELECT id, nombre, apellido_paterno, apellido_materno
-      FROM usuarios WHERE id_rol=${id_rol} AND b_activo = 1`
+      FROM usuarios WHERE id_rol=${id_rol} AND b_activo=1 ORDER BY nombre DESC`
+
+      console.log(query)
 
     try {
       const res = await queryDB(query)

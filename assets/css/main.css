@@ -96,7 +96,12 @@ a {
 .icono-enlace .bi-check {
   color: #19d819;
 }
+
 .icono-enlace .bi-x {
+  color: red;
+}
+
+.mensaje_error {
   color: red;
 }
 

@@ -47,7 +47,7 @@ class CatalogosDB {
   }
 
   static async obtenerBancos() {
-    let query = `SELECT id, nombre FROM bancos WHERE b_activo=1`
+    let query = `SELECT id, nombre, clave FROM bancos WHERE b_activo=1 ORDER BY nombre`
 
     try {
       const res = await queryDB(query)

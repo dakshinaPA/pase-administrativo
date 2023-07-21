@@ -264,6 +264,7 @@ const FormaSolicitudPresupuesto = () => {
 
   const fileInput = useRef(null)
   const cbAceptaTerminos = useRef(null)
+  const formRef = useRef(null)
 
   useEffect(() => {
     cargarData()
@@ -750,7 +751,7 @@ const FormaSolicitudPresupuesto = () => {
             {showBtnEditar && <BtnEditar onClick={() => setModoEditar(true)} />}
           </div>
         </div>
-        <FormaContenedor onSubmit={handleSubmit}>
+        <FormaContenedor onSubmit={handleSubmit} formaRef={formRef}>
           {modalidad === "EDITAR" && estatusCarga.current && (
             <div className="col-12 mb-3">
               <h5>

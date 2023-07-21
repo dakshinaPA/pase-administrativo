@@ -122,6 +122,7 @@ const FormaCoparte = () => {
   const [modoEditar, setModoEditar] = useState<boolean>(!idCoparte)
   const modalidad = idCoparte ? "EDITAR" : "CREAR"
   const inputNota = useRef(null)
+  const formRef = useRef(null)
 
   useEffect(() => {
     cargarData()
@@ -260,7 +261,7 @@ const FormaCoparte = () => {
             )}
         </div>
       </div>
-      <FormaContenedor onSubmit={handleSubmit}>
+      <FormaContenedor onSubmit={handleSubmit} formaRef={formRef}>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">ID alterno</label>
           <input

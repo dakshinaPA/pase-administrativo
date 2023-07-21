@@ -1,4 +1,4 @@
-import { useEffect, useState, useReducer } from "react"
+import { useEffect, useState, useReducer, useRef } from "react"
 import { useRouter } from "next/router"
 import { ChangeEvent } from "@assets/models/formEvents.model"
 import { Usuario } from "@models/usuario.model"
@@ -8,7 +8,7 @@ import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
 import { BtnBack } from "@components/BtnBack"
 import { ApiCall, ApiCallRes } from "@assets/utils/apiCalls"
 import { BtnCancelar, BtnEditar, BtnRegistrar } from "./Botones"
-import { obtenerCopartes } from "@assets/utils/common"
+import { Validaciones, obtenerCopartes } from "@assets/utils/common"
 import { useAuth } from "@contexts/auth.context"
 
 type ActionTypes = "CARGA_INICIAL" | "HANDLE_CHANGE" | "HANDLE_CHANGE_COPARTE"
@@ -56,6 +56,17 @@ const estadoInicialForma: Usuario = {
   },
 }
 
+const estaInicialErrores = {
+  nombre: "",
+  apellido_paterno: "",
+  apellido_materno: "",
+  email: "",
+  telefono: "",
+  password: "",
+  cargo: "",
+  id_coparte: "",
+}
+
 const FormaUsuario = () => {
   const { user } = useAuth()
   if (!user || user.id_rol == 3) return null
@@ -64,9 +75,11 @@ const FormaUsuario = () => {
   const idUsuario = Number(router.query.id)
   const [estadoForma, dispatch] = useReducer(reducer, estadoInicialForma)
   const [copartesDB, setCopartesDB] = useState<CoparteMin[]>([])
+  const [errores, setErrores] = useState(estaInicialErrores)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [modoEditar, setModoEditar] = useState<boolean>(!idUsuario)
   const modalidad = idUsuario ? "EDITAR" : "CREAR"
+  const formRef = useRef(null)
 
   useEffect(() => {
     cargarData()
@@ -146,8 +159,41 @@ const FormaUsuario = () => {
     })
   }
 
+  const validarCampos = () => {
+    try {
+      const camposForma = Object.entries(estadoForma).filter(
+        (campo, index) => index <= 5
+      )
+
+      for (const cf of camposForma) {
+        const [campo, valor] = cf
+        const validacion = Validaciones.metodos[campo](valor)
+        if (!validacion.pasa) throw [campo, validacion.mensaje]
+      }
+
+      if (estadoForma.coparte.id_coparte == 0)
+        throw ["id_coparte", "Selecciona una coparte"]
+
+      const cargo = Validaciones.texto(estadoForma.coparte.cargo)
+      if (!cargo.pasa) throw ["cargo", cargo.mensaje]
+
+      setErrores(estaInicialErrores)
+      return true
+    } catch (error) {
+      const [campo, mensaje] = error
+      formRef.current
+        .querySelector(`input[name=${campo}], select[name=${campo}]`)
+        .focus()
+      setErrores({ ...estaInicialErrores, [campo]: mensaje })
+      return false
+    }
+  }
+
   const handleSubmit = async (ev: React.SyntheticEvent) => {
     ev.preventDefault()
+
+    if (!validarCampos()) return
+    console.log(estadoForma)
 
     setIsLoading(true)
     const { error, data, mensaje } =
@@ -183,7 +229,7 @@ const FormaUsuario = () => {
           )}
         </div>
       </div>
-      <FormaContenedor onSubmit={handleSubmit}>
+      <FormaContenedor onSubmit={handleSubmit} formaRef={formRef}>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Nombre</label>
           <input
@@ -194,6 +240,9 @@ const FormaUsuario = () => {
             value={estadoForma.nombre}
             disabled={!modoEditar}
           />
+          {errores.nombre && (
+            <small className="mensaje_error">{errores.nombre}</small>
+          )}
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Apellido paterno</label>
@@ -205,6 +254,9 @@ const FormaUsuario = () => {
             value={estadoForma.apellido_paterno}
             disabled={!modoEditar}
           />
+          {errores.apellido_paterno && (
+            <small className="mensaje_error">{errores.apellido_paterno}</small>
+          )}
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Apellido materno</label>
@@ -216,6 +268,9 @@ const FormaUsuario = () => {
             value={estadoForma.apellido_materno}
             disabled={!modoEditar}
           />
+          {errores.apellido_materno && (
+            <small className="mensaje_error">{errores.apellido_materno}</small>
+          )}
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Email</label>
@@ -227,6 +282,9 @@ const FormaUsuario = () => {
             value={estadoForma.email}
             disabled={!modoEditar}
           />
+          {errores.email && (
+            <small className="mensaje_error">{errores.email}</small>
+          )}
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Teléfono</label>
@@ -238,6 +296,9 @@ const FormaUsuario = () => {
             value={estadoForma.telefono}
             disabled={!modoEditar}
           />
+          {errores.telefono && (
+            <small className="mensaje_error">{errores.telefono}</small>
+          )}
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Password</label>
@@ -249,6 +310,9 @@ const FormaUsuario = () => {
             value={estadoForma.password}
             disabled={!modoEditar}
           />
+          {errores.password && (
+            <small className="mensaje_error">{errores.password}</small>
+          )}
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Rol</label>
@@ -283,6 +347,9 @@ const FormaUsuario = () => {
                   </option>
                 ))}
               </select>
+              {errores.id_coparte && (
+                <small className="mensaje_error">{errores.id_coparte}</small>
+              )}
             </div>
             <div className="col-12 col-md-6 col-lg-4 mb-3">
               <label className="form-label">Cargo</label>
@@ -294,6 +361,9 @@ const FormaUsuario = () => {
                 value={estadoForma.coparte.cargo}
                 disabled={!modoEditar}
               />
+              {errores.cargo && (
+                <small className="mensaje_error">{errores.cargo}</small>
+              )}
             </div>
           </>
         )}

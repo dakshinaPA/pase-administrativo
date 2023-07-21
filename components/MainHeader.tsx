@@ -18,12 +18,12 @@ const MainHeader = ({ abrirMenu }) => {
       style={{ height: "50px" }}
     >
       <div>
-        {/* <Link href="/" className="d-none d-md-block">
+        <Link href="/" className="d-none d-md-block">
           <i
             className="bi bi-house-gear text-white"
             style={{ fontSize: "30px" }}
           ></i>
-        </Link> */}
+        </Link>
         <i
           className="bi bi-list text-white d-md-none"
           style={{ fontSize: "30px" }}

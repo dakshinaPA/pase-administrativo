@@ -13,12 +13,14 @@ class CoparteDB {
     let query = `SELECT id, nombre, nombre_corto FROM copartes WHERE b_activo = 1`
 
     if (id_admin) {
-      query += ` AND id_administrador = ${id_admin}`
+      query += ` AND id_administrador=${id_admin}`
     }
 
     if (id_coparte) {
-      query += ` AND id = ${id_coparte}`
+      query += ` AND id=${id_coparte}`
     }
+
+    query += " ORDER BY nombre"
 
     try {
       const res = await queryDB(query)
@@ -138,7 +140,7 @@ class CoparteDB {
       u.nombre, u.apellido_paterno, u.apellido_materno, u.email, u.telefono
       FROM coparte_usuarios cu
       JOIN usuarios u ON cu.id_usuario = u.id
-      WHERE cu.id_coparte = ${id_coparte} AND u.b_activo = 1`
+      WHERE cu.id_coparte = ${id_coparte} AND u.b_activo = 1 ORDER BY u.nombre`
 
     try {
       const res = await queryDB(query)

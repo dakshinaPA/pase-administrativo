@@ -256,6 +256,48 @@ const obtenerEstatusSolicitud = (i_estatus: number) => {
   }
 }
 
+class Validaciones {
+  static metodos = {
+    nombre: this.nombre,
+    apellido_paterno: this.nombre,
+    apellido_materno: this.nombre,
+    email: this.email,
+    telefono: this.telefono,
+    password: this.password,
+    texto: this.texto,
+  }
+
+  static nombre(nombre: string) {
+    return /^[a-zA-Z\u00C0-\u017F]{2,}$/.test(nombre)
+      ? { pasa: true, mensaje: "" }
+      : { pasa: false, mensaje: "Nombre inválido" }
+  }
+
+  static texto(texto: string) {
+    return /^[a-zA-Z]{5,}$/.test(texto)
+      ? { pasa: true, mensaje: "" }
+      : { pasa: false, mensaje: "Mínimo 5 caracteres" }
+  }
+
+  static email(email: string) {
+    return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(email)
+      ? { pasa: true, mensaje: "" }
+      : { pasa: false, mensaje: "Formato de correo inválido" }
+  }
+
+  static telefono(telefono: string) {
+    return /^[0-9]{10}$/.test(telefono)
+      ? { pasa: true, mensaje: "" }
+      : { pasa: false, mensaje: "Número a 10 dígitos" }
+  }
+
+  static password(password: string) {
+    return /^.{3,}$/.test(password)
+      ? { pasa: true, mensaje: "" }
+      : { pasa: false, mensaje: "Mínimo 3 carcateres" }
+  }
+}
+
 export {
   meses,
   determinarNombreArchivo,
@@ -277,5 +319,6 @@ export {
   obtenerBadgeStatusSolicitud,
   obtenerEstatusSolicitud,
   montoALocaleString,
-  inputDateAEpoch
+  inputDateAEpoch,
+  Validaciones,
 }

@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useState } from "react"
+import { useEffect, useReducer, useRef, useState } from "react"
 import { useRouter } from "next/router"
 import { ChangeEvent } from "@assets/models/formEvents.model"
 import {
@@ -61,7 +61,7 @@ const FormaProveedor = () => {
     nombre: "",
     i_tipo: 1,
     clabe: "",
-    id_banco: 1,
+    id_banco: 0,
     telefono: "",
     email: "",
     rfc: "",
@@ -83,10 +83,37 @@ const FormaProveedor = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [modoEditar, setModoEditar] = useState<boolean>(!idProveedor)
   const modalidad = idProveedor ? "EDITAR" : "CREAR"
+  const formRef = useRef(null)
 
   useEffect(() => {
     cargarData()
   }, [])
+
+  useEffect(() => {
+    //el banco depende de los primero 3 digios de la clabe
+    if (estadoForma.clabe.length < 3 && estadoForma.id_banco > 0) {
+      dispatch({
+        type: "HANDLE_CHANGE",
+        payload: {
+          name: "id_banco",
+          value: 0,
+        },
+      })
+    } else if (estadoForma.clabe.length == 3 && estadoForma.id_banco == 0) {
+      const matchBanco = bancos.find(
+        (banco) => banco.clave === estadoForma.clabe
+      )
+      if (matchBanco) {
+        dispatch({
+          type: "HANDLE_CHANGE",
+          payload: {
+            name: "id_banco",
+            value: matchBanco.id,
+          },
+        })
+      }
+    }
+  }, [estadoForma.clabe])
 
   const cargarData = async () => {
     setIsLoading(true)
@@ -202,7 +229,7 @@ const FormaProveedor = () => {
             )}
         </div>
       </div>
-      <FormaContenedor onSubmit={handleSubmit}>
+      <FormaContenedor onSubmit={handleSubmit} formaRef={formRef}>
         <div className="col-12 col-lg-4 mb-3">
           <label className="form-label">Proyecto</label>
           <select
@@ -265,8 +292,10 @@ const FormaProveedor = () => {
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="id_banco"
             value={estadoForma.id_banco}
-            disabled={!modoEditar}
+            // disabled={!modoEditar}
+            disabled
           >
+            <option value="0" disabled></option>
             {bancos.map(({ id, nombre }) => (
               <option key={id} value={id}>
                 {nombre}

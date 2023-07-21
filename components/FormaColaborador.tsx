@@ -100,7 +100,7 @@ const FormaColaborador = () => {
     apellido_paterno: "",
     apellido_materno: "",
     clabe: "",
-    id_banco: 1,
+    id_banco: 0,
     telefono: "",
     email: "",
     rfc: "",
@@ -130,12 +130,12 @@ const FormaColaborador = () => {
   const { estados, bancos } = useCatalogos()
   const [estadoForma, dispatch] = useReducer(reducer, estadoInicialForma)
   const [proyectosDB, setProyectosDB] = useState<ProyectoMin[]>([])
-  // const [dtFinMax, setDtFinMax] = useState("")
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [modoEditar, setModoEditar] = useState<boolean>(!idColaborador)
   const modalidad = idColaborador ? "EDITAR" : "CREAR"
   const estadoOriginalColaborador = useRef(null)
   const tBodyPeriodos = useRef(null)
+  const formRef = useRef(null)
 
   useEffect(() => {
     cargarData()
@@ -150,6 +150,32 @@ const FormaColaborador = () => {
       payload,
     })
   }, [estadoForma.i_tipo])
+
+  useEffect(() => {
+    //el banco depende de los primero 3 digios de la clabe
+    if (estadoForma.clabe.length < 3 && estadoForma.id_banco > 0) {
+      dispatch({
+        type: "HANDLE_CHANGE",
+        payload: {
+          name: "id_banco",
+          value: 0,
+        },
+      })
+    } else if (estadoForma.clabe.length == 3 && estadoForma.id_banco == 0) {
+      const matchBanco = bancos.find(
+        (banco) => banco.clave === estadoForma.clabe
+      )
+      if (matchBanco) {
+        dispatch({
+          type: "HANDLE_CHANGE",
+          payload: {
+            name: "id_banco",
+            value: matchBanco.id,
+          },
+        })
+      }
+    }
+  }, [estadoForma.clabe])
 
   const cargarData = async () => {
     setIsLoading(true)
@@ -370,7 +396,7 @@ const FormaColaborador = () => {
             )}
         </div>
       </div>
-      <FormaContenedor onSubmit={handleSubmit}>
+      <FormaContenedor onSubmit={handleSubmit} formaRef={formRef}>
         <div className="col-12">
           <div className="row">
             <div className="col-12 col-md-6 col-lg-4 mb-3">
@@ -471,8 +497,10 @@ const FormaColaborador = () => {
                 onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
                 name="id_banco"
                 value={estadoForma.id_banco}
-                disabled={!modoEditar}
+                // disabled={!modoEditar}
+                disabled
               >
+                <option value="0" disabled></option>
                 {bancos.map(({ id, nombre }) => (
                   <option key={id} value={id}>
                     {nombre}

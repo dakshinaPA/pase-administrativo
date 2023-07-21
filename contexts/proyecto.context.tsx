@@ -126,7 +126,7 @@ const ProyectoProvider = ({ children }) => {
     f_monto_total: 0,
     i_tipo_financiamiento: 1,
     id_tema_social: 1,
-    id_sector_beneficiado: 1,
+    sector_beneficiado: "",
     id_estado: 1,
     municipio: "",
     descripcion: "",

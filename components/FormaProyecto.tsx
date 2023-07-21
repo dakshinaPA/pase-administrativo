@@ -519,13 +519,14 @@ const FormaProyecto = () => {
   } = useProyecto()
 
   const router = useRouter()
-  const { temas_sociales, sectores_beneficiados, estados } = useCatalogos()
+  const { temas_sociales, estados } = useCatalogos()
   const [financiadoresDB, setFinanciadoresDB] = useState<FinanciadorMin[]>([])
   const [copartesDB, setCopartesDB] = useState<CoparteMin[]>([])
   const [usuariosCoparteDB, setUsuariosCoparteDB] = useState<
     CoparteUsuarioMin[]
   >([])
   const [isLoading, setIsLoading] = useState<boolean>(false)
+  const formRef = useRef(null)
 
   useEffect(() => {
     cargarData()
@@ -720,7 +721,7 @@ const FormaProyecto = () => {
           {showBtnEditar && <BtnEditar onClick={() => setModoEditar(true)} />}
         </div>
       </div>
-      <FormaContenedor onSubmit={handleSubmit}>
+      <FormaContenedor onSubmit={handleSubmit} formaRef={formRef}>
         {modalidad === "EDITAR" && (
           <div className="col-12 col-md-6 col-lg-4 mb-3">
             <label className="form-label">Id alterno</label>
@@ -828,19 +829,14 @@ const FormaProyecto = () => {
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Sector beneficiado</label>
-          <select
+          <input
             className="form-control"
+            type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-            name="id_sector_beneficiado"
-            value={estadoForma.id_sector_beneficiado}
+            name="sector_beneficiado"
+            value={estadoForma.sector_beneficiado}
             disabled={!modoEditar}
-          >
-            {sectores_beneficiados.map(({ id, nombre }) => (
-              <option key={id} value={id}>
-                {nombre}
-              </option>
-            ))}
-          </select>
+          />
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label me-1">Estado</label>
