@@ -142,13 +142,15 @@ const FormaColaborador = () => {
   }, [])
 
   useEffect(() => {
-    const payload =
-      estadoForma.i_tipo == 3 ? [] : estadoInicialForma.periodos_servicio
+    if (modalidad === "CREAR") {
+      const payload =
+        estadoForma.i_tipo == 3 ? [] : estadoInicialForma.periodos_servicio
 
-    dispatch({
-      type: "HANDLE_CHANGE_PERIODO",
-      payload,
-    })
+      dispatch({
+        type: "HANDLE_CHANGE_PERIODO",
+        payload,
+      })
+    }
   }, [estadoForma.i_tipo])
 
   useEffect(() => {
