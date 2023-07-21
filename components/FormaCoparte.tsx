@@ -18,6 +18,8 @@ import {
 import { useAuth } from "@contexts/auth.context"
 import { obtenerUsuariosXRol } from "@assets/utils/common"
 import { TooltipInfo } from "./Tooltip"
+import { useErrores } from "@hooks/useErrores"
+import { MensajeError } from "./Mensajes"
 
 type ActionTypes =
   | "CARGAR_DATA"
@@ -26,28 +28,35 @@ type ActionTypes =
   | "DIRECCION"
   | "ENLACE"
   | "RECARGAR_NOTAS"
+  | "CAMBIO_ESTATUS_LEGAL"
 
 interface ActionDispatch {
   type: ActionTypes
-  value: any
+  payload?: any
 }
 
 const reducer = (state: Coparte, action: ActionDispatch): Coparte => {
-  const { type, value } = action
+  const { type, payload } = action
 
   switch (type) {
     case "CARGAR_DATA":
-      return value
+      return payload
     case "HANDLE_CHANGE":
+      let clave = payload[0]
+      let valor = payload[1]
+
+      if (clave == "nombre_coparte") clave = "nombre"
+      if (clave == "rfc_organizacion") clave = "rfc"
+
       return {
         ...state,
-        [value[0]]: value[1],
+        [clave]: valor,
       }
     case "ADMINISTRADOR":
       return {
         ...state,
         administrador: {
-          id: value[1],
+          id: payload,
         },
       }
     case "DIRECCION":
@@ -55,7 +64,7 @@ const reducer = (state: Coparte, action: ActionDispatch): Coparte => {
         ...state,
         direccion: {
           ...state.direccion,
-          [value[0]]: value[1],
+          [payload[0]]: payload[1],
         },
       }
     case "ENLACE":
@@ -63,14 +72,23 @@ const reducer = (state: Coparte, action: ActionDispatch): Coparte => {
         ...state,
         enlace: {
           ...state.enlace,
-          [value[0]]: value[1],
+          [payload[0]]: payload[1],
         },
       }
     case "RECARGAR_NOTAS":
       return {
         ...state,
-        notas: value,
+        notas: payload,
       }
+    case "CAMBIO_ESTATUS_LEGAL":
+      if (state.i_estatus_legal == 2) {
+        return {
+          ...state,
+          representante_legal: "",
+          rfc: "",
+        }
+      }
+      return state
     default:
       return state
   }
@@ -118,15 +136,21 @@ const FormaCoparte = () => {
   const [estadoForma, dispatch] = useReducer(reducer, estadoInicialForma)
   const [administardoresDB, setAdministardoresDB] = useState<UsuarioMin[]>([])
   const [mensajeNota, setMensajeNota] = useState<string>("")
+  const { error, validarCampos, formRef } = useErrores()
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [modoEditar, setModoEditar] = useState<boolean>(!idCoparte)
   const modalidad = idCoparte ? "EDITAR" : "CREAR"
   const inputNota = useRef(null)
-  const formRef = useRef(null)
 
   useEffect(() => {
     cargarData()
   }, [])
+
+  useEffect(() => {
+    dispatch({
+      type: "CAMBIO_ESTATUS_LEGAL",
+    })
+  }, [estadoForma.i_estatus_legal])
 
   const cargarData = async () => {
     setIsLoading(true)
@@ -150,13 +174,13 @@ const FormaCoparte = () => {
         const dataCoparte = resCombinadas[1].data[0] as Coparte
         dispatch({
           type: "CARGAR_DATA",
-          value: dataCoparte,
+          payload: dataCoparte,
         })
       } else {
         //setear en el select a primer admin en la lista
         dispatch({
           type: "ADMINISTRADOR",
-          value: [undefined, adminsDB[0]?.id || 0],
+          payload: adminsDB[0]?.id || 0,
         })
       }
     } catch (error) {
@@ -190,7 +214,7 @@ const FormaCoparte = () => {
 
     dispatch({
       type,
-      value: [name, value],
+      payload: [name, value],
     })
   }
 
@@ -217,14 +241,55 @@ const FormaCoparte = () => {
         const notasDB = re.data as NotaCoparte[]
         dispatch({
           type: "RECARGAR_NOTAS",
-          value: notasDB,
+          payload: notasDB,
         })
       }
     }
   }
 
+  const validarForma = () => {
+    const campos = {
+      id_alt: estadoForma.id_alt,
+      nombre_coparte: estadoForma.nombre,
+      nombre_corto: estadoForma.nombre_corto,
+      representante_legal: estadoForma.representante_legal,
+      rfc_organizacion: estadoForma.rfc,
+      id_administrador: estadoForma.administrador.id,
+      calle: estadoForma.direccion.calle,
+      numero_ext: estadoForma.direccion.numero_ext,
+      colonia: estadoForma.direccion.colonia,
+      municipio: estadoForma.direccion.municipio,
+      cp: estadoForma.direccion.cp,
+      nombre: estadoForma.enlace?.nombre,
+      apellido_paterno: estadoForma.enlace?.apellido_paterno,
+      apellido_materno: estadoForma.enlace?.apellido_materno,
+      email: estadoForma.enlace?.email,
+      telefono: estadoForma.enlace?.telefono,
+      password: estadoForma.enlace?.password,
+      cargo: estadoForma.enlace?.cargo,
+    }
+
+    if (estadoForma.i_estatus_legal == 2) {
+      delete campos.representante_legal
+      delete campos.rfc_organizacion
+    }
+    
+    if(modalidad === "EDITAR"){
+      delete campos.nombre
+      delete campos.apellido_paterno
+      delete campos.apellido_materno
+      delete campos.email
+      delete campos.telefono
+      delete campos.password
+      delete campos.cargo
+    }
+
+    return validarCampos(campos)
+  }
+
   const handleSubmit = async (ev: React.SyntheticEvent) => {
-    ev.preventDefault()
+    if (!validarForma()) return
+    console.log(estadoForma)
 
     setIsLoading(true)
     const res = modalidad === "EDITAR" ? await editar() : await registrar()
@@ -272,6 +337,7 @@ const FormaCoparte = () => {
             value={estadoForma.id_alt}
             disabled={!modoEditar}
           />
+          {error.campo == "id_alt" && <MensajeError mensaje={error.mensaje} />}
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Nombre</label>
@@ -279,10 +345,13 @@ const FormaCoparte = () => {
             className="form-control"
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-            name="nombre"
+            name="nombre_coparte"
             value={estadoForma.nombre}
             disabled={!modoEditar}
           />
+          {error.campo == "nombre_coparte" && (
+            <MensajeError mensaje={error.mensaje} />
+          )}
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Nombre corto</label>
@@ -294,6 +363,9 @@ const FormaCoparte = () => {
             value={estadoForma.nombre_corto}
             disabled={!modoEditar}
           />
+          {error.campo == "nombre_corto" && (
+            <MensajeError mensaje={error.mensaje} />
+          )}
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Estatus legal</label>
@@ -319,6 +391,9 @@ const FormaCoparte = () => {
             value={estadoForma.representante_legal}
             disabled={!modoEditar || estadoForma.i_estatus_legal != 1}
           />
+          {error.campo == "representante_legal" && (
+            <MensajeError mensaje={error.mensaje} />
+          )}
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label me-1">RFC</label>
@@ -327,10 +402,13 @@ const FormaCoparte = () => {
             className="form-control"
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-            name="rfc"
+            name="rfc_organizacion"
             value={estadoForma.rfc}
             disabled={!modoEditar || estadoForma.i_estatus_legal != 1}
           />
+          {error.campo == "rfc_organizacion" && (
+            <MensajeError mensaje={error.mensaje} />
+          )}
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Administrador</label>
@@ -346,6 +424,9 @@ const FormaCoparte = () => {
               </option>
             ))}
           </select>
+          {error.campo == "id_administrador" && (
+            <MensajeError mensaje={error.mensaje} />
+          )}
         </div>
         <div className="col-12">
           <hr />
@@ -363,6 +444,7 @@ const FormaCoparte = () => {
             value={estadoForma.direccion.calle}
             disabled={!modoEditar}
           />
+          {error.campo == "calle" && <MensajeError mensaje={error.mensaje} />}
         </div>
         <div className="col-6 col-lg-3 mb-3">
           <label className="form-label">Número ext</label>
@@ -374,6 +456,9 @@ const FormaCoparte = () => {
             value={estadoForma.direccion.numero_ext}
             disabled={!modoEditar}
           />
+          {error.campo == "numero_ext" && (
+            <MensajeError mensaje={error.mensaje} />
+          )}
         </div>
         <div className="col-6 col-lg-3 mb-3">
           <label className="form-label">Número int</label>
@@ -396,6 +481,7 @@ const FormaCoparte = () => {
             value={estadoForma.direccion.colonia}
             disabled={!modoEditar}
           />
+          {error.campo == "colonia" && <MensajeError mensaje={error.mensaje} />}
         </div>
         <div className="col-12 col-md-6 col-lg-3 mb-3">
           <label className="form-label">Municipio</label>
@@ -407,6 +493,9 @@ const FormaCoparte = () => {
             value={estadoForma.direccion.municipio}
             disabled={!modoEditar}
           />
+          {error.campo == "municipio" && (
+            <MensajeError mensaje={error.mensaje} />
+          )}
         </div>
         <div className="col-12 col-md-6 col-lg-3 mb-3">
           <label className="form-label">CP</label>
@@ -418,6 +507,7 @@ const FormaCoparte = () => {
             value={estadoForma.direccion.cp}
             disabled={!modoEditar}
           />
+          {error.campo == "cp" && <MensajeError mensaje={error.mensaje} />}
         </div>
         <div className="col-12 col-md-6 col-lg-3 mb-3">
           <label className="form-label">Estado</label>
@@ -452,6 +542,9 @@ const FormaCoparte = () => {
                 name="nombre"
                 value={estadoForma.enlace.nombre}
               />
+              {error.campo == "nombre" && (
+                <MensajeError mensaje={error.mensaje} />
+              )}
             </div>
             <div className="col-12 col-md-6 col-lg-4 mb-3">
               <label className="form-label">Apellido paterno</label>
@@ -462,6 +555,9 @@ const FormaCoparte = () => {
                 name="apellido_paterno"
                 value={estadoForma.enlace.apellido_paterno}
               />
+              {error.campo == "apellido_paterno" && (
+                <MensajeError mensaje={error.mensaje} />
+              )}
             </div>
             <div className="col-12 col-md-6 col-lg-4 mb-3">
               <label className="form-label">Apellido materno</label>
@@ -472,6 +568,9 @@ const FormaCoparte = () => {
                 name="apellido_materno"
                 value={estadoForma.enlace.apellido_materno}
               />
+              {error.campo == "apellido_materno" && (
+                <MensajeError mensaje={error.mensaje} />
+              )}
             </div>
             <div className="col-12 col-md-6 col-lg-4 mb-3">
               <label className="form-label">Email</label>
@@ -482,6 +581,9 @@ const FormaCoparte = () => {
                 name="email"
                 value={estadoForma.enlace.email}
               />
+              {error.campo == "email" && (
+                <MensajeError mensaje={error.mensaje} />
+              )}
             </div>
             <div className="col-12 col-md-6 col-lg-4 mb-3">
               <label className="form-label">Teléfono</label>
@@ -492,6 +594,9 @@ const FormaCoparte = () => {
                 name="telefono"
                 value={estadoForma.enlace.telefono}
               />
+              {error.campo == "telefono" && (
+                <MensajeError mensaje={error.mensaje} />
+              )}
             </div>
             <div className="col-12 col-md-6 col-lg-4 mb-3">
               <label className="form-label me-1">Password</label>
@@ -503,6 +608,9 @@ const FormaCoparte = () => {
                 name="password"
                 value={estadoForma.enlace.password}
               />
+              {error.campo == "password" && (
+                <MensajeError mensaje={error.mensaje} />
+              )}
             </div>
             <div className="col-12 col-md-6 col-lg-4 mb-3">
               <label className="form-label">Cargo</label>
@@ -513,6 +621,9 @@ const FormaCoparte = () => {
                 name="cargo"
                 value={estadoForma.enlace.cargo}
               />
+              {error.campo == "cargo" && (
+                <MensajeError mensaje={error.mensaje} />
+              )}
             </div>
           </>
         )}

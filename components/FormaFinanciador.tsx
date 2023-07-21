@@ -9,6 +9,8 @@ import { ApiCall } from "@assets/utils/apiCalls"
 import { useAuth } from "@contexts/auth.context"
 import { useCatalogos } from "@contexts/catalogos.context"
 import { BtnCancelar, BtnEditar, BtnRegistrar } from "./Botones"
+import { useErrores } from "@hooks/useErrores"
+import { MensajeError } from "./Mensajes"
 
 type ActionTypes =
   | "CARGA_INICIAL"
@@ -21,26 +23,28 @@ type ActionTypes =
 
 interface ActionDispatch {
   type: ActionTypes
-  value: any
+  payload: any
 }
 
 const reducer = (state: Financiador, action: ActionDispatch): Financiador => {
-  const { type, value } = action
+  const { type, payload } = action
 
   switch (type) {
     case "CARGA_INICIAL":
-      return value
+      return payload
     case "HANDLE_CHANGE":
+      let clave = payload.clave
+      if (clave == "nombre_financiador") clave = "nombre"
       return {
         ...state,
-        [value[0]]: value[1],
+        [clave]: payload.valor,
       }
     case "HANDLE_CHANGE_DIRECCION":
       return {
         ...state,
         direccion: {
           ...state.direccion,
-          [value[0]]: value[1],
+          [payload.clave]: payload.valor,
         },
       }
     case "HANDLE_CHANGE_ENLACE":
@@ -48,28 +52,30 @@ const reducer = (state: Financiador, action: ActionDispatch): Financiador => {
         ...state,
         enlace: {
           ...state.enlace,
-          [value[0]]: value[1],
+          [payload.clave]: payload.valor,
         },
       }
     case "RECARGAR_NOTAS":
       return {
         ...state,
-        notas: value,
+        notas: payload,
       }
     case "HANDLE_CHANGE_PAIS":
-      let llave = "id_estado"
-      let valor: string | number = 1
+      let estado = state.direccion.estado
+      let id_estado = 1
 
-      if (value == 1) {
-        llave = "estado"
-        valor = ""
+      if (payload == 1) {
+        estado = ""
+      } else {
+        id_estado = 0
       }
 
       return {
         ...state,
         direccion: {
           ...state.direccion,
-          [llave]: valor,
+          id_estado,
+          estado,
         },
       }
     default:
@@ -117,10 +123,10 @@ const FormaFinanciador = () => {
   const [estadoForma, dispatch] = useReducer(reducer, estadoInicialForma)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [mensajeNota, setMensajeNota] = useState<string>("")
+  const { error, validarCampos, formRef } = useErrores()
   const [modoEditar, setModoEditar] = useState<boolean>(!idFinanciador)
   const modalidad = idFinanciador ? "EDITAR" : "CREAR"
   const inputNota = useRef(null)
-  const formRef = useRef(null)
 
   useEffect(() => {
     if (modalidad === "EDITAR") {
@@ -131,7 +137,7 @@ const FormaFinanciador = () => {
   useEffect(() => {
     dispatch({
       type: "HANDLE_CHANGE_PAIS",
-      value: estadoForma.direccion.id_pais,
+      payload: estadoForma.direccion.id_pais,
     })
   }, [estadoForma.direccion.id_pais])
 
@@ -146,7 +152,7 @@ const FormaFinanciador = () => {
       const dataFinanciador = data[0] as Financiador
       dispatch({
         type: "CARGA_INICIAL",
-        value: dataFinanciador,
+        payload: dataFinanciador,
       })
     }
 
@@ -180,12 +186,42 @@ const FormaFinanciador = () => {
 
     dispatch({
       type,
-      value: [name, value],
+      payload: { clave: name, valor: value },
     })
   }
 
-  const handleSubmit = async (ev: React.SyntheticEvent) => {
-    ev.preventDefault()
+  const validarForma = () => {
+    const campos = {
+      id_alt: estadoForma.id_alt,
+      nombre_financiador: estadoForma.nombre,
+      // rfc: estadoForma.rfc,
+      actividad: estadoForma.actividad,
+      representante_legal: estadoForma.representante_legal,
+      rfc_representante_legal: estadoForma.rfc_representante_legal,
+      dt_constitucion: estadoForma.dt_constitucion,
+      calle: estadoForma.direccion.calle,
+      numero_ext: estadoForma.direccion.numero_ext,
+      colonia: estadoForma.direccion.colonia,
+      municipio: estadoForma.direccion.municipio,
+      cp: estadoForma.direccion.cp,
+      estado: estadoForma.direccion.estado,
+      nombre: estadoForma.enlace.nombre,
+      apellido_paterno: estadoForma.enlace.apellido_paterno,
+      apellido_materno: estadoForma.enlace.apellido_materno,
+      email: estadoForma.enlace.email,
+      telefono: estadoForma.enlace.telefono,
+    }
+
+    if (estadoForma.direccion.id_pais == 1) {
+      delete campos.estado
+    }
+
+    return validarCampos(campos)
+  }
+
+  const handleSubmit = async () => {
+    if (!validarForma()) return
+    console.log(estadoForma)
 
     setIsLoading(true)
     const res = modalidad === "EDITAR" ? await editar() : await registrar()
@@ -227,7 +263,7 @@ const FormaFinanciador = () => {
         const notasDB = re.data as NotaFinanciador[]
         dispatch({
           type: "RECARGAR_NOTAS",
-          value: notasDB,
+          payload: notasDB,
         })
       }
     }
@@ -263,6 +299,7 @@ const FormaFinanciador = () => {
             value={estadoForma.id_alt}
             disabled={Boolean(idFinanciador)}
           />
+          {error.campo == "id_alt" && <MensajeError mensaje={error.mensaje} />}
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Nombre</label>
@@ -270,10 +307,13 @@ const FormaFinanciador = () => {
             className="form-control"
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-            name="nombre"
+            name="nombre_financiador"
             value={estadoForma.nombre}
             disabled={!modoEditar}
           />
+          {error.campo == "nombre_financiador" && (
+            <MensajeError mensaje={error.mensaje} />
+          )}
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">RFC</label>
@@ -309,6 +349,9 @@ const FormaFinanciador = () => {
             value={estadoForma.actividad}
             disabled={!modoEditar}
           />
+          {error.campo == "actividad" && (
+            <MensajeError mensaje={error.mensaje} />
+          )}
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Representante legal</label>
@@ -320,6 +363,9 @@ const FormaFinanciador = () => {
             value={estadoForma.representante_legal}
             disabled={!modoEditar}
           />
+          {error.campo == "representante_legal" && (
+            <MensajeError mensaje={error.mensaje} />
+          )}
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">RFC Representante</label>
@@ -332,6 +378,9 @@ const FormaFinanciador = () => {
             placeholder="del representante legal"
             disabled={!modoEditar}
           />
+          {error.campo == "rfc_representante_legal" && (
+            <MensajeError mensaje={error.mensaje} />
+          )}
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Página web</label>
@@ -354,6 +403,9 @@ const FormaFinanciador = () => {
             value={estadoForma.dt_constitucion}
             disabled={!modoEditar}
           />
+          {error.campo == "dt_constitucion" && (
+            <MensajeError mensaje={error.mensaje} />
+          )}
         </div>
         <div className="col-12">
           <hr />
@@ -371,6 +423,7 @@ const FormaFinanciador = () => {
             value={estadoForma.direccion.calle}
             disabled={!modoEditar}
           />
+          {error.campo == "calle" && <MensajeError mensaje={error.mensaje} />}
         </div>
         <div className="col-6 col-lg-3 mb-3">
           <label className="form-label">Número ext</label>
@@ -382,6 +435,9 @@ const FormaFinanciador = () => {
             value={estadoForma.direccion.numero_ext}
             disabled={!modoEditar}
           />
+          {error.campo == "numero_ext" && (
+            <MensajeError mensaje={error.mensaje} />
+          )}
         </div>
         <div className="col-6 col-lg-3 mb-3">
           <label className="form-label">Número int</label>
@@ -404,6 +460,7 @@ const FormaFinanciador = () => {
             value={estadoForma.direccion.colonia}
             disabled={!modoEditar}
           />
+          {error.campo == "colonia" && <MensajeError mensaje={error.mensaje} />}
         </div>
         <div className="col-12 col-md-6 col-lg-3 mb-3">
           <label className="form-label">Municipio</label>
@@ -415,6 +472,9 @@ const FormaFinanciador = () => {
             value={estadoForma.direccion.municipio}
             disabled={!modoEditar}
           />
+          {error.campo == "municipio" && (
+            <MensajeError mensaje={error.mensaje} />
+          )}
         </div>
         <div className="col-12 col-md-6 col-lg-3 mb-3">
           <label className="form-label">CP</label>
@@ -426,6 +486,7 @@ const FormaFinanciador = () => {
             value={estadoForma.direccion.cp}
             disabled={!modoEditar}
           />
+          {error.campo == "cp" && <MensajeError mensaje={error.mensaje} />}
         </div>
         {estadoForma.direccion.id_pais == 1 ? (
           <div className="col-12 col-md-6 col-lg-3 mb-3">
@@ -455,6 +516,9 @@ const FormaFinanciador = () => {
               value={estadoForma.direccion.estado}
               disabled={!modoEditar}
             />
+            {error.campo == "estado" && (
+              <MensajeError mensaje={error.mensaje} />
+            )}
           </div>
         )}
         <div className="col-12 col-md-6 col-lg-3 mb-3">
@@ -489,6 +553,7 @@ const FormaFinanciador = () => {
             value={estadoForma.enlace.nombre}
             disabled={!modoEditar}
           />
+          {error.campo == "nombre" && <MensajeError mensaje={error.mensaje} />}
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Apellido paterno</label>
@@ -500,6 +565,9 @@ const FormaFinanciador = () => {
             value={estadoForma.enlace.apellido_paterno}
             disabled={!modoEditar}
           />
+          {error.campo == "apellido_paterno" && (
+            <MensajeError mensaje={error.mensaje} />
+          )}
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Apellido materno</label>
@@ -511,6 +579,9 @@ const FormaFinanciador = () => {
             value={estadoForma.enlace.apellido_materno}
             disabled={!modoEditar}
           />
+          {error.campo == "apellido_materno" && (
+            <MensajeError mensaje={error.mensaje} />
+          )}
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Email</label>
@@ -522,6 +593,7 @@ const FormaFinanciador = () => {
             value={estadoForma.enlace.email}
             disabled={!modoEditar}
           />
+          {error.campo == "email" && <MensajeError mensaje={error.mensaje} />}
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Teléfono</label>
@@ -533,6 +605,9 @@ const FormaFinanciador = () => {
             value={estadoForma.enlace.telefono}
             disabled={!modoEditar}
           />
+          {error.campo == "telefono" && (
+            <MensajeError mensaje={error.mensaje} />
+          )}
         </div>
         {modoEditar && (
           <div className="col-12 text-end">

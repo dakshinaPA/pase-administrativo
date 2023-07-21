@@ -1,6 +1,7 @@
 import { useAuth } from "@contexts/auth.context"
-import { useForm } from "@hooks/useForm"
 import styles from "@components/styles/LoginForm.module.css"
+import { useState } from "react"
+import { ChangeEvent } from "@assets/models/formEvents.model"
 
 const Login = () => {
   const estadoInicialUsuario = {
@@ -9,11 +10,16 @@ const Login = () => {
   }
 
   const { login, error, limpiarError } = useAuth()
-  const { estadoForma, handleInputChange } = useForm(estadoInicialUsuario)
+  const [estadoForma, setEstadoForma] = useState(estadoInicialUsuario)
 
-  const onInputChange = (ev: React.FormEvent<HTMLInputElement>) => {
+  const onInputChange = (ev: ChangeEvent) => {
     if (error.hay) limpiarError()
-    handleInputChange(ev)
+    const { name, value } = ev.target
+
+    setEstadoForma((prevState) => ({
+      ...prevState,
+      [name]: value,
+    }))
   }
 
   const onSubmit = (ev: React.SyntheticEvent) => {
@@ -22,10 +28,7 @@ const Login = () => {
   }
 
   return (
-    <form
-      className={`mt-5 px-2 py-4 ${styles.loginForm}`}
-      onSubmit={onSubmit}
-    >
+    <form className={`mt-5 px-2 py-4 ${styles.loginForm}`} onSubmit={onSubmit}>
       <div className="mb-3">
         <label className="form-label color1 fw-bold">Usuario</label>
         <input
