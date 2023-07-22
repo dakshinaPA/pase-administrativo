@@ -211,6 +211,10 @@ const FormaCoparte = () => {
 
   const handleChange = (ev: ChangeEvent, type: ActionTypes) => {
     const { name, value } = ev.target
+    
+    if (error.campo === ev.target.name) {
+      validarCampos({ [name]: value })
+    }
 
     dispatch({
       type,
@@ -273,8 +277,8 @@ const FormaCoparte = () => {
       delete campos.representante_legal
       delete campos.rfc_organizacion
     }
-    
-    if(modalidad === "EDITAR"){
+
+    if (modalidad === "EDITAR") {
       delete campos.nombre
       delete campos.apellido_paterno
       delete campos.apellido_materno

@@ -43,6 +43,10 @@ import {
 } from "@contexts/proyecto.context"
 import { FormaMinistracion } from "./FromaMinistracion"
 import { TooltipInfo } from "./Tooltip"
+import { useErrores } from "@hooks/useErrores"
+import { MensajeError } from "./Mensajes"
+import { Toast } from "./Toast"
+import { useToast } from "@hooks/useToasts"
 
 const TablaMinistraciones = () => {
   const {
@@ -525,8 +529,9 @@ const FormaProyecto = () => {
   const [usuariosCoparteDB, setUsuariosCoparteDB] = useState<
     CoparteUsuarioMin[]
   >([])
+  const { error, validarCampos, formRef } = useErrores()
   const [isLoading, setIsLoading] = useState<boolean>(false)
-  const formRef = useRef(null)
+  const { toastState, mostrarToast, cerrarToast } = useToast()
 
   useEffect(() => {
     cargarData()
@@ -637,6 +642,12 @@ const FormaProyecto = () => {
   }
 
   const handleChange = (ev: ChangeEvent, type: ActionTypes) => {
+    const { name, value } = ev.target
+
+    if (error.campo === ev.target.name) {
+      validarCampos({ [name]: value })
+    }
+
     dispatch({
       type,
       payload: ev.target,
@@ -657,9 +668,36 @@ const FormaProyecto = () => {
     setShowFormaMinistracion(true)
   }
 
-  const handleSubmit = async (ev: React.SyntheticEvent) => {
-    ev.preventDefault()
+  const validarForma = () => {
+    const campos = {
+      nombre: estadoForma.nombre,
+      id_financiador: estadoForma.id_financiador,
+      id_coparte: estadoForma.id_coparte,
+      id_responsable: estadoForma.id_responsable,
+      sector_beneficiado: estadoForma.sector_beneficiado,
+      municipio: estadoForma.municipio,
+      dt_inicio: estadoForma.dt_inicio,
+      dt_fin: estadoForma.dt_fin,
+      i_beneficiados: estadoForma.i_beneficiados,
+      descripcion: estadoForma.descripcion,
+    }
 
+    console.log(campos)
+    return validarCampos(campos)
+  }
+
+  const validarMinistraciones = () => {
+    if (estadoForma.ministraciones.length > 0) {
+      return true
+    }
+
+    mostrarToast("Agregar ministración")
+    return false
+  }
+
+  const handleSubmit = async (ev: React.SyntheticEvent) => {
+    if (!validarForma()) return
+    if (!validarMinistraciones()) return
     console.log(estadoForma)
 
     setIsLoading(true)
@@ -733,6 +771,9 @@ const FormaProyecto = () => {
               value={estadoForma.id_alt}
               disabled
             />
+            {error.campo == "id_alt" && (
+              <MensajeError mensaje={error.mensaje} />
+            )}
           </div>
         )}
         <div className="col-12 col-md-6 col-lg-4 mb-3">
@@ -745,6 +786,7 @@ const FormaProyecto = () => {
             value={estadoForma.nombre}
             disabled={!modoEditar}
           />
+          {error.campo == "nombre" && <MensajeError mensaje={error.mensaje} />}
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Financiador</label>
@@ -761,6 +803,9 @@ const FormaProyecto = () => {
               </option>
             ))}
           </select>
+          {error.campo == "id_financiador" && (
+            <MensajeError mensaje={error.mensaje} />
+          )}
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Coparte</label>
@@ -777,6 +822,9 @@ const FormaProyecto = () => {
               </option>
             ))}
           </select>
+          {error.campo == "id_coparte" && (
+            <MensajeError mensaje={error.mensaje} />
+          )}
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Responsable</label>
@@ -793,6 +841,9 @@ const FormaProyecto = () => {
                   {nombre} {apellido_paterno}
                 </option>
               )
+            )}
+            {error.campo == "id_responsable" && (
+              <MensajeError mensaje={error.mensaje} />
             )}
           </select>
         </div>
@@ -837,6 +888,9 @@ const FormaProyecto = () => {
             value={estadoForma.sector_beneficiado}
             disabled={!modoEditar}
           />
+          {error.campo == "sector_beneficiado" && (
+            <MensajeError mensaje={error.mensaje} />
+          )}
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label me-1">Estado</label>
@@ -866,6 +920,9 @@ const FormaProyecto = () => {
             value={estadoForma.municipio}
             disabled={!modoEditar}
           />
+          {error.campo == "municipio" && (
+            <MensajeError mensaje={error.mensaje} />
+          )}
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label me-1">Fecha inicio</label>
@@ -878,6 +935,9 @@ const FormaProyecto = () => {
             value={estadoForma.dt_inicio}
             disabled={!modoEditar}
           />
+          {error.campo == "dt_inicio" && (
+            <MensajeError mensaje={error.mensaje} />
+          )}
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label me-1">Fecha fin</label>
@@ -890,6 +950,7 @@ const FormaProyecto = () => {
             value={estadoForma.dt_fin}
             disabled={!modoEditar}
           />
+          {error.campo == "dt_fin" && <MensajeError mensaje={error.mensaje} />}
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Beneficiados</label>
@@ -901,6 +962,9 @@ const FormaProyecto = () => {
             value={estadoForma.i_beneficiados}
             disabled={!modoEditar}
           />
+          {error.campo == "i_beneficiados" && (
+            <MensajeError mensaje={error.mensaje} />
+          )}
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Monto total</label>
@@ -922,6 +986,9 @@ const FormaProyecto = () => {
             value={estadoForma.descripcion}
             disabled={!modoEditar}
           />
+          {error.campo == "descripcion" && (
+            <MensajeError mensaje={error.mensaje} />
+          )}
         </div>
         <div className="col-12">
           <hr />
@@ -947,6 +1014,8 @@ const FormaProyecto = () => {
           </div>
         )}
       </FormaContenedor>
+      <Toast estado={toastState} cerrar={cerrarToast} />
+      {/* <Toast estado={toastState} cerrar={cerrarToast} /> */}
       {modalidad === "EDITAR" && (
         <>
           <Saldos />

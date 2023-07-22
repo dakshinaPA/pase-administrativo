@@ -187,7 +187,7 @@ const Financiadores = () => {
                   <th>#id</th>
                   <th>Alt id</th>
                   <th>Nombre</th>
-                  <th>Responsable</th>
+                  {user.id_rol != 3 && <th>Responsable</th>}
                   <th>Tipo financiamiento</th>
                   <th>Monto total</th>
                   <th>Solicitado</th>
@@ -222,7 +222,7 @@ const Financiadores = () => {
                       <td>{id}</td>
                       <td>{id_alt}</td>
                       <td>{nombre}</td>
-                      <td>{responsable}</td>
+                      {user.id_rol != 3 && <td>{responsable}</td>}
                       <td>{tipo_financiamiento}</td>
                       <td>{montoALocaleString(f_monto_total)}</td>
                       <td>{montoALocaleString(saldo.f_solicitado)}</td>

@@ -35,16 +35,26 @@ const useErrores = () => {
             break
           case "cargo":
           case "actividad":
-            if (!/^[a-zA-Z\u00C0-\u017F\s]{5,}$/.test(campos[key]))
+          case "sector_beneficiado":
+            if (!/^[a-zA-Z0-9\u00C0-\u017F\s]{5,}$/.test(campos[key]))
               throw [key, "Mínimo 5 caracteres"]
             break
           case "id_coparte":
           case "id_administrador":
+          case "id_financiador":
+          case "id_responsable":
             if (!(campos[key] > 0)) throw [key, "Campo requerido"]
+            break
+          case "i_beneficiados":
+            if (!(campos[key] > 0)) throw [key, "Cantidad mayor a 0"]
             break
           case "id_alt":
             if (!/^[0-9]{3,}$/.test(campos[key]))
               throw [key, "Mínimo 3 dígitos"]
+            break
+          case "descripcion":
+            if (!/^[a-zA-Z\u00C0-\u017F\s]{10,}$/.test(campos[key]))
+              throw [key, "Mínimo 10 caracteres"]
             break
           case "nombre_financiador":
           case "nombre_coparte":
@@ -77,7 +87,9 @@ const useErrores = () => {
               throw [key, "Código postal inválido"]
             break
           case "dt_constitucion":
-            if (!/^[0-9]{4}\-[0-1][1-9]\-[1-3][0-9]$/.test(campos[key]))
+          case "dt_inicio":
+          case "dt_fin":
+            if (!/^[0-9]{4}\-[0-1][1-9]\-[0-3][0-9]$/.test(campos[key]))
               throw [key, "Fecha inválida"]
             break
         }
@@ -87,7 +99,9 @@ const useErrores = () => {
       return true
     } catch (error) {
       formRef.current
-        .querySelector(`input[name=${error[0]}], select[name=${error[0]}]`)
+        .querySelector(
+          `input[name=${error[0]}], select[name=${error[0]}], textarea[name=${error[0]}] `
+        )
         .focus()
 
       setError({

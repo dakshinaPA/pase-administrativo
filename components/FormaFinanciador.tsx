@@ -184,6 +184,10 @@ const FormaFinanciador = () => {
   const handleChange = (ev: ChangeEvent, type: ActionTypes) => {
     const { name, value } = ev.target
 
+    if (error.campo === ev.target.name) {
+      validarCampos({ [name]: value })
+    }
+
     dispatch({
       type,
       payload: { clave: name, valor: value },

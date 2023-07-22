@@ -143,6 +143,12 @@ const FormaUsuario = () => {
   }
 
   const handleChange = (ev: ChangeEvent, type: ActionTypes) => {
+    const { name, value } = ev.target
+
+    if (error.campo === ev.target.name) {
+      validarCampos({ [name]: value })
+    }
+
     dispatch({
       type,
       payload: ev.target,
@@ -218,9 +224,7 @@ const FormaUsuario = () => {
             value={estadoForma.nombre}
             disabled={!modoEditar}
           />
-          {error.campo == "nombre" && (
-            <MensajeError mensaje={error.mensaje} />
-          )}
+          {error.campo == "nombre" && <MensajeError mensaje={error.mensaje} />}
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Apellido paterno</label>
@@ -260,9 +264,7 @@ const FormaUsuario = () => {
             value={estadoForma.email}
             disabled={!modoEditar}
           />
-          {error.campo == "email" && (
-           <MensajeError mensaje={error.mensaje} />
-          )}
+          {error.campo == "email" && <MensajeError mensaje={error.mensaje} />}
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Teléfono</label>

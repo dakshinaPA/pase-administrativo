@@ -8,7 +8,6 @@ import {
   useState,
 } from "react"
 import { useRouter } from "next/router"
-import { ApiCall } from "@assets/utils/apiCalls"
 import {
   MinistracionProyecto,
   Proyecto,
@@ -168,30 +167,13 @@ const ProyectoProvider = ({ children }) => {
   const [modoEditar, setModoEditar] = useState<boolean>(!idProyecto)
   const modalidad = idProyecto ? "EDITAR" : "CREAR"
 
-  // useEffect(() => {}, [])
   useEffect(() => {
     if (modalidad === "CREAR") {
       handleTipoCambioFinanciamineto()
     }
   }, [estadoForma.i_tipo_financiamiento])
 
-  // useEffect(() => {
 
-  //   if (formaMinistracion.id) return
-
-  //   // limpiar la forma cada que se cierre o abra nueva ministracion
-  //   // calcular automaticamente el numero de ministracion de acuerdo al siguiente en la lista
-  //   setFormaMinistracion((prevState) => ({
-  //     ...estaInicialFormaMinistracion,
-  //     i_numero:
-  //       estadoForma.ministraciones.length > 0
-  //         ? Number(
-  //             estadoForma.ministraciones[estadoForma.ministraciones.length - 1]
-  //               .i_numero
-  //           ) + 1
-  //         : 1,
-  //   }))
-  // }, [showFormaMinistracion])
 
   const handleTipoCambioFinanciamineto = () => {
     dispatch({
