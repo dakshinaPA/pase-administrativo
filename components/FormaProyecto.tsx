@@ -20,6 +20,7 @@ import {
 } from "@models/coparte.model"
 import { useCatalogos } from "@contexts/catalogos.context"
 import {
+  fechaMasDiasFutuosString,
   inputDateAformato,
   montoALocaleString,
   obtenerBadgeStatusSolicitud,
@@ -668,6 +669,12 @@ const FormaProyecto = () => {
     setShowFormaMinistracion(true)
   }
 
+  const calcularDtMinFin = () => {
+    return estadoForma.dt_inicio
+      ? fechaMasDiasFutuosString(estadoForma.dt_inicio, 1)
+      : ""
+  }
+
   const validarForma = () => {
     const campos = {
       nombre: estadoForma.nombre,
@@ -948,6 +955,7 @@ const FormaProyecto = () => {
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="dt_fin"
             value={estadoForma.dt_fin}
+            min={calcularDtMinFin()}
             disabled={!modoEditar}
           />
           {error.campo == "dt_fin" && <MensajeError mensaje={error.mensaje} />}
