@@ -20,11 +20,15 @@ import {
 } from "./Botones"
 import { useAuth } from "@contexts/auth.context"
 import {
+  fechaMasDiasFutuosString,
+  fechaMasMesesFutuosString,
   inputDateAformato,
   montoALocaleString,
   obtenerColaboradores,
   obtenerProyectos,
 } from "@assets/utils/common"
+import { useErrores } from "@hooks/useErrores"
+import { MensajeError } from "./Mensajes"
 
 type ActionTypes =
   | "CARGA_INICIAL"
@@ -130,12 +134,12 @@ const FormaColaborador = () => {
   const { estados, bancos } = useCatalogos()
   const [estadoForma, dispatch] = useReducer(reducer, estadoInicialForma)
   const [proyectosDB, setProyectosDB] = useState<ProyectoMin[]>([])
+  const { error, validarCampos, formRef } = useErrores()
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [modoEditar, setModoEditar] = useState<boolean>(!idColaborador)
   const modalidad = idColaborador ? "EDITAR" : "CREAR"
   const estadoOriginalColaborador = useRef(null)
   const tBodyPeriodos = useRef(null)
-  const formRef = useRef(null)
 
   useEffect(() => {
     cargarData()
@@ -257,6 +261,10 @@ const FormaColaborador = () => {
   const handleChange = (ev: ChangeEvent, type: ActionTypes) => {
     const { name, value } = ev.target
 
+    if (error.campo === name) {
+      validarCampos({ [name]: value })
+    }
+
     dispatch({
       type,
       payload: { name, value },
@@ -264,7 +272,9 @@ const FormaColaborador = () => {
   }
 
   const handleChangePeriodo = (ev: ChangeEvent, index: number) => {
-    const { name, value } = ev.target
+    let { name, value } = ev.target
+
+    if (name === "cp_periodo") name = "cp"
 
     const copiaPeriodos = [...estadoForma.periodos_servicio]
     copiaPeriodos[index] = {
@@ -277,27 +287,6 @@ const FormaColaborador = () => {
       payload: copiaPeriodos,
     })
   }
-
-  // const dtInicioMasSeisMeses = () => {
-  //   const dtInicio = new Date(estadoForma.dt_inicio_servicio)
-  //   const dtFinEpoch = new Date(estadoForma.dt_inicio_servicio).setMonth(
-  //     dtInicio.getMonth() + 6
-  //   )
-
-  //   const dtFin = new Date(0)
-  //   dtFin.setUTCMilliseconds(dtFinEpoch)
-  //   const [month, day, year] = dtFin
-  //     .toLocaleDateString("en-US", {
-  //       year: "numeric",
-  //       month: "2-digit",
-  //       day: "2-digit",
-  //     })
-  //     .split("/")
-
-  //   const dtAFormatoInput = `${year}-${month}-${day}`
-
-  //   return dtAFormatoInput
-  // }
 
   const quitarPeriodoServicio = (index: number) => {
     dispatch({
@@ -322,6 +311,18 @@ const FormaColaborador = () => {
     })
   }
 
+  const determinarMinDataFinPeriodoServicio = (dt_inicio: string) => {
+    if (!dt_inicio) return ""
+    const dtInicioMasDia = fechaMasDiasFutuosString(dt_inicio, 1)
+    return dtInicioMasDia
+  }
+
+  const determinarMaxDataFinPeriodoServicio = (dt_inicio: string) => {
+    if (!dt_inicio || estadoForma.i_tipo > 1) return ""
+    const dtInicioMasSeisMeses = fechaMasMesesFutuosString(dt_inicio, 6)
+    return dtInicioMasSeisMeses
+  }
+
   const validarPeriodos = (): boolean => {
     try {
       estadoForma.periodos_servicio.forEach((periodo, index) => {
@@ -331,7 +332,7 @@ const FormaColaborador = () => {
         if (!periodo.servicio) throw { index, campo: "servicio" }
         if (!periodo.descripcion) throw { index, campo: "descripcion" }
         if (!Number(periodo.cp) || periodo.cp.length != 5)
-          throw { index, campo: "cp" }
+          throw { index, campo: "cp_periodo" }
         if (!periodo.dt_inicio) throw { index, campo: "dt_inicio" }
         if (!periodo.dt_fin) throw { index, campo: "dt_fin" }
       })
@@ -345,9 +346,31 @@ const FormaColaborador = () => {
     }
   }
 
-  const handleSubmit = async (ev: React.SyntheticEvent) => {
-    ev.preventDefault()
+  const validarForma = () => {
+    const campos = {
+      id_proyecto: estadoForma.id_proyecto,
+      nombre: estadoForma.nombre,
+      apellido_paterno: estadoForma.apellido_paterno,
+      apellido_materno: estadoForma.apellido_materno,
+      clabe: estadoForma.clabe,
+      id_banco: estadoForma.id_banco,
+      email: estadoForma.email,
+      telefono: estadoForma.telefono,
+      rfc: estadoForma.rfc,
+      curp: estadoForma.curp,
+      calle: estadoForma.direccion.calle,
+      numero_ext: estadoForma.direccion.numero_ext,
+      colonia: estadoForma.direccion.colonia,
+      municipio: estadoForma.direccion.municipio,
+      cp: estadoForma.direccion.cp,
+    }
 
+    // console.log(campos)
+    return validarCampos(campos)
+  }
+
+  const handleSubmit = async () => {
+    if (!validarForma()) return
     if (!validarPeriodos()) return
     console.log(estadoForma)
 
@@ -420,6 +443,9 @@ const FormaColaborador = () => {
                   <option value="0">No hay proyectos</option>
                 )}
               </select>
+              {error.campo == "id_proyecto" && (
+                <MensajeError mensaje={error.mensaje} />
+              )}
             </div>
             <div className="col-12 col-md-6 col-lg-4 mb-3">
               <label className="form-label">Tipo</label>
@@ -435,126 +461,143 @@ const FormaColaborador = () => {
                 <option value="3">Sin pago</option>
               </select>
             </div>
-            <div className="col-12 col-md-6 col-lg-4 mb-3">
-              <label className="form-label">ID empleado</label>
-              <input
-                className="form-control"
-                type="text"
-                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-                name="id_empleado"
-                value={estadoForma.id_empleado}
-                disabled={!modoEditar}
-              />
-            </div>
+            {modalidad === "EDITAR" && (
+              <div className="col-12 col-md-6 col-lg-4 mb-3">
+                <label className="form-label">ID empleado</label>
+                <input
+                  className="form-control"
+                  type="text"
+                  onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+                  name="id_empleado"
+                  value={estadoForma.id_empleado}
+                  disabled
+                />
+              </div>
+            )}
           </div>
-          <div className="row">
-            <div className="col-12 col-md-6 col-lg-4 mb-3">
-              <label className="form-label">Nombre</label>
-              <input
-                className="form-control"
-                type="text"
-                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-                name="nombre"
-                value={estadoForma.nombre}
-                disabled={!modoEditar}
-              />
-            </div>
-            <div className="col-12 col-md-6 col-lg-4 mb-3">
-              <label className="form-label">Apellido paterno</label>
-              <input
-                className="form-control"
-                type="text"
-                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-                name="apellido_paterno"
-                value={estadoForma.apellido_paterno}
-                disabled={!modoEditar}
-              />
-            </div>
-            <div className="col-12 col-md-6 col-lg-4 mb-3">
-              <label className="form-label">Apellido materno</label>
-              <input
-                className="form-control"
-                type="text"
-                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-                name="apellido_materno"
-                value={estadoForma.apellido_materno}
-                disabled={!modoEditar}
-              />
-            </div>
-            <div className="col-12 col-md-6 col-lg-4 mb-3">
-              <label className="form-label">CLABE</label>
-              <input
-                className="form-control"
-                type="text"
-                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-                name="clabe"
-                value={estadoForma.clabe}
-                disabled={!modoEditar}
-              />
-            </div>
-            <div className="col-12 col-md-6 col-lg-4 mb-3">
-              <label className="form-label">Banco</label>
-              <select
-                className="form-control"
-                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-                name="id_banco"
-                value={estadoForma.id_banco}
-                // disabled={!modoEditar}
-                disabled
-              >
-                <option value="0" disabled></option>
-                {bancos.map(({ id, nombre }) => (
-                  <option key={id} value={id}>
-                    {nombre}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="col-12 col-md-6 col-lg-4 mb-3">
-              <label className="form-label">Email</label>
-              <input
-                className="form-control"
-                type="text"
-                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-                name="email"
-                value={estadoForma.email}
-                disabled={!modoEditar}
-              />
-            </div>
-            <div className="col-12 col-md-6 col-lg-4 mb-3">
-              <label className="form-label">Teléfono</label>
-              <input
-                className="form-control"
-                type="text"
-                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-                name="telefono"
-                value={estadoForma.telefono}
-                disabled={!modoEditar}
-              />
-            </div>
-            <div className="col-12 col-md-6 col-lg-4 mb-3">
-              <label className="form-label">RFC</label>
-              <input
-                className="form-control"
-                type="text"
-                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-                name="rfc"
-                value={estadoForma.rfc}
-                disabled={!modoEditar}
-              />
-            </div>
-            <div className="col-12 col-md-6 col-lg-4 mb-3">
-              <label className="form-label">CURP</label>
-              <input
-                className="form-control"
-                type="text"
-                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-                name="curp"
-                value={estadoForma.curp}
-                disabled={!modoEditar}
-              />
-            </div>
-          </div>
+        </div>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label">Nombre</label>
+          <input
+            className="form-control"
+            type="text"
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+            name="nombre"
+            value={estadoForma.nombre}
+            disabled={!modoEditar}
+          />
+          {error.campo == "nombre" && <MensajeError mensaje={error.mensaje} />}
+        </div>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label">Apellido paterno</label>
+          <input
+            className="form-control"
+            type="text"
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+            name="apellido_paterno"
+            value={estadoForma.apellido_paterno}
+            disabled={!modoEditar}
+          />
+          {error.campo == "apellido_paterno" && (
+            <MensajeError mensaje={error.mensaje} />
+          )}
+        </div>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label">Apellido materno</label>
+          <input
+            className="form-control"
+            type="text"
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+            name="apellido_materno"
+            value={estadoForma.apellido_materno}
+            disabled={!modoEditar}
+          />
+          {error.campo == "apellido_materno" && (
+            <MensajeError mensaje={error.mensaje} />
+          )}
+        </div>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label">CLABE</label>
+          <input
+            className="form-control"
+            type="text"
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+            name="clabe"
+            value={estadoForma.clabe}
+            disabled={!modoEditar}
+          />
+          {error.campo == "clabe" && <MensajeError mensaje={error.mensaje} />}
+        </div>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label">Banco</label>
+          <select
+            className="form-control"
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+            name="id_banco"
+            value={estadoForma.id_banco}
+            // disabled={!modoEditar}
+            disabled
+          >
+            <option value="0" disabled></option>
+            {bancos.map(({ id, nombre }) => (
+              <option key={id} value={id}>
+                {nombre}
+              </option>
+            ))}
+          </select>
+          {error.campo == "id_banco" && (
+            <MensajeError mensaje={error.mensaje} />
+          )}
+        </div>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label">Email</label>
+          <input
+            className="form-control"
+            type="text"
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+            name="email"
+            value={estadoForma.email}
+            disabled={!modoEditar}
+          />
+          {error.campo == "email" && <MensajeError mensaje={error.mensaje} />}
+        </div>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label">Teléfono</label>
+          <input
+            className="form-control"
+            type="text"
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+            name="telefono"
+            value={estadoForma.telefono}
+            disabled={!modoEditar}
+          />
+          {error.campo == "telefono" && (
+            <MensajeError mensaje={error.mensaje} />
+          )}
+        </div>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label">RFC</label>
+          <input
+            className="form-control"
+            type="text"
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+            name="rfc"
+            value={estadoForma.rfc}
+            disabled={!modoEditar}
+          />
+          {error.campo == "rfc" && <MensajeError mensaje={error.mensaje} />}
+        </div>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label">CURP</label>
+          <input
+            className="form-control"
+            type="text"
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+            name="curp"
+            value={estadoForma.curp}
+            disabled={!modoEditar}
+          />
+          {error.campo == "curp" && <MensajeError mensaje={error.mensaje} />}
         </div>
         {estadoForma.i_tipo != 3 && (
           <>
@@ -658,7 +701,7 @@ const FormaColaborador = () => {
                             <input
                               type="text"
                               className="form-control"
-                              name="cp"
+                              name="cp_periodo"
                               value={cp}
                               onChange={(e) => handleChangePeriodo(e, index)}
                             />
@@ -677,7 +720,12 @@ const FormaColaborador = () => {
                               type="date"
                               className="form-control"
                               name="dt_fin"
-                              value={dt_fin}
+                              min={determinarMinDataFinPeriodoServicio(
+                                dt_inicio
+                              )}
+                              max={determinarMaxDataFinPeriodoServicio(
+                                dt_inicio
+                              )}
                               onChange={(e) => handleChangePeriodo(e, index)}
                             />
                           </td>
@@ -729,6 +777,7 @@ const FormaColaborador = () => {
             value={estadoForma.direccion.calle}
             disabled={!modoEditar}
           />
+          {error.campo == "calle" && <MensajeError mensaje={error.mensaje} />}
         </div>
         <div className="col-6 col-lg-3 mb-3">
           <label className="form-label">Número ext</label>
@@ -740,6 +789,9 @@ const FormaColaborador = () => {
             value={estadoForma.direccion.numero_ext}
             disabled={!modoEditar}
           />
+          {error.campo == "numero_ext" && (
+            <MensajeError mensaje={error.mensaje} />
+          )}
         </div>
         <div className="col-6 col-lg-3 mb-3">
           <label className="form-label">Número int</label>
@@ -762,6 +814,7 @@ const FormaColaborador = () => {
             value={estadoForma.direccion.colonia}
             disabled={!modoEditar}
           />
+          {error.campo == "colonia" && <MensajeError mensaje={error.mensaje} />}
         </div>
         <div className="col-12 col-md-6 col-lg-3 mb-3">
           <label className="form-label">Municipio</label>
@@ -773,6 +826,9 @@ const FormaColaborador = () => {
             value={estadoForma.direccion.municipio}
             disabled={!modoEditar}
           />
+          {error.campo == "municipio" && (
+            <MensajeError mensaje={error.mensaje} />
+          )}
         </div>
         <div className="col-12 col-md-6 col-lg-3 mb-3">
           <label className="form-label">CP</label>
@@ -784,6 +840,7 @@ const FormaColaborador = () => {
             value={estadoForma.direccion.cp}
             disabled={!modoEditar}
           />
+          {error.campo == "cp" && <MensajeError mensaje={error.mensaje} />}
         </div>
         <div className="col-12 col-md-6 col-lg-3 mb-3">
           <label className="form-label">Estado</label>

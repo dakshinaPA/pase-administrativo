@@ -77,6 +77,20 @@ const fechaMasDiasFutuosString = (dt_inicio: string, dias: number) => {
   return dtAFormatoInput
 }
 
+const fechaMasMesesFutuosString = (dt_inicio: string, meses: number) => {
+  const dtInicio = new Date(dt_inicio)
+  dtInicio.setDate(dtInicio.getDate() + 1)
+  dtInicio.setMonth(dtInicio.getMonth() + meses)
+  const dtAString = dtInicio.toLocaleDateString("es-MX", {
+    month: "2-digit",
+    day: "2-digit",
+    year: "numeric",
+  })
+  const [dia, mes, anio] = dtAString.split("/")
+  const dtAFormatoInput = `${anio}-${mes}-${dia}`
+  return dtAFormatoInput
+}
+
 const obtenerCopartes = async (queries: QueriesCoparte) => {
   const { id, id_admin, min = true } = queries
 
@@ -293,4 +307,5 @@ export {
   montoALocaleString,
   inputDateAEpoch,
   fechaMasDiasFutuosString,
+  fechaMasMesesFutuosString,
 }

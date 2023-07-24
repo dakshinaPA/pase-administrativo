@@ -91,6 +91,7 @@ export interface NotaProyecto {
 }
 
 export interface SaldoProyecto {
+  f_transferido: number
   f_solicitado: number
   f_comprobado: number
   f_por_comprobar: number

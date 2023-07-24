@@ -8,6 +8,7 @@ const TablaContenedor = ({ children }) => {
 
 const FormaContenedor = ({ children, onSubmit, formaRef }) => {
   const handleSubmit = (ev: React.SyntheticEvent) => {
+    // console.log('si', ev)
     ev.preventDefault()
     onSubmit()
   }

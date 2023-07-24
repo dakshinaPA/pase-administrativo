@@ -29,6 +29,8 @@ import {
   obtenerSolicitudes,
 } from "@assets/utils/common"
 import { Toast } from "./Toast"
+import { useErrores } from "@hooks/useErrores"
+import { MensajeError } from "./Mensajes"
 
 type ActionTypes =
   | "CARGA_INICIAL"
@@ -238,7 +240,7 @@ const FormaSolicitudPresupuesto = () => {
     tipo_gasto: "",
     titular_cuenta: "",
     clabe: "",
-    id_banco: 1,
+    id_banco: 0,
     email: "",
     proveedor: "",
     descripcion_gasto: "",
@@ -256,6 +258,7 @@ const FormaSolicitudPresupuesto = () => {
   const [dataProyecto, setDataProyecto] = useState(estadoInicialDataProyecto)
   const [dataTipoGasto, setDataTipoGasto] = useState(estadoInicialDataTipoGasto)
   const [aceptarTerminos, setAceptarTerminos] = useState(Boolean(idSolicitud))
+  const { error, validarCampos, formRef } = useErrores()
   const [toastState, setToastState] = useState(estaInicialToast)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [modoEditar, setModoEditar] = useState<boolean>(!idSolicitud)
@@ -264,7 +267,6 @@ const FormaSolicitudPresupuesto = () => {
 
   const fileInput = useRef(null)
   const cbAceptaTerminos = useRef(null)
-  const formRef = useRef(null)
 
   useEffect(() => {
     cargarData()
@@ -361,7 +363,7 @@ const FormaSolicitudPresupuesto = () => {
         type: "CAMBIO_TITULAR",
         payload: {
           clabe: "",
-          id_banco: 1,
+          id_banco: 0,
           proveedor: "",
         },
       })
@@ -513,6 +515,10 @@ const FormaSolicitudPresupuesto = () => {
   const handleChange = (ev: ChangeEvent, type: ActionTypes) => {
     const { name, value } = ev.target
 
+    if (error.campo === name) {
+      validarCampos({ [name]: value })
+    }
+
     dispatch({
       type,
       payload: { name, value },
@@ -653,7 +659,7 @@ const FormaSolicitudPresupuesto = () => {
     })
   }
 
-  const pasaValidaciones = () => {
+  const aceptaTerminos = () => {
     let NoError = true
 
     if (modalidad === "CREAR" && !aceptarTerminos) {
@@ -664,12 +670,33 @@ const FormaSolicitudPresupuesto = () => {
     return NoError
   }
 
+  const validarForma = () => {
+    const campos = {
+      id_proyecto: estadoForma.id_proyecto,
+      i_tipo_gasto: estadoForma.i_tipo_gasto,
+      id_partida_presupuestal: estadoForma.id_partida_presupuestal,
+      titular_cuenta: estadoForma.titular_cuenta,
+      clabe: estadoForma.clabe,
+      id_banco: estadoForma.id_banco,
+      email: estadoForma.email,
+      proveedor: estadoForma.proveedor,
+      descripcion_gasto: estadoForma.descripcion_gasto,
+      f_importe: estadoForma.f_importe,
+    }
+
+    if (estadoForma.i_tipo_gasto == 5) {
+      delete campos.proveedor
+    }
+
+    // console.log(campos)
+    return validarCampos(campos)
+  }
+
   const handleSubmit = async (ev: React.SyntheticEvent) => {
-    ev.preventDefault()
+    if (!validarForma()) return
+    if (!aceptaTerminos()) return
+    console.log(estadoForma)
 
-    if (!pasaValidaciones()) return
-
-    // console.log(estadoForma)
     setIsLoading(true)
 
     const { error, data, mensaje } =
@@ -786,6 +813,9 @@ const FormaSolicitudPresupuesto = () => {
                     <option value="0">No hay proyectos</option>
                   )}
                 </select>
+                {error.campo == "id_proyecto" && (
+                  <MensajeError mensaje={error.mensaje} />
+                )}
               </div>
               <div className="col-12 col-md-6 col-lg-4 mb-3">
                 <label className="form-label">Tipo de gasto</label>
@@ -816,6 +846,9 @@ const FormaSolicitudPresupuesto = () => {
                     <option value="5">Gastos por comprobar</option>
                   )}
                 </select>
+                {error.campo == "i_tipo_gasto" && (
+                  <MensajeError mensaje={error.mensaje} />
+                )}
               </div>
               <div className="col-12 col-md-6 col-lg-4 mb-3">
                 <label className="form-label">Partida presupuestal</label>
@@ -837,6 +870,9 @@ const FormaSolicitudPresupuesto = () => {
                     )
                   )}
                 </select>
+                {error.campo == "id_partida_presupuestal" && (
+                  <MensajeError mensaje={error.mensaje} />
+                )}
               </div>
             </>
           ) : (
@@ -877,7 +913,7 @@ const FormaSolicitudPresupuesto = () => {
               disabled={disableInputXEstatus}
             >
               <option value="" disabled>
-                Selecciona una opción
+                Selecciona titular
               </option>
               {dataTipoGasto.titulares.map((titular_cuenta) => (
                 <option key={titular_cuenta.id} value={titular_cuenta.nombre}>
@@ -885,6 +921,9 @@ const FormaSolicitudPresupuesto = () => {
                 </option>
               ))}
             </select>
+            {error.campo == "titular_cuenta" && (
+              <MensajeError mensaje={error.mensaje} />
+            )}
           </div>
           <div className="col-12 col-md-6 col-lg-4 mb-3">
             <label className="form-label">CLABE</label>
@@ -896,6 +935,7 @@ const FormaSolicitudPresupuesto = () => {
               value={estadoForma.clabe}
               disabled
             />
+            {error.campo == "clabe" && <MensajeError mensaje={error.mensaje} />}
           </div>
           <div className="col-12 col-md-6 col-lg-4 mb-3">
             <label className="form-label">Banco</label>
@@ -906,12 +946,16 @@ const FormaSolicitudPresupuesto = () => {
               value={estadoForma.id_banco}
               disabled
             >
+              <option value="0" disabled></option>
               {bancos.map(({ id, nombre }) => (
                 <option key={id} value={id}>
                   {nombre}
                 </option>
               ))}
             </select>
+            {error.campo == "id_banco" && (
+              <MensajeError mensaje={error.mensaje} />
+            )}
           </div>
           <div className="col-12 col-md-6 col-lg-4 mb-3">
             <label className="form-label">Email</label>
@@ -923,6 +967,7 @@ const FormaSolicitudPresupuesto = () => {
               value={estadoForma.email}
               disabled={disableInputXEstatus}
             />
+            {error.campo == "email" && <MensajeError mensaje={error.mensaje} />}
           </div>
           <div className="col-12 col-md-6 col-lg-4 mb-3">
             <label className="form-label">Proveedor</label>
@@ -935,6 +980,9 @@ const FormaSolicitudPresupuesto = () => {
               disabled={disableInputProveedor}
               placeholder="emisor de la factura"
             />
+            {error.campo == "proveedor" && (
+              <MensajeError mensaje={error.mensaje} />
+            )}
           </div>
           <div className="col-12 col-md-6 col-lg-4 mb-3">
             <label className="form-label">Descricpión del gasto</label>
@@ -962,6 +1010,9 @@ const FormaSolicitudPresupuesto = () => {
                 disabled={disableInputXEstatus}
               />
             )}
+            {error.campo == "descripcion_gasto" && (
+              <MensajeError mensaje={error.mensaje} />
+            )}
           </div>
           <div className="col-12 col-md-6 col-lg-4 mb-3">
             <label className="form-label">Importe</label>
@@ -973,6 +1024,9 @@ const FormaSolicitudPresupuesto = () => {
               value={estadoForma.f_importe}
               disabled={disableInputImporte}
             />
+            {error.campo == "f_importe" && (
+              <MensajeError mensaje={error.mensaje} />
+            )}
           </div>
           <div className="col-12 col-md-6 col-lg-4 mb-3">
             <label className="form-label">Monto a comprobar</label>
@@ -1004,7 +1058,7 @@ const FormaSolicitudPresupuesto = () => {
             </div>
           )}
           {modalidad === "CREAR" && (
-            <div className="col-12 mb-3">
+            <div className="col-12 mb-3 d-flex justify-content-end">
               <div className="form-check">
                 <input
                   type="checkbox"

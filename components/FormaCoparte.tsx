@@ -16,7 +16,7 @@ import {
   BtnRegistrar,
 } from "./Botones"
 import { useAuth } from "@contexts/auth.context"
-import { obtenerUsuariosXRol } from "@assets/utils/common"
+import { montoALocaleString, obtenerUsuariosXRol } from "@assets/utils/common"
 import { TooltipInfo } from "./Tooltip"
 import { useErrores } from "@hooks/useErrores"
 import { MensajeError } from "./Mensajes"
@@ -731,13 +731,14 @@ const FormaCoparte = () => {
               <table className="table">
                 <thead className="table-light">
                   <tr>
-                    <th>#Id</th>
-                    <th>Alt Id</th>
-                    <th>Tipo de financiamiento</th>
-                    <th>Financiador</th>
-                    <th>Monto total</th>
-                    <th># Beneficiados</th>
+                    <th>Id Alt</th>
+                    <th>Nombre</th>
                     <th>Responsable</th>
+                    <th>Monto total</th>
+                    <th>Transferido</th>
+                    <th>Solicitado</th>
+                    <th>Ejecutado</th>
+                    <th>Avance</th>
                     <th>Ver</th>
                   </tr>
                 </thead>
@@ -746,20 +747,20 @@ const FormaCoparte = () => {
                     ({
                       id,
                       id_alt,
-                      tipo_financiamiento,
-                      financiador,
+                      nombre,
                       f_monto_total,
-                      i_beneficiados,
                       responsable,
+                      saldo
                     }) => (
                       <tr key={id}>
-                        <td>{id}</td>
                         <td>{id_alt}</td>
-                        <td>{tipo_financiamiento}</td>
-                        <td>{financiador}</td>
-                        <td>{f_monto_total}</td>
-                        <td>{i_beneficiados}</td>
+                        <td>{nombre}</td>
                         <td>{responsable}</td>
+                        <td>{montoALocaleString(f_monto_total)}</td>
+                        <td>{montoALocaleString(saldo.f_transferido)}</td>
+                        <td>{montoALocaleString(saldo.f_solicitado)}</td>
+                        <td>{montoALocaleString(saldo.f_ejecutado)}</td>
+                        <td>{saldo.p_avance}</td>
                         <td>
                           <BtnAccion
                             margin={false}

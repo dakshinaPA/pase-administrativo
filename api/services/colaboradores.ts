@@ -7,7 +7,7 @@ import {
 } from "@models/proyecto.model"
 
 class ColaboradorServices {
-  static obtenerTipo(id_tipo: 1 | 2| 3) {
+  static obtenerTipo(id_tipo: 1 | 2 | 3) {
     switch (id_tipo) {
       case 1:
         return "Asimilado"
@@ -113,15 +113,23 @@ class ColaboradorServices {
   static async crear(data: ColaboradorProyecto) {
     try {
       const { direccion, periodos_servicio } = data
+
       const cr = await ColaboradorDB.crear(data)
       if (cr.error) throw cr.data
 
       // @ts-ignore
-      const idInsertado = cr.data.insertId
+      const idInsertado = cr.data[0].insertId as number
+      const idAltProyecto = cr.data[1][0].id_alt
+      const [idFinanciador, idCoparte, idProyecto] = idAltProyecto.split("_")
+      const idEmpleado = `${idFinanciador}${idCoparte}${idProyecto}_${idInsertado}`
 
+      const upNumeroEmpleado = ColaboradorDB.actualizarIdEmpleado(
+        idEmpleado,
+        idInsertado
+      )
       const crDireccion = ColaboradorDB.crearDireccion(idInsertado, direccion)
 
-      const promesas = [crDireccion]
+      const promesas = [upNumeroEmpleado, crDireccion]
 
       for (const ps of periodos_servicio) {
         promesas.push(ColaboradorDB.crearPeriodoServicio(idInsertado, ps))
@@ -151,11 +159,11 @@ class ColaboradorServices {
 
       const up = ColaboradorDB.actualizar(id_colaborador, data)
       const upDireccion = ColaboradorDB.actualizarDireccion(direccion)
-      
+
       const promesas = [up, upDireccion]
 
       for (const ps of periodos_servicio) {
-        if(ps.id){
+        if (ps.id) {
           promesas.push(ColaboradorDB.actualizarPeriodoServicio(ps))
         } else {
           promesas.push(ColaboradorDB.crearPeriodoServicio(id_colaborador, ps))
@@ -169,7 +177,7 @@ class ColaboradorServices {
       }
 
       const reColaborador = await this.obtener(0, id_colaborador)
-      if(reColaborador.error) throw reColaborador.data
+      if (reColaborador.error) throw reColaborador.data
 
       const colaboradorUp = reColaborador.data[0] as ColaboradorDB
 
@@ -221,7 +229,11 @@ class ColaboradorServices {
       f_monto: Number(periodo.f_monto),
     }))
 
-    return RespuestaController.exitosa(200, "Consulta exitosa", dataTransformada)
+    return RespuestaController.exitosa(
+      200,
+      "Consulta exitosa",
+      dataTransformada
+    )
   }
 }
 

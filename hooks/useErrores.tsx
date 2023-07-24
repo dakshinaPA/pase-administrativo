@@ -17,6 +17,7 @@ const useErrores = () => {
           case "apellido_paterno":
           case "apellido_materno":
           case "representante_legal":
+          case "titular_cuenta":
             if (!/^[a-zA-Z\u00C0-\u017F\s]{2,}$/.test(campos[key]))
               throw [key, "Nombre inválido"]
             break
@@ -43,9 +44,14 @@ const useErrores = () => {
           case "id_administrador":
           case "id_financiador":
           case "id_responsable":
+          case "id_proyecto":
+          case "id_banco":
+          case "i_tipo_gasto":
+          case "id_partida_presupuestal":
             if (!(campos[key] > 0)) throw [key, "Campo requerido"]
             break
           case "i_beneficiados":
+          case "f_importe":
             if (!(campos[key] > 0)) throw [key, "Cantidad mayor a 0"]
             break
           case "id_alt":
@@ -53,6 +59,8 @@ const useErrores = () => {
               throw [key, "Mínimo 3 dígitos"]
             break
           case "descripcion":
+          case "descripcion_servicio":
+          case "descripcion_gasto":
             if (!/^[a-zA-Z\u00C0-\u017F\s]{10,}$/.test(campos[key]))
               throw [key, "Mínimo 10 caracteres"]
             break
@@ -62,6 +70,7 @@ const useErrores = () => {
           case "colonia":
           case "municipio":
           case "estado":
+          case "proveedor":
             if (!/^[a-zA-Z\u00C0-\u017F\s]{3,}$/.test(campos[key]))
               throw [key, "Mínimo 3 caracteres"]
             break
@@ -82,9 +91,17 @@ const useErrores = () => {
             if (!/^[A-Z]{3}[0-9]{6}[A-Z0-9]{3}$/.test(campos[key]))
               throw [key, "RFC inválido"]
             break
+          case "clabe":
+            if (!/^[0-9]{18}$/.test(campos[key]))
+              throw [key, "CLABE a 18 dígitos"]
+            break
+          case "curp":
+            if (!/^[A-Z][AEIOUX][A-Z]{2}[0-9]{6}[HM][A-Z]{5}[A-Z0-9][0-9]$/.test(campos[key]))
+              throw [key, "CURP inválido"]
+            break
           case "cp":
             if (!/^[0-9]{5}$/.test(campos[key]))
-              throw [key, "Código postal inválido"]
+              throw [key, "Código postal a 5 dígitos"]
             break
           case "dt_constitucion":
           case "dt_inicio":

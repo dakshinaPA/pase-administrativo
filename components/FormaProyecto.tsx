@@ -147,6 +147,7 @@ const Saldos = () => {
           <thead className="table-light">
             <tr>
               <th>Monto total</th>
+              <th>Transferido</th>
               <th>Solicitado</th>
               <th>Comprobado</th>
               <th>Por comprobar</th>
@@ -161,6 +162,7 @@ const Saldos = () => {
           <tbody>
             <tr>
               <td>{montoALocaleString(estadoForma.f_monto_total)}</td>
+              <td>{montoALocaleString(estadoForma.saldo.f_transferido)}</td>
               <td>{montoALocaleString(estadoForma.saldo.f_solicitado)}</td>
               <td>{montoALocaleString(estadoForma.saldo.f_comprobado)}</td>
               <td>{montoALocaleString(estadoForma.saldo.f_por_comprobar)}</td>

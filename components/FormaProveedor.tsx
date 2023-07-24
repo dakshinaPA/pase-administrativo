@@ -14,6 +14,8 @@ import { useCatalogos } from "@contexts/catalogos.context"
 import { BtnCancelar, BtnEditar, BtnRegistrar } from "./Botones"
 import { useAuth } from "@contexts/auth.context"
 import { obtenerProveedores, obtenerProyectos } from "@assets/utils/common"
+import { useErrores } from "@hooks/useErrores"
+import { MensajeError } from "./Mensajes"
 
 type ActionTypes = "CARGA_INICIAL" | "HANDLE_CHANGE" | "HANDLE_CHANGE_DIRECCION"
 
@@ -80,10 +82,10 @@ const FormaProveedor = () => {
   const { estados, bancos } = useCatalogos()
   const [estadoForma, dispatch] = useReducer(reducer, estadoInicialForma)
   const [proyectosDB, setProyectosDB] = useState<ProyectoMin[]>([])
+  const { error, validarCampos, formRef } = useErrores()
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [modoEditar, setModoEditar] = useState<boolean>(!idProveedor)
   const modalidad = idProveedor ? "EDITAR" : "CREAR"
-  const formRef = useRef(null)
 
   useEffect(() => {
     cargarData()
@@ -179,7 +181,12 @@ const FormaProveedor = () => {
   }
 
   const handleChange = (ev: ChangeEvent, type: ActionTypes) => {
-    const { name, value } = ev.target
+    let { name, value } = ev.target
+
+    if (name == "rfc_organizacion") name = "rfc"
+    if (error.campo === name) {
+      validarCampos({ [name]: value })
+    }
 
     dispatch({
       type,
@@ -187,8 +194,36 @@ const FormaProveedor = () => {
     })
   }
 
+  const validarForma = () => {
+    const campos = {
+      id_proyecto: estadoForma.id_proyecto,
+      nombre: estadoForma.nombre,
+      clabe: estadoForma.clabe,
+      id_banco: estadoForma.id_banco,
+      email: estadoForma.email,
+      telefono: estadoForma.telefono,
+      rfc: estadoForma.rfc,
+      rfc_organizacion: estadoForma.rfc,
+      descripcion_servicio: estadoForma.descripcion_servicio,
+      calle: estadoForma.direccion.calle,
+      numero_ext: estadoForma.direccion.numero_ext,
+      colonia: estadoForma.direccion.colonia,
+      municipio: estadoForma.direccion.municipio,
+      cp: estadoForma.direccion.cp,
+    }
+
+    if (estadoForma.i_tipo == 1) {
+      delete campos.rfc_organizacion
+    } else {
+      delete campos.rfc
+    }
+
+    // console.log(campos)
+    return validarCampos(campos)
+  }
+
   const handleSubmit = async (ev: React.SyntheticEvent) => {
-    ev.preventDefault()
+    if (!validarForma()) return
     console.log(estadoForma)
 
     setIsLoading(true)
@@ -249,6 +284,9 @@ const FormaProveedor = () => {
               <option value="0">No hay proyectos</option>
             )}
           </select>
+          {error.campo == "id_proyecto" && (
+            <MensajeError mensaje={error.mensaje} />
+          )}
         </div>
         <div className="col-12 col-lg-8 mb-3">
           <label className="form-label">Nombre</label>
@@ -260,6 +298,7 @@ const FormaProveedor = () => {
             value={estadoForma.nombre}
             disabled={!modoEditar}
           />
+          {error.campo == "nombre" && <MensajeError mensaje={error.mensaje} />}
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Tipo</label>
@@ -284,6 +323,7 @@ const FormaProveedor = () => {
             value={estadoForma.clabe}
             disabled={!modoEditar}
           />
+          {error.campo == "clabe" && <MensajeError mensaje={error.mensaje} />}
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Banco</label>
@@ -302,6 +342,9 @@ const FormaProveedor = () => {
               </option>
             ))}
           </select>
+          {error.campo == "id_banco" && (
+            <MensajeError mensaje={error.mensaje} />
+          )}
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Email</label>
@@ -313,6 +356,7 @@ const FormaProveedor = () => {
             value={estadoForma.email}
             disabled={!modoEditar}
           />
+          {error.campo == "email" && <MensajeError mensaje={error.mensaje} />}
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Teléfono</label>
@@ -324,6 +368,9 @@ const FormaProveedor = () => {
             value={estadoForma.telefono}
             disabled={!modoEditar}
           />
+          {error.campo == "telefono" && (
+            <MensajeError mensaje={error.mensaje} />
+          )}
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">RFC</label>
@@ -331,10 +378,14 @@ const FormaProveedor = () => {
             className="form-control"
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-            name="rfc"
+            name={estadoForma.i_tipo == 1 ? "rfc" : "rfc_organizacion"}
             value={estadoForma.rfc}
             disabled={!modoEditar}
           />
+          {error.campo ==
+            (estadoForma.i_tipo == 1 ? "rfc" : "rfc_organizacion") && (
+            <MensajeError mensaje={error.mensaje} />
+          )}
         </div>
         <div className="col-12 mb-3">
           <label className="form-label">
@@ -348,6 +399,9 @@ const FormaProveedor = () => {
             value={estadoForma.descripcion_servicio}
             disabled={!modoEditar}
           />
+          {error.campo == "descripcion_servicio" && (
+            <MensajeError mensaje={error.mensaje} />
+          )}
         </div>
         <div className="col-12">
           <hr />
@@ -365,6 +419,7 @@ const FormaProveedor = () => {
             value={estadoForma.direccion.calle}
             disabled={!modoEditar}
           />
+          {error.campo == "calle" && <MensajeError mensaje={error.mensaje} />}
         </div>
         <div className="col-6 col-lg-3 mb-3">
           <label className="form-label">Número ext</label>
@@ -376,6 +431,9 @@ const FormaProveedor = () => {
             value={estadoForma.direccion.numero_ext}
             disabled={!modoEditar}
           />
+          {error.campo == "numero_ext" && (
+            <MensajeError mensaje={error.mensaje} />
+          )}
         </div>
         <div className="col-6 col-lg-3 mb-3">
           <label className="form-label">Número int</label>
@@ -398,6 +456,7 @@ const FormaProveedor = () => {
             value={estadoForma.direccion.colonia}
             disabled={!modoEditar}
           />
+          {error.campo == "colonia" && <MensajeError mensaje={error.mensaje} />}
         </div>
         <div className="col-12 col-md-6 col-lg-3 mb-3">
           <label className="form-label">Municipio</label>
@@ -409,6 +468,9 @@ const FormaProveedor = () => {
             value={estadoForma.direccion.municipio}
             disabled={!modoEditar}
           />
+          {error.campo == "municipio" && (
+            <MensajeError mensaje={error.mensaje} />
+          )}
         </div>
         <div className="col-12 col-md-6 col-lg-3 mb-3">
           <label className="form-label">CP</label>
@@ -420,6 +482,7 @@ const FormaProveedor = () => {
             value={estadoForma.direccion.cp}
             disabled={!modoEditar}
           />
+          {error.campo == "cp" && <MensajeError mensaje={error.mensaje} />}
         </div>
         <div className="col-12 col-md-6 col-lg-3 mb-3">
           <label className="form-label">Estado</label>
