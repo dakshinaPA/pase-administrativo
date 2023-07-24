@@ -63,6 +63,34 @@ const fechaActualInputDate = () => {
   return dtAformatoInput
 }
 
+const fechaMasDiasFutuosString = (dt_inicio: string, dias: number) => {
+  const dtInicio = new Date(dt_inicio)
+  //agregar 1 dia
+  dtInicio.setDate(dtInicio.getDate() + (dias + 1))
+  const dtAString = dtInicio.toLocaleDateString("es-MX", {
+    month: "2-digit",
+    day: "2-digit",
+    year: "numeric",
+  })
+  const [dia, mes, anio] = dtAString.split("/")
+  const dtAFormatoInput = `${anio}-${mes}-${dia}`
+  return dtAFormatoInput
+}
+
+const fechaMasMesesFutuosString = (dt_inicio: string, meses: number) => {
+  const dtInicio = new Date(dt_inicio)
+  dtInicio.setDate(dtInicio.getDate() + 1)
+  dtInicio.setMonth(dtInicio.getMonth() + meses)
+  const dtAString = dtInicio.toLocaleDateString("es-MX", {
+    month: "2-digit",
+    day: "2-digit",
+    year: "numeric",
+  })
+  const [dia, mes, anio] = dtAString.split("/")
+  const dtAFormatoInput = `${anio}-${mes}-${dia}`
+  return dtAFormatoInput
+}
+
 const obtenerCopartes = async (queries: QueriesCoparte) => {
   const { id, id_admin, min = true } = queries
 
@@ -256,48 +284,6 @@ const obtenerEstatusSolicitud = (i_estatus: number) => {
   }
 }
 
-class Validaciones {
-  static metodos = {
-    nombre: this.nombre,
-    apellido_paterno: this.nombre,
-    apellido_materno: this.nombre,
-    email: this.email,
-    telefono: this.telefono,
-    password: this.password,
-    texto: this.texto,
-  }
-
-  static nombre(nombre: string) {
-    return /^[a-zA-Z\u00C0-\u017F]{2,}$/.test(nombre)
-      ? { pasa: true, mensaje: "" }
-      : { pasa: false, mensaje: "Nombre inválido" }
-  }
-
-  static texto(texto: string) {
-    return /^[a-zA-Z]{5,}$/.test(texto)
-      ? { pasa: true, mensaje: "" }
-      : { pasa: false, mensaje: "Mínimo 5 caracteres" }
-  }
-
-  static email(email: string) {
-    return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(email)
-      ? { pasa: true, mensaje: "" }
-      : { pasa: false, mensaje: "Formato de correo inválido" }
-  }
-
-  static telefono(telefono: string) {
-    return /^[0-9]{10}$/.test(telefono)
-      ? { pasa: true, mensaje: "" }
-      : { pasa: false, mensaje: "Número a 10 dígitos" }
-  }
-
-  static password(password: string) {
-    return /^.{3,}$/.test(password)
-      ? { pasa: true, mensaje: "" }
-      : { pasa: false, mensaje: "Mínimo 3 carcateres" }
-  }
-}
-
 export {
   meses,
   determinarNombreArchivo,
@@ -320,5 +306,6 @@ export {
   obtenerEstatusSolicitud,
   montoALocaleString,
   inputDateAEpoch,
-  Validaciones,
+  fechaMasDiasFutuosString,
+  fechaMasMesesFutuosString,
 }

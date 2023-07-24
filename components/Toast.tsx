@@ -1,7 +1,15 @@
 import { useEffect, useRef } from "react"
 import styles from "./styles/Toast.module.css"
 
-const Toast = ({ estado, cerrar }) => {
+interface PropsToast {
+  estado: {
+    show: boolean
+    mensaje: string
+  }
+  cerrar: () => void
+}
+
+const Toast = ({ estado, cerrar }: PropsToast) => {
   const spanToast = useRef(null)
   let timeout: NodeJS.Timeout
 
@@ -13,7 +21,7 @@ const Toast = ({ estado, cerrar }) => {
         cerrar()
       }, 3000)
     } else {
-      spanToast.current.style.right = "-100%"
+      spanToast.current.style.right = "-50%"
     }
 
     return () => clearTimeout(timeout)

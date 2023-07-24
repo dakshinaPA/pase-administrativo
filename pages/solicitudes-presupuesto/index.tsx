@@ -400,11 +400,14 @@ const SolicitudesPresupuesto = () => {
         const condicionDtInicio = dt_inicio
           ? solicitud.dt_registro >= dt_inicio
           : true
-        const condicionDtFin = dt_fin
-          ? solicitud.dt_registro <= dt_fin
-          : true
+        const condicionDtFin = dt_fin ? solicitud.dt_registro <= dt_fin : true
 
-        return condicionEstatus && condicionTitular && condicionDtInicio && condicionDtFin
+        return (
+          condicionEstatus &&
+          condicionTitular &&
+          condicionDtInicio &&
+          condicionDtFin
+        )
       }
     )
 
@@ -545,6 +548,7 @@ const SolicitudesPresupuesto = () => {
                 <thead className="table-light">
                   <tr>
                     <th>Monto total</th>
+                    <th>Transferido</th>
                     <th>Solicitado</th>
                     <th>Comprobado</th>
                     <th>Por comprobar</th>
@@ -563,6 +567,9 @@ const SolicitudesPresupuesto = () => {
                 <tbody>
                   <tr>
                     <td>{montoALocaleString(infoProyectoDB.f_monto_total)}</td>
+                    <td>
+                      {montoALocaleString(infoProyectoDB.saldo.f_transferido)}
+                    </td>
                     <td>
                       {montoALocaleString(infoProyectoDB.saldo.f_solicitado)}
                     </td>

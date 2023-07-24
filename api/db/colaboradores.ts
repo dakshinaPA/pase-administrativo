@@ -41,7 +41,6 @@ class ColaboradorDB {
   static async crear(data: ColaboradorProyecto) {
     const {
       id_proyecto,
-      id_empleado,
       nombre,
       apellido_paterno,
       apellido_materno,
@@ -54,12 +53,13 @@ class ColaboradorDB {
       curp,
     } = data
 
-    const query = `INSERT INTO colaboradores ( id_proyecto, id_empleado, nombre, apellido_paterno, apellido_materno, i_tipo, clabe,
-      id_banco, telefono, email, rfc, curp, dt_registro ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )`
+    const query = [
+      "INSERT INTO colaboradores ( id_proyecto, nombre, apellido_paterno, apellido_materno, i_tipo, clabe, id_banco, telefono, email, rfc, curp, dt_registro ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )",
+      "SELECT id_alt FROM proyectos WHERE id=?",
+    ].join(";")
 
     const placeHolders = [
       id_proyecto,
-      id_empleado,
       nombre,
       apellido_paterno,
       apellido_materno,
@@ -71,6 +71,7 @@ class ColaboradorDB {
       rfc,
       curp,
       fechaActualAEpoch(),
+      id_proyecto,
     ]
 
     try {
@@ -265,8 +266,34 @@ class ColaboradorDB {
       cp,
       dt_inicio,
       dt_fin,
-      id
+      id,
     ]
+
+    try {
+      const res = await queryDBPlaceHolder(query, placeHolders)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
+
+  // static async obtenerDataNuevoEmpleado(id_proyecto: number) {
+  //   const query = "SELECT id_alt FROM proyectos WHERE id=?"
+
+  //   const placeHolders = [id_proyecto]
+
+  //   try {
+  //     const res = await queryDBPlaceHolder(query, placeHolders)
+  //     return RespuestaDB.exitosa(res)
+  //   } catch (error) {
+  //     return RespuestaDB.fallida(error)
+  //   }
+  // }
+
+  static async actualizarIdEmpleado(id_empleado: string, id: number) {
+    const query = "UPDATE colaboradores SET id_empleado=? WHERE id=? LIMIT 1"
+
+    const placeHolders = [id_empleado, id]
 
     try {
       const res = await queryDBPlaceHolder(query, placeHolders)

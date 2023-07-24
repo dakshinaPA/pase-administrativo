@@ -7,10 +7,16 @@ const TablaContenedor = ({ children }) => {
 }
 
 const FormaContenedor = ({ children, onSubmit, formaRef }) => {
+  const handleSubmit = (ev: React.SyntheticEvent) => {
+    // console.log('si', ev)
+    ev.preventDefault()
+    onSubmit()
+  }
+
   return (
     <form
       className="row py-3 mb-5"
-      onSubmit={onSubmit}
+      onSubmit={handleSubmit}
       autoComplete="off"
       ref={formaRef}
     >

@@ -143,21 +143,28 @@ class ProyectosServices {
             )
             .reduce((acum, f_monto) => acum + Number(f_monto), 0)
 
+          let f_transferido = 0
           let f_solicitado = 0
           let f_comprobado = 0
           let f_retenciones = 0
 
           for (const solicitud of solicitudes) {
+            //solo se suma a los transferido las solicitudes en estatus procesado
             f_solicitado += solicitud.f_importe
+            if (solicitud.i_estatus == 4) {
+              f_transferido += solicitud.f_importe
+            }
             f_comprobado += solicitud.saldo.f_total_comprobaciones
             f_retenciones += solicitud.saldo.f_total_impuestos_retenidos
           }
 
           const f_por_comprobar = f_solicitado - f_comprobado
           const f_isr = f_por_comprobar * 0.35
-          const f_ejecutado = f_solicitado + f_retenciones + f_isr + f_pa
+          const f_ejecutado = f_transferido + f_retenciones + f_isr + f_pa
           const f_remanente = f_monto_total - f_ejecutado
-          const p_avance = `${(f_ejecutado * 100 / f_monto_total).toFixed(2)}%`
+          const p_avance = `${((f_ejecutado * 100) / f_monto_total).toFixed(
+            2
+          )}%`
 
           return {
             id,
@@ -187,15 +194,16 @@ class ProyectosServices {
             dt_inicio,
             dt_fin,
             saldo: {
+              f_transferido,
               f_solicitado,
               f_comprobado,
               f_por_comprobar,
               f_isr,
               f_retenciones,
               f_pa,
-              f_ejecutado, 
+              f_ejecutado,
               f_remanente,
-              p_avance
+              p_avance,
             },
             ministraciones,
             colaboradores,
