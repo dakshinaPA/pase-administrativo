@@ -1,41 +1,22 @@
 import { RespuestaController } from "@api/utils/response"
 import { CatalogosDB } from "@api/db/catalogos"
-// import { PaisDB } from "@api/models/catalogos.model"
-// import { epochAFecha } from "@assets/utils/common"
 
 class CatalogosServices {
   static async obtenerTodos() {
     try {
-      const paises = CatalogosDB.obtenerPaises()
-      const estados = CatalogosDB.obtenerEstados()
-      const temas_sociales = CatalogosDB.obtenerTemasSociales()
-      const rubros_presupuestales = CatalogosDB.obtenerRubrosPresupuestales()
-      const bancos = CatalogosDB.obtenerBancos()
-      const formas_pago = CatalogosDB.obtenerFormasPago()
-      const regimenes_fiscales = CatalogosDB.obtenerRegimenesFiscales()
+      const reCatalogos = await CatalogosDB.obtenerTodos()
+      if (reCatalogos.error) throw reCatalogos.data
 
-      const resCombinadas = await Promise.all([
-        paises,
-        estados,
-        temas_sociales,
-        rubros_presupuestales,
-        bancos,
-        formas_pago,
-        regimenes_fiscales,
-      ])
-
-      for (const rc of resCombinadas) {
-        if (rc.error) throw rc.data
-      }
+      const catalogosDB = reCatalogos.data
 
       const catalogos = {
-        paises: resCombinadas[0].data,
-        estados: resCombinadas[1].data,
-        temas_sociales: resCombinadas[2].data,
-        rubros_presupuestales: resCombinadas[3].data,
-        bancos: resCombinadas[4].data,
-        formas_pago: resCombinadas[5].data,
-        regimenes_fiscales: resCombinadas[6].data,
+        paises: catalogosDB[0],
+        estados: catalogosDB[1],
+        temas_sociales: catalogosDB[2],
+        rubros_presupuestales: catalogosDB[3],
+        bancos: catalogosDB[4],
+        formas_pago: catalogosDB[5],
+        regimenes_fiscales: catalogosDB[6],
       }
 
       return RespuestaController.exitosa(

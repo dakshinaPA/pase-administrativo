@@ -1,4 +1,4 @@
-import { connectionDB } from "./connection"
+import { connectionDB } from "./connectionPool"
 import { ResultsDB } from "@api/models/respuestas.model"
 
 const queryDB = (query: string): Promise<ResultsDB> => {
