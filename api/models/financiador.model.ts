@@ -1,3 +1,5 @@
+import { NotaFinanciador } from "@models/financiador.model"
+
 export interface ResFinanciadorDB {
   id: number
   id_alt: string
@@ -28,4 +30,5 @@ export interface ResFinanciadorDB {
   id_pais: number
   estado?: string
   pais?: string
+  notas?: NotaFinanciador[]
 }

@@ -1,6 +1,11 @@
 import { useEffect, useRef } from "react"
 import styles from "./styles/Toast.module.css"
 
+const estadoInicialToast = {
+  show: false,
+  mensaje: "",
+}
+
 interface PropsToast {
   estado: {
     show: boolean
@@ -34,4 +39,4 @@ const Toast = ({ estado, cerrar }: PropsToast) => {
   )
 }
 
-export { Toast }
+export { Toast, estadoInicialToast }

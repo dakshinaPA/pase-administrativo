@@ -11,6 +11,7 @@ import { useCatalogos } from "@contexts/catalogos.context"
 import { BtnCancelar, BtnEditar, BtnRegistrar } from "./Botones"
 import { useErrores } from "@hooks/useErrores"
 import { MensajeError } from "./Mensajes"
+import { Toast, estadoInicialToast } from "./Toast"
 
 type ActionTypes =
   | "CARGA_INICIAL"
@@ -121,6 +122,7 @@ const FormaFinanciador = () => {
   const router = useRouter()
   const idFinanciador = router.query.id
   const [estadoForma, dispatch] = useReducer(reducer, estadoInicialForma)
+  const [toastState, setToastState] = useState(estadoInicialToast)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [mensajeNota, setMensajeNota] = useState<string>("")
   const { error, validarCampos, formRef } = useErrores()
@@ -233,13 +235,16 @@ const FormaFinanciador = () => {
 
     if (res.error) {
       console.log(res.data)
-      console.log(res.mensaje)
+      setToastState({
+        show: true,
+        mensaje: res.mensaje
+      })
     } else {
       if (modalidad === "EDITAR") {
         setModoEditar(false)
       } else {
         //@ts-ignore
-        router.push(`/financiadores/${res.data.idInsertado}`)
+        router.push(`/financiadores/${res.data.financiador}`)
       }
     }
   }
@@ -665,6 +670,12 @@ const FormaFinanciador = () => {
           </div>
         </div>
       )}
+      <Toast
+        estado={toastState}
+        cerrar={() =>
+          setToastState((prevState) => ({ ...prevState, show: false }))
+        }
+      />
     </RegistroContenedor>
   )
 }

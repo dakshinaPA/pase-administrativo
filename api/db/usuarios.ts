@@ -4,7 +4,7 @@ import { LoginUsuario } from "@api/models/usuario.model"
 import { RespuestaDB } from "@api/utils/response"
 import { fechaActualAEpoch } from "@assets/utils/common"
 
-const encryptKey = 'dakshina23'
+const encryptKey = "dakshina23"
 
 class UsuarioDB {
   static async login({ email, password }: LoginUsuario) {
@@ -24,8 +24,6 @@ class UsuarioDB {
   static async obtenerVmin(id_rol: number) {
     let query = `SELECT id, nombre, apellido_paterno, apellido_materno
       FROM usuarios WHERE id_rol=${id_rol} AND b_activo=1 ORDER BY nombre DESC`
-
-      console.log(query)
 
     try {
       const res = await queryDB(query)

@@ -132,7 +132,7 @@ const estadoInicialDataTipoGasto: DataTipoGasto = {
   titulares: [],
 }
 
-const estaInicialToast = {
+const estadoInicialToast = {
   show: false,
   mensaje: "",
 }
@@ -259,7 +259,7 @@ const FormaSolicitudPresupuesto = () => {
   const [dataTipoGasto, setDataTipoGasto] = useState(estadoInicialDataTipoGasto)
   const [aceptarTerminos, setAceptarTerminos] = useState(Boolean(idSolicitud))
   const { error, validarCampos, formRef } = useErrores()
-  const [toastState, setToastState] = useState(estaInicialToast)
+  const [toastState, setToastState] = useState(estadoInicialToast)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [modoEditar, setModoEditar] = useState<boolean>(!idSolicitud)
   const modalidad = idSolicitud ? "EDITAR" : "CREAR"

@@ -2,7 +2,7 @@ import { FinanciadorDB } from "@api/db/financiadores"
 import { RespuestaController } from "@api/utils/response"
 import { Financiador, NotaFinanciador } from "@models/financiador.model"
 import { ResFinanciadorDB } from "@api/models/financiador.model"
-import { epochAFecha, inputDateAformato } from "@assets/utils/common"
+import { epochAFecha } from "@assets/utils/common"
 
 class FinanciadoresServices {
   static obtenerTipo(id_tipo: 1 | 2) {
@@ -14,118 +14,68 @@ class FinanciadoresServices {
     }
   }
 
-  static async obtebnerVminimalista() {
-    const obtener = await FinanciadorDB.obtenerVminimalista()
+  static async obtebnerVmin() {
+    const re = await FinanciadorDB.obtenerVminimalista()
 
-    if (obtener.error) {
+    if (re.error) {
       return RespuestaController.fallida(
         400,
         "Error al obtener financiadores",
-        obtener.data
+        re.data
       )
     }
 
-    return RespuestaController.exitosa(200, "Consulta exitosa", obtener.data)
+    return RespuestaController.exitosa(200, "Consulta exitosa", re.data)
   }
 
   static async obtener(id_financiador?: number, min = false) {
-    if (min) return await this.obtebnerVminimalista()
+    if (min) return this.obtebnerVmin()
 
     try {
-      const obtenerDB = await FinanciadorDB.obtener(id_financiador)
-      if (obtenerDB.error) throw obtenerDB.data
+      const financiadoresDB = (await FinanciadorDB.obtener(
+        id_financiador
+      )) as ResFinanciadorDB[]
 
-      const financiadoresDB = obtenerDB.data as ResFinanciadorDB[]
-
-      const dataTransformada: Financiador[] = await Promise.all(
-        financiadoresDB.map(async (financiador) => {
-          const {
-            id,
-            id_alt,
-            nombre,
-            representante_legal,
-            rfc_representante_legal,
-            pagina_web,
-            rfc,
-            actividad,
-            i_tipo,
-            dt_constitucion,
-            dt_registro,
-            id_enlace,
-            nombre_enlace,
-            apellido_paterno,
-            apellido_materno,
-            email,
-            telefono,
-            id_direccion,
-            calle,
-            numero_ext,
-            numero_int,
-            colonia,
-            municipio,
-            cp,
-            id_estado,
-            estado,
-            id_pais,
-            pais,
-          } = financiador
-
-          let notas: NotaFinanciador[] = []
-
-          //obtener notas solo si se trata de un financiador
-          //no saturar tiempo de respuesta al obtener todos
-          if (id_financiador) {
-            const notasDB = await this.obtenerNotas(id)
-            if(notasDB.error) throw notasDB.data
-
-            notas = notasDB.data
-          }
-
-          return {
-            id,
-            id_alt,
-            nombre,
-            representante_legal,
-            rfc_representante_legal,
-            pagina_web,
-            rfc,
-            actividad,
-            i_tipo,
-            tipo: this.obtenerTipo(i_tipo),
-            dt_constitucion: dt_constitucion,
-            dt_constitucion_format: inputDateAformato(dt_constitucion),
-            dt_registro: dt_registro,
-            enlace: {
-              id: id_enlace,
-              nombre: nombre_enlace,
-              apellido_paterno,
-              apellido_materno,
-              email,
-              telefono,
-            },
-            direccion: {
-              id: id_direccion,
-              calle,
-              numero_ext,
-              numero_int,
-              colonia,
-              municipio,
-              cp,
-              id_estado,
-              estado,
-              id_pais,
-              pais,
-            },
-            notas,
-          }
+      const financiadores: Financiador[] = financiadoresDB.map(
+        (financiadorDB) => ({
+          id: financiadorDB.id,
+          id_alt: financiadorDB.id_alt,
+          nombre: financiadorDB.nombre,
+          representante_legal: financiadorDB.representante_legal,
+          rfc_representante_legal: financiadorDB.rfc_representante_legal,
+          pagina_web: financiadorDB.pagina_web,
+          rfc: financiadorDB.pagina_web,
+          actividad: financiadorDB.actividad,
+          i_tipo: financiadorDB.i_tipo,
+          tipo: this.obtenerTipo(financiadorDB.i_tipo),
+          dt_constitucion: financiadorDB.dt_constitucion,
+          dt_registro: financiadorDB.dt_registro,
+          enlace: {
+            id: financiadorDB.id_enlace,
+            nombre: financiadorDB.nombre_enlace,
+            apellido_paterno: financiadorDB.apellido_paterno,
+            apellido_materno: financiadorDB.apellido_materno,
+            email: financiadorDB.email,
+            telefono: financiadorDB.telefono,
+          },
+          direccion: {
+            id: financiadorDB.id_direccion,
+            calle: financiadorDB.calle,
+            numero_ext: financiadorDB.numero_ext,
+            numero_int: financiadorDB.numero_int,
+            colonia: financiadorDB.colonia,
+            municipio: financiadorDB.municipio,
+            cp: financiadorDB.cp,
+            id_estado: financiadorDB.id_estado,
+            estado: financiadorDB.estado,
+            id_pais: financiadorDB.id_pais,
+            pais: financiadorDB.pais,
+          },
+          notas: financiadorDB.notas || [],
         })
       )
 
-      return RespuestaController.exitosa(
-        200,
-        "Consulta exitosa",
-        dataTransformada
-      )
+      return RespuestaController.exitosa(200, "Consulta exitosa", financiadores)
     } catch (error) {
       return RespuestaController.fallida(
         400,
@@ -137,24 +87,13 @@ class FinanciadoresServices {
 
   static async crear(data: Financiador) {
     try {
-      const { enlace, direccion } = data
       const cr = await FinanciadorDB.crear(data)
-      if (cr.error) throw cr.data
 
-      // @ts-ignore
-      const idInsertado = cr.data.insertId
-
-      const crEnlace = FinanciadorDB.crearEnlace(idInsertado, enlace)
-      const crDireccion = FinanciadorDB.crearDireccion(idInsertado, direccion)
-
-      const resCombinadas = await Promise.all([crEnlace, crDireccion])
-      for (const rc of resCombinadas) {
-        if (rc.error) throw rc.data
-      }
-
-      return RespuestaController.exitosa(201, "Financiador creado con éxito", {
-        idInsertado,
-      })
+      return RespuestaController.exitosa(
+        201,
+        "Financiador creado con éxito",
+        cr
+      )
     } catch (error) {
       return RespuestaController.fallida(
         400,
@@ -166,26 +105,12 @@ class FinanciadoresServices {
 
   static async actualizar(id: number, data: Financiador) {
     try {
-      const { enlace, direccion } = data
-
-      const upFianciador = FinanciadorDB.actualizar(id, data)
-      const upEnlace = FinanciadorDB.actualizarEnlace(enlace)
-      const upDireccion = FinanciadorDB.actualizarDireccion(direccion)
-
-      const resCombinadas = await Promise.all([
-        upFianciador,
-        upEnlace,
-        upDireccion,
-      ])
-
-      for (const rc of resCombinadas) {
-        if (rc.error) throw rc.data
-      }
+      const upFianciador = await FinanciadorDB.actualizar(id, data)
 
       return RespuestaController.exitosa(
         200,
         "Financiador actualizado con éxito",
-        null
+        upFianciador
       )
     } catch (error) {
       return RespuestaController.fallida(
@@ -253,11 +178,7 @@ class FinanciadoresServices {
       }
     })
 
-    return RespuestaController.exitosa(
-      200,
-      "consulta exitosa",
-      notas
-    )
+    return RespuestaController.exitosa(200, "consulta exitosa", notas)
   }
 }
 
