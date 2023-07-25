@@ -565,7 +565,9 @@ class ProyectosServices {
       )
       if (crMinistraciones.error) throw crMinistraciones.data
 
-      const resIdsMinisraciones = crMinistraciones.data as []
+      const resIdsMinisraciones = Array.isArray(crMinistraciones.data)
+        ? crMinistraciones.data
+        : [crMinistraciones.data]
       // @ts-ignore
       const ids = resIdsMinisraciones.map((res) => res.insertId)
 
