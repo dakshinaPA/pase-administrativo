@@ -9,6 +9,11 @@ import {
 } from "@models/proyecto.model"
 import { fechaActualAEpoch } from "@assets/utils/common"
 
+interface RubrosConIdMinistracion {
+  id_ministracion: number
+  rubros: RubroMinistracion[]
+}
+
 class ProyectoDB {
   static async obtenerVMin(queries: QueriesProyecto) {
     const { id_responsable, id_coparte, id } = queries
@@ -133,7 +138,7 @@ class ProyectoDB {
       municipio,
       descripcion,
       dt_inicio,
-      dt_fin
+      dt_fin,
     } = data
 
     const query = `UPDATE proyectos SET id_responsable=?, nombre=?, id_tema_social=?, sector_beneficiado=?,
@@ -211,6 +216,40 @@ class ProyectoDB {
     }
   }
 
+  static async crearMinistraciones(
+    id_proyecto: number,
+    ministraciones: MinistracionProyecto[]
+  ) {
+    const queries = []
+    const placeHolders = []
+
+    for (const ministracion of ministraciones) {
+      const { i_numero, i_grupo, dt_recepcion, rubros_presupuestales } =
+        ministracion
+
+      queries.push(
+        "INSERT INTO proyecto_ministraciones ( id_proyecto, i_numero, i_grupo, dt_recepcion, dt_registro ) VALUES ( ?, ?, ?, ?, ? )"
+      )
+
+      placeHolders.push(
+        id_proyecto,
+        i_numero,
+        i_grupo,
+        dt_recepcion,
+        fechaActualAEpoch()
+      )
+    }
+
+    const query = queries.join(";")
+
+    try {
+      const res = await queryDBPlaceHolder(query, placeHolders)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
+
   static async actualizarMinistracion(
     id_ministracion: number,
     data: MinistracionProyecto
@@ -220,12 +259,7 @@ class ProyectoDB {
     const query = `UPDATE proyecto_ministraciones SET i_numero=?,
       i_grupo=?, dt_recepcion=? WHERE id=? LIMIT 1`
 
-    const placeHolders = [
-      i_numero,
-      i_grupo,
-      dt_recepcion,
-      id_ministracion,
-    ]
+    const placeHolders = [i_numero, i_grupo, dt_recepcion, id_ministracion]
 
     try {
       const res = await queryDBPlaceHolder(query, placeHolders)
@@ -266,7 +300,6 @@ class ProyectoDB {
   }
 
   static async obtenerRubrosMinistraciones(id_proyecto: number) {
-
     const query = `SELECT DISTINCT mrp.id_rubro,
       rp.nombre
       FROM ministracion_rubros_presupuestales mrp
@@ -294,6 +327,34 @@ class ProyectoDB {
     const query = `INSERT INTO ministracion_rubros_presupuestales ( id_ministracion, id_rubro, f_monto ) VALUES ( ?, ?, ? )`
 
     const placeHolders = [id_ministracion, id_rubro, f_monto]
+
+    try {
+      const res = await queryDBPlaceHolder(query, placeHolders)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
+
+  static async crearRubrosMinistraciones(
+    rubrosConIdMinistracion: RubrosConIdMinistracion[]
+  ) {
+    const queries = []
+    const placeHolders = []
+
+    for (const rubMin of rubrosConIdMinistracion) {
+      const { id_ministracion, rubros } = rubMin
+
+      for (const { id_rubro, f_monto } of rubros) {
+        queries.push(
+          "INSERT INTO ministracion_rubros_presupuestales ( id_ministracion, id_rubro, f_monto ) VALUES ( ?, ?, ? )"
+        )
+
+        placeHolders.push(id_ministracion, id_rubro, f_monto)
+      }
+    }
+
+    const query = queries.join(";")
 
     try {
       const res = await queryDBPlaceHolder(query, placeHolders)
@@ -334,7 +395,6 @@ class ProyectoDB {
   }
 
   static async desactivarRubroMinistracion(id: number) {
-
     const query = `UPDATE ministracion_rubros_presupuestales SET b_activo=? WHERE id=? LIMIT 1`
 
     const placeHolders = [0, id]
@@ -347,51 +407,63 @@ class ProyectoDB {
     }
   }
 
-  // static async limpiarRubrosMinistracion(id_ministracion: number) {
-  //   const query = `UPDATE ministracion_rubros_presupuestales SET b_activo=0 WHERE id_ministracion=?`
+  static async obtenerDataCrearIdAlt(
+    id_financiador: number,
+    id_coparte: number
+  ) {
+    const query = [
+      "SELECT id_alt FROM financiadores WHERE id=? LIMIT 1",
+      "SELECT id_alt FROM copartes WHERE id=? LIMIT 1",
+      "SELECT count(*) cantidad FROM proyectos WHERE id_financiador=? AND id_coparte=?",
+    ].join(";")
 
-  //   const placeHolders = [id_ministracion]
+    const placeHolders = [
+      id_financiador,
+      id_coparte,
+      id_financiador,
+      id_coparte,
+    ]
+
+    try {
+      const res = await queryDBPlaceHolder(query, placeHolders)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
+
+  // static async obtenerIdAltFinanciador(id_financiador: number) {
+  //   let query = `SELECT id_alt FROM financiadores WHERE id=${id_financiador} LIMIT 1`
 
   //   try {
-  //     const res = await queryDBPlaceHolder(query, placeHolders)
+  //     const res = await queryDB(query)
   //     return RespuestaDB.exitosa(res)
   //   } catch (error) {
   //     return RespuestaDB.fallida(error)
   //   }
   // }
 
-  static async obtenerIdAltFinanciador(id_financiador: number) {
-    let query = `SELECT id_alt FROM financiadores WHERE id=${id_financiador} LIMIT 1`
+  // static async obtenerIdAltCoparte(id_coparte: number) {
+  //   let query = `SELECT id_alt FROM copartes WHERE id=${id_coparte} LIMIT 1`
 
-    try {
-      const res = await queryDB(query)
-      return RespuestaDB.exitosa(res)
-    } catch (error) {
-      return RespuestaDB.fallida(error)
-    }
-  }
+  //   try {
+  //     const res = await queryDB(query)
+  //     return RespuestaDB.exitosa(res)
+  //   } catch (error) {
+  //     return RespuestaDB.fallida(error)
+  //   }
+  // }
 
-  static async obtenerIdAltCoparte(id_coparte: number) {
-    let query = `SELECT id_alt FROM copartes WHERE id=${id_coparte} LIMIT 1`
+  // static async obtenerUltimoId() {
+  //   let query = `SELECT id FROM proyectos ORDER BY id DESC LIMIT 1`
 
-    try {
-      const res = await queryDB(query)
-      return RespuestaDB.exitosa(res)
-    } catch (error) {
-      return RespuestaDB.fallida(error)
-    }
-  }
-
-  static async obtenerUltimoId() {
-    let query = `SELECT id FROM proyectos ORDER BY id DESC LIMIT 1`
-
-    try {
-      const res = await queryDB(query)
-      return RespuestaDB.exitosa(res)
-    } catch (error) {
-      return RespuestaDB.fallida(error)
-    }
-  }
+  //   try {
+  //     const res = await queryDB(query)
+  //     return RespuestaDB.exitosa(res)
+  //   } catch (error) {
+  //     return RespuestaDB.fallida(error)
+  //   }
+  // }
 
   static async obtenerNotas(idProyecto: number) {
     let query = `SELECT p.id, p.mensaje, p.dt_registro,

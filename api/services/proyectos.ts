@@ -380,33 +380,31 @@ class ProyectosServices {
   }
 
   static async crear(data: Proyecto) {
+    const agregarCerosAId = (id: string) => {
+      if (id.length < 3) {
+        return agregarCerosAId(`0${id}`)
+      } else {
+        return id
+      }
+    }
+
     try {
       const { ministraciones, id_coparte, id_financiador } = data
 
-      const reIdAltFinanciador =
-        ProyectoDB.obtenerIdAltFinanciador(id_financiador)
-      const reIdAltCoparte = ProyectoDB.obtenerIdAltCoparte(id_coparte)
-      const reIdUltimoProyecto = ProyectoDB.obtenerUltimoId()
+      const reDataCrearIdAlt = await ProyectoDB.obtenerDataCrearIdAlt(
+        id_financiador,
+        id_coparte
+      )
+      if (reDataCrearIdAlt.error) throw reDataCrearIdAlt.data
 
-      const promesasIds = await Promise.all([
-        reIdAltFinanciador,
-        reIdAltCoparte,
-        reIdUltimoProyecto,
-      ])
-
-      for (const pid of promesasIds) {
-        if (pid.error) throw pid.data
-      }
-
-      const idAltFinanciador = promesasIds[0].data[0].id_alt as string
-      const idAltCoparte = promesasIds[1].data[0].id_alt as string
-      const ultimoId = promesasIds[2].data[0]?.id
-        ? promesasIds[2].data[0].id + 1
-        : "1"
+      const idAltFinanciador = reDataCrearIdAlt.data[0][0].id_alt as string
+      const idAltCoparte = reDataCrearIdAlt.data[1][0].id_alt as string
+      const conteoIds = reDataCrearIdAlt.data[2][0].cantidad + 1
+      const idConCeros = agregarCerosAId(String(conteoIds))
 
       const dataActualizada: Proyecto = {
         ...data,
-        id_alt: `${idAltFinanciador}_${idAltCoparte}_${ultimoId}`,
+        id_alt: `${idAltFinanciador}_${idAltCoparte}_${idConCeros}`,
       }
 
       const cr = await ProyectoDB.crear(dataActualizada)
@@ -415,15 +413,11 @@ class ProyectosServices {
       // @ts-ignore
       const idInsertado = cr.data.insertId
 
-      const crMinistraciones = await Promise.all(
-        ministraciones.map(
-          async (min) => await this.crearMinistracion(idInsertado, min)
-        )
+      const crMinistraciones = await this.crearMinistraciones(
+        idInsertado,
+        ministraciones
       )
-
-      for (const cm of crMinistraciones) {
-        if (cm.error) throw cm.data
-      }
+      if (crMinistraciones.error) throw crMinistraciones.data
 
       return RespuestaController.exitosa(201, "Proyecto creado con éxito", {
         idInsertado,
@@ -551,6 +545,47 @@ class ProyectosServices {
       return RespuestaController.exitosa(201, "Ministracion creada con éxito", {
         idInsertadoMinistracion,
       })
+    } catch (error) {
+      return RespuestaController.fallida(
+        400,
+        "Error al crear ministracion",
+        error
+      )
+    }
+  }
+
+  static async crearMinistraciones(
+    id_proyecto: number,
+    ministraciones: MinistracionProyecto[]
+  ) {
+    try {
+      const crMinistraciones = await ProyectoDB.crearMinistraciones(
+        id_proyecto,
+        ministraciones
+      )
+      if (crMinistraciones.error) throw crMinistraciones.data
+
+      const resIdsMinisraciones = crMinistraciones.data as []
+      // @ts-ignore
+      const ids = resIdsMinisraciones.map((res) => res.insertId)
+
+      const rubrosConIdMinistracion = ministraciones.map(
+        (ministracion, index) => ({
+          id_ministracion: ids[index],
+          rubros: ministracion.rubros_presupuestales,
+        })
+      )
+
+      const crRubrosMinistracion = await ProyectoDB.crearRubrosMinistraciones(
+        rubrosConIdMinistracion
+      )
+      if (crRubrosMinistracion.error) throw crRubrosMinistracion.data
+
+      return RespuestaController.exitosa(
+        201,
+        "Ministracion creada con éxito",
+        null
+      )
     } catch (error) {
       return RespuestaController.fallida(
         400,

@@ -691,7 +691,7 @@ const FormaProyecto = () => {
       descripcion: estadoForma.descripcion,
     }
 
-    console.log(campos)
+    // console.log(campos)
     return validarCampos(campos)
   }
 
