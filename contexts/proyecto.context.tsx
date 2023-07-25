@@ -133,6 +133,7 @@ const ProyectoProvider = ({ children }) => {
     dt_fin: "",
     i_beneficiados: 0,
     saldo: {
+      f_transferido: 0,
       f_solicitado: 0,
       f_comprobado: 0,
       f_por_comprobar: 0,
