@@ -52,7 +52,7 @@ class FinanciadorDB {
           }
 
           if (id) {
-            let financiador = results[0]
+            const financiador = results[0]
 
             connection.query(qNotas, id, (error, results, fields) => {
               if (error) {

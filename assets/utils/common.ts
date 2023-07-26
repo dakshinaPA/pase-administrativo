@@ -1,23 +1,7 @@
 import { QueriesProyecto } from "@models/proyecto.model"
 import { ApiCall } from "./apiCalls"
 import { QueriesCoparte } from "@models/coparte.model"
-
-const determinarNombreArchivo = (archivo) => {
-  if (!archivo) {
-    return { nombre: "" }
-  }
-
-  const { name, type } = archivo
-  const [tipo, extension] = type.split("/")
-  const nombreArchivo =
-    name.length > 10 ? `${name.substring(0, 10)}...${extension}` : name
-  const icono = tipo === "image" ? "bi-file-image" : "bi-filetype-pdf"
-
-  return {
-    nombre: nombreArchivo,
-    icono,
-  }
-}
+import { QueriesUsuario } from "@models/usuario.model"
 
 const aMinuscula = (clave: string) => clave.toLowerCase()
 
@@ -91,7 +75,27 @@ const fechaMasMesesFutuosString = (dt_inicio: string, meses: number) => {
   return dtAFormatoInput
 }
 
-const obtenerCopartes = async (queries: QueriesCoparte) => {
+const obtenerUsuarios = (queries: QueriesUsuario) => {
+  const { id, id_rol, id_coparte, min = false } = queries
+
+  let url = "/usuarios"
+
+  if (id) {
+    url += `/${id}`
+  } else if (id_rol) {
+    url += `?id_rol=${id_rol}`
+  } else if (id_coparte) {
+    url += `?id_coparte=${id_coparte}`
+  }
+
+  if (min) {
+    url += "&min=true"
+  }
+
+  return ApiCall.get(url)
+}
+
+const obtenerCopartes = (queries: QueriesCoparte) => {
   const { id, id_admin, min = true } = queries
 
   let url = "/copartes"
@@ -108,7 +112,7 @@ const obtenerCopartes = async (queries: QueriesCoparte) => {
   return ApiCall.get(url)
 }
 
-const obtenerFinanciadores = async (min = true) => {
+const obtenerFinanciadores = (min = true) => {
   let url = "/financiadores"
   if (min) {
     url += "?min=true"
@@ -188,57 +192,6 @@ const obtenerSolicitudes = (id_proyecto?: number, id?: number) => {
   return ApiCall.get(url)
 }
 
-const obtenerUsuariosCoparte = async (id_coparte: number, min = true) => {
-  let url = `/copartes/${id_coparte}/usuarios`
-  if (min) {
-    url += "?min=true"
-  }
-  return ApiCall.get(url)
-}
-
-const obtenerUsuariosXRol = async (id_rol: number, min = true) => {
-  let url = `/usuarios?id_rol=${id_rol}`
-  if (min) {
-    url += "&min=true"
-  }
-  return ApiCall.get(url)
-}
-
-const estadosRepublica = [
-  { id: 1, nombre: "Aguascalientes" },
-  { id: 2, nombre: "Baja California" },
-  { id: 3, nombre: "Baja California Sur" },
-  { id: 4, nombre: "Campeche" },
-  { id: 5, nombre: "Coahuila" },
-  { id: 6, nombre: "Colima" },
-  { id: 7, nombre: "Chiapas" },
-  { id: 8, nombre: "Chihuahua" },
-  { id: 9, nombre: "Durango" },
-  { id: 10, nombre: "Distrito Federal" },
-  { id: 11, nombre: "Guanajuato" },
-  { id: 12, nombre: "Guerrero" },
-  { id: 13, nombre: "Hidalgo" },
-  { id: 14, nombre: "Jalisco" },
-  { id: 15, nombre: "México" },
-  { id: 16, nombre: "Michoacán" },
-  { id: 17, nombre: "Morelos" },
-  { id: 18, nombre: "Nayarit" },
-  { id: 19, nombre: "Nuevo León" },
-  { id: 20, nombre: "Oaxaca" },
-  { id: 21, nombre: "Puebla" },
-  { id: 22, nombre: "Querétaro" },
-  { id: 23, nombre: "Quintana Roo" },
-  { id: 24, nombre: "San Luis Potosí," },
-  { id: 25, nombre: "Sinaloa" },
-  { id: 26, nombre: "Sonora" },
-  { id: 27, nombre: "Tabasco" },
-  { id: 28, nombre: "Tamaulipas" },
-  { id: 29, nombre: "Tlaxcala" },
-  { id: 30, nombre: "Veracruz" },
-  { id: 31, nombre: "Yucatán" },
-  { id: 32, nombre: "Zacatecas" },
-]
-
 const meses = [
   "Enero",
   "Febrero",
@@ -286,16 +239,13 @@ const obtenerEstatusSolicitud = (i_estatus: number) => {
 
 export {
   meses,
-  determinarNombreArchivo,
-  estadosRepublica,
   aMinuscula,
   epochAFecha,
   fechaActualAEpoch,
   inputDateAformato,
+  obtenerUsuarios,
   obtenerFinanciadores,
   obtenerCopartes,
-  obtenerUsuariosCoparte,
-  obtenerUsuariosXRol,
   obtenerProyectos,
   obtenerColaboradores,
   obtenerProveedores,

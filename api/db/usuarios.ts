@@ -1,5 +1,6 @@
 import { queryDB, queryDBPlaceHolder } from "./query"
-import { Usuario } from "@models/usuario.model"
+import { connectionDB } from "./connectionPool"
+import { QueriesUsuario, Usuario } from "@models/usuario.model"
 import { LoginUsuario } from "@api/models/usuario.model"
 import { RespuestaDB } from "@api/utils/response"
 import { fechaActualAEpoch } from "@assets/utils/common"
@@ -21,103 +22,199 @@ class UsuarioDB {
     }
   }
 
-  static async obtenerVmin(id_rol: number) {
-    let query = `SELECT id, nombre, apellido_paterno, apellido_materno
-      FROM usuarios WHERE id_rol=${id_rol} AND b_activo=1 ORDER BY nombre DESC`
+  static async obtener(queries: QueriesUsuario) {
+    const { id, id_rol, id_coparte, min } = queries
 
-    try {
-      const res = await queryDB(query)
-      return RespuestaDB.exitosa(res)
-    } catch (error) {
-      return RespuestaDB.fallida(error)
-    }
-  }
-
-  static async obtener(id_rol?: number, id_usuario?: number) {
-    let query = `SELECT u.id, u.nombre, u.apellido_paterno, u.apellido_materno, u.email, u.telefono, CAST(AES_DECRYPT(u.password, '${encryptKey}') AS CHAR) password, u.id_rol,
-      r.nombre rol
+    let qUsuario = `SELECT u.id, u.nombre, u.apellido_paterno, u.apellido_materno, u.email, u.telefono, CAST(AES_DECRYPT(u.password, '${encryptKey}') AS CHAR) password, u.id_rol,
+      r.nombre rol,
+      cu.id id_coparte_usuario, cu.id_coparte, cu.cargo, cu.b_enlace,
+      c.nombre coparte
       FROM usuarios u
       JOIN roles r ON u.id_rol = r.id
+      LEFT JOIN coparte_usuarios cu ON cu.id_usuario = u.id
+      LEFT JOIN copartes c ON cu.id_coparte = c.id
       WHERE u.b_activo=1`
 
-    if (id_usuario) {
-      query += ` AND u.id=${id_usuario} LIMIT 1`
+    const phUsuario = []
+
+    if (id) {
+      qUsuario += " AND u.id=? LIMIT 1"
+      phUsuario.push(id)
+    } else if ([1, 2].includes(Number(id_rol))) {
+      qUsuario += " AND u.id_rol=?"
+      phUsuario.push(id_rol)
+    } else if (id_coparte) {
+      qUsuario += " AND u.id_rol=3 AND cu.id_coparte=?"
+      phUsuario.push(id_coparte)
     }
 
-    if (id_rol) {
-      query += ` AND u.id_rol=${id_rol}`
-    }
+    return new Promise((res, rej) => {
+      connectionDB.getConnection((err, connection) => {
+        if (err) return rej(err)
 
-    try {
-      const res = await queryDB(query)
-      return RespuestaDB.exitosa(res)
-    } catch (error) {
-      return RespuestaDB.fallida(error)
-    }
+        connection.query(qUsuario, phUsuario, (error, results, fields) => {
+          if (error) {
+            connection.destroy()
+            return rej(error)
+          }
+
+          connection.destroy()
+          res(results)
+        })
+      })
+    })
   }
 
   static async crear(data: Usuario) {
-    const {
-      nombre,
-      apellido_paterno,
-      apellido_materno,
-      email,
-      telefono,
-      password,
-      id_rol,
-    } = data
+    const { coparte } = data
 
-    const query = `INSERT INTO usuarios ( nombre, apellido_paterno, apellido_materno,
+    const qUsuario = `INSERT INTO usuarios ( nombre, apellido_paterno, apellido_materno,
     email, telefono, password, id_rol, dt_registro ) VALUES (?, ?, ?, ?, ?, AES_ENCRYPT(?,?), ?, ?)`
 
-    const placeHolders = [
-      nombre,
-      apellido_paterno,
-      apellido_materno,
-      email,
-      telefono,
-      password,
+    const phUsuario = [
+      data.nombre,
+      data.apellido_paterno,
+      data.apellido_materno,
+      data.email,
+      data.telefono,
+      data.password,
       encryptKey,
-      id_rol,
+      data.id_rol,
       fechaActualAEpoch(),
     ]
 
-    try {
-      const res = await queryDBPlaceHolder(query, placeHolders)
-      return RespuestaDB.exitosa(res)
-    } catch (error) {
-      return RespuestaDB.fallida(error)
-    }
+    const qCoparteUsuario = `INSERT INTO coparte_usuarios ( id_usuario, id_coparte,
+      cargo ) VALUES ( ?, ?, ? )`
+
+    const phCoparteUsuario = [coparte.id_coparte, coparte.cargo]
+
+    return new Promise((res, rej) => {
+      connectionDB.getConnection((err, connection) => {
+        if (err) return rej(err)
+
+        connection.beginTransaction((err) => {
+          if (err) {
+            connection.destroy()
+            return rej(err)
+          }
+
+          //crear usuario
+          connection.query(qUsuario, phUsuario, (error, results, fields) => {
+            if (error) {
+              return connection.rollback(() => {
+                connection.destroy()
+                rej(error)
+              })
+            }
+
+            // @ts-ignore
+            const id_usuario = results.insertId
+            phCoparteUsuario.unshift(id_usuario)
+
+            if (data.id_rol == 3) {
+              //crear coparte - usuario
+              connection.query(
+                qCoparteUsuario,
+                phCoparteUsuario,
+                (error, results, fields) => {
+                  if (error) {
+                    return connection.rollback(() => {
+                      connection.destroy()
+                      rej(error)
+                    })
+                  }
+
+                  connection.commit((err) => {
+                    if (err) return connection.rollback(() => rej(error))
+                    connection.destroy()
+                    res(id_usuario)
+                  })
+                }
+              )
+              return
+            }
+            connection.commit((err) => {
+              if (err) return connection.rollback(() => rej(error))
+              connection.destroy()
+              res(id_usuario)
+            })
+          })
+        })
+      })
+    })
   }
 
   static async actualizar(id: number, data: Usuario) {
-    const {
-      nombre,
-      apellido_paterno,
-      apellido_materno,
-      email,
-      telefono,
-      password,
-    } = data
+    const { coparte } = data
 
-    const query = `UPDATE usuarios SET nombre=?, apellido_paterno=?, apellido_materno=?, email=?, telefono=?, password=AES_ENCRYPT(?,?) WHERE id=? LIMIT 1`
-    const placeHolders = [
-      nombre,
-      apellido_paterno,
-      apellido_materno,
-      email,
-      telefono,
-      password,
+    const qUsuario = `UPDATE usuarios SET nombre=?, apellido_paterno=?, apellido_materno=?, email=?, telefono=?,
+      password=AES_ENCRYPT(?,?) WHERE id=? LIMIT 1`
+
+    const phUsuario = [
+      data.nombre,
+      data.apellido_paterno,
+      data.apellido_materno,
+      data.email,
+      data.telefono,
+      data.password,
       encryptKey,
       id,
     ]
 
-    try {
-      const res = await queryDBPlaceHolder(query, placeHolders)
-      return RespuestaDB.exitosa(res)
-    } catch (error) {
-      return RespuestaDB.fallida(error)
-    }
+    const qCoparteUsuario = `UPDATE coparte_usuarios SET cargo=? WHERE id=? LIMIT 1`
+
+    const phCoparteUsuario = [coparte?.cargo, coparte?.id]
+
+    return new Promise((res, rej) => {
+      connectionDB.getConnection((err, connection) => {
+        if (err) return rej(err)
+
+        connection.beginTransaction((err) => {
+          if (err) {
+            connection.destroy()
+            return rej(err)
+          }
+
+          //actualizar usuario
+          connection.query(qUsuario, phUsuario, (error, results, fields) => {
+            if (error) {
+              return connection.rollback(() => {
+                connection.destroy()
+                rej(error)
+              })
+            }
+
+            if (data.id_rol == 3) {
+              //actualizar coparte - usuario
+              connection.query(
+                qCoparteUsuario,
+                phCoparteUsuario,
+                (error, results, fields) => {
+                  if (error) {
+                    return connection.rollback(() => {
+                      connection.destroy()
+                      rej(error)
+                    })
+                  }
+
+                  connection.commit((err) => {
+                    if (err) return connection.rollback(() => rej(error))
+                    connection.destroy()
+                    res(true)
+                  })
+                }
+              )
+              return
+            }
+            connection.commit((err) => {
+              if (err) return connection.rollback(() => rej(error))
+              connection.destroy()
+              res(true)
+            })
+          })
+        })
+      })
+    })
   }
 
   static async borrar(id: number) {
@@ -131,29 +228,18 @@ class UsuarioDB {
     }
   }
 
-  static async obtenerCoparteCoparte(id: number) {
-    let query = `SELECT cu.id, cu.id_coparte, c.nombre, cu.cargo, cu.b_enlace
-    FROM coparte_usuarios cu JOIN copartes c ON cu.id_coparte = c.id
-    WHERE id_usuario=${id} LIMIT 1`
+  // static async obtenerCoparteCoparte(id: number) {
+  //   let query = `SELECT cu.id, cu.id_coparte, c.nombre, cu.cargo, cu.b_enlace
+  //   FROM coparte_usuarios cu JOIN copartes c ON cu.id_coparte = c.id
+  //   WHERE id_usuario=${id} LIMIT 1`
 
-    try {
-      const res = await queryDB(query)
-      return RespuestaDB.exitosa(res)
-    } catch (error) {
-      return RespuestaDB.fallida(error)
-    }
-  }
-
-  static async obtenerCopartesAdministrador(id_administrador: number) {
-    let query = `SELECT id id_coparte, nombre FROM copartes WHERE id_administrador = ${id_administrador}`
-
-    try {
-      const res = await queryDB(query)
-      return RespuestaDB.exitosa(res)
-    } catch (error) {
-      return RespuestaDB.fallida(error)
-    }
-  }
+  //   try {
+  //     const res = await queryDB(query)
+  //     return RespuestaDB.exitosa(res)
+  //   } catch (error) {
+  //     return RespuestaDB.fallida(error)
+  //   }
+  // }
 }
 
 export { UsuarioDB }

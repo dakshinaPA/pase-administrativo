@@ -9,8 +9,12 @@ export interface ResUsuarioDB {
   telefono: string
   password?: string
   id_rol: IdRolUsuario
-  b_enlace: null | 1 | 0
   rol: string
+  id_coparte_usuario: number
+  id_coparte: number
+  coparte: string
+  cargo: string
+  b_enlace: 1 | 0
 }
 
 export interface LoginUsuario {

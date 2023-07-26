@@ -7,10 +7,9 @@ import { ModalEliminar } from "@components/ModalEliminar"
 import {
   aMinuscula,
   obtenerCopartes,
-  obtenerUsuariosCoparte,
-  obtenerUsuariosXRol,
+  obtenerUsuarios,
 } from "@assets/utils/common"
-import { IdRolUsuario, Usuario } from "@models/usuario.model"
+import { IdRolUsuario, QueriesUsuario, Usuario } from "@models/usuario.model"
 import {
   CoparteMin,
   CoparteUsuario,
@@ -46,56 +45,20 @@ const Usuarios = () => {
   }
 
   const cargarUsuarios = async () => {
+    if (rolUsuarioSelect == 3 && !(coparteSelect > 0)) return
     setIsLoading(true)
 
-    try {
-      let usuarios: Usuario[] = []
+    const queries: QueriesUsuario = [1, 2].includes(Number(rolUsuarioSelect))
+      ? { id_rol: rolUsuarioSelect }
+      : { id_coparte: coparteSelect }
 
-      if (rolUsuarioSelect == 3) {
-        if (coparteSelect > 0) {
-          const reUsuarios = await obtenerUsuariosCoparte(coparteSelect, false)
-          if (reUsuarios.error) throw reUsuarios.data
+    const reUsuarios = await obtenerUsuarios(queries)
 
-          const usuariosCoparte = reUsuarios.data as CoparteUsuario[]
-          //transformar data a formato usuario
-          usuarios = usuariosCoparte.map((usuario) => {
-            const {
-              id_usuario,
-              nombre,
-              apellido_paterno,
-              apellido_materno,
-              email,
-              telefono,
-              cargo,
-              b_enlace,
-            } = usuario
-
-            return {
-              id: id_usuario,
-              nombre,
-              apellido_paterno,
-              apellido_materno,
-              email,
-              telefono,
-              password: "",
-              id_rol: 3,
-              coparte: {
-                id_coparte: coparteSelect,
-                cargo,
-                b_enlace: Boolean(b_enlace),
-              },
-            }
-          })
-        }
-      } else {
-        const reUsuarios = await obtenerUsuariosXRol(rolUsuarioSelect, false)
-        if (reUsuarios.error) throw reUsuarios.data
-        usuarios = reUsuarios.data as Usuario[]
-      }
-
+    if (reUsuarios.error) {
+      console.log(reUsuarios.data)
+    } else {
+      const usuarios = reUsuarios.data as Usuario[]
       setUsuariosDB(usuarios)
-    } catch (error) {
-      console.log(error)
     }
 
     setIsLoading(false)

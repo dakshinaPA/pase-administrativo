@@ -3,6 +3,7 @@
 export interface QueriesUsuario {
   id?: number
   id_rol?: IdRolUsuario
+  id_coparte?: number
   min?: boolean
 }
 
@@ -22,6 +23,7 @@ export interface RolUsuario {
 export interface CoparteUsuario {
   id?: number //id coparte_usuarios
   id_coparte: number
+  coparte?: string
   cargo: string
   b_enlace?: boolean
 }

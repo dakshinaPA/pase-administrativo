@@ -1,14 +1,14 @@
-import { useEffect, useState, useReducer, useRef } from "react"
+import { useEffect, useState, useReducer, useRef, use } from "react"
 import { useRouter } from "next/router"
 import { ChangeEvent } from "@assets/models/formEvents.model"
 import { Usuario } from "@models/usuario.model"
-import { CoparteMin, QueriesCoparte } from "@models/coparte.model"
+import { Coparte, CoparteMin, QueriesCoparte } from "@models/coparte.model"
 import { Loader } from "@components/Loader"
 import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
 import { BtnBack } from "@components/BtnBack"
 import { ApiCall, ApiCallRes } from "@assets/utils/apiCalls"
 import { BtnCancelar, BtnEditar, BtnRegistrar } from "./Botones"
-import { obtenerCopartes } from "@assets/utils/common"
+import { obtenerCopartes, obtenerUsuarios } from "@assets/utils/common"
 import { useAuth } from "@contexts/auth.context"
 import { useErrores } from "@hooks/useErrores"
 import { MensajeError } from "./Mensajes"
@@ -79,44 +79,35 @@ const FormaUsuario = () => {
     setIsLoading(true)
 
     try {
-      let reCopartes: Promise<ApiCallRes>
+      if (modalidad === "CREAR") {
+        let queries: QueriesCoparte = {}
 
-      if (idCoparte) {
-        reCopartes = obtenerCopartes({ id: idCoparte })
-      } else {
-        const queryCopartes: QueriesCoparte =
-          user.id_rol == 2 ? { id_admin: user.id } : {}
+        if (idCoparte) {
+          queries = { id: idCoparte }
+        } else if (user.id_rol == 2) {
+          queries = { id_admin: user.id }
+        }
 
-        reCopartes = obtenerCopartes(queryCopartes)
-      }
+        const reCopartes = await obtenerCopartes(queries)
+        if (reCopartes.error) throw reCopartes.data
 
-      const promesas = [reCopartes]
-
-      if (modalidad === "EDITAR") {
-        promesas.push(obtener())
-      }
-
-      const resCombinadas = await Promise.all(promesas)
-
-      for (const rc of resCombinadas) {
-        if (rc.error) throw rc.data
-      }
-
-      const copartesDB = resCombinadas[0].data as CoparteMin[]
-      setCopartesDB(copartesDB)
-
-      if (modalidad === "EDITAR") {
-        dispatch({
-          type: "CARGA_INICIAL",
-          payload: resCombinadas[1].data[0] as Usuario,
-        })
-      } else {
+        const copartes = reCopartes.data as CoparteMin[]
+        setCopartesDB(copartes)
         dispatch({
           type: "HANDLE_CHANGE_COPARTE",
           payload: {
             name: "id_coparte",
-            value: copartesDB[0]?.id || 0,
+            value: copartes[0]?.id || 0,
           },
+        })
+      } else {
+        const reUsuario = await obtenerUsuarios({ id: idUsuario })
+        if (reUsuario.error) throw reUsuario.data
+
+        const usuario = reUsuario.data[0] as Usuario
+        dispatch({
+          type: "CARGA_INICIAL",
+          payload: usuario,
         })
       }
     } catch (error) {
@@ -124,10 +115,6 @@ const FormaUsuario = () => {
     }
 
     setIsLoading(false)
-  }
-
-  const obtener = async () => {
-    return ApiCall.get(`/usuarios/${idUsuario}`)
   }
 
   const registrar = async () => {
@@ -163,8 +150,8 @@ const FormaUsuario = () => {
       email: estadoForma.email,
       telefono: estadoForma.telefono,
       password: estadoForma.password,
-      id_coparte: estadoForma.coparte.id_coparte,
-      cargo: estadoForma.coparte.cargo,
+      id_coparte: estadoForma.coparte?.id_coparte,
+      cargo: estadoForma.coparte?.cargo,
     }
 
     if ([1, 2].includes(Number(estadoForma.id_rol))) {
@@ -314,19 +301,28 @@ const FormaUsuario = () => {
           <>
             <div className="col-12 col-md-6 col-lg-4 mb-3">
               <label className="form-label">Coparte</label>
-              <select
-                className="form-control"
-                onChange={(e) => handleChange(e, "HANDLE_CHANGE_COPARTE")}
-                name="id_coparte"
-                value={estadoForma.coparte.id_coparte}
-                disabled={Boolean(idUsuario) || Boolean(idCoparte)}
-              >
-                {copartesDB.map(({ id, nombre }) => (
-                  <option key={id} value={id}>
-                    {nombre}
-                  </option>
-                ))}
-              </select>
+              {modalidad === "CREAR" ? (
+                <select
+                  className="form-control"
+                  onChange={(e) => handleChange(e, "HANDLE_CHANGE_COPARTE")}
+                  name="id_coparte"
+                  value={estadoForma.coparte.id_coparte}
+                  disabled={Boolean(idUsuario) || Boolean(idCoparte)}
+                >
+                  {copartesDB.map(({ id, nombre }) => (
+                    <option key={id} value={id}>
+                      {nombre}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  className="form-control"
+                  type="text"
+                  value={estadoForma.coparte.coparte}
+                  disabled
+                />
+              )}
               {error.campo == "id_coparte" && (
                 <MensajeError mensaje={error.mensaje} />
               )}

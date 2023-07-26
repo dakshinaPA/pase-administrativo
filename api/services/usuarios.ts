@@ -4,13 +4,8 @@ import { RespuestaController } from "@api/utils/response"
 import { LoginUsuario, ResUsuarioDB } from "@api/models/usuario.model"
 import {
   Usuario,
-  CoparteUsuario,
-  UsuarioLogin,
   QueriesUsuario,
 } from "@models/usuario.model"
-// import { CoparteUsuario } from "@models/coparte.model"
-import { ResDB } from "@api/models/respuestas.model"
-import { CopartesServices } from "./copartes"
 
 class UsuariosServices {
   static async login(dataUsuario: LoginUsuario) {
@@ -35,73 +30,51 @@ class UsuariosServices {
     }
   }
 
-  static async obtenerVmin(id_rol: number) {
-    const re = await UsuarioDB.obtenerVmin(id_rol)
-
-    if (re.error) {
-      return RespuestaController.fallida(
-        400,
-        "Error al obtener usuarios",
-        re.data
-      )
-    }
-    return RespuestaController.exitosa(200, "Consulta exitosa", re.data)
-  }
-
   static async obtener(queries: QueriesUsuario) {
-    const id_rol = Number(queries.id_rol)
     const id_usuario = Number(queries.id)
     const min = Boolean(queries.min)
-
-    if (min) return await this.obtenerVmin(id_rol)
     try {
-      const resUsuariosDB = await UsuarioDB.obtener(id_rol, id_usuario)
-      if (resUsuariosDB.error) throw resUsuariosDB.data
+      const re = await UsuarioDB.obtener(queries)
+      const usuariosDB = re as ResUsuarioDB[]
 
-      const usuariosDB = resUsuariosDB.data as ResUsuarioDB[]
+      const usuarios: Usuario[] = usuariosDB.map((usuario) => {
+        let dataUsuario: Usuario = {
+          id: usuario.id,
+          nombre: usuario.nombre,
+          apellido_paterno: usuario.apellido_paterno,
+          apellido_materno: usuario.apellido_materno,
+          email: usuario.email,
+          telefono: usuario.telefono,
+          password: id_usuario ? usuario.password : "",
+          id_rol: usuario.id_rol,
+          rol: usuario.rol,
+        }
 
-      const datatransfromada: Usuario[] = await Promise.all(
-        usuariosDB.map(async (usuario) => {
-          const {
-            id,
-            nombre,
-            apellido_paterno,
-            apellido_materno,
-            email,
-            telefono,
-            password,
-            id_rol,
-            rol,
-          } = usuario
+        if (min) {
+          delete dataUsuario.email
+          delete dataUsuario.telefono
+          delete dataUsuario.password
+          delete dataUsuario.id_rol
+          delete dataUsuario.rol
+        }
 
-          let coparte: CoparteUsuario = null
-
-          if (id_rol == 3) {
-            const reCoparteUsuario = await UsuarioDB.obtenerCoparteCoparte(id)
-            if (reCoparteUsuario.error) throw reCoparteUsuario.data
-            coparte = reCoparteUsuario.data[0] as CoparteUsuario
+        if (usuario.id_rol == 3 && !min) {
+          dataUsuario = {
+            ...dataUsuario,
+            coparte: {
+              id: usuario.id_coparte_usuario,
+              id_coparte: usuario.id_coparte,
+              coparte: usuario.coparte,
+              cargo: usuario.cargo,
+              b_enlace: Boolean(usuario.b_enlace),
+            },
           }
+        }
 
-          return {
-            id,
-            nombre,
-            apellido_paterno,
-            apellido_materno,
-            email,
-            telefono,
-            password: id_usuario ? password : "",
-            id_rol,
-            rol,
-            coparte,
-          }
-        })
-      )
+        return dataUsuario
+      })
 
-      return RespuestaController.exitosa(
-        200,
-        "Consulta exitosa",
-        datatransfromada
-      )
+      return RespuestaController.exitosa(200, "Consulta exitosa", usuarios)
     } catch (error) {
       return RespuestaController.fallida(
         400,
@@ -113,31 +86,10 @@ class UsuariosServices {
 
   static async crear(data: Usuario) {
     try {
-      const crear = await UsuarioDB.crear(data)
-      if (crear.error) throw crear.data
-
-      // @ts-ignore
-      const idInsertado = crear.data.insertId
-      const id_rol = data.id_rol
-      let idInsertadoCoparteUsuario = 0
-      // registrar en tabla coparte_usuarios
-      if (id_rol == 3) {
-        const { id_coparte, cargo } = data.coparte
-
-        const crearCoparteUsuario = await CoparteDB.crearUsuario(
-          id_coparte,
-          idInsertado,
-          cargo,
-          false
-        )
-        if (crearCoparteUsuario.error) throw crearCoparteUsuario.data
-        // @ts-ignore
-        idInsertadoCoparteUsuario = crearCoparteUsuario.data.insertId
-      }
+      const cr = await UsuarioDB.crear(data)
 
       return RespuestaController.exitosa(201, "Usuario creado con éxito", {
-        idInsertado,
-        idInsertadoCoparteUsuario,
+        idInsertado: cr,
       })
     } catch (error) {
       return RespuestaController.fallida(400, "Error al crear usuario", error)
@@ -146,24 +98,12 @@ class UsuariosServices {
 
   static async actualizar(id_usuario: number, data: Usuario) {
     try {
-      const upUsuario = UsuarioDB.actualizar(id_usuario, data)
-
-      const promesas = [upUsuario]
-
-      if (data.id_rol == 3) {
-        promesas.push(CoparteDB.actualizarUsuario(data.coparte))
-      }
-
-      const resCombinadas = await Promise.all(promesas)
-
-      for (const rc of resCombinadas) {
-        if (rc.error) throw rc.data
-      }
+      const upUsuario = await UsuarioDB.actualizar(id_usuario, data)
 
       return RespuestaController.exitosa(
         200,
         "Usuario actualizado con éxito",
-        null
+        upUsuario
       )
     } catch (error) {
       return RespuestaController.fallida(

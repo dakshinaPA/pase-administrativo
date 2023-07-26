@@ -16,7 +16,7 @@ import {
   BtnRegistrar,
 } from "./Botones"
 import { useAuth } from "@contexts/auth.context"
-import { montoALocaleString, obtenerUsuariosXRol } from "@assets/utils/common"
+import { montoALocaleString, obtenerUsuarios } from "@assets/utils/common"
 import { TooltipInfo } from "./Tooltip"
 import { useErrores } from "@hooks/useErrores"
 import { MensajeError } from "./Mensajes"
@@ -156,7 +156,7 @@ const FormaCoparte = () => {
     setIsLoading(true)
 
     try {
-      const promesas = [obtenerUsuariosXRol(2)]
+      const promesas = [obtenerUsuarios({id_rol: 2})]
       if (modalidad === "EDITAR") {
         promesas.push(obtener())
       }
