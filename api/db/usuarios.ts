@@ -14,7 +14,6 @@ class UsuarioDB {
     const placeHolders = [email, password, encryptKey]
 
     try {
-      // const res = await queryDBPlaceHolder(query, placeHolders)
       const res = await queryDBPlaceHolder(query, placeHolders)
       return RespuestaDB.exitosa(res)
     } catch (error) {
@@ -34,6 +33,13 @@ class UsuarioDB {
       LEFT JOIN coparte_usuarios cu ON cu.id_usuario = u.id
       LEFT JOIN copartes c ON cu.id_coparte = c.id
       WHERE u.b_activo=1`
+
+    if(min){
+      qUsuario = `SELECT u.id, u.nombre, u.apellido_paterno, u.apellido_materno
+        FROM usuarios u
+        LEFT JOIN coparte_usuarios cu ON cu.id_usuario = u.id
+        WHERE u.b_activo=1`
+    }
 
     const phUsuario = []
 

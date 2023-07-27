@@ -2,10 +2,7 @@ import { UsuarioDB } from "@api/db/usuarios"
 import { CoparteDB } from "@api/db/copartes"
 import { RespuestaController } from "@api/utils/response"
 import { LoginUsuario, ResUsuarioDB } from "@api/models/usuario.model"
-import {
-  Usuario,
-  QueriesUsuario,
-} from "@models/usuario.model"
+import { Usuario, QueriesUsuario, UsuarioMin } from "@models/usuario.model"
 
 class UsuariosServices {
   static async login(dataUsuario: LoginUsuario) {
@@ -37,42 +34,40 @@ class UsuariosServices {
       const re = await UsuarioDB.obtener(queries)
       const usuariosDB = re as ResUsuarioDB[]
 
-      const usuarios: Usuario[] = usuariosDB.map((usuario) => {
-        let dataUsuario: Usuario = {
-          id: usuario.id,
-          nombre: usuario.nombre,
-          apellido_paterno: usuario.apellido_paterno,
-          apellido_materno: usuario.apellido_materno,
-          email: usuario.email,
-          telefono: usuario.telefono,
-          password: id_usuario ? usuario.password : "",
-          id_rol: usuario.id_rol,
-          rol: usuario.rol,
-        }
+      let usuarios: Usuario[] | UsuarioMin[]
 
-        if (min) {
-          delete dataUsuario.email
-          delete dataUsuario.telefono
-          delete dataUsuario.password
-          delete dataUsuario.id_rol
-          delete dataUsuario.rol
-        }
-
-        if (usuario.id_rol == 3 && !min) {
-          dataUsuario = {
-            ...dataUsuario,
-            coparte: {
-              id: usuario.id_coparte_usuario,
-              id_coparte: usuario.id_coparte,
-              coparte: usuario.coparte,
-              cargo: usuario.cargo,
-              b_enlace: Boolean(usuario.b_enlace),
-            },
+      if (min) {
+        usuarios = usuariosDB as UsuarioMin[]
+      } else {
+        usuarios = usuariosDB.map((usuario) => {
+          let dataUsuario: Usuario = {
+            id: usuario.id,
+            nombre: usuario.nombre,
+            apellido_paterno: usuario.apellido_paterno,
+            apellido_materno: usuario.apellido_materno,
+            email: usuario.email,
+            telefono: usuario.telefono,
+            password: id_usuario ? usuario.password : "",
+            id_rol: usuario.id_rol,
+            rol: usuario.rol,
           }
-        }
 
-        return dataUsuario
-      })
+          if (usuario.id_rol == 3) {
+            dataUsuario = {
+              ...dataUsuario,
+              coparte: {
+                id: usuario.id_coparte_usuario,
+                id_coparte: usuario.id_coparte,
+                coparte: usuario.coparte,
+                cargo: usuario.cargo,
+                b_enlace: Boolean(usuario.b_enlace),
+              },
+            }
+          }
+
+          return dataUsuario
+        })
+      }
 
       return RespuestaController.exitosa(200, "Consulta exitosa", usuarios)
     } catch (error) {
