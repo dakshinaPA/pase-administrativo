@@ -1,7 +1,7 @@
 export interface ResProyectoDB {
   id: number
   id_financiador: number
-  financiador?: string
+  financiador: string
   id_coparte: number
   id_administrador: number
   coparte: string
@@ -15,10 +15,17 @@ export interface ResProyectoDB {
   i_tipo_financiamiento: number
   i_beneficiados: number
   id_estado: number
-  estado?: string
+  estado: string
   municipio: string
   descripcion: string
   dt_inicio: string
   dt_fin: string
   dt_registro: string
+  id_proyecto_saldo: number
+  f_monto_total: number
+  f_solicitado: number
+  f_transferido: number
+  f_comprobado: number
+  f_retenciones: number
+  f_pa: number
 }

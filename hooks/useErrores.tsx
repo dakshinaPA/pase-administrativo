@@ -96,7 +96,11 @@ const useErrores = () => {
               throw [key, "CLABE a 18 dígitos"]
             break
           case "curp":
-            if (!/^[A-Z][AEIOUX][A-Z]{2}[0-9]{6}[HM][A-Z]{5}[A-Z0-9][0-9]$/.test(campos[key]))
+            if (
+              !/^[A-Z][AEIOUX][A-Z]{2}[0-9]{6}[HM][A-Z]{5}[A-Z0-9][0-9]$/.test(
+                campos[key]
+              )
+            )
               throw [key, "CURP inválido"]
             break
           case "cp":
@@ -115,11 +119,10 @@ const useErrores = () => {
       setError(estadoInicialError)
       return true
     } catch (error) {
-      formRef.current
-        .querySelector(
-          `input[name=${error[0]}], select[name=${error[0]}], textarea[name=${error[0]}] `
-        )
-        .focus()
+      const inputError = formRef.current.querySelector(
+        `input[name=${error[0]}], select[name=${error[0]}], textarea[name=${error[0]}] `
+      )
+      inputError?.focus()
 
       setError({
         campo: error[0],

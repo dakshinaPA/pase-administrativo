@@ -127,7 +127,7 @@ const Financiadores = () => {
                   <th>RFC</th>
                   <th>Representante legal</th>
                   <th>Administrador</th>
-                  <th>Proyectos activos</th>
+                  {/* <th>Proyectos activos</th> */}
                   <th>Acciones</th>
                 </tr>
               </thead>
@@ -156,8 +156,8 @@ const Financiadores = () => {
                       <td>
                         {i_estatus_legal === 1 ? representante_legal : "NA"}
                       </td>
-                      <td>{administrador.nombre}</td>
-                      <td>...</td>
+                      <td>{administrador}</td>
+                      {/* <td>...</td> */}
                       <td>
                         <div className="d-flex">
                           <BtnAccion

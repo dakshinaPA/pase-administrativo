@@ -3,8 +3,6 @@ import { queryDB, queryDBPlaceHolder } from "./query"
 import { connectionDB } from "./connectionPool"
 import {
   Financiador,
-  EnlaceFinanciador,
-  DireccionFinanciador,
   NotaFinanciador,
 } from "@models/financiador.model"
 import { fechaActualAEpoch } from "@assets/utils/common"
@@ -179,9 +177,7 @@ class FinanciadorDB {
                     idsCreados.direccion = results.insertId
 
                     connection.commit((err) => {
-                      if (err) {
-                        return connection.rollback(() => rej(error))
-                      }
+                      if (err) connection.rollback(() => rej(err))
                       connection.destroy()
                       res(idsCreados)
                     })
@@ -285,9 +281,7 @@ class FinanciadorDB {
                     }
 
                     connection.commit((err) => {
-                      if (err) {
-                        return connection.rollback(() => rej(error))
-                      }
+                      if (err) connection.rollback(() => rej(err))
                       connection.destroy()
                       res(true)
                     })

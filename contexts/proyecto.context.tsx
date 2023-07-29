@@ -122,7 +122,6 @@ const ProyectoProvider = ({ children }) => {
     id_responsable: 0,
     id_alt: "",
     nombre: "",
-    f_monto_total: 0,
     i_tipo_financiamiento: 1,
     id_tema_social: 1,
     sector_beneficiado: "",
@@ -133,6 +132,7 @@ const ProyectoProvider = ({ children }) => {
     dt_fin: "",
     i_beneficiados: 0,
     saldo: {
+      f_monto_total: 0,
       f_transferido: 0,
       f_solicitado: 0,
       f_comprobado: 0,

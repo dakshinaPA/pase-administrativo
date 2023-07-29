@@ -1,9 +1,12 @@
-import { EstatusLegalCoparte } from "@models/coparte.model"
+import { EstatusLegalCoparte, NotaCoparte } from "@models/coparte.model"
+import { ResUsuarioDB } from "./usuario.model"
+import { ResProyectoDB } from "./proyecto.model"
+import { Proyecto } from "@models/proyecto.model"
 
 export interface ResCoparteDB {
   id: number
   id_administrador: number
-  nombre_administrador: string
+  administrador: string
   id_alt: string
   nombre: string
   nombre_corto: string
@@ -20,4 +23,7 @@ export interface ResCoparteDB {
   cp: string
   id_estado: number
   estado?: string
+  notas?: NotaCoparte[]
+  usuarios?: ResUsuarioDB[]
+  proyectos?: Proyecto[]
 }

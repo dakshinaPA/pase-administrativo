@@ -1,4 +1,5 @@
 import { Proyecto } from "./proyecto.model"
+import { Usuario } from "./usuario.model"
 
 export interface QueriesCoparte {
   id?: number
@@ -6,20 +7,13 @@ export interface QueriesCoparte {
   min?: boolean
 }
 
-// usuario tipo coparte
-export interface CoparteUsuarioMin {
-  id?: number
-  id_usuario?: number
-  id_coparte?: number
-  nombre?: string
-  apellido_paterno?: string
-  apellido_materno?: string
-}
-
-export interface CoparteUsuario extends CoparteUsuarioMin {
-  email?: string
-  telefono?: string
-  password?: string
+export interface CoparteUsuario {
+  nombre: string
+  apellido_paterno: string
+  apellido_materno: string
+  email: string
+  telefono: string
+  password: string
   cargo: string
   b_enlace?: boolean
 }
@@ -36,11 +30,6 @@ export interface DireccionCoparte {
   estado?: string
 }
 
-export interface AdministradorCoparte {
-  id: number,
-  nombre?: string
-}
-
 export interface NotaCoparte {
   id?: number
   id_coparte: number
@@ -54,7 +43,8 @@ export type EstatusLegalCoparte = 1 | 2 // constituida | no constituida
 
 export interface Coparte {
   id?: number
-  id_administrador?: number 
+  id_administrador?: number
+  administrador?: string
   id_alt: string
   nombre: string
   nombre_corto: string
@@ -64,9 +54,8 @@ export interface Coparte {
   rfc: string // solo constituidas
   dt_registro?: string
   direccion: DireccionCoparte
-  administrador: AdministradorCoparte
   enlace?: CoparteUsuario
-  usuarios?: CoparteUsuario[]
+  usuarios?: Usuario[]
   proyectos?: Proyecto[]
   notas?: NotaCoparte[]
 }

@@ -33,7 +33,7 @@ export type IdRolUsuario = 1 | 2 | 3
 export interface Usuario extends UsuarioMin {
   email: string
   telefono: string
-  password: string
+  password?: string
   id_rol: IdRolUsuario
   rol?: string
   coparte?: CoparteUsuario

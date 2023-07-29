@@ -16,7 +16,11 @@ import {
   BtnRegistrar,
 } from "./Botones"
 import { useAuth } from "@contexts/auth.context"
-import { montoALocaleString, obtenerUsuarios } from "@assets/utils/common"
+import {
+  montoALocaleString,
+  obtenerCopartes,
+  obtenerUsuarios,
+} from "@assets/utils/common"
 import { TooltipInfo } from "./Tooltip"
 import { useErrores } from "@hooks/useErrores"
 import { MensajeError } from "./Mensajes"
@@ -24,7 +28,6 @@ import { MensajeError } from "./Mensajes"
 type ActionTypes =
   | "CARGAR_DATA"
   | "HANDLE_CHANGE"
-  | "ADMINISTRADOR"
   | "DIRECCION"
   | "ENLACE"
   | "RECARGAR_NOTAS"
@@ -51,13 +54,6 @@ const reducer = (state: Coparte, action: ActionDispatch): Coparte => {
       return {
         ...state,
         [clave]: valor,
-      }
-    case "ADMINISTRADOR":
-      return {
-        ...state,
-        administrador: {
-          id: payload,
-        },
       }
     case "DIRECCION":
       return {
@@ -101,9 +97,7 @@ const estadoInicialForma: Coparte = {
   i_estatus_legal: 1,
   representante_legal: "",
   rfc: "",
-  administrador: {
-    id: 0,
-  },
+  id_administrador: 0,
   direccion: {
     calle: "",
     numero_ext: "",
@@ -141,6 +135,7 @@ const FormaCoparte = () => {
   const [modoEditar, setModoEditar] = useState<boolean>(!idCoparte)
   const modalidad = idCoparte ? "EDITAR" : "CREAR"
   const inputNota = useRef(null)
+  const TblProyectos = useRef(null)
 
   useEffect(() => {
     cargarData()
@@ -156,9 +151,9 @@ const FormaCoparte = () => {
     setIsLoading(true)
 
     try {
-      const promesas = [obtenerUsuarios({id_rol: 2})]
+      const promesas = [obtenerUsuarios({ id_rol: 2 })]
       if (modalidad === "EDITAR") {
-        promesas.push(obtener())
+        promesas.push(obtenerCopartes({ id: Number(idCoparte), min: false }))
       }
 
       const resCombinadas = await Promise.all(promesas)
@@ -179,8 +174,8 @@ const FormaCoparte = () => {
       } else {
         //setear en el select a primer admin en la lista
         dispatch({
-          type: "ADMINISTRADOR",
-          payload: adminsDB[0]?.id || 0,
+          type: "HANDLE_CHANGE",
+          payload: ["id_administrador", adminsDB[0]?.id || 0],
         })
       }
     } catch (error) {
@@ -188,11 +183,6 @@ const FormaCoparte = () => {
     }
 
     setIsLoading(false)
-  }
-
-  const obtener = async () => {
-    const res = await ApiCall.get(`/copartes/${idCoparte}`)
-    return res
   }
 
   const registrar = async () => {
@@ -211,7 +201,7 @@ const FormaCoparte = () => {
 
   const handleChange = (ev: ChangeEvent, type: ActionTypes) => {
     const { name, value } = ev.target
-    
+
     if (error.campo === ev.target.name) {
       validarCampos({ [name]: value })
     }
@@ -258,7 +248,7 @@ const FormaCoparte = () => {
       nombre_corto: estadoForma.nombre_corto,
       representante_legal: estadoForma.representante_legal,
       rfc_organizacion: estadoForma.rfc,
-      id_administrador: estadoForma.administrador.id,
+      id_administrador: estadoForma.id_administrador,
       calle: estadoForma.direccion.calle,
       numero_ext: estadoForma.direccion.numero_ext,
       colonia: estadoForma.direccion.colonia,
@@ -304,7 +294,7 @@ const FormaCoparte = () => {
     } else {
       if (modalidad === "CREAR") {
         //@ts-ignore
-        router.push(`/copartes/${res.data.idInsertadoCoparte}`)
+        router.push(`/copartes/${res.data.idInsertado}`)
       } else {
         setModoEditar(false)
       }
@@ -325,7 +315,7 @@ const FormaCoparte = () => {
           </div>
           {!modoEditar &&
             idCoparte &&
-            (estadoForma.administrador.id == user.id || user.id_rol == 1) && (
+            (estadoForma.id_administrador == user.id || user.id_rol == 1) && (
               <BtnEditar onClick={() => setModoEditar(true)} />
             )}
         </div>
@@ -339,7 +329,7 @@ const FormaCoparte = () => {
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="id_alt"
             value={estadoForma.id_alt}
-            disabled={!modoEditar}
+            disabled={Boolean(idCoparte)}
           />
           {error.campo == "id_alt" && <MensajeError mensaje={error.mensaje} />}
         </div>
@@ -418,8 +408,9 @@ const FormaCoparte = () => {
           <label className="form-label">Administrador</label>
           <select
             className="form-control"
-            onChange={(e) => handleChange(e, "ADMINISTRADOR")}
-            value={estadoForma.administrador.id}
+            name="id_administrador"
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+            value={estadoForma.id_administrador}
             disabled={!modoEditar}
           >
             {administardoresDB.map(({ id, nombre, apellido_paterno }) => (
@@ -644,7 +635,7 @@ const FormaCoparte = () => {
           <div className="row mb-5">
             <div className="col-12 mb-3 d-flex justify-content-between">
               <h2 className="color1 mb-0">Usuarios</h2>
-              {(estadoForma.administrador.id == user.id ||
+              {(estadoForma.id_administrador == user.id ||
                 user.id_rol == 1) && (
                 <BtnNeutro
                   margin={false}
@@ -672,24 +663,22 @@ const FormaCoparte = () => {
                   {estadoForma.usuarios.map(
                     ({
                       id,
-                      id_usuario,
                       nombre,
                       apellido_paterno,
                       apellido_materno,
                       email,
                       telefono,
-                      cargo,
-                      b_enlace,
+                      coparte,
                     }) => (
                       <tr key={id}>
                         <td>
                           {nombre} {apellido_paterno} {apellido_materno}
                         </td>
-                        <td>{cargo}</td>
+                        <td>{coparte.cargo}</td>
                         <td>{email}</td>
                         <td>{telefono}</td>
                         <td className="icono-enlace">
-                          {b_enlace ? (
+                          {coparte.b_enlace ? (
                             <i className="bi bi-check"></i>
                           ) : (
                             <i className="bi bi-x"></i>
@@ -699,9 +688,7 @@ const FormaCoparte = () => {
                           <BtnAccion
                             margin={false}
                             icono="bi bi-eye-fill"
-                            onclick={() =>
-                              router.push(`/usuarios/${id_usuario}`)
-                            }
+                            onclick={() => router.push(`/usuarios/${id}`)}
                             title="ver usuario"
                           />
                         </td>
@@ -716,7 +703,7 @@ const FormaCoparte = () => {
           <div className="row mb-5">
             <div className="col-12 mb-3 d-flex justify-content-between">
               <h2 className="color1 mb-0">Proyectos</h2>
-              {estadoForma.administrador.id == user.id && (
+              {estadoForma.id_administrador == user.id && (
                 <BtnNeutro
                   margin={false}
                   texto="Registrar +"
@@ -728,7 +715,7 @@ const FormaCoparte = () => {
               )}
             </div>
             <div className="col-12 table-responsive">
-              <table className="table">
+              <table className="table" ref={TblProyectos}>
                 <thead className="table-light">
                   <tr>
                     <th>Id Alt</th>
@@ -748,15 +735,14 @@ const FormaCoparte = () => {
                       id,
                       id_alt,
                       nombre,
-                      f_monto_total,
                       responsable,
-                      saldo
+                      saldo,
                     }) => (
                       <tr key={id}>
                         <td>{id_alt}</td>
                         <td>{nombre}</td>
                         <td>{responsable}</td>
-                        <td>{montoALocaleString(f_monto_total)}</td>
+                        <td>{montoALocaleString(saldo.f_monto_total)}</td>
                         <td>{montoALocaleString(saldo.f_transferido)}</td>
                         <td>{montoALocaleString(saldo.f_solicitado)}</td>
                         <td>{montoALocaleString(saldo.f_ejecutado)}</td>

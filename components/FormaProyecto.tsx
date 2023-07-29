@@ -13,11 +13,7 @@ import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
 import { BtnBack } from "@components/BtnBack"
 import { ApiCall, ApiCallRes } from "@assets/utils/apiCalls"
 import { useAuth } from "@contexts/auth.context"
-import {
-  CoparteMin,
-  CoparteUsuarioMin,
-  QueriesCoparte,
-} from "@models/coparte.model"
+import { CoparteMin, QueriesCoparte } from "@models/coparte.model"
 import { useCatalogos } from "@contexts/catalogos.context"
 import {
   fechaMasDiasFutuosString,
@@ -27,7 +23,7 @@ import {
   obtenerCopartes,
   obtenerFinanciadores,
   obtenerProyectos,
-  obtenerUsuariosCoparte,
+  obtenerUsuarios,
 } from "@assets/utils/common"
 import {
   BtnAccion,
@@ -36,7 +32,6 @@ import {
   BtnNeutro,
   BtnRegistrar,
 } from "./Botones"
-import { RubrosPresupuestalesDB } from "@api/models/catalogos.model"
 import {
   ActionTypes,
   ProyectoProvider,
@@ -48,6 +43,7 @@ import { useErrores } from "@hooks/useErrores"
 import { MensajeError } from "./Mensajes"
 import { Toast } from "./Toast"
 import { useToast } from "@hooks/useToasts"
+import { UsuarioMin } from "@models/usuario.model"
 
 const TablaMinistraciones = () => {
   const {
@@ -161,7 +157,7 @@ const Saldos = () => {
           </thead>
           <tbody>
             <tr>
-              <td>{montoALocaleString(estadoForma.f_monto_total)}</td>
+              <td>{montoALocaleString(estadoForma.saldo.f_monto_total)}</td>
               <td>{montoALocaleString(estadoForma.saldo.f_transferido)}</td>
               <td>{montoALocaleString(estadoForma.saldo.f_solicitado)}</td>
               <td>{montoALocaleString(estadoForma.saldo.f_comprobado)}</td>
@@ -529,9 +525,7 @@ const FormaProyecto = () => {
   const { temas_sociales, estados } = useCatalogos()
   const [financiadoresDB, setFinanciadoresDB] = useState<FinanciadorMin[]>([])
   const [copartesDB, setCopartesDB] = useState<CoparteMin[]>([])
-  const [usuariosCoparteDB, setUsuariosCoparteDB] = useState<
-    CoparteUsuarioMin[]
-  >([])
+  const [usuariosCoparteDB, setUsuariosCoparteDB] = useState<UsuarioMin[]>([])
   const { error, validarCampos, formRef } = useErrores()
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const { toastState, mostrarToast, cerrarToast } = useToast()
@@ -544,20 +538,20 @@ const FormaProyecto = () => {
     cargarUsuariosCoparte()
   }, [estadoForma.id_coparte])
 
-  useEffect(() => {
-    const montoTotalProyecto = estadoForma.ministraciones.reduce(
-      (acum, ministracion) => acum + Number(ministracion.f_monto),
-      0
-    )
+  // useEffect(() => {
+  //   const montoTotalProyecto = estadoForma.ministraciones.reduce(
+  //     (acum, ministracion) => acum + Number(ministracion.f_monto),
+  //     0
+  //   )
 
-    dispatch({
-      type: "HANDLE_CHANGE",
-      payload: {
-        name: "f_monto_total",
-        value: montoTotalProyecto,
-      },
-    })
-  }, [estadoForma.ministraciones])
+  //   dispatch({
+  //     type: "HANDLE_CHANGE",
+  //     payload: {
+  //       name: "f_monto_total",
+  //       value: montoTotalProyecto,
+  //     },
+  //   })
+  // }, [estadoForma.ministraciones])
 
   const cargarData = async () => {
     setIsLoading(true)
@@ -611,12 +605,12 @@ const FormaProyecto = () => {
     const idCoparte = estadoForma.id_coparte
     if (!idCoparte) return
 
-    const reUsCoDB = await obtenerUsuariosCoparte(idCoparte)
+    const reUsCoDB = await obtenerUsuarios({id_coparte: idCoparte, min: true})
 
     if (reUsCoDB.error) {
       console.log(reUsCoDB.data)
     } else {
-      const usuariosCoparte = reUsCoDB.data as CoparteUsuarioMin[]
+      const usuariosCoparte = reUsCoDB.data as UsuarioMin[]
       setUsuariosCoparteDB(usuariosCoparte)
 
       if (modalidad === "CREAR") {
@@ -625,7 +619,7 @@ const FormaProyecto = () => {
           type: "HANDLE_CHANGE",
           payload: {
             name: "id_responsable",
-            value: usuariosCoparte[0].id_usuario,
+            value: usuariosCoparte[0].id,
           },
         })
       }
@@ -718,10 +712,11 @@ const FormaProyecto = () => {
       console.log(data)
     } else {
       if (modalidad === "CREAR") {
-        router.push(
-          //@ts-ignore
-          `/copartes/${estadoForma.id_coparte}/proyectos/${data.idInsertado}`
-        )
+        // router.push(
+        //   //@ts-ignore
+        //   `/copartes/${estadoForma.id_coparte}/proyectos/${data.idInsertado}`
+        // )
+        router.push("/proyectos")
       } else {
         const reProyectoActualizado = await obtenerProyectos({
           id: idProyecto,
@@ -845,8 +840,8 @@ const FormaProyecto = () => {
             disabled={!modoEditar}
           >
             {usuariosCoparteDB.map(
-              ({ id, id_usuario, nombre, apellido_paterno }) => (
-                <option key={id} value={id_usuario}>
+              ({ id, nombre, apellido_paterno }) => (
+                <option key={id} value={id}>
                   {nombre} {apellido_paterno}
                 </option>
               )
@@ -976,17 +971,17 @@ const FormaProyecto = () => {
             <MensajeError mensaje={error.mensaje} />
           )}
         </div>
-        <div className="col-12 col-md-6 col-lg-4 mb-3">
+        {/* <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Monto total</label>
           <input
             className="form-control"
             type="text"
-            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+            // onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="f_monto_total"
-            value={estadoForma.f_monto_total}
+            value={estadoForma.saldo.f_monto_total}
             disabled
           />
-        </div>
+        </div> */}
         <div className="col-12 mb-3">
           <label className="form-label me-1">Descricpción</label>
           <textarea

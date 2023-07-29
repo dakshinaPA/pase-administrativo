@@ -477,6 +477,18 @@ CREATE TABLE `proyectos` (
   INDEX (`id_estado`),
   INDEX (`id_responsable`));
 
+  CREATE TABLE `proyecto_saldo` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `id_proyecto` INT UNSIGNED NOT NULL,
+  `f_monto_total` VARCHAR(20) NOT NULL,
+  `f_solicitado` VARCHAR(20) NOT NULL,
+  `f_transferido` VARCHAR(20) NOT NULL,
+  `f_comprobado` VARCHAR(20) NOT NULL,
+  `f_retenciones` VARCHAR(20) NOT NULL,
+  `f_pa` VARCHAR(20) NOT NULL,
+  PRIMARY KEY (`id`),
+  INDEX (`id_proyecto`));
+
   CREATE TABLE `proyecto_ministraciones` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
     `id_proyecto` INT UNSIGNED NOT NULL,
@@ -662,6 +674,7 @@ TRUNCATE TABLE financiador_notas;
 TRUNCATE TABLE financiadores;
 
 TRUNCATE TABLE proyectos;
+TRUNCATE TABLE proyecto_saldo;
 TRUNCATE TABLE proyecto_ministraciones;
 TRUNCATE TABLE proyecto_notas;
 TRUNCATE TABLE ministracion_rubros_presupuestales;

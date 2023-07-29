@@ -125,6 +125,7 @@ const obtenerProyectos = (queries: QueriesProyecto) => {
     id,
     id_coparte,
     id_responsable,
+    id_admin,
     min = true,
     registro_solicitud,
   } = queries
@@ -139,6 +140,8 @@ const obtenerProyectos = (queries: QueriesProyecto) => {
     url += `?id_coparte=${id_coparte}`
   } else if (id_responsable) {
     url += `?id_responsable=${id_responsable}`
+  } else if (id_admin){
+    url += `?id_admin=${id_admin}`
   }
 
   if (min) {

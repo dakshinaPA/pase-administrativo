@@ -1,5 +1,4 @@
 import { UsuarioDB } from "@api/db/usuarios"
-import { CoparteDB } from "@api/db/copartes"
 import { RespuestaController } from "@api/utils/response"
 import { LoginUsuario, ResUsuarioDB } from "@api/models/usuario.model"
 import { Usuario, QueriesUsuario, UsuarioMin } from "@models/usuario.model"
@@ -27,6 +26,38 @@ class UsuariosServices {
     }
   }
 
+  static trasnformarDataRe = (
+    usuariosDB: ResUsuarioDB,
+    password = false
+  ): Usuario => {
+    let dataUsuario: Usuario = {
+      id: usuariosDB.id,
+      nombre: usuariosDB.nombre,
+      apellido_paterno: usuariosDB.apellido_paterno,
+      apellido_materno: usuariosDB.apellido_materno,
+      email: usuariosDB.email,
+      telefono: usuariosDB.telefono,
+      password: password ? usuariosDB.password : "",
+      id_rol: usuariosDB.id_rol,
+      rol: usuariosDB.rol,
+    }
+
+    if (usuariosDB.id_rol == 3) {
+      dataUsuario = {
+        ...dataUsuario,
+        coparte: {
+          id: usuariosDB.id_coparte_usuario,
+          id_coparte: usuariosDB.id_coparte,
+          coparte: usuariosDB.coparte,
+          cargo: usuariosDB.cargo,
+          b_enlace: Boolean(usuariosDB.b_enlace),
+        },
+      }
+    }
+
+    return dataUsuario
+  }
+
   static async obtener(queries: QueriesUsuario) {
     const id_usuario = Number(queries.id)
     const min = Boolean(queries.min)
@@ -39,34 +70,9 @@ class UsuariosServices {
       if (min) {
         usuarios = usuariosDB as UsuarioMin[]
       } else {
-        usuarios = usuariosDB.map((usuario) => {
-          let dataUsuario: Usuario = {
-            id: usuario.id,
-            nombre: usuario.nombre,
-            apellido_paterno: usuario.apellido_paterno,
-            apellido_materno: usuario.apellido_materno,
-            email: usuario.email,
-            telefono: usuario.telefono,
-            password: id_usuario ? usuario.password : "",
-            id_rol: usuario.id_rol,
-            rol: usuario.rol,
-          }
-
-          if (usuario.id_rol == 3) {
-            dataUsuario = {
-              ...dataUsuario,
-              coparte: {
-                id: usuario.id_coparte_usuario,
-                id_coparte: usuario.id_coparte,
-                coparte: usuario.coparte,
-                cargo: usuario.cargo,
-                b_enlace: Boolean(usuario.b_enlace),
-              },
-            }
-          }
-
-          return dataUsuario
-        })
+        usuarios = usuariosDB.map((usuario) =>
+          this.trasnformarDataRe(usuario, Boolean(id_usuario))
+        )
       }
 
       return RespuestaController.exitosa(200, "Consulta exitosa", usuarios)

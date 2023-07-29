@@ -10,7 +10,7 @@ import {
   obtenerCopartes,
   obtenerProyectos,
 } from "@assets/utils/common"
-import { Proyecto } from "@models/proyecto.model"
+import { Proyecto, QueriesProyecto } from "@models/proyecto.model"
 import { useAuth } from "@contexts/auth.context"
 import { CoparteMin, QueriesCoparte } from "@models/coparte.model"
 import { BtnAccion, BtnNeutro } from "@components/Botones"
@@ -45,29 +45,44 @@ const Financiadores = () => {
 
     try {
       //setear copartes para filtrar si es admin o superu usuario
-      if (user.id_rol != 3) {
-        const queryCopartes: QueriesCoparte =
-          user.id_rol == 2 ? { id_admin: user.id } : {}
 
-        const reCopartes = await obtenerCopartes(queryCopartes)
-        if (reCopartes.error) throw reCopartes.data
+      let queries: QueriesProyecto = { min: false }
 
-        const copartesDB = reCopartes.data as CoparteMin[]
-
-        setCopartesDB(copartesDB)
-        if (copartesDB.length == 1) {
-          setSelectCoparte(copartesDB[0]?.id)
-        }
-      } else {
-        //cargar proyecto de usuario coparte
-        const reProyectos = await obtenerProyectos({
-          id_responsable: user.id,
-          min: false,
-        })
-        if (reProyectos.error) throw reProyectos.data
-
-        setProyectosDB(reProyectos.data as Proyecto[])
+      if (user.id_rol == 2) {
+        queries = { ...queries, id_admin: user.id }
+      } else if (user.id_rol == 3) {
+        queries = { ...queries, id_responsable: user.id }
       }
+
+      const reProyectos = await obtenerProyectos(queries)
+      if (reProyectos.error) throw reProyectos.data
+
+      const proyectos = reProyectos.data as Proyecto[]
+      setProyectosDB(proyectos)
+
+      // if (user.id_rol != 3) {
+      //   const queryCopartes: QueriesCoparte =
+      //     user.id_rol == 2 ? { id_admin: user.id } : {}
+
+      //   const reCopartes = await obtenerCopartes(queryCopartes)
+      //   if (reCopartes.error) throw reCopartes.data
+
+      //   const copartesDB = reCopartes.data as CoparteMin[]
+
+      //   setCopartesDB(copartesDB)
+      //   if (copartesDB.length == 1) {
+      //     setSelectCoparte(copartesDB[0]?.id)
+      //   }
+      // } else {
+      //   //cargar proyecto de usuario coparte
+      //   const reProyectos = await obtenerProyectos({
+      //     id_responsable: user.id,
+      //     min: false,
+      //   })
+      //   if (reProyectos.error) throw reProyectos.data
+
+      //   setProyectosDB(reProyectos.data as Proyecto[])
+      // }
     } catch (error) {
       console.log(error)
     }
@@ -141,7 +156,7 @@ const Financiadores = () => {
             />
           </div>
         )}
-        {user.id_rol != 3 && (
+        {/* {user.id_rol != 3 && (
           <div className="col-12 col-sm-6 col-lg-4 col-xl-3 mb-3">
             <select
               className="form-control"
@@ -158,9 +173,9 @@ const Financiadores = () => {
               ))}
             </select>
           </div>
-        )}
+        )} */}
         <div className="d-none d-lg-block col mb-3"></div>
-        <div className="col-12 col-sm-6 col-lg-4 mb-2">
+        <div className="col-12 col-sm-6 col-xl-4 mb-2">
           <div className="input-group">
             <input
               type="text"
@@ -187,7 +202,12 @@ const Financiadores = () => {
                   <th>#id</th>
                   <th>Alt id</th>
                   <th>Nombre</th>
-                  {user.id_rol != 3 && <th>Responsable</th>}
+                  {user.id_rol != 3 && (
+                    <>
+                      <th>Responsable</th>
+                      <th>Coparte</th>
+                    </>
+                  )}
                   <th>Tipo financiamiento</th>
                   <th>Monto total</th>
                   <th>Transferido</th>
@@ -213,9 +233,9 @@ const Financiadores = () => {
                     id_responsable,
                     financiador,
                     tipo_financiamiento,
-                    f_monto_total,
                     saldo,
                     responsable,
+                    coparte,
                   } = proyecto
 
                   return (
@@ -223,9 +243,14 @@ const Financiadores = () => {
                       <td>{id}</td>
                       <td>{id_alt}</td>
                       <td>{nombre}</td>
-                      {user.id_rol != 3 && <td>{responsable}</td>}
+                      {user.id_rol != 3 && (
+                        <>
+                          <td>{responsable}</td>
+                          <td>{coparte}</td>
+                        </>
+                      )}
                       <td>{tipo_financiamiento}</td>
-                      <td>{montoALocaleString(f_monto_total)}</td>
+                      <td>{montoALocaleString(saldo.f_monto_total)}</td>
                       <td>{montoALocaleString(saldo.f_transferido)}</td>
                       <td>{montoALocaleString(saldo.f_solicitado)}</td>
                       <td>{montoALocaleString(saldo.f_comprobado)}</td>
@@ -235,7 +260,7 @@ const Financiadores = () => {
                       <td>{montoALocaleString(saldo.f_pa)}</td>
                       <td>{montoALocaleString(saldo.f_ejecutado)}</td>
                       <td>{montoALocaleString(saldo.f_remanente)}</td>
-                      <td>{saldo.p_avance}</td>
+                      <td>{`${saldo.p_avance}%`}</td>
                       <td>
                         <div className="d-flex">
                           <BtnAccion

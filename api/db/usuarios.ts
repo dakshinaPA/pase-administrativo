@@ -5,13 +5,13 @@ import { LoginUsuario } from "@api/models/usuario.model"
 import { RespuestaDB } from "@api/utils/response"
 import { fechaActualAEpoch } from "@assets/utils/common"
 
-const encryptKey = "dakshina23"
-
 class UsuarioDB {
+  static encryptKey = () => "dakshina23"
+
   static async login({ email, password }: LoginUsuario) {
     const query = `SELECT id, nombre, apellido_paterno, apellido_materno, id_rol
       FROM usuarios WHERE email=? AND password=AES_ENCRYPT(?,?) AND b_activo=1`
-    const placeHolders = [email, password, encryptKey]
+    const placeHolders = [email, password, this.encryptKey()]
 
     try {
       const res = await queryDBPlaceHolder(query, placeHolders)
@@ -21,10 +21,10 @@ class UsuarioDB {
     }
   }
 
-  static async obtener(queries: QueriesUsuario) {
+  static queryRe = (queries: QueriesUsuario) => {
     const { id, id_rol, id_coparte, min } = queries
 
-    let qUsuario = `SELECT u.id, u.nombre, u.apellido_paterno, u.apellido_materno, u.email, u.telefono, CAST(AES_DECRYPT(u.password, '${encryptKey}') AS CHAR) password, u.id_rol,
+    let query = `SELECT u.id, u.nombre, u.apellido_paterno, u.apellido_materno, u.email, u.telefono, CAST(AES_DECRYPT(u.password, '${this.encryptKey()}') AS CHAR) password, u.id_rol,
       r.nombre rol,
       cu.id id_coparte_usuario, cu.id_coparte, cu.cargo, cu.b_enlace,
       c.nombre coparte
@@ -34,23 +34,35 @@ class UsuarioDB {
       LEFT JOIN copartes c ON cu.id_coparte = c.id
       WHERE u.b_activo=1`
 
-    if(min){
-      qUsuario = `SELECT u.id, u.nombre, u.apellido_paterno, u.apellido_materno
+    if (min) {
+      query = `SELECT u.id, u.nombre, u.apellido_paterno, u.apellido_materno
         FROM usuarios u
         LEFT JOIN coparte_usuarios cu ON cu.id_usuario = u.id
         WHERE u.b_activo=1`
     }
 
+    if (id) {
+      query += " AND u.id=? LIMIT 1"
+    } else if ([1, 2].includes(Number(id_rol))) {
+      query += " AND u.id_rol=?"
+    } else if (id_coparte) {
+      query += " AND u.id_rol=3 AND cu.id_coparte=?"
+    }
+
+    return query
+  }
+
+  static async obtener(queries: QueriesUsuario) {
+    const { id, id_rol, id_coparte } = queries
+
+    const qUsuario = this.queryRe(queries)
     const phUsuario = []
 
     if (id) {
-      qUsuario += " AND u.id=? LIMIT 1"
       phUsuario.push(id)
     } else if ([1, 2].includes(Number(id_rol))) {
-      qUsuario += " AND u.id_rol=?"
       phUsuario.push(id_rol)
     } else if (id_coparte) {
-      qUsuario += " AND u.id_rol=3 AND cu.id_coparte=?"
       phUsuario.push(id_coparte)
     }
 
@@ -71,11 +83,20 @@ class UsuarioDB {
     })
   }
 
+  static queryCrUsuario = () => {
+    return `INSERT INTO usuarios ( nombre, apellido_paterno, apellido_materno,
+      email, telefono, password, id_rol, dt_registro ) VALUES (?, ?, ?, ?, ?, AES_ENCRYPT(?,?), ?, ?)`
+  }
+
+  static queryCrCoparteUsuario = () => {
+    return `INSERT INTO coparte_usuarios ( id_usuario, id_coparte,
+      cargo, b_enlace ) VALUES ( ?, ?, ?, ? )`
+  }
+
   static async crear(data: Usuario) {
     const { coparte } = data
 
-    const qUsuario = `INSERT INTO usuarios ( nombre, apellido_paterno, apellido_materno,
-    email, telefono, password, id_rol, dt_registro ) VALUES (?, ?, ?, ?, ?, AES_ENCRYPT(?,?), ?, ?)`
+    const qUsuario = this.queryCrUsuario()
 
     const phUsuario = [
       data.nombre,
@@ -84,15 +105,14 @@ class UsuarioDB {
       data.email,
       data.telefono,
       data.password,
-      encryptKey,
+      this.encryptKey(),
       data.id_rol,
       fechaActualAEpoch(),
     ]
 
-    const qCoparteUsuario = `INSERT INTO coparte_usuarios ( id_usuario, id_coparte,
-      cargo ) VALUES ( ?, ?, ? )`
+    const qCoparteUsuario = this.queryCrCoparteUsuario()
 
-    const phCoparteUsuario = [coparte.id_coparte, coparte.cargo]
+    const phCoparteUsuario = [coparte.id_coparte, coparte.cargo, 0]
 
     return new Promise((res, rej) => {
       connectionDB.getConnection((err, connection) => {
@@ -131,7 +151,7 @@ class UsuarioDB {
                   }
 
                   connection.commit((err) => {
-                    if (err) return connection.rollback(() => rej(error))
+                    if (err) connection.rollback(() => rej(err))
                     connection.destroy()
                     res(id_usuario)
                   })
@@ -140,7 +160,7 @@ class UsuarioDB {
               return
             }
             connection.commit((err) => {
-              if (err) return connection.rollback(() => rej(error))
+              if (err) return connection.rollback(() => rej(err))
               connection.destroy()
               res(id_usuario)
             })
@@ -163,7 +183,7 @@ class UsuarioDB {
       data.email,
       data.telefono,
       data.password,
-      encryptKey,
+      this.encryptKey(),
       id,
     ]
 
@@ -204,7 +224,7 @@ class UsuarioDB {
                   }
 
                   connection.commit((err) => {
-                    if (err) return connection.rollback(() => rej(error))
+                    if (err) connection.rollback(() => rej(err))
                     connection.destroy()
                     res(true)
                   })
@@ -233,19 +253,6 @@ class UsuarioDB {
       return RespuestaDB.fallida(error)
     }
   }
-
-  // static async obtenerCoparteCoparte(id: number) {
-  //   let query = `SELECT cu.id, cu.id_coparte, c.nombre, cu.cargo, cu.b_enlace
-  //   FROM coparte_usuarios cu JOIN copartes c ON cu.id_coparte = c.id
-  //   WHERE id_usuario=${id} LIMIT 1`
-
-  //   try {
-  //     const res = await queryDB(query)
-  //     return RespuestaDB.exitosa(res)
-  //   } catch (error) {
-  //     return RespuestaDB.fallida(error)
-  //   }
-  // }
 }
 
 export { UsuarioDB }

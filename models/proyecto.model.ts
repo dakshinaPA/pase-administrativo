@@ -3,11 +3,13 @@ import { Direccion } from "./direccion.model"
 import { SolicitudPresupuesto } from "./solicitud-presupuesto.model"
 
 export interface QueriesProyecto {
+  id?: number
   id_coparte?: number
   id_responsable?: number
-  id?: number
+  id_admin?: number
   min?: boolean
   registro_solicitud?: boolean
+  activo?: boolean
 }
 
 export interface PeriodoServicioColaborador {
@@ -91,16 +93,18 @@ export interface NotaProyecto {
 }
 
 export interface SaldoProyecto {
+  id?: number
+  f_monto_total: number
   f_transferido: number
   f_solicitado: number
   f_comprobado: number
-  f_por_comprobar: number
-  f_isr: number
+  f_por_comprobar?: number
+  f_isr?: number
   f_retenciones: number
   f_pa: number //pase administrativo es la suma de las gestiones financieras
-  f_ejecutado: number // suma de solicitado + retenciones + isr + gestion financiera
-  f_remanente: number
-  p_avance: string
+  f_ejecutado?: number // suma de solicitado + retenciones + isr + gestion financiera
+  f_remanente?: number
+  p_avance?: string
 }
 
 export interface ProyectoMin {
@@ -122,7 +126,6 @@ export interface Proyecto extends ProyectoMin {
   sector_beneficiado: string
   i_tipo_financiamiento: number
   tipo_financiamiento?: string
-  f_monto_total: number
   i_beneficiados: number
   id_estado: number
   estado?: string
@@ -132,7 +135,7 @@ export interface Proyecto extends ProyectoMin {
   dt_fin: string
   dt_registro?: string
   saldo?: SaldoProyecto
-  ministraciones: MinistracionProyecto[]
+  ministraciones?: MinistracionProyecto[]
   colaboradores?: ColaboradorProyecto[]
   proveedores?: ProveedorProyecto[]
   solicitudes_presupuesto?: SolicitudPresupuesto[]
