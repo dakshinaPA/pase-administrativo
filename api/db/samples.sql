@@ -480,12 +480,13 @@ CREATE TABLE `proyectos` (
   CREATE TABLE `proyecto_saldo` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `id_proyecto` INT UNSIGNED NOT NULL,
-  `f_monto_total` VARCHAR(20) NOT NULL,
-  `f_solicitado` VARCHAR(20) NOT NULL,
-  `f_transferido` VARCHAR(20) NOT NULL,
-  `f_comprobado` VARCHAR(20) NOT NULL,
-  `f_retenciones` VARCHAR(20) NOT NULL,
-  `f_pa` VARCHAR(20) NOT NULL,
+  `f_monto_total` VARCHAR(20) NOT NULL DEFAULT 0,
+  `f_solicitado` VARCHAR(20) NOT NULL DEFAULT 0,
+  `f_transferido` VARCHAR(20) NOT NULL DEFAULT 0,
+  `f_comprobado` VARCHAR(20) NOT NULL DEFAULT 0,
+  `f_retenciones` VARCHAR(20) NOT NULL DEFAULT 0,
+  `f_pa` VARCHAR(20) NOT NULL DEFAULT 0,
+  `p_avance` VARCHAR(20) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   INDEX (`id_proyecto`));
 

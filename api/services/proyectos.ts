@@ -48,6 +48,44 @@ class ProyectosServices {
     }
   }
 
+  static transformarDataProyecto = (data: ResProyectoDB): Proyecto => {
+    const { id_proyecto_saldo, ...resto } = data
+
+    const f_monto_total = Number(data.f_monto_total)
+    const f_solicitado = Number(data.f_solicitado)
+    const f_comprobado = Number(data.f_comprobado)
+    const f_transferido = Number(data.f_transferido)
+    const f_retenciones = Number(data.f_retenciones)
+    const f_pa = Number(data.f_pa)
+    const p_avance = Number(data.p_avance)
+
+    const f_por_comprobar = f_solicitado - f_comprobado
+    const f_isr = f_por_comprobar * 0.35
+    const f_ejecutado = f_transferido + f_retenciones + f_isr + f_pa
+    const f_remanente = f_monto_total - f_ejecutado
+
+    return {
+      ...resto,
+      tipo_financiamiento: this.obtenerTipoFinanciamiento(
+        resto.i_tipo_financiamiento
+      ),
+      saldo: {
+        id: id_proyecto_saldo,
+        f_monto_total,
+        f_solicitado,
+        f_transferido,
+        f_comprobado,
+        f_por_comprobar,
+        f_isr,
+        f_remanente,
+        p_avance,
+        f_retenciones,
+        f_ejecutado,
+        f_pa,
+      },
+    }
+  }
+
   static async obtener(queries: QueriesProyecto) {
     const { id, min } = queries
 
@@ -56,45 +94,7 @@ class ProyectosServices {
     try {
       const re = (await ProyectoDB.obtener(queries)) as ResProyectoDB[]
 
-      const proyectos: Proyecto[] = re.map((proyecto) => {
-        const {
-          id_proyecto_saldo,
-          f_monto_total,
-          f_solicitado,
-          f_transferido,
-          f_comprobado,
-          f_retenciones,
-          f_pa,
-          ...resto
-        } = proyecto
-
-        const f_por_comprobar = f_solicitado - f_comprobado
-        const f_isr = f_por_comprobar * 0.35
-        const f_ejecutado = f_transferido + f_retenciones + f_isr + f_pa
-        const f_remanente = f_monto_total - f_ejecutado
-        const p_avance = ((f_ejecutado * 100) / f_monto_total).toFixed(2)
-
-        return {
-          ...resto,
-          tipo_financiamiento: this.obtenerTipoFinanciamiento(
-            resto.i_tipo_financiamiento
-          ),
-          saldo: {
-            id: id_proyecto_saldo,
-            f_monto_total,
-            f_solicitado,
-            f_transferido,
-            f_comprobado,
-            f_por_comprobar,
-            f_isr,
-            f_remanente,
-            p_avance,
-            f_retenciones,
-            f_ejecutado,
-            f_pa,
-          },
-        }
-      })
+      const proyectos = re.map(this.transformarDataProyecto)
 
       return RespuestaController.exitosa(200, "Consulta exitosa", proyectos)
     } catch (error) {
@@ -108,10 +108,46 @@ class ProyectosServices {
 
   static async obtenerUno(id_proyecto: number) {
     try {
-      const re = await ProyectoDB.obtenerUno(id_proyecto)
-      // if (re.error) throw re.data
+      const re = (await ProyectoDB.obtenerUno(id_proyecto)) as ResProyectoDB
 
-      return RespuestaController.exitosa(200, "Consulta exitosa", {})
+      const {
+        ministraciones,
+        rubros_ministracion,
+        colaboradores,
+        proveedores,
+        solicitudes,
+        notas,
+        ...dataProyecto
+      } = re
+
+      const ministracionesConRubros: MinistracionProyecto[] =
+        ministraciones.map((ministracion) => {
+          const rubros_presupuestales = rubros_ministracion.filter(
+            (rb) => rb.id_ministracion == ministracion.id
+          )
+
+          const f_monto = rubros_presupuestales.reduce(
+            (acum, rp) => acum + Number(rp.f_monto),
+            0
+          )
+
+          return {
+            ...ministracion,
+            f_monto,
+            rubros_presupuestales,
+          }
+        })
+
+      const proyecto: Proyecto = {
+        ...this.transformarDataProyecto(dataProyecto),
+        ministraciones: ministracionesConRubros,
+        colaboradores,
+        proveedores,
+        solicitudes_presupuesto: solicitudes,
+        notas
+      }
+
+      return RespuestaController.exitosa(200, "Consulta exitosa", proyecto)
     } catch (error) {
       return RespuestaController.fallida(
         400,
@@ -290,12 +326,10 @@ class ProyectosServices {
     const dataProyecto: Proyecto = {
       ...data,
       saldo: {
+        ...data.saldo,
         f_monto_total,
-        f_transferido: 0,
-        f_solicitado: 0,
-        f_comprobado: 0,
-        f_retenciones: 0,
         f_pa,
+        p_avance: Number(((f_pa * 100) / f_monto_total).toFixed(2)),
       },
     }
 

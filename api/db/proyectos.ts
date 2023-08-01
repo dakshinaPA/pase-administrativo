@@ -14,6 +14,10 @@ import {
   ComprobanteSolicitud,
   SolicitudPresupuesto,
 } from "@models/solicitud-presupuesto.model"
+import { ColaboradorDB } from "./colaboradores"
+import proveedores from "pages/api/proveedores"
+import { ProveedorDB } from "./proveedores"
+import { SolicitudesPresupuestoDB } from "./solicitudes-presupuesto"
 
 interface RubrosConIdMinistracion {
   id_ministracion: number
@@ -56,7 +60,7 @@ class ProyectoDB {
       CONCAT(u.nombre, ' ', u.apellido_paterno) responsable,
       ts.nombre tema_social,
       e.nombre estado,
-      ps.id id_proyecto_saldo, ps.f_monto_total, ps.f_solicitado, ps.f_transferido, ps.f_comprobado, ps.f_retenciones, ps.f_pa
+      ps.id id_proyecto_saldo, ps.f_monto_total, ps.f_solicitado, ps.f_transferido, ps.f_comprobado, ps.f_retenciones, ps.f_pa, ps.p_avance
       FROM proyectos p
       JOIN proyecto_saldo ps ON ps.id_proyecto = p.id
       JOIN financiadores f ON p.id_financiador = f.id
@@ -111,7 +115,65 @@ class ProyectoDB {
     })
   }
 
-  static obtenerUno = async (id: number) => {}
+  static obtenerUno = async (id: number) => {
+    const qProyecto = this.queryRe({ id })
+    const qMinistracioens = `SELECT id, id_proyecto, i_numero, i_grupo, dt_recepcion, dt_registro
+      FROM proyecto_ministraciones pm WHERE id_proyecto=? AND b_activo=1`
+    const qRubrosMinistracion = `SELECT mrp.id, mrp.id_ministracion, mrp.id_rubro, mrp.f_monto, rp.nombre rubro
+      FROM ministracion_rubros_presupuestales mrp
+      JOIN rubros_presupuestales rp ON rp.id = mrp.id_rubro
+      WHERE mrp.id_ministracion IN (
+      SELECT id FROM proyecto_ministraciones WHERE id_proyecto=? AND b_activo=1
+      ) AND mrp.b_activo=1`
+    const qColaboradores = ColaboradorDB.queryRe(id)
+    const qProveedores = ProveedorDB.queryRe(id)
+    const qSolicitudes = SolicitudesPresupuestoDB.queryRe({ id_proyecto: id })
+    const qNotas = this.reNotas()
+
+    const qCombinados = [
+      qProyecto,
+      qMinistracioens,
+      qRubrosMinistracion,
+      qColaboradores,
+      qProveedores,
+      qSolicitudes,
+      qNotas,
+    ].join(";")
+
+    const phCombinados = [id, id, id, id, id, id, id]
+
+    return new Promise((res, rej) => {
+      connectionDB.getConnection((err, connection) => {
+        if (err) return rej(err)
+
+        //obtener proyecto
+        connection.query(
+          qCombinados,
+          phCombinados,
+          (error, results, fields) => {
+            if (error) {
+              connection.destroy()
+              return rej(error)
+            }
+
+            connection.destroy()
+
+            const dataProyecto: ResProyectoDB = {
+              ...results[0][0],
+              ministraciones: results[1],
+              rubros_ministracion: results[2],
+              colaboradores: results[3],
+              proveedores: results[4],
+              solicitudes: results[5],
+              notas: results[6],
+            }
+
+            res(dataProyecto)
+          }
+        )
+      })
+    })
+  }
 
   static qCrMinistracion =
     () => `INSERT INTO proyecto_ministraciones ( id_proyecto, i_numero, i_grupo,
@@ -143,17 +205,10 @@ class ProyectoDB {
       fechaActualAEpoch(),
     ]
 
-    const qSaldoProyecto = `INSERT INTO proyecto_saldo (id_proyecto, f_monto_total, f_solicitado, f_transferido, f_comprobado,
-      f_retenciones, f_pa) VALUES(?, ?, ?, ?, ?, ?, ?)`
+    const qSaldoProyecto = `INSERT INTO proyecto_saldo (id_proyecto, f_monto_total, 
+      f_pa, p_avance) VALUES(?, ?, ?, ?)`
 
-    const phSaldoProyecto = [
-      saldo.f_monto_total,
-      saldo.f_solicitado,
-      saldo.f_transferido,
-      saldo.f_comprobado,
-      saldo.f_retenciones,
-      saldo.f_pa,
-    ]
+    const phSaldoProyecto = [saldo.f_monto_total, saldo.f_pa, saldo.p_avance]
 
     const qIdAlt = [
       "SELECT id_alt FROM financiadores WHERE id=? LIMIT 1",
@@ -448,22 +503,22 @@ class ProyectoDB {
   //   }
   // }
 
-  static async obtenerRubrosMinistracion(id_ministracion: number) {
-    const query = `SELECT mrp.id, mrp.id_ministracion, mrp.id_rubro, mrp.f_monto,
-    rp.nombre nombre
-    FROM ministracion_rubros_presupuestales mrp
-    JOIN rubros_presupuestales rp ON mrp.id_rubro = rp.id
-    WHERE mrp.id_ministracion=? AND mrp.b_activo=1`
+  // static async obtenerRubrosMinistracion(id_ministracion: number) {
+  //   const query = `SELECT mrp.id, mrp.id_ministracion, mrp.id_rubro, mrp.f_monto,
+  //   rp.nombre nombre
+  //   FROM ministracion_rubros_presupuestales mrp
+  //   JOIN rubros_presupuestales rp ON mrp.id_rubro = rp.id
+  //   WHERE mrp.id_ministracion=? AND mrp.b_activo=1`
 
-    const placeHolders = [id_ministracion]
+  //   const placeHolders = [id_ministracion]
 
-    try {
-      const res = await queryDBPlaceHolder(query, placeHolders)
-      return RespuestaDB.exitosa(res)
-    } catch (error) {
-      return RespuestaDB.fallida(error)
-    }
-  }
+  //   try {
+  //     const res = await queryDBPlaceHolder(query, placeHolders)
+  //     return RespuestaDB.exitosa(res)
+  //   } catch (error) {
+  //     return RespuestaDB.fallida(error)
+  //   }
+  // }
 
   // static async obtenerTodosRubrosMinistracion(id_ministracion: number) {
   //   const query = `SELECT id, id_rubro, b_activo FROM ministracion_rubros_presupuestales WHERE id_ministracion=?`
@@ -586,14 +641,20 @@ class ProyectoDB {
     }
   }
 
-  static async obtenerNotas(idProyecto: number) {
-    let query = `SELECT p.id, p.mensaje, p.dt_registro,
+  static reNotas = () => {
+    return `SELECT p.id, p.mensaje, p.dt_registro,
       CONCAT(u.nombre, ' ', u.apellido_paterno) usuario
       FROM proyecto_notas p JOIN usuarios u ON p.id_usuario = u.id
-      WHERE p.id_proyecto=${idProyecto} AND p.b_activo=1`
+      WHERE p.id_proyecto=? AND p.b_activo=1`
+  }
+
+  static async obtenerNotas(id_proyecto: number) {
+    const query = this.reNotas()
+
+    const placeHolders = [id_proyecto]
 
     try {
-      const res = await queryDB(query)
+      const res = await queryDBPlaceHolder(query, placeHolders)
       return RespuestaDB.exitosa(res)
     } catch (error) {
       return RespuestaDB.fallida(error)

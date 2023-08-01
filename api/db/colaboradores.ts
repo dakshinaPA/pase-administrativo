@@ -8,7 +8,7 @@ import { Direccion } from "@models/direccion.model"
 import { fechaActualAEpoch } from "@assets/utils/common"
 
 class ColaboradorDB {
-  static async obtener(id_proyecto: number, id_colaborador?: number) {
+  static queryRe = (id_proyecto: number, id_colaborador?: number) => {
     let query = `SELECT c.id, c.id_proyecto, c.id_empleado, c.nombre, c.apellido_paterno, c.apellido_materno, c.i_tipo, c.clabe,
       c.id_banco, c.telefono, c.email, c.rfc, c.curp, c.dt_registro,
       cd.id id_direccion, cd.calle, cd.numero_ext, cd.numero_int, cd.colonia, cd.municipio, cd.cp cp_direccion, cd.id_estado,
@@ -23,15 +23,27 @@ class ColaboradorDB {
       WHERE c.b_activo = 1`
 
     if (id_proyecto) {
-      query += ` AND c.id_proyecto=${id_proyecto}`
+      query += " AND c.id_proyecto=?"
+    } else if (id_colaborador) {
+      query += " AND c.id=?"
     }
 
-    if (id_colaborador) {
-      query += ` AND c.id=${id_colaborador}`
+    return query
+  }
+
+  static async obtener(id_proyecto: number, id_colaborador?: number) {
+    const qColaborador = this.queryRe(id_proyecto, id_colaborador)
+
+    const phColaborador = []
+
+    if (id_proyecto) {
+      phColaborador.push(id_proyecto)
+    } else if (id_colaborador) {
+      phColaborador.push(id_colaborador)
     }
 
     try {
-      const res = await queryDB(query)
+      const res = await queryDBPlaceHolder(qColaborador, phColaborador)
       return RespuestaDB.exitosa(res)
     } catch (error) {
       return RespuestaDB.fallida(error)

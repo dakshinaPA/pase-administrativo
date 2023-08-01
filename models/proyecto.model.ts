@@ -67,7 +67,7 @@ export interface RubroMinistracion {
   id?: number
   id_ministracion?: number
   id_rubro: number
-  nombre?: string
+  rubro?: string
   f_monto: number
   b_activo?: boolean
 }
@@ -79,8 +79,8 @@ export interface MinistracionProyecto {
   f_monto: number
   i_grupo: string
   dt_recepcion: string
-  rubros_presupuestales: RubroMinistracion[]
   dt_registro?: string
+  rubros_presupuestales: RubroMinistracion[]
 }
 
 export interface NotaProyecto {
@@ -104,7 +104,7 @@ export interface SaldoProyecto {
   f_pa: number //pase administrativo es la suma de las gestiones financieras
   f_ejecutado?: number // suma de solicitado + retenciones + isr + gestion financiera
   f_remanente?: number
-  p_avance?: string
+  p_avance?: number
 }
 
 export interface ProyectoMin {

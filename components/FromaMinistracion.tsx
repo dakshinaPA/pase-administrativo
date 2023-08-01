@@ -18,7 +18,6 @@ const FormaMinistracion = () => {
     dispatch,
     setShowFormaMinistracion,
     formaMinistracion,
-    // estaInicialdFormaMinistracion,
     setFormaMinistracion,
     setModoEditar,
   } = useProyecto()
@@ -86,7 +85,7 @@ const FormaMinistracion = () => {
         ...prevState.rubros_presupuestales,
         {
           id_rubro: matchRubro.id,
-          nombre: matchRubro.nombre,
+          rubro: matchRubro.nombre,
           f_monto: 0,
         },
       ],
@@ -326,9 +325,9 @@ const FormaMinistracion = () => {
             </thead>
             <tbody>
               {formaMinistracion.rubros_presupuestales.map(
-                ({ id_rubro, nombre, f_monto }, index) => (
+                ({ id_rubro, rubro, f_monto }, index) => (
                   <tr key={id_rubro}>
-                    <td>{nombre}</td>
+                    <td>{rubro}</td>
                     <td>
                       <input
                         type="text"

@@ -47,13 +47,20 @@ import { UsuarioMin } from "@models/usuario.model"
 
 const TablaMinistraciones = () => {
   const {
+    user,
     estadoForma,
-    modalidad,
-    modoEditar,
-    showFormaMinistracion,
     quitarMinistracion,
     editarMinistracion,
+    modoEditar,
   } = useProyecto()
+
+  const showAcciones =
+    (user.id == estadoForma.id_administrador || user.id_rol == 1) && !modoEditar
+
+  const sumaMinistraciones = estadoForma.ministraciones.reduce(
+    (acum, min) => acum + min.f_monto,
+    0
+  )
 
   return (
     <div className="col-12 col-md table-responsive mb-3">
@@ -65,7 +72,7 @@ const TablaMinistraciones = () => {
             <th>Fecha de recepción</th>
             <th>Rubros</th>
             <th>Monto</th>
-            {modoEditar && <th>Acciones</th>}
+            {showAcciones && <th>Acciones</th>}
           </tr>
         </thead>
         <tbody>
@@ -86,14 +93,14 @@ const TablaMinistraciones = () => {
                   <table className="table table-bordered mb-0">
                     <tbody>
                       {rubros_presupuestales.map(
-                        ({ id_rubro, nombre, f_monto }) => {
-                          // const nombre_corto = `${nombre.substring(0, 20)}...`
+                        ({ id_rubro, rubro, f_monto }) => {
+                          // const nombre_corto = `${rubro.substring(0, 20)}...`
 
                           return (
                             <tr key={id_rubro}>
-                              <td>{nombre}</td>
+                              <td>{rubro}</td>
                               <td className="w-25">
-                                {montoALocaleString(Number(f_monto))}
+                                {montoALocaleString(f_monto)}
                               </td>
                             </tr>
                           )
@@ -103,27 +110,33 @@ const TablaMinistraciones = () => {
                   </table>
                 </td>
                 <td>{montoALocaleString(f_monto)}</td>
-                <td>
-                  {modoEditar && !showFormaMinistracion && id && (
-                    <BtnAccion
-                      margin={false}
-                      icono="bi-pencil"
-                      onclick={() => editarMinistracion(id)}
-                      title="editar ministración"
-                    />
-                  )}
-                  {!id && (
-                    <BtnAccion
-                      margin={false}
-                      icono="bi-x-circle"
-                      onclick={() => quitarMinistracion(i_numero)}
-                      title="editar ministración"
-                    />
-                  )}
-                </td>
+                {showAcciones && (
+                  <td>
+                    {id ? (
+                      <BtnAccion
+                        margin={false}
+                        icono="bi-pencil"
+                        onclick={() => editarMinistracion(id)}
+                        title="editar ministración"
+                      />
+                    ) : (
+                      <BtnAccion
+                        margin={false}
+                        icono="bi-x-circle"
+                        onclick={() => quitarMinistracion(i_numero)}
+                        title="editar ministración"
+                      />
+                    )}
+                  </td>
+                )}
               </tr>
             )
           )}
+          <tr>
+            <td colSpan={4}></td>
+            <td>{montoALocaleString(sumaMinistraciones)}</td>
+            {showAcciones && <td></td>}
+          </tr>
         </tbody>
       </table>
     </div>
@@ -557,41 +570,46 @@ const FormaProyecto = () => {
     setIsLoading(true)
 
     try {
-      const queryCopartes: QueriesCoparte = idCoparte
-        ? { id: idCoparte }
-        : { id_admin: user.id }
+      if (modalidad == "CREAR") {
+        const queryCopartes: QueriesCoparte = idCoparte
+          ? { id: idCoparte }
+          : { id_admin: user.id }
 
-      const promesas = [obtenerFinanciadores(), obtenerCopartes(queryCopartes)]
+        const promesas = [
+          obtenerFinanciadores(),
+          obtenerCopartes(queryCopartes),
+        ]
 
-      if (modalidad === "EDITAR") {
-        promesas.push(obtenerProyectos({ id: idProyecto, min: false }))
-      }
+        const resCombinadas = await Promise.all(promesas)
 
-      const resCombinadas = await Promise.all(promesas)
+        for (const rc of resCombinadas) {
+          if (rc.error) throw rc.data
+        }
 
-      for (const rc of resCombinadas) {
-        if (rc.error) throw rc.data
-      }
+        const financiaodresDB = resCombinadas[0].data as FinanciadorMin[]
+        const copartesAdminDB = resCombinadas[1].data as CoparteMin[]
 
-      const financiaodresDB = resCombinadas[0].data as FinanciadorMin[]
-      const copartesAdminDB = resCombinadas[1].data as CoparteMin[]
+        setFinanciadoresDB(financiaodresDB)
+        setCopartesDB(copartesAdminDB)
 
-      setFinanciadoresDB(financiaodresDB)
-      setCopartesDB(copartesAdminDB)
-
-      if (modalidad === "EDITAR") {
-        const proyecto = resCombinadas[2].data[0] as Proyecto
-        dispatch({
-          type: "CARGA_INICIAL",
-          payload: proyecto,
-        })
-      } else {
         dispatch({
           type: "SET_IDS_DEPENDENCIAS",
           payload: {
             id_coparte: copartesAdminDB[0]?.id ?? 0,
             id_financiador: financiaodresDB[0]?.id ?? 0,
           },
+        })
+      } else {
+        const reProyecto = await obtenerProyectos({
+          id: idProyecto,
+          min: false,
+        })
+        if (reProyecto.error) throw reProyecto.data
+
+        const proyecto = reProyecto.data as Proyecto
+        dispatch({
+          type: "CARGA_INICIAL",
+          payload: proyecto,
         })
       }
     } catch (error) {
@@ -605,7 +623,7 @@ const FormaProyecto = () => {
     const idCoparte = estadoForma.id_coparte
     if (!idCoparte) return
 
-    const reUsCoDB = await obtenerUsuarios({id_coparte: idCoparte, min: true})
+    const reUsCoDB = await obtenerUsuarios({ id_coparte: idCoparte, min: true })
 
     if (reUsCoDB.error) {
       console.log(reUsCoDB.data)
@@ -746,6 +764,7 @@ const FormaProyecto = () => {
   const showBtnEditar =
     !modoEditar &&
     idProyecto &&
+    !showFormaMinistracion &&
     (estadoForma.id_administrador == user.id || user.id_rol == 1)
 
   if (isLoading) {
@@ -794,38 +813,56 @@ const FormaProyecto = () => {
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Financiador</label>
-          <select
-            className="form-control"
-            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-            name="id_financiador"
-            value={estadoForma.id_financiador}
-            disabled={Boolean(idProyecto)}
-          >
-            {financiadoresDB.map(({ id, nombre }) => (
-              <option key={id} value={id}>
-                {nombre}
-              </option>
-            ))}
-          </select>
+          {modalidad === "CREAR" ? (
+            <select
+              className="form-control"
+              onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+              name="id_financiador"
+              value={estadoForma.id_financiador}
+              disabled={Boolean(idProyecto)}
+            >
+              {financiadoresDB.map(({ id, nombre }) => (
+                <option key={id} value={id}>
+                  {nombre}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              className="form-control"
+              type="text"
+              value={estadoForma.financiador}
+              disabled
+            />
+          )}
           {error.campo == "id_financiador" && (
             <MensajeError mensaje={error.mensaje} />
           )}
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Coparte</label>
-          <select
-            className="form-control"
-            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-            value={estadoForma.id_coparte}
-            name="id_coparte"
-            disabled={Boolean(idProyecto) || Boolean(idCoparte)}
-          >
-            {copartesDB.map(({ id, nombre }) => (
-              <option key={id} value={id}>
-                {nombre}
-              </option>
-            ))}
-          </select>
+          {modalidad === "CREAR" ? (
+            <select
+              className="form-control"
+              onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+              value={estadoForma.id_coparte}
+              name="id_coparte"
+              disabled={Boolean(idProyecto) || Boolean(idCoparte)}
+            >
+              {copartesDB.map(({ id, nombre }) => (
+                <option key={id} value={id}>
+                  {nombre}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              className="form-control"
+              type="text"
+              value={estadoForma.coparte}
+              disabled
+            />
+          )}
           {error.campo == "id_coparte" && (
             <MensajeError mensaje={error.mensaje} />
           )}
@@ -839,13 +876,11 @@ const FormaProyecto = () => {
             value={estadoForma.id_responsable}
             disabled={!modoEditar}
           >
-            {usuariosCoparteDB.map(
-              ({ id, nombre, apellido_paterno }) => (
-                <option key={id} value={id}>
-                  {nombre} {apellido_paterno}
-                </option>
-              )
-            )}
+            {usuariosCoparteDB.map(({ id, nombre, apellido_paterno }) => (
+              <option key={id} value={id}>
+                {nombre} {apellido_paterno}
+              </option>
+            ))}
             {error.campo == "id_responsable" && (
               <MensajeError mensaje={error.mensaje} />
             )}

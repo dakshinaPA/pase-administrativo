@@ -11,39 +11,49 @@ import { RespuestaDB } from "@api/utils/response"
 import { fechaActualAEpoch } from "@assets/utils/common"
 
 class SolicitudesPresupuestoDB {
-  static async obtener(queries: QueriesSolicitud) {
+  static queryRe = (queries: QueriesSolicitud) => {
     const { id, id_proyecto, id_responsable } = queries
 
     let query = `SELECT sp.id, sp.id_proyecto, sp.i_tipo_gasto, sp.clabe, sp.id_banco, sp.titular_cuenta,
-    sp.email, sp.proveedor, sp.descripcion_gasto, sp.id_partida_presupuestal, sp.f_importe, sp.i_estatus, sp.dt_registro,
-    CONCAT(p.id_alt, ' - ', p.nombre) proyecto, p.id_responsable,
-    b.nombre banco,
-    r.nombre rubro,
-    SUM(spc.f_total) f_total_comprobaciones,
-    SUM(spc.f_retenciones) f_total_impuestos_retenidos
-    FROM solicitudes_presupuesto sp
-    JOIN proyectos p ON sp.id_proyecto=p.id
-    JOIN bancos b ON sp.id_banco=b.id
-    JOIN rubros_presupuestales r ON sp.id_partida_presupuestal=r.id
-    LEFT JOIN solicitud_presupuesto_comprobantes spc ON spc.id_solicitud_presupuesto=sp.id
-    WHERE sp.b_activo=1`
+      sp.email, sp.proveedor, sp.descripcion_gasto, sp.id_partida_presupuestal, sp.f_importe, sp.i_estatus, sp.dt_registro,
+      CONCAT(p.id_alt, ' - ', p.nombre) proyecto, p.id_responsable,
+      b.nombre banco,
+      r.nombre rubro,
+      SUM(spc.f_total) f_total_comprobaciones,
+      SUM(spc.f_retenciones) f_total_impuestos_retenidos
+      FROM solicitudes_presupuesto sp
+      JOIN proyectos p ON sp.id_proyecto=p.id
+      JOIN bancos b ON sp.id_banco=b.id
+      JOIN rubros_presupuestales r ON sp.id_partida_presupuestal=r.id
+      LEFT JOIN solicitud_presupuesto_comprobantes spc ON spc.id_solicitud_presupuesto=sp.id
+      WHERE sp.b_activo=1`
 
     if (id_proyecto) {
-      query += ` AND sp.id_proyecto=${id_proyecto}`
+      query += " AND sp.id_proyecto=?"
+    } else if (id) {
+      query += " AND sp.id=?"
     }
 
-    if (id) {
-      query += ` AND sp.id=${id}`
+    query += " GROUP BY sp.id"
+
+    return query
+  }
+
+  static async obtener(queries: QueriesSolicitud) {
+    const { id, id_proyecto, id_responsable } = queries
+
+    const qSolicitud = this.queryRe(queries)
+
+    const phSolicitud = []
+
+    if (id_proyecto) {
+      phSolicitud.push(id_proyecto)
+    } else if (id) {
+      phSolicitud.push(id)
     }
-
-    query += " GROUP BY sp.id ORDER by sp.dt_registro DESC"
-
-    // if (id_responsable) {
-    //   query += ` AND p.id_responsable=${id}`
-    // }
 
     try {
-      const res = await queryDB(query)
+      const res = await queryDBPlaceHolder(qSolicitud, phSolicitud)
       return RespuestaDB.exitosa(res)
     } catch (error) {
       return RespuestaDB.fallida(error)

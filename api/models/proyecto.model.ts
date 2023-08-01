@@ -1,3 +1,6 @@
+import { ColaboradorProyecto, MinistracionProyecto, NotaProyecto, ProveedorProyecto, RubroMinistracion } from "@models/proyecto.model"
+import { SolicitudPresupuesto } from "@models/solicitud-presupuesto.model"
+
 export interface ResProyectoDB {
   id: number
   id_financiador: number
@@ -28,4 +31,11 @@ export interface ResProyectoDB {
   f_comprobado: number
   f_retenciones: number
   f_pa: number
+  p_avance: number
+  ministraciones?: MinistracionProyecto[]
+  rubros_ministracion?: RubroMinistracion[]
+  colaboradores?: ColaboradorProyecto[]
+  proveedores?: ProveedorProyecto[]
+  solicitudes?: SolicitudPresupuesto[]
+  notas?: NotaProyecto[]
 }

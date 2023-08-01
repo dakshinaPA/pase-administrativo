@@ -5,29 +5,41 @@ import { Direccion } from "@models/direccion.model"
 import { fechaActualAEpoch } from "@assets/utils/common"
 
 class ProveedorDB {
-  static async obtener(id_proyecto: number, id_proveedor?: number) {
+  static queryRe = (id_proyecto: number, id_proveedor?: number) => {
     let query = `SELECT p.id, p.id_proyecto, p.nombre, p.i_tipo, p.clabe, p.id_banco, p.telefono, p.email, p.rfc, p.descripcion_servicio, p.dt_registro,
-      pd.id id_direccion, pd.calle, pd.numero_ext, pd.numero_int, pd.colonia, pd.municipio, pd.cp, pd.id_estado,
-      pr.id_responsable,
-      e.nombre estado,
-      b.nombre banco
-      FROM proveedores p
-      JOIN proyectos pr ON p.id_proyecto = pr.id
-      JOIN proveedor_direccion pd ON p.id = pd.id_proveedor
-      JOIN estados e ON pd.id_estado = e.id
-      JOIN bancos b ON p.id_banco = b.id
-      WHERE p.b_activo = 1`
+    pd.id id_direccion, pd.calle, pd.numero_ext, pd.numero_int, pd.colonia, pd.municipio, pd.cp, pd.id_estado,
+    pr.id_responsable,
+    e.nombre estado,
+    b.nombre banco
+    FROM proveedores p
+    JOIN proyectos pr ON p.id_proyecto = pr.id
+    JOIN proveedor_direccion pd ON p.id = pd.id_proveedor
+    JOIN estados e ON pd.id_estado = e.id
+    JOIN bancos b ON p.id_banco = b.id
+    WHERE p.b_activo = 1`
 
     if (id_proyecto) {
-      query += ` AND p.id_proyecto=${id_proyecto}`
+      query += " AND p.id_proyecto=?"
+    } else if (id_proveedor) {
+      query += " AND p.id=?"
     }
 
-    if (id_proveedor) {
-      query += ` AND p.id=${id_proveedor}`
+    return query
+  }
+
+  static async obtener(id_proyecto: number, id_proveedor?: number) {
+    const qProveedor = this.queryRe(id_proyecto, id_proveedor)
+
+    const phProveedor = []
+
+    if (id_proyecto) {
+      phProveedor.push(id_proyecto)
+    } else if (id_proveedor) {
+      phProveedor.push(id_proveedor)
     }
 
     try {
-      const res = await queryDB(query)
+      const res = await queryDBPlaceHolder(qProveedor, phProveedor)
       return RespuestaDB.exitosa(res)
     } catch (error) {
       return RespuestaDB.fallida(error)
@@ -165,7 +177,7 @@ class ProveedorDB {
       municipio,
       cp,
       id_estado,
-      id
+      id,
     ]
 
     try {
