@@ -76,7 +76,6 @@ export interface MinistracionProyecto {
   id?: number
   id_proyecto?: number
   i_numero: number
-  f_monto: number
   i_grupo: string
   dt_recepcion: string
   dt_registro?: string

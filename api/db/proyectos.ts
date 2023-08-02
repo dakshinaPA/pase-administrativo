@@ -6,6 +6,7 @@ import {
   RubroMinistracion,
   NotaProyecto,
   QueriesProyecto,
+  SaldoProyecto,
 } from "@models/proyecto.model"
 import { fechaActualAEpoch } from "@assets/utils/common"
 import { connectionDB } from "./connectionPool"
@@ -115,16 +116,30 @@ class ProyectoDB {
     })
   }
 
-  static obtenerUno = async (id: number) => {
-    const qProyecto = this.queryRe({ id })
-    const qMinistracioens = `SELECT id, id_proyecto, i_numero, i_grupo, dt_recepcion, dt_registro
+  static qReMinistraciones = () => {
+    return `SELECT id, id_proyecto, i_numero, i_grupo, dt_recepcion, dt_registro
       FROM proyecto_ministraciones pm WHERE id_proyecto=? AND b_activo=1`
-    const qRubrosMinistracion = `SELECT mrp.id, mrp.id_ministracion, mrp.id_rubro, mrp.f_monto, rp.nombre rubro
+  }
+
+  static qReRubrosMinistracion = (activos = true) => {
+    let query = `SELECT mrp.id, mrp.id_ministracion, mrp.id_rubro, mrp.f_monto, mrp.b_activo, rp.nombre rubro
       FROM ministracion_rubros_presupuestales mrp
       JOIN rubros_presupuestales rp ON rp.id = mrp.id_rubro
       WHERE mrp.id_ministracion IN (
       SELECT id FROM proyecto_ministraciones WHERE id_proyecto=? AND b_activo=1
-      ) AND mrp.b_activo=1`
+      )`
+
+    if (activos) {
+      query += "  AND mrp.b_activo=1"
+    }
+
+    return query
+  }
+
+  static obtenerUno = async (id: number) => {
+    const qProyecto = this.queryRe({ id })
+    const qMinistracioens = this.qReMinistraciones()
+    const qRubrosMinistracion = this.qReRubrosMinistracion()
     const qColaboradores = ColaboradorDB.queryRe(id)
     const qProveedores = ProveedorDB.queryRe(id)
     const qSolicitudes = SolicitudesPresupuestoDB.queryRe({ id_proyecto: id })
@@ -362,42 +377,168 @@ class ProyectoDB {
   }
 
   static async actualizar(id_proyecto: number, data: Proyecto) {
-    const {
-      id_responsable,
-      nombre,
-      id_tema_social,
-      sector_beneficiado,
-      i_beneficiados,
-      id_estado,
-      municipio,
-      descripcion,
-      dt_inicio,
-      dt_fin,
-    } = data
+    const { ministraciones, saldo } = data
 
-    const query = `UPDATE proyectos SET id_responsable=?, nombre=?, id_tema_social=?, sector_beneficiado=?,
+    const qProyecto = `UPDATE proyectos SET id_responsable=?, nombre=?, id_tema_social=?, sector_beneficiado=?,
       i_beneficiados=?, id_estado=?, municipio=?, descripcion=?, dt_inicio=?, dt_fin=? WHERE id=? LIMIT 1`
 
-    const placeHolders = [
-      id_responsable,
-      nombre,
-      id_tema_social,
-      sector_beneficiado,
-      i_beneficiados,
-      id_estado,
-      municipio,
-      descripcion,
-      dt_inicio,
-      dt_fin,
+    const qReSaldo = `SELECT f_solicitado, f_transferido, f_comprobado, f_retenciones
+      FROM proyecto_saldo WHERE id=?`
+
+    const qUpSaldo = `UPDATE proyecto_saldo SET f_monto_total=?, f_pa=?, p_avance=? WHERE id=? LIMIT 1`
+
+    const qUpMinistracion = `UPDATE proyecto_ministraciones SET i_grupo=?,
+      dt_recepcion=? WHERE id=? LIMIT 1`
+
+    const qUpRubroMinistracion = `UPDATE ministracion_rubros_presupuestales SET
+      f_monto=? WHERE id=? LIMIT 1`
+
+    const qReAcRubro = `UPDATE ministracion_rubros_presupuestales SET b_activo=1, f_monto=? WHERE id=? LIMIT 1`
+
+    const qDlRubro = `UPDATE ministracion_rubros_presupuestales SET
+      b_activo=0 WHERE id=? LIMIT 1`
+
+    const qCombinados = [qProyecto]
+    const phCombinados = [
+      data.id_responsable,
+      data.nombre,
+      data.id_tema_social,
+      data.sector_beneficiado,
+      data.i_beneficiados,
+      data.id_estado,
+      data.municipio,
+      data.descripcion,
+      data.dt_inicio,
+      data.dt_fin,
       id_proyecto,
     ]
 
-    try {
-      const res = await queryDBPlaceHolder(query, placeHolders)
-      return RespuestaDB.exitosa(res)
-    } catch (error) {
-      return RespuestaDB.fallida(error)
-    }
+    const qIniciales = [this.qReRubrosMinistracion(false), qReSaldo].join(";")
+    const phIniciales = [id_proyecto, saldo.id]
+
+    return new Promise((res, rej) => {
+      connectionDB.getConnection((err, connection) => {
+        if (err) return rej(err)
+
+        connection.beginTransaction((err) => {
+          if (err) {
+            connection.destroy()
+            return rej(err)
+          }
+
+          //obtener rubros actuales
+          connection.query(
+            qIniciales,
+            phIniciales,
+            (error, results, fields) => {
+              if (error) {
+                return connection.rollback(() => {
+                  connection.destroy()
+                  rej(error)
+                })
+              }
+
+              const rubrosDB = results[0] as RubroMinistracion[]
+              const saldoDB = results[1][0] as SaldoProyecto
+              let rubrosVista: RubroMinistracion[] = []
+
+              for (const min of ministraciones) {
+                const {
+                  id,
+                  i_numero,
+                  i_grupo,
+                  dt_recepcion,
+                  rubros_presupuestales,
+                } = min
+                // para comparar los de db vs vista
+                rubrosVista = [...rubrosVista, ...rubros_presupuestales]
+
+                if (id) {
+                  qCombinados.push(qUpMinistracion)
+                  phCombinados.push(i_grupo, dt_recepcion, id)
+                } else {
+                  qCombinados.push(this.qCrMinistracion())
+                  phCombinados.push(
+                    id_proyecto,
+                    i_numero,
+                    i_grupo,
+                    dt_recepcion,
+                    fechaActualAEpoch()
+                  )
+                }
+
+                for (const rp of rubros_presupuestales) {
+                  const { id, f_monto, id_rubro } = rp
+
+                  if (id) {
+                    qCombinados.push(qUpRubroMinistracion)
+                    phCombinados.push(f_monto, id)
+                  } else {
+                    const esRegistrado = rubrosDB.find(
+                      (rDB) =>
+                        rDB.id_rubro == id_rubro &&
+                        rDB.id_ministracion == min.id
+                    )
+                    if (esRegistrado) {
+                      qCombinados.push(qReAcRubro)
+                      phCombinados.push(f_monto, esRegistrado.id)
+                    } else {
+                      qCombinados.push(this.qCrRubrosMinistracion())
+                      phCombinados.push(min.id, id_rubro, f_monto)
+                    }
+                  }
+                }
+              }
+
+              //revisar si algun rubro fue eliminado
+              const rubrosActivosDb = rubrosDB.filter((rp) => !!rp.b_activo)
+              for (const rdb of rubrosActivosDb) {
+                const matchDBvista = rubrosVista.find((rv) => rv.id == rdb.id)
+                if (!matchDBvista) {
+                  qCombinados.push(qDlRubro)
+                  phCombinados.push(rdb.id)
+                }
+              }
+
+              //actualizar saldo del proyecto
+              const { f_monto_total, f_pa } = saldo
+              const f_solicitado = Number(saldoDB.f_solicitado)
+              const f_comprobado = Number(saldoDB.f_comprobado)
+              const f_transferido = Number(saldoDB.f_transferido)
+              const f_retenciones = Number(saldoDB.f_retenciones)
+              const f_por_comprobar = f_solicitado - f_comprobado
+              const f_isr = f_por_comprobar * 0.35
+              const f_ejecutado = f_transferido + f_retenciones + f_isr + f_pa
+              const p_avance = Number(
+                ((f_ejecutado * 100) / f_monto_total).toFixed(2)
+              )
+              qCombinados.push(qUpSaldo)
+              phCombinados.push(f_monto_total, f_pa, p_avance, saldo.id)
+
+              //actualizar todo
+              connection.query(
+                qCombinados.join(";"),
+                phCombinados,
+                (error, results, fields) => {
+                  if (error) {
+                    return connection.rollback(() => {
+                      connection.destroy()
+                      rej(error)
+                    })
+                  }
+
+                  connection.commit((err) => {
+                    if (err) connection.rollback(() => rej(err))
+                    connection.destroy()
+                    res(true)
+                  })
+                }
+              )
+            }
+          )
+        })
+      })
+    })
   }
 
   static async borrar(id: number) {
@@ -411,128 +552,6 @@ class ProyectoDB {
     }
   }
 
-  // static async obtenerMinistraciones(id_proyecto: number) {
-  //   let query = `SELECT pm.id, pm.i_numero, SUM(mrp.f_monto) f_monto, pm.i_grupo, pm.dt_recepcion, pm.dt_registro
-  //     FROM proyecto_ministraciones pm
-  //     JOIN ministracion_rubros_presupuestales mrp ON pm.id = mrp.id_ministracion
-  //     WHERE pm.id_proyecto = ${id_proyecto} AND pm.b_activo=1 AND mrp.b_activo=1 GROUP BY pm.id`
-
-  //   try {
-  //     const res = await queryDB(query)
-  //     return RespuestaDB.exitosa(res)
-  //   } catch (error) {
-  //     return RespuestaDB.fallida(error)
-  //   }
-  // }
-
-  static async crearMinistracion(
-    id_proyecto: number,
-    data: MinistracionProyecto
-  ) {
-    const { i_numero, i_grupo, dt_recepcion } = data
-
-    const query = `INSERT INTO proyecto_ministraciones ( id_proyecto, i_numero, i_grupo,
-      dt_recepcion, dt_registro ) VALUES ( ?, ?, ?, ?, ? )`
-
-    const placeHolders = [
-      id_proyecto,
-      i_numero,
-      i_grupo,
-      dt_recepcion,
-      fechaActualAEpoch(),
-    ]
-
-    try {
-      const res = await queryDBPlaceHolder(query, placeHolders)
-      return RespuestaDB.exitosa(res)
-    } catch (error) {
-      return RespuestaDB.fallida(error)
-    }
-  }
-
-  static async crearMinistraciones(
-    id_proyecto: number,
-    ministraciones: MinistracionProyecto[]
-  ) {
-    const queries = []
-    const placeHolders = []
-
-    for (const ministracion of ministraciones) {
-      const { i_numero, i_grupo, dt_recepcion, rubros_presupuestales } =
-        ministracion
-
-      queries.push(
-        "INSERT INTO proyecto_ministraciones ( id_proyecto, i_numero, i_grupo, dt_recepcion, dt_registro ) VALUES ( ?, ?, ?, ?, ? )"
-      )
-
-      placeHolders.push(
-        id_proyecto,
-        i_numero,
-        i_grupo,
-        dt_recepcion,
-        fechaActualAEpoch()
-      )
-    }
-
-    const query = queries.join(";")
-
-    try {
-      const res = await queryDBPlaceHolder(query, placeHolders)
-      return RespuestaDB.exitosa(res)
-    } catch (error) {
-      return RespuestaDB.fallida(error)
-    }
-  }
-
-  // static async actualizarMinistracion(
-  //   id_ministracion: number,
-  //   data: MinistracionProyecto
-  // ) {
-  //   const { i_numero, i_grupo, dt_recepcion } = data
-
-  //   const query = `UPDATE proyecto_ministraciones SET i_numero=?,
-  //     i_grupo=?, dt_recepcion=? WHERE id=? LIMIT 1`
-
-  //   const placeHolders = [i_numero, i_grupo, dt_recepcion, id_ministracion]
-
-  //   try {
-  //     const res = await queryDBPlaceHolder(query, placeHolders)
-  //     return RespuestaDB.exitosa(res)
-  //   } catch (error) {
-  //     return RespuestaDB.fallida(error)
-  //   }
-  // }
-
-  // static async obtenerRubrosMinistracion(id_ministracion: number) {
-  //   const query = `SELECT mrp.id, mrp.id_ministracion, mrp.id_rubro, mrp.f_monto,
-  //   rp.nombre nombre
-  //   FROM ministracion_rubros_presupuestales mrp
-  //   JOIN rubros_presupuestales rp ON mrp.id_rubro = rp.id
-  //   WHERE mrp.id_ministracion=? AND mrp.b_activo=1`
-
-  //   const placeHolders = [id_ministracion]
-
-  //   try {
-  //     const res = await queryDBPlaceHolder(query, placeHolders)
-  //     return RespuestaDB.exitosa(res)
-  //   } catch (error) {
-  //     return RespuestaDB.fallida(error)
-  //   }
-  // }
-
-  // static async obtenerTodosRubrosMinistracion(id_ministracion: number) {
-  //   const query = `SELECT id, id_rubro, b_activo FROM ministracion_rubros_presupuestales WHERE id_ministracion=?`
-
-  //   const placeHolders = [id_ministracion]
-
-  //   try {
-  //     const res = await queryDBPlaceHolder(query, placeHolders)
-  //     return RespuestaDB.exitosa(res)
-  //   } catch (error) {
-  //     return RespuestaDB.fallida(error)
-  //   }
-  // }
-
   static async obtenerRubrosMinistraciones(id_proyecto: number) {
     const query = `SELECT DISTINCT mrp.id_rubro,
       rp.nombre
@@ -543,95 +562,6 @@ class ProyectoDB {
       AND mrp.id_rubro!=1 AND mrp.b_activo=1`
 
     const placeHolders = [id_proyecto]
-
-    try {
-      const res = await queryDBPlaceHolder(query, placeHolders)
-      return RespuestaDB.exitosa(res)
-    } catch (error) {
-      return RespuestaDB.fallida(error)
-    }
-  }
-
-  // static async crearRubroMinistracion(
-  //   id_ministracion: number,
-  //   data: RubroMinistracion
-  // ) {
-  //   const { id_rubro, f_monto } = data
-
-  //   const query = `INSERT INTO ministracion_rubros_presupuestales ( id_ministracion, id_rubro, f_monto ) VALUES ( ?, ?, ? )`
-
-  //   const placeHolders = [id_ministracion, id_rubro, f_monto]
-
-  //   try {
-  //     const res = await queryDBPlaceHolder(query, placeHolders)
-  //     return RespuestaDB.exitosa(res)
-  //   } catch (error) {
-  //     return RespuestaDB.fallida(error)
-  //   }
-  // }
-
-  // static async crearRubrosMinistraciones(
-  //   rubrosConIdMinistracion: RubrosConIdMinistracion[]
-  // ) {
-  //   const queries = []
-  //   const placeHolders = []
-
-  //   for (const rubMin of rubrosConIdMinistracion) {
-  //     const { id_ministracion, rubros } = rubMin
-
-  //     for (const { id_rubro, f_monto } of rubros) {
-  //       queries.push(
-  //         "INSERT INTO ministracion_rubros_presupuestales ( id_ministracion, id_rubro, f_monto ) VALUES ( ?, ?, ? )"
-  //       )
-
-  //       placeHolders.push(id_ministracion, id_rubro, f_monto)
-  //     }
-  //   }
-
-  //   const query = queries.join(";")
-
-  //   try {
-  //     const res = await queryDBPlaceHolder(query, placeHolders)
-  //     return RespuestaDB.exitosa(res)
-  //   } catch (error) {
-  //     return RespuestaDB.fallida(error)
-  //   }
-  // }
-
-  // static async actualizarRubroMinistracion(data: RubroMinistracion) {
-  //   const { id, f_monto } = data
-
-  //   const query = `UPDATE ministracion_rubros_presupuestales SET f_monto=? WHERE id=? LIMIT 1`
-
-  //   const placeHolders = [f_monto, id]
-
-  //   try {
-  //     const res = await queryDBPlaceHolder(query, placeHolders)
-  //     return RespuestaDB.exitosa(res)
-  //   } catch (error) {
-  //     return RespuestaDB.fallida(error)
-  //   }
-  // }
-
-  static async reactivarRubroMinistracion(data: RubroMinistracion) {
-    const { id, f_monto } = data
-
-    const query = `UPDATE ministracion_rubros_presupuestales SET f_monto=?, b_activo=? WHERE id=? LIMIT 1`
-
-    const placeHolders = [f_monto, 1, id]
-
-    try {
-      const res = await queryDBPlaceHolder(query, placeHolders)
-      return RespuestaDB.exitosa(res)
-    } catch (error) {
-      return RespuestaDB.fallida(error)
-    }
-  }
-
-  static async desactivarRubroMinistracion(id: number) {
-    const query = `UPDATE ministracion_rubros_presupuestales SET b_activo=? WHERE id=? LIMIT 1`
-
-    const placeHolders = [0, id]
 
     try {
       const res = await queryDBPlaceHolder(query, placeHolders)

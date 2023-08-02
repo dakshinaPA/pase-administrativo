@@ -1,15 +1,10 @@
 import { RubrosPresupuestalesDB } from "@api/models/catalogos.model"
-import { BtnAccion, BtnCancelar, BtnNeutro, BtnRegistrar } from "./Botones"
+import { BtnAccion, BtnCancelar, BtnNeutro } from "./Botones"
 import { useProyecto } from "@contexts/proyecto.context"
 import { useCatalogos } from "@contexts/catalogos.context"
-import { MinistracionProyecto, RubroMinistracion } from "@models/proyecto.model"
-import { MutableRefObject, createRef, useEffect, useRef } from "react"
+import { useEffect, useRef } from "react"
 import { ChangeEvent } from "@assets/models/formEvents.model"
-import { ApiCall } from "@assets/utils/apiCalls"
-import {
-  fechaActualInputDate,
-  obtenerMinistraciones,
-} from "@assets/utils/common"
+import { fechaActualInputDate } from "@assets/utils/common"
 
 const FormaMinistracion = () => {
   const {
@@ -19,21 +14,13 @@ const FormaMinistracion = () => {
     setShowFormaMinistracion,
     formaMinistracion,
     setFormaMinistracion,
-    setModoEditar,
   } = useProyecto()
   const { rubros_presupuestales } = useCatalogos()
 
-  // const estadoInicialdFormaRubros: RubroMinistracion = {
-  //   id_rubro: 0,
-  //   f_monto: "",
-  // }
-
-  // const [formaRubros, setFormaRubros] = useState(estadoInicialdFormaRubros)
   const inputNumero = useRef(null)
   const inputGrupo = useRef(null)
   const inputDtRecepcion = useRef(null)
   const selectRubro = useRef(null)
-  // const inputMontoRubro = useRef(null)
   const formMinistracion = useRef(null)
   const tableRubros = useRef(null)
 
@@ -42,20 +29,7 @@ const FormaMinistracion = () => {
       behavior: "smooth",
       block: "end",
     })
-    // formMinistracion.current.scrollIntoView(true)
   }, [])
-
-  useEffect(() => {
-    const montoMinistracionAagregar =
-      formaMinistracion.rubros_presupuestales.reduce(
-        (acum, rubro) => acum + Number(rubro.f_monto),
-        0
-      )
-    setFormaMinistracion((prevState) => ({
-      ...prevState,
-      f_monto: montoMinistracionAagregar,
-    }))
-  }, [formaMinistracion.rubros_presupuestales])
 
   useEffect(() => {
     agregarRubro()
@@ -98,7 +72,6 @@ const FormaMinistracion = () => {
   }
 
   const actualizarMontoRubro = (monto: number, id_rubro: number) => {
-
     const indexRubro = formaMinistracion.rubros_presupuestales.findIndex(
       (rp) => rp.id_rubro == id_rubro
     )
@@ -184,30 +157,19 @@ const FormaMinistracion = () => {
   const handleGuardar = async () => {
     if (!validarForma()) return
 
-    console.log(formaMinistracion)
-    const upMinistracion = await ApiCall.put(
-      `/ministraciones/${formaMinistracion.id}`,
-      formaMinistracion
-    )
-
-    if (upMinistracion.error) {
-      console.log(upMinistracion.data)
-    } else {
-      const reMinistraciones = await obtenerMinistraciones(idProyecto)
-      if (reMinistraciones.error) {
-        console.log(reMinistraciones.data)
-      } else {
-        const ministraciones = reMinistraciones.data as MinistracionProyecto[]
-
-        dispatch({
-          type: "RECARGAR_MINISTRACIONES",
-          payload: ministraciones,
-        })
-
-        cerrarForma()
-        setModoEditar(false)
+    const nuevaListaMinistraciones = estadoForma.ministraciones.map((min) => {
+      if (min.id == formaMinistracion.id) {
+        return formaMinistracion
       }
-    }
+      return min
+    })
+
+    dispatch({
+      type: "ACTUALIZAR_MINISTRACIONES",
+      payload: nuevaListaMinistraciones,
+    })
+
+    cerrarForma()
   }
 
   const rubrosNoSeleccionados = () => {
@@ -233,6 +195,11 @@ const FormaMinistracion = () => {
     return <option value={rubroGestion.id}>{rubroGestion.nombre}</option>
   }
 
+  const sumaRubros = formaMinistracion.rubros_presupuestales.reduce(
+    (acum, rp) => acum + rp.f_monto,
+    0
+  )
+
   const disabledInputNumero =
     estadoForma.i_tipo_financiamiento <= 2 ||
     estadoForma.ministraciones.length > 0
@@ -251,17 +218,6 @@ const FormaMinistracion = () => {
               value={formaMinistracion.i_numero}
               ref={inputNumero}
               disabled={disabledInputNumero}
-            />
-          </div>
-          <div className="mb-3">
-            <label className="form-label">Monto</label>
-            <input
-              className="form-control"
-              type="text"
-              onChange={handleChangeMinistracion}
-              name="f_monto"
-              value={formaMinistracion.f_monto}
-              disabled
             />
           </div>
           <div className="mb-3">
@@ -351,6 +307,20 @@ const FormaMinistracion = () => {
                   </tr>
                 )
               )}
+              <tr>
+                <td>
+                  <strong>Total</strong>
+                </td>
+                <td>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={sumaRubros}
+                    disabled
+                  />
+                </td>
+                <td></td>
+              </tr>
             </tbody>
             <tbody></tbody>
           </table>
@@ -370,7 +340,7 @@ const FormaMinistracion = () => {
               className="btn btn-outline-success"
               onClick={handleGuardar}
             >
-              Guardar cambios
+              Aceptar
             </button>
           )}
         </div>

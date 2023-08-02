@@ -55,10 +55,12 @@ const TablaMinistraciones = () => {
   } = useProyecto()
 
   const showAcciones =
-    (user.id == estadoForma.id_administrador || user.id_rol == 1) && !modoEditar
+    (user.id == estadoForma.id_administrador || user.id_rol == 1) && modoEditar
 
-  const sumaMinistraciones = estadoForma.ministraciones.reduce(
-    (acum, min) => acum + min.f_monto,
+  const sumaRubros = estadoForma.ministraciones.reduce(
+    (acum, min) =>
+      acum +
+      min.rubros_presupuestales.reduce((acum, rp) => acum + rp.f_monto, 0),
     0
   )
 
@@ -80,61 +82,67 @@ const TablaMinistraciones = () => {
             ({
               id,
               i_numero,
-              f_monto,
               i_grupo,
               dt_recepcion,
               rubros_presupuestales,
-            }) => (
-              <tr key={i_numero}>
-                <td>{i_numero}</td>
-                <td>{i_grupo}</td>
-                <td>{inputDateAformato(dt_recepcion)}</td>
-                <td>
-                  <table className="table table-bordered mb-0">
-                    <tbody>
-                      {rubros_presupuestales.map(
-                        ({ id_rubro, rubro, f_monto }) => {
-                          // const nombre_corto = `${rubro.substring(0, 20)}...`
+            }) => {
+              const f_monto = rubros_presupuestales.reduce(
+                (acum, rp) => acum + rp.f_monto,
+                0
+              )
 
-                          return (
-                            <tr key={id_rubro}>
-                              <td>{rubro}</td>
-                              <td className="w-25">
-                                {montoALocaleString(f_monto)}
-                              </td>
-                            </tr>
-                          )
-                        }
-                      )}
-                    </tbody>
-                  </table>
-                </td>
-                <td>{montoALocaleString(f_monto)}</td>
-                {showAcciones && (
+              return (
+                <tr key={i_numero}>
+                  <td>{i_numero}</td>
+                  <td>{i_grupo}</td>
+                  <td>{inputDateAformato(dt_recepcion)}</td>
                   <td>
-                    {id ? (
-                      <BtnAccion
-                        margin={false}
-                        icono="bi-pencil"
-                        onclick={() => editarMinistracion(id)}
-                        title="editar ministración"
-                      />
-                    ) : (
-                      <BtnAccion
-                        margin={false}
-                        icono="bi-x-circle"
-                        onclick={() => quitarMinistracion(i_numero)}
-                        title="editar ministración"
-                      />
-                    )}
+                    <table className="table table-bordered mb-0">
+                      <tbody>
+                        {rubros_presupuestales.map(
+                          ({ id_rubro, rubro, f_monto }) => {
+                            // const nombre_corto = `${rubro.substring(0, 20)}...`
+
+                            return (
+                              <tr key={id_rubro}>
+                                <td>{rubro}</td>
+                                <td className="w-25">
+                                  {montoALocaleString(f_monto)}
+                                </td>
+                              </tr>
+                            )
+                          }
+                        )}
+                      </tbody>
+                    </table>
                   </td>
-                )}
-              </tr>
-            )
+                  <td>{montoALocaleString(f_monto)}</td>
+                  {showAcciones && (
+                    <td>
+                      {id ? (
+                        <BtnAccion
+                          margin={false}
+                          icono="bi-pencil"
+                          onclick={() => editarMinistracion(id)}
+                          title="editar ministración"
+                        />
+                      ) : (
+                        <BtnAccion
+                          margin={false}
+                          icono="bi-x-circle"
+                          onclick={() => quitarMinistracion(i_numero)}
+                          title="editar ministración"
+                        />
+                      )}
+                    </td>
+                  )}
+                </tr>
+              )
+            }
           )}
           <tr>
             <td colSpan={4}></td>
-            <td>{montoALocaleString(sumaMinistraciones)}</td>
+            <td>{montoALocaleString(sumaRubros)}</td>
             {showAcciones && <td></td>}
           </tr>
         </tbody>
@@ -180,7 +188,7 @@ const Saldos = () => {
               <td>{montoALocaleString(estadoForma.saldo.f_pa)}</td>
               <td>{montoALocaleString(estadoForma.saldo.f_ejecutado)}</td>
               <td>{montoALocaleString(estadoForma.saldo.f_remanente)}</td>
-              <td>{estadoForma.saldo.p_avance}</td>
+              <td>{estadoForma.saldo.p_avance}%</td>
             </tr>
           </tbody>
         </table>
@@ -551,21 +559,6 @@ const FormaProyecto = () => {
     cargarUsuariosCoparte()
   }, [estadoForma.id_coparte])
 
-  // useEffect(() => {
-  //   const montoTotalProyecto = estadoForma.ministraciones.reduce(
-  //     (acum, ministracion) => acum + Number(ministracion.f_monto),
-  //     0
-  //   )
-
-  //   dispatch({
-  //     type: "HANDLE_CHANGE",
-  //     payload: {
-  //       name: "f_monto_total",
-  //       value: montoTotalProyecto,
-  //     },
-  //   })
-  // }, [estadoForma.ministraciones])
-
   const cargarData = async () => {
     setIsLoading(true)
 
@@ -724,7 +717,6 @@ const FormaProyecto = () => {
     setIsLoading(true)
     const { error, data, mensaje } =
       modalidad === "EDITAR" ? await editar() : await registrar()
-    setIsLoading(false)
 
     if (error) {
       console.log(data)
@@ -743,7 +735,7 @@ const FormaProyecto = () => {
         if (reProyectoActualizado.error) {
           console.log(reProyectoActualizado.data)
         } else {
-          const proyectoActualizado = reProyectoActualizado.data[0] as Proyecto
+          const proyectoActualizado = reProyectoActualizado.data as Proyecto
           dispatch({
             type: "CARGA_INICIAL",
             payload: proyectoActualizado,
@@ -752,6 +744,7 @@ const FormaProyecto = () => {
         }
       }
     }
+    setIsLoading(false)
   }
 
   const showBtnNuevaMinistracion =
@@ -1006,17 +999,6 @@ const FormaProyecto = () => {
             <MensajeError mensaje={error.mensaje} />
           )}
         </div>
-        {/* <div className="col-12 col-md-6 col-lg-4 mb-3">
-          <label className="form-label">Monto total</label>
-          <input
-            className="form-control"
-            type="text"
-            // onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-            name="f_monto_total"
-            value={estadoForma.saldo.f_monto_total}
-            disabled
-          />
-        </div> */}
         <div className="col-12 mb-3">
           <label className="form-label me-1">Descricpción</label>
           <textarea

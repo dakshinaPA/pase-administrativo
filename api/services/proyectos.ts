@@ -1,23 +1,19 @@
 import { ProyectoDB } from "@api/db/proyectos"
 import { ColaboradorServices } from "./colaboradores"
 import { ProveedorServices } from "./proveedores"
-import { SolicitudesPresupuestoServices } from "./solicitudes-presupuesto"
 import { RespuestaController } from "@api/utils/response"
 import {
   Proyecto,
   MinistracionProyecto,
   ColaboradorProyecto,
   ProveedorProyecto,
-  ProyectoMin,
   QueriesProyecto,
   RubroMinistracion,
   NotaProyecto,
 } from "@models/proyecto.model"
-import { SolicitudPresupuesto } from "@models/solicitud-presupuesto.model"
+
 import { ResProyectoDB } from "@api/models/proyecto.model"
 import { epochAFecha } from "@assets/utils/common"
-import { ResDB } from "@api/models/respuestas.model"
-import solicitudesPresupuesto from "pages/api/solicitudes-presupuesto"
 
 class ProyectosServices {
   static async obtenerVMin(queries: QueriesProyecto) {
@@ -126,15 +122,15 @@ class ProyectosServices {
             (rb) => rb.id_ministracion == ministracion.id
           )
 
-          const f_monto = rubros_presupuestales.reduce(
-            (acum, rp) => acum + Number(rp.f_monto),
-            0
-          )
+          //transformar los montos de los rubros a numero
+          const dataTransformada = rubros_presupuestales.map((rp) => ({
+            ...rp,
+            f_monto: Number(rp.f_monto),
+          }))
 
           return {
             ...ministracion,
-            f_monto,
-            rubros_presupuestales,
+            rubros_presupuestales: dataTransformada,
           }
         })
 
@@ -144,7 +140,7 @@ class ProyectosServices {
         colaboradores,
         proveedores,
         solicitudes_presupuesto: solicitudes,
-        notas
+        notas,
       }
 
       return RespuestaController.exitosa(200, "Consulta exitosa", proyecto)
@@ -177,7 +173,6 @@ class ProyectosServices {
       const proveedores = resCombinadas[1].data as ProveedorProyecto[]
       const rubros_presupuestales = resCombinadas[2].data as RubroMinistracion[]
 
-      //quitar los rubros repetido
 
       return RespuestaController.exitosa(200, "Consulta exitosa", {
         colaboradores,
@@ -193,148 +188,9 @@ class ProyectosServices {
     }
   }
 
-  // static async obtenerMinistraciones(id_proyecto: number) {
-  //   try {
-  //     const reMinistraciones = await ProyectoDB.obtenerMinistraciones(
-  //       id_proyecto
-  //     )
-  //     if (reMinistraciones.error) throw reMinistraciones.data
-
-  //     const ministraciones = reMinistraciones.data as MinistracionProyecto[]
-
-  //     const ministracionesHidratadas = await Promise.all(
-  //       ministraciones.map(async (ministracion) => {
-  //         const reRubrosMinistracion =
-  //           await ProyectoDB.obtenerRubrosMinistracion(ministracion.id)
-  //         if (reRubrosMinistracion.error) throw reRubrosMinistracion.data
-
-  //         const rubrosMinistracion =
-  //           reRubrosMinistracion.data as RubroMinistracion[]
-
-  //         return {
-  //           ...ministracion,
-  //           rubros_presupuestales: rubrosMinistracion,
-  //         }
-  //       })
-  //     )
-
-  //     return RespuestaController.exitosa(
-  //       200,
-  //       "ministraciones obtenidas con éxito",
-  //       ministracionesHidratadas
-  //     )
-  //   } catch (error) {
-  //     return RespuestaController.fallida(
-  //       400,
-  //       "Error al obtener ministraciones de proyecto",
-  //       error
-  //     )
-  //   }
-  // }
-
-  // static async actualizarMinistracion(
-  //   id_ministracion: number,
-  //   data: MinistracionProyecto
-  // ) {
-  //   try {
-  //     const { rubros_presupuestales } = data
-
-  //     const up = ProyectoDB.actualizarMinistracion(id_ministracion, data)
-  //     const reTodosRubros =
-  //       ProyectoDB.obtenerTodosRubrosMinistracion(id_ministracion)
-
-  //     const promesas1 = await Promise.all([up, reTodosRubros])
-
-  //     for (const p1 of promesas1) {
-  //       if (p1.error) throw p1.data
-  //     }
-
-  //     const todosRubrosDB = promesas1[1].data as RubroMinistracion[]
-  //     const rubrosActivosDB = todosRubrosDB.filter(({ b_activo }) => !!b_activo)
-
-  //     const promesas2 = []
-
-  //     for (const rp of rubros_presupuestales) {
-  //       //si tiene id es porque se va a ctualizar
-  //       if (rp.id) {
-  //         promesas2.push(ProyectoDB.actualizarRubroMinistracion(rp))
-  //       } else {
-  //         //si no tiene id o se va a registrar o se va a actualizar
-  //         const rubroMatchDB = todosRubrosDB.find(
-  //           (rDB) => rDB.id_rubro == rp.id_rubro
-  //         )
-  //         if (rubroMatchDB) {
-  //           promesas2.push(
-  //             ProyectoDB.reactivarRubroMinistracion({
-  //               id: rubroMatchDB.id,
-  //               ...rp,
-  //             })
-  //           )
-  //         } else {
-  //           promesas2.push(
-  //             ProyectoDB.crearRubroMinistracion(id_ministracion, rp)
-  //           )
-  //         }
-  //       }
-  //     }
-
-  //     //comparar rubros activos de DB vs los que vienen de cliente y ver si se borro alguno
-  //     for (const raDB of rubrosActivosDB) {
-  //       const matchCliente = rubros_presupuestales.find(
-  //         (rp) => rp.id == raDB.id
-  //       )
-  //       if (!matchCliente) {
-  //         promesas2.push(ProyectoDB.desactivarRubroMinistracion(raDB.id))
-  //       }
-  //     }
-
-  //     //evitar posible problema de desincronizacion con eapagado de rubros
-  //     const resCombinadas = await Promise.all(promesas2)
-  //     for (const rc of resCombinadas) {
-  //       if (rc.error) throw rc.data
-  //     }
-
-  //     return RespuestaController.exitosa(
-  //       200,
-  //       "ministracion actualizada con éxito",
-  //       null
-  //     )
-  //   } catch (error) {
-  //     return RespuestaController.fallida(
-  //       400,
-  //       "Error al actualizar ministración",
-  //       error
-  //     )
-  //   }
-  // }
-
   static async crear(data: Proyecto) {
-    const { ministraciones } = data
-
-    let f_monto_total = 0
-    let f_pa = 0
-
-    for (const ministracion of ministraciones) {
-      for (const rp of ministracion.rubros_presupuestales) {
-        f_monto_total += Number(rp.f_monto)
-        if (rp.id_rubro == 1) {
-          f_pa += Number(rp.f_monto)
-        }
-      }
-    }
-
-    const dataProyecto: Proyecto = {
-      ...data,
-      saldo: {
-        ...data.saldo,
-        f_monto_total,
-        f_pa,
-        p_avance: Number(((f_pa * 100) / f_monto_total).toFixed(2)),
-      },
-    }
-
     try {
-      const cr = await ProyectoDB.crear(dataProyecto)
+      const cr = await ProyectoDB.crear(data)
 
       return RespuestaController.exitosa(201, "Proyecto creado con éxito", {
         idInsertado: cr,
@@ -346,27 +202,12 @@ class ProyectosServices {
 
   static async actualizar(id_proyecto: number, data: Proyecto) {
     try {
-      const { ministraciones } = data
-
-      // const up = ProyectoDB.actualizar(id_proyecto, data)
-      // const promesas = [up]
-
-      // for (const min of ministraciones) {
-      //   if (!min.id) {
-      //     promesas.push(this.crearMinistracion(id_proyecto, min))
-      //   }
-      // }
-
-      // const resCombinadas = await Promise.all(promesas)
-
-      // for (const rc of resCombinadas) {
-      //   if (rc.error) throw rc.data
-      // }
+      const up = await ProyectoDB.actualizar(id_proyecto, data)
 
       return RespuestaController.exitosa(
         200,
         "Proyecto actualizado con éxito",
-        null
+        up
       )
     } catch (error) {
       return RespuestaController.fallida(
@@ -432,113 +273,6 @@ class ProyectosServices {
       { idInsertado }
     )
   }
-
-  // static async crearMinistracion(
-  //   id_proyecto: number,
-  //   ministracion: MinistracionProyecto
-  // ) {
-  //   try {
-  //     const { rubros_presupuestales } = ministracion
-
-  //     const crMinistracion = await ProyectoDB.crearMinistracion(
-  //       id_proyecto,
-  //       ministracion
-  //     )
-  //     if (crMinistracion.error) throw crMinistracion.data
-  //     // @ts-ignore
-  //     const idInsertadoMinistracion = crMinistracion.data.insertId
-
-  //     const crRubros = await Promise.all(
-  //       rubros_presupuestales.map(
-  //         async (rubro) =>
-  //           await this.crearRubroMinistracion(idInsertadoMinistracion, rubro)
-  //       )
-  //     )
-
-  //     for (const cr of crRubros) {
-  //       if (cr.error) throw cr.data
-  //     }
-
-  //     return RespuestaController.exitosa(201, "Ministracion creada con éxito", {
-  //       idInsertadoMinistracion,
-  //     })
-  //   } catch (error) {
-  //     return RespuestaController.fallida(
-  //       400,
-  //       "Error al crear ministracion",
-  //       error
-  //     )
-  //   }
-  // }
-
-  // static async crearMinistraciones(
-  //   id_proyecto: number,
-  //   ministraciones: MinistracionProyecto[]
-  // ) {
-  //   try {
-  //     const crMinistraciones = await ProyectoDB.crearMinistraciones(
-  //       id_proyecto,
-  //       ministraciones
-  //     )
-  //     if (crMinistraciones.error) throw crMinistraciones.data
-
-  //     const resIdsMinisraciones = Array.isArray(crMinistraciones.data)
-  //       ? crMinistraciones.data
-  //       : [crMinistraciones.data]
-  //     // @ts-ignore
-  //     const ids = resIdsMinisraciones.map((res) => res.insertId)
-
-  //     const rubrosConIdMinistracion = ministraciones.map(
-  //       (ministracion, index) => ({
-  //         id_ministracion: ids[index],
-  //         rubros: ministracion.rubros_presupuestales,
-  //       })
-  //     )
-
-  //     const crRubrosMinistracion = await ProyectoDB.crearRubrosMinistraciones(
-  //       rubrosConIdMinistracion
-  //     )
-  //     if (crRubrosMinistracion.error) throw crRubrosMinistracion.data
-
-  //     return RespuestaController.exitosa(
-  //       201,
-  //       "Ministracion creada con éxito",
-  //       null
-  //     )
-  //   } catch (error) {
-  //     return RespuestaController.fallida(
-  //       400,
-  //       "Error al crear ministracion",
-  //       error
-  //     )
-  //   }
-  // }
-
-  // static async crearRubroMinistracion(
-  //   id_ministracion: number,
-  //   rubro: RubroMinistracion
-  // ) {
-  //   const crRubro = await ProyectoDB.crearRubroMinistracion(
-  //     id_ministracion,
-  //     rubro
-  //   )
-  //   if (crRubro.error) {
-  //     return RespuestaController.fallida(
-  //       400,
-  //       "Error al crear rubro de ministración",
-  //       crRubro.data
-  //     )
-  //   }
-
-  //   // @ts-ignore
-  //   const idInsertadoRubro = crRubro.data.insertId
-
-  //   return RespuestaController.exitosa(
-  //     201,
-  //     "Rubro de ministración creado con éxito",
-  //     { idInsertadoRubro }
-  //   )
-  // }
 }
 
 export { ProyectosServices }
