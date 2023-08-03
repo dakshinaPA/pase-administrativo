@@ -1,14 +1,14 @@
 import { RespuestaDB } from "@api/utils/response"
-import { queryDB, queryDBPlaceHolder } from "./query"
+import { queryDBPlaceHolder } from "./query"
+import { connectionDB } from "./connectionPool"
 import { ProveedorProyecto } from "@models/proyecto.model"
-import { Direccion } from "@models/direccion.model"
 import { fechaActualAEpoch } from "@assets/utils/common"
 
 class ProveedorDB {
   static queryRe = (id_proyecto: number, id_proveedor?: number) => {
     let query = `SELECT p.id, p.id_proyecto, p.nombre, p.i_tipo, p.clabe, p.id_banco, p.telefono, p.email, p.rfc, p.descripcion_servicio, p.dt_registro,
     pd.id id_direccion, pd.calle, pd.numero_ext, pd.numero_int, pd.colonia, pd.municipio, pd.cp, pd.id_estado,
-    pr.id_responsable,
+    pr.id_responsable, CONCAT(pr.nombre, ' - ', pr.id_alt) proyecto,
     e.nombre estado,
     b.nombre banco
     FROM proveedores p
@@ -38,150 +38,192 @@ class ProveedorDB {
       phProveedor.push(id_proveedor)
     }
 
-    try {
-      const res = await queryDBPlaceHolder(qProveedor, phProveedor)
-      return RespuestaDB.exitosa(res)
-    } catch (error) {
-      return RespuestaDB.fallida(error)
-    }
+    return new Promise((res, rej) => {
+      connectionDB.getConnection((err, connection) => {
+        if (err) return rej(err)
+
+        connection.query(qProveedor, phProveedor, (error, results, fields) => {
+          if (error) {
+            connection.destroy()
+            return rej(error)
+          }
+
+          res(results)
+        })
+      })
+    })
   }
 
   static async crear(data: ProveedorProyecto) {
-    const {
-      id_proyecto,
-      nombre,
-      i_tipo,
-      clabe,
-      id_banco,
-      telefono,
-      email,
-      rfc,
-      descripcion_servicio,
-    } = data
+    const { direccion } = data
 
-    const query = `INSERT INTO proveedores ( id_proyecto, nombre, i_tipo, clabe, id_banco, telefono, email, rfc, descripcion_servicio, dt_registro ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )`
+    const qProveedor = `INSERT INTO proveedores ( id_proyecto, nombre, i_tipo, clabe, id_banco, telefono, email, rfc,
+      descripcion_servicio, dt_registro ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )`
 
-    const placeHolders = [
-      id_proyecto,
-      nombre,
-      i_tipo,
-      clabe,
-      id_banco,
-      telefono,
-      email,
-      rfc,
-      descripcion_servicio,
+    const phProveedor = [
+      data.id_proyecto,
+      data.nombre,
+      data.i_tipo,
+      data.clabe,
+      data.id_banco,
+      data.telefono,
+      data.email,
+      data.rfc,
+      data.descripcion_servicio,
       fechaActualAEpoch(),
     ]
 
-    try {
-      const res = await queryDBPlaceHolder(query, placeHolders)
-      return RespuestaDB.exitosa(res)
-    } catch (error) {
-      return RespuestaDB.fallida(error)
-    }
+    const qDireccion = `INSERT INTO proveedor_direccion ( id_proveedor, calle, numero_ext, numero_int,
+      colonia, municipio, cp, id_estado ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )`
+
+    const phDireccion = [
+      direccion.calle,
+      direccion.numero_ext,
+      direccion.numero_int,
+      direccion.colonia,
+      direccion.municipio,
+      direccion.cp,
+      direccion.id_estado,
+    ]
+
+    return new Promise((res, rej) => {
+      connectionDB.getConnection((err, connection) => {
+        if (err) return rej(err)
+
+        connection.beginTransaction((err) => {
+          if (err) {
+            connection.destroy()
+            return rej(err)
+          }
+
+          //crear proveedor
+          connection.query(
+            qProveedor,
+            phProveedor,
+            (error, results, fields) => {
+              if (error) {
+                return connection.rollback(() => {
+                  connection.destroy()
+                  rej(error)
+                })
+              }
+
+              // @ts-ignore
+              const idProveedor = results.insertId
+              phDireccion.unshift(idProveedor)
+
+              //crear direccion
+              connection.query(
+                qDireccion,
+                phDireccion,
+                (error, results, fields) => {
+                  if (error) {
+                    return connection.rollback(() => {
+                      connection.destroy()
+                      rej(error)
+                    })
+                  }
+
+                  connection.commit((err) => {
+                    if (err) connection.rollback(() => rej(err))
+                    connection.destroy()
+                    res(idProveedor)
+                  })
+                }
+              )
+            }
+          )
+        })
+      })
+    })
   }
 
   static async actualizar(id_proveedor: number, data: ProveedorProyecto) {
-    const {
-      nombre,
-      i_tipo,
-      clabe,
-      id_banco,
-      telefono,
-      email,
-      rfc,
-      descripcion_servicio,
-    } = data
 
-    const query = `UPDATE proveedores SET nombre=?, i_tipo=?, clabe=?, id_banco=?,
+    const {direccion} = data
+
+    const qProveedor = `UPDATE proveedores SET nombre=?, i_tipo=?, clabe=?, id_banco=?,
     telefono=?, email=?, rfc=?, descripcion_servicio=? WHERE id=? LIMIT 1`
 
-    const placeHolders = [
-      nombre,
-      i_tipo,
-      clabe,
-      id_banco,
-      telefono,
-      email,
-      rfc,
-      descripcion_servicio,
+    const phProveedor = [
+      data.nombre,
+      data.i_tipo,
+      data.clabe,
+      data.id_banco,
+      data.telefono,
+      data.email,
+      data.rfc,
+      data.descripcion_servicio,
       id_proveedor,
     ]
 
-    try {
-      const res = await queryDBPlaceHolder(query, placeHolders)
-      return RespuestaDB.exitosa(res)
-    } catch (error) {
-      return RespuestaDB.fallida(error)
-    }
+    const qDireccion = `UPDATE proveedor_direccion SET calle=?, numero_ext=?, numero_int=?,
+      colonia=?, municipio=?, cp=?, id_estado=? WHERE id=?`
+
+    const phDireccion = [
+      direccion.calle,
+      direccion.numero_ext,
+      direccion.numero_int,
+      direccion.colonia,
+      direccion.municipio,
+      direccion.cp,
+      direccion.id_estado,
+      direccion.id
+    ]
+
+    return new Promise((res, rej) => {
+      connectionDB.getConnection((err, connection) => {
+        if (err) return rej(err)
+
+        connection.beginTransaction((err) => {
+          if (err) {
+            connection.destroy()
+            return rej(err)
+          }
+
+          //actualizar proveedor
+          connection.query(
+            qProveedor,
+            phProveedor,
+            (error, results, fields) => {
+              if (error) {
+                return connection.rollback(() => {
+                  connection.destroy()
+                  rej(error)
+                })
+              }
+
+              //actuqlizar direccion
+              connection.query(
+                qDireccion,
+                phDireccion,
+                (error, results, fields) => {
+                  if (error) {
+                    return connection.rollback(() => {
+                      connection.destroy()
+                      rej(error)
+                    })
+                  }
+
+                  connection.commit((err) => {
+                    if (err) connection.rollback(() => rej(err))
+                    connection.destroy()
+                    res(true)
+                  })
+                }
+              )
+            }
+          )
+        })
+      })
+    })
   }
 
   static async borrar(id: number) {
-    const query = `UPDATE proveedores SET b_activo=0 WHERE id=${id} LIMIT 1`
+    const query = `UPDATE proveedores SET b_activo=0 WHERE id=? LIMIT 1`
 
     try {
-      const res = await queryDB(query)
-      return RespuestaDB.exitosa(res)
-    } catch (error) {
-      return RespuestaDB.fallida(error)
-    }
-  }
-
-  static async crearDireccion(id_proveedor: number, data: Direccion) {
-    const { calle, numero_ext, numero_int, colonia, municipio, cp, id_estado } =
-      data
-
-    const query = `INSERT INTO proveedor_direccion ( id_proveedor, calle, numero_ext, numero_int,
-      colonia, municipio, cp, id_estado ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )`
-
-    const placeHolders = [
-      id_proveedor,
-      calle,
-      numero_ext,
-      numero_int,
-      colonia,
-      municipio,
-      cp,
-      id_estado,
-    ]
-
-    try {
-      const res = await queryDBPlaceHolder(query, placeHolders)
-      return RespuestaDB.exitosa(res)
-    } catch (error) {
-      return RespuestaDB.fallida(error)
-    }
-  }
-
-  static async actualizarDireccion(data: Direccion) {
-    const {
-      id,
-      calle,
-      numero_ext,
-      numero_int,
-      colonia,
-      municipio,
-      cp,
-      id_estado,
-    } = data
-
-    const query = `UPDATE proveedor_direccion SET calle=?, numero_ext=?, numero_int=?,
-      colonia=?, municipio=?, cp=?, id_estado=? WHERE id=?`
-
-    const placeHolders = [
-      calle,
-      numero_ext,
-      numero_int,
-      colonia,
-      municipio,
-      cp,
-      id_estado,
-      id,
-    ]
-
-    try {
-      const res = await queryDBPlaceHolder(query, placeHolders)
+      const res = await queryDBPlaceHolder(query, [id])
       return RespuestaDB.exitosa(res)
     } catch (error) {
       return RespuestaDB.fallida(error)

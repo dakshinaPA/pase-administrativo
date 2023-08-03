@@ -121,21 +121,13 @@ const FormaProveedor = () => {
     setIsLoading(true)
 
     try {
-      const promesas = [obtenerProyectosDB()]
-      if (modalidad === "EDITAR") {
-        promesas.push(obtenerProveedores(null, idProveedor))
-      }
+      if (modalidad === "CREAR") {
+        const reProyectos = await obtenerProyectosDB()
+        if (reProyectos.error) throw reProyectos.data
 
-      const resCombinadas = await Promise.all(promesas)
+        const proyectosDB = reProyectos.data as ProyectoMin[]
+        setProyectosDB(proyectosDB)
 
-      for (const rc of resCombinadas) {
-        if (rc.error) throw rc.data
-      }
-
-      const proyectosDB = resCombinadas[0].data as ProyectoMin[]
-      setProyectosDB(proyectosDB)
-
-      if (!idProyecto) {
         dispatch({
           type: "HANDLE_CHANGE",
           payload: {
@@ -143,14 +135,14 @@ const FormaProveedor = () => {
             value: proyectosDB[0]?.id || 0,
           },
         })
-      }
+      } else {
+        const reProveedor = await obtenerProveedores(null, idProveedor)
+        if (reProveedor.error) throw reProveedor.data
 
-      if (modalidad === "EDITAR") {
-        const colaborador = resCombinadas[1].data[0] as ProveedorProyecto
-
+        const proveedor = reProveedor.data[0] as ProveedorProyecto
         dispatch({
           type: "CARGA_INICIAL",
-          payload: colaborador,
+          payload: proveedor,
         })
       }
     } catch (error) {
@@ -267,23 +259,32 @@ const FormaProveedor = () => {
       <FormaContenedor onSubmit={handleSubmit} formaRef={formRef}>
         <div className="col-12 col-lg-4 mb-3">
           <label className="form-label">Proyecto</label>
-          <select
-            className="form-control"
-            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-            name="id_proyecto"
-            value={estadoForma.id_proyecto}
-            disabled={!!idProyecto}
-          >
-            {proyectosDB.length > 0 ? (
-              proyectosDB.map(({ id, id_alt, nombre }) => (
-                <option key={id} value={id}>
-                  {nombre} - {id_alt}
-                </option>
-              ))
-            ) : (
-              <option value="0">No hay proyectos</option>
-            )}
-          </select>
+          {modalidad === "CREAR" ? (
+            <select
+              className="form-control"
+              onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+              name="id_proyecto"
+              value={estadoForma.id_proyecto}
+              disabled={!!idProyecto}
+            >
+              {proyectosDB.length > 0 ? (
+                proyectosDB.map(({ id, id_alt, nombre }) => (
+                  <option key={id} value={id}>
+                    {nombre} - {id_alt}
+                  </option>
+                ))
+              ) : (
+                <option value="0">No hay proyectos</option>
+              )}
+            </select>
+          ) : (
+            <input
+              className="form-control"
+              type="text"
+              value={estadoForma.proyecto}
+              disabled
+            />
+          )}
           {error.campo == "id_proyecto" && (
             <MensajeError mensaje={error.mensaje} />
           )}

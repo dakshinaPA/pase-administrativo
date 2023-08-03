@@ -160,7 +160,7 @@ class UsuarioDB {
               return
             }
             connection.commit((err) => {
-              if (err) return connection.rollback(() => rej(err))
+              if (err) connection.rollback(() => rej(err))
               connection.destroy()
               res(id_usuario)
             })
@@ -233,7 +233,7 @@ class UsuarioDB {
               return
             }
             connection.commit((err) => {
-              if (err) return connection.rollback(() => rej(error))
+              if (err) connection.rollback(() => rej(error))
               connection.destroy()
               res(true)
             })

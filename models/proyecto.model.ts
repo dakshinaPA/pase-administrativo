@@ -47,7 +47,8 @@ export interface ColaboradorProyecto {
 
 export interface ProveedorProyecto {
   id?: number
-  id_proyecto?: number
+  id_proyecto: number
+  proyecto?: string
   id_responsable?: number
   nombre: string
   i_tipo: 1 | 2 // 1.persona fisica, 2. persona moral

@@ -1,7 +1,6 @@
 import { ProveedorDB } from "@api/db/proveedores"
 import { RespuestaController } from "@api/utils/response"
 import { ResProveedorDB } from "@api/models/proveedor.model"
-import { epochAFecha } from "@assets/utils/common"
 import { ProveedorProyecto } from "@models/proyecto.model"
 
 class ProveedorServices {
@@ -16,71 +15,42 @@ class ProveedorServices {
 
   static async obtener(id_proyecto: number, id_proveedor?: number) {
     try {
-      const re = await ProveedorDB.obtener(id_proyecto, id_proveedor)
-      if (re.error) throw re.data
+      const re = (await ProveedorDB.obtener(
+        id_proyecto,
+        id_proveedor
+      )) as ResProveedorDB[]
 
-      const proveedoresDB = re.data as ResProveedorDB[]
+      const proveedores: ProveedorProyecto[] = re.map((proveedor) => {
+        return {
+          id: proveedor.id,
+          id_proyecto: proveedor.id_proyecto,
+          proyecto: proveedor.proyecto,
+          id_responsable: proveedor.id_responsable,
+          nombre: proveedor.nombre,
+          i_tipo: proveedor.i_tipo,
+          tipo: this.obtenerTipo(proveedor.i_tipo),
+          clabe: proveedor.clabe,
+          id_banco: proveedor.id_banco,
+          banco: proveedor.banco,
+          telefono: proveedor.telefono,
+          email: proveedor.email,
+          rfc: proveedor.rfc,
+          descripcion_servicio: proveedor.descripcion_servicio,
+          direccion: {
+            id: proveedor.id_direccion,
+            calle: proveedor.calle,
+            numero_ext: proveedor.numero_ext,
+            numero_int: proveedor.numero_int,
+            colonia: proveedor.colonia,
+            municipio: proveedor.municipio,
+            cp: proveedor.cp,
+            id_estado: proveedor.id_estado,
+            estado: proveedor.estado,
+          },
+        }
+      })
 
-      const dataTransformada: ProveedorProyecto[] = await Promise.all(
-        proveedoresDB.map(async (proveedor) => {
-          const {
-            id,
-            id_proyecto,
-            id_responsable,
-            nombre,
-            i_tipo,
-            clabe,
-            id_banco,
-            banco,
-            telefono,
-            email,
-            rfc,
-            descripcion_servicio,
-            id_direccion,
-            calle,
-            numero_ext,
-            numero_int,
-            colonia,
-            municipio,
-            cp,
-            id_estado,
-            estado,
-          } = proveedor
-
-          return {
-            id,
-            id_proyecto,
-            id_responsable,
-            nombre,
-            i_tipo,
-            tipo: this.obtenerTipo(i_tipo),
-            clabe,
-            id_banco,
-            banco,
-            telefono,
-            email,
-            rfc,
-            descripcion_servicio,
-            direccion: {
-              id: id_direccion,
-              calle,
-              numero_ext,
-              numero_int,
-              colonia,
-              municipio,
-              cp,
-              id_estado,
-              estado,
-            },
-          }
-        })
-      )
-
-      return RespuestaController.exitosa(
-        200,
-        "Consulta exitosa",
-        dataTransformada
-      )
+      return RespuestaController.exitosa(200, "Consulta exitosa", proveedores)
     } catch (error) {
       return RespuestaController.fallida(
         400,
@@ -92,48 +62,24 @@ class ProveedorServices {
 
   static async crear(data: ProveedorProyecto) {
     try {
-      const { direccion } = data
       const cr = await ProveedorDB.crear(data)
-      if (cr.error) throw cr.data
-
-      // @ts-ignore
-      const idInsertado = cr.data.insertId
-
-      const crDireccion = await ProveedorDB.crearDireccion(
-        idInsertado,
-        direccion
-      )
-      if (crDireccion.error) throw crDireccion.data
 
       return RespuestaController.exitosa(201, "Proveedor creado con éxito", {
-        idInsertado,
+        idInsertado: cr,
       })
     } catch (error) {
-      return RespuestaController.fallida(
-        400,
-        "Error al crear proveedor",
-        error
-      )
+      return RespuestaController.fallida(400, "Error al crear proveedor", error)
     }
   }
 
   static async actualizar(id_proveedor: number, data: ProveedorProyecto) {
     try {
-      const { direccion } = data
-
-      const up = ProveedorDB.actualizar(id_proveedor, data)
-      const upDireccion = ProveedorDB.actualizarDireccion(direccion)
-
-      const resCombinadas = await Promise.all([up, upDireccion])
-
-      for (const rc of resCombinadas) {
-        if (rc.error) throw rc.data
-      }
+      const up = await ProveedorDB.actualizar(id_proveedor, data)
 
       return RespuestaController.exitosa(
         200,
         "Proveedor actualizado con éxito",
-        null
+        up
       )
     } catch (error) {
       return RespuestaController.fallida(
@@ -154,11 +100,7 @@ class ProveedorServices {
         dl.data
       )
     }
-    return RespuestaController.exitosa(
-      200,
-      "proveedor borrado con éxito",
-      null
-    )
+    return RespuestaController.exitosa(200, "proveedor borrado con éxito", null)
   }
 }
 

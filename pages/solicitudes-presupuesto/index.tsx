@@ -256,7 +256,7 @@ const SolicitudesPresupuesto = () => {
     if (reProyecto.error) {
       console.log(reProyecto.data)
     } else {
-      const infoProyecto = reProyecto.data[0] as Proyecto
+      const infoProyecto = reProyecto.data as Proyecto
       const solicitudesDB = infoProyecto.solicitudes_presupuesto
       setInfoProyectoDB(infoProyecto)
       setSolicitudesFiltradas(solicitudesDB)
@@ -566,7 +566,7 @@ const SolicitudesPresupuesto = () => {
                 </thead>
                 <tbody>
                   <tr>
-                    <td>{montoALocaleString(infoProyectoDB.f_monto_total)}</td>
+                    <td>{montoALocaleString(infoProyectoDB.saldo.f_monto_total)}</td>
                     <td>
                       {montoALocaleString(infoProyectoDB.saldo.f_transferido)}
                     </td>
