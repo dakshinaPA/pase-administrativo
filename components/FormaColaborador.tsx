@@ -206,6 +206,7 @@ const FormaColaborador = () => {
         if (reColaborador.error) throw reColaborador.data
 
         const colaborador = reColaborador.data[0] as ColaboradorProyecto
+        estadoOriginalColaborador.current = colaborador
         dispatch({
           type: "CARGA_INICIAL",
           payload: colaborador,
@@ -725,6 +726,7 @@ const FormaColaborador = () => {
                                 dt_inicio
                               )}
                               onChange={(e) => handleChangePeriodo(e, index)}
+                              value={dt_fin}
                             />
                           </td>
                           <td>
@@ -743,7 +745,7 @@ const FormaColaborador = () => {
 
                     //mostrar tabla sin inputs si no esta en modo edicion
                     return (
-                      <tr key={id}>
+                      <tr key={id || `periodo_${index}`}>
                         <td>{i_numero_ministracion}</td>
                         <td>{montoALocaleString(f_monto)}</td>
                         <td>{servicio}</td>

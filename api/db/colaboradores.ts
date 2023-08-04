@@ -1,11 +1,9 @@
 import { RespuestaDB } from "@api/utils/response"
-import { queryDB, queryDBPlaceHolder } from "./query"
+import { queryDBPlaceHolder } from "./query"
 import { connectionDB } from "./connectionPool"
 import {
   ColaboradorProyecto,
-  PeriodoServicioColaborador,
 } from "@models/proyecto.model"
-import { Direccion } from "@models/direccion.model"
 import { fechaActualAEpoch } from "@assets/utils/common"
 
 class ColaboradorDB {
@@ -83,6 +81,11 @@ class ColaboradorDB {
     })
   }
 
+  static qCrPeriodoServicio() {
+    return `INSERT INTO colaborador_periodos_servicio ( id_colaborador, i_numero_ministracion, f_monto, servicio, descripcion, cp,
+      dt_inicio, dt_fin, dt_registro ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ? )`
+  }
+
   static async crear(data: ColaboradorProyecto) {
     const { periodos_servicio, direccion } = data
 
@@ -92,9 +95,6 @@ class ColaboradorDB {
     const qIdAltProyecto = "SELECT id_alt FROM proyectos WHERE id=?"
 
     const qUpIdEmpleado = `UPDATE colaboradores SET id_empleado=? WHERE id=? LIMIT 1`
-
-    const qCrPeriodo = `INSERT INTO colaborador_periodos_servicio ( id_colaborador, i_numero_ministracion, f_monto, servicio, descripcion, cp,
-      dt_inicio, dt_fin, dt_registro ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ? )`
 
     const qCrDireccion = `INSERT INTO colaborador_direccion ( id_colaborador, calle, numero_ext, numero_int,
       colonia, municipio, cp, id_estado ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )`
@@ -166,7 +166,7 @@ class ColaboradorDB {
               )
 
               for (const ps of periodos_servicio) {
-                qSecundarios.push(qCrPeriodo)
+                qSecundarios.push(this.qCrPeriodoServicio())
                 phSecundarios.push(
                   idColaborador,
                   ps.i_numero_ministracion,
@@ -206,42 +206,106 @@ class ColaboradorDB {
   }
 
   static async actualizar(id_colaborador: number, data: ColaboradorProyecto) {
-    const {
-      id_empleado,
-      nombre,
-      apellido_paterno,
-      apellido_materno,
-      clabe,
-      id_banco,
-      telefono,
-      email,
-      rfc,
-      curp,
-    } = data
+    const { direccion, periodos_servicio } = data
 
-    const query = `UPDATE colaboradores SET id_empleado=?, nombre=?, apellido_paterno=?, apellido_materno=?,
+    const qColaborador = `UPDATE colaboradores SET id_empleado=?, nombre=?, apellido_paterno=?, apellido_materno=?,
       clabe=?, id_banco=?, telefono=?, email=?, rfc=?, curp=? WHERE id=?`
 
-    const placeHolders = [
-      id_empleado,
-      nombre,
-      apellido_paterno,
-      apellido_materno,
-      clabe,
-      id_banco,
-      telefono,
-      email,
-      rfc,
-      curp,
+    const phColaborador = [
+      data.id_empleado,
+      data.nombre,
+      data.apellido_paterno,
+      data.apellido_materno,
+      data.clabe,
+      data.id_banco,
+      data.telefono,
+      data.email,
+      data.rfc,
+      data.curp,
       id_colaborador,
     ]
 
-    try {
-      const res = await queryDBPlaceHolder(query, placeHolders)
-      return RespuestaDB.exitosa(res)
-    } catch (error) {
-      return RespuestaDB.fallida(error)
+    const qDireccion = `UPDATE colaborador_direccion SET calle=?, numero_ext=?, numero_int=?,
+      colonia=?, municipio=?, cp=?, id_estado=? WHERE id=?`
+
+    const phDireccion = [
+      direccion.calle,
+      direccion.numero_ext,
+      direccion.numero_int,
+      direccion.colonia,
+      direccion.municipio,
+      direccion.cp,
+      direccion.id_estado,
+      direccion.id,
+    ]
+
+    const qUpPeriodoServicio = `UPDATE colaborador_periodos_servicio SET i_numero_ministracion=?, f_monto=?,
+      servicio=?, descripcion=?, cp=?, dt_inicio=?, dt_fin=? WHERE id=? LIMIT 1`
+
+    const qCombinados = [qColaborador, qDireccion]
+    const phCombinados = [...phColaborador, ...phDireccion]
+
+    for (const ps of periodos_servicio) {
+      if (ps.id) {
+        qCombinados.push(qUpPeriodoServicio)
+        phCombinados.push(
+          ps.i_numero_ministracion,
+          ps.f_monto,
+          ps.servicio,
+          ps.descripcion,
+          ps.cp,
+          ps.dt_inicio,
+          ps.dt_fin,
+          ps.id
+        )
+      } else {
+        qCombinados.push(this.qCrPeriodoServicio())
+        phCombinados.push(
+          id_colaborador,
+          ps.i_numero_ministracion,
+          ps.f_monto,
+          ps.servicio,
+          ps.descripcion,
+          ps.cp,
+          ps.dt_inicio,
+          ps.dt_fin,
+          fechaActualAEpoch()
+        )
+      }
     }
+
+    return new Promise((res, rej) => {
+      connectionDB.getConnection((err, connection) => {
+        if (err) return rej(err)
+
+        connection.beginTransaction((err) => {
+          if (err) {
+            connection.destroy()
+            return rej(err)
+          }
+
+          //actualizar colaborador
+          connection.query(
+            qCombinados.join(";"),
+            phCombinados,
+            (error, results, fields) => {
+              if (error) {
+                return connection.rollback(() => {
+                  connection.destroy()
+                  rej(error)
+                })
+              }
+
+              connection.commit((err) => {
+                if (err) connection.rollback(() => rej(err))
+                connection.destroy()
+                res(true)
+              })
+            }
+          )
+        })
+      })
+    })
   }
 
   static async borrar(id: number) {
@@ -255,73 +319,7 @@ class ColaboradorDB {
     }
   }
 
-  static async actualizarDireccion(data: Direccion) {
-    const {
-      id,
-      calle,
-      numero_ext,
-      numero_int,
-      colonia,
-      municipio,
-      cp,
-      id_estado,
-    } = data
 
-    const query = `UPDATE colaborador_direccion SET calle=?, numero_ext=?, numero_int=?,
-      colonia=?, municipio=?, cp=?, id_estado=? WHERE id=?`
-
-    const placeHolders = [
-      calle,
-      numero_ext,
-      numero_int,
-      colonia,
-      municipio,
-      cp,
-      id_estado,
-      id,
-    ]
-
-    try {
-      const res = await queryDBPlaceHolder(query, placeHolders)
-      return RespuestaDB.exitosa(res)
-    } catch (error) {
-      return RespuestaDB.fallida(error)
-    }
-  }
-
-  static async actualizarPeriodoServicio(data: PeriodoServicioColaborador) {
-    const {
-      id,
-      i_numero_ministracion,
-      f_monto,
-      servicio,
-      descripcion,
-      cp,
-      dt_inicio,
-      dt_fin,
-    } = data
-
-    const query = `UPDATE colaborador_periodos_servicio SET i_numero_ministracion=?, f_monto=?,
-    servicio=?, descripcion=?, cp=?, dt_inicio=?, dt_fin=? WHERE id=? LIMIT 1`
-
-    const placeHolders = [
-      i_numero_ministracion,
-      f_monto,
-      servicio,
-      descripcion,
-      cp,
-      dt_inicio,
-      dt_fin,
-      id,
-    ]
-
-    try {
-      const res = await queryDBPlaceHolder(query, placeHolders)
-      return RespuestaDB.exitosa(res)
-    } catch (error) {
-      return RespuestaDB.fallida(error)
-    }
-  }
 }
 
 export { ColaboradorDB }

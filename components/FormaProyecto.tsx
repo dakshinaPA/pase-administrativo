@@ -616,6 +616,8 @@ const FormaProyecto = () => {
     const idCoparte = estadoForma.id_coparte
     if (!idCoparte) return
 
+    setIsLoading(true)
+
     const reUsCoDB = await obtenerUsuarios({ id_coparte: idCoparte, min: true })
 
     if (reUsCoDB.error) {
@@ -635,6 +637,8 @@ const FormaProyecto = () => {
         })
       }
     }
+
+    setIsLoading(false)
   }
 
   const registrar = () => {

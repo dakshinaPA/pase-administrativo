@@ -45,7 +45,7 @@ class ProyectosServices {
   }
 
   static transformarDataProyecto = (data: ResProyectoDB): Proyecto => {
-    const { id_proyecto_saldo, ...resto } = data
+    const { id_proyecto_saldo, proveedores, ...resto } = data
 
     const f_monto_total = Number(data.f_monto_total)
     const f_solicitado = Number(data.f_solicitado)
@@ -134,11 +134,21 @@ class ProyectosServices {
           }
         })
 
+      const colaboradoresHyd = colaboradores.map((col) => ({
+        ...col,
+        tipo: ColaboradorServices.obtenerTipo(col.i_tipo),
+      }))
+
+      const proveedoresHyd = proveedores.map((prov) => ({
+        ...prov,
+        tipo: ProveedorServices.obtenerTipo(prov.i_tipo),
+      }))
+
       const proyecto: Proyecto = {
         ...this.transformarDataProyecto(dataProyecto),
         ministraciones: ministracionesConRubros,
-        colaboradores,
-        proveedores,
+        colaboradores: colaboradoresHyd,
+        proveedores: proveedoresHyd,
         solicitudes_presupuesto: solicitudes,
         notas,
       }
@@ -172,7 +182,6 @@ class ProyectosServices {
       const colaboradores = resCombinadas[0].data as ColaboradorProyecto[]
       const proveedores = resCombinadas[1].data as ProveedorProyecto[]
       const rubros_presupuestales = resCombinadas[2].data as RubroMinistracion[]
-
 
       return RespuestaController.exitosa(200, "Consulta exitosa", {
         colaboradores,
