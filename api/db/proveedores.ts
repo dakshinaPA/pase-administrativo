@@ -48,6 +48,7 @@ class ProveedorDB {
             return rej(error)
           }
 
+          connection.destroy()
           res(results)
         })
       })

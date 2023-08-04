@@ -61,6 +61,8 @@ class ColaboradorDB {
               return rej(error)
             }
 
+            connection.destroy()
+
             //obtener periodos servicio
             if (id_proyecto) {
               res(results)
@@ -243,10 +245,10 @@ class ColaboradorDB {
   }
 
   static async borrar(id: number) {
-    const query = `UPDATE colaboradores SET b_activo=0 WHERE id=${id} LIMIT 1`
+    const query = `UPDATE colaboradores SET b_activo=0 WHERE id=? LIMIT 1`
 
     try {
-      const res = await queryDB(query)
+      const res = await queryDBPlaceHolder(query, [id])
       return RespuestaDB.exitosa(res)
     } catch (error) {
       return RespuestaDB.fallida(error)
