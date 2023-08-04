@@ -1,6 +1,9 @@
+import { PeriodoServicioColaborador } from "@models/proyecto.model"
+
 export interface ResColaboradoreDB {
   id: number
   id_proyecto: number
+  proyecto: string
   id_responsable: number
   id_empleado: string
   nombre: string
@@ -24,4 +27,5 @@ export interface ResColaboradoreDB {
   cp_direccion: string
   id_estado: number
   estado?: string
+  periodos_servicio?: PeriodoServicioColaborador[]
 }

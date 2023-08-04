@@ -25,7 +25,8 @@ export interface PeriodoServicioColaborador {
 
 export interface ColaboradorProyecto {
   id?: number
-  id_proyecto?: number
+  id_proyecto: number
+  proyecto?: string
   id_responsable?: number
   id_empleado: string
   nombre: string

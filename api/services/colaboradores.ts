@@ -3,7 +3,6 @@ import { RespuestaController } from "@api/utils/response"
 import { ResColaboradoreDB } from "@api/models/colaborador.model"
 import {
   ColaboradorProyecto,
-  PeriodoServicioColaborador,
 } from "@models/proyecto.model"
 
 class ColaboradorServices {
@@ -20,87 +19,46 @@ class ColaboradorServices {
 
   static async obtener(id_proyecto: number, id_colaborador?: number) {
     try {
-      const obtenerDB = await ColaboradorDB.obtener(id_proyecto, id_colaborador)
-      if (obtenerDB.error) throw obtenerDB.data
+      const re = (await ColaboradorDB.obtener(
+        id_proyecto,
+        id_colaborador
+      )) as ResColaboradoreDB[]
 
-      const colaboradoresDB = obtenerDB.data as ResColaboradoreDB[]
+      const colaboradores: ColaboradorProyecto[] = re.map((colaborador) => {
+        const {
+          periodos_servicio,
+          id_direccion,
+          calle,
+          numero_ext,
+          numero_int,
+          colonia,
+          municipio,
+          cp_direccion,
+          id_estado,
+          estado,
+          ...resto
+        } = colaborador
 
-      const dataTransformada: ColaboradorProyecto[] = await Promise.all(
-        colaboradoresDB.map(async (colaborador) => {
-          const {
-            id,
-            id_proyecto,
-            id_responsable,
-            id_empleado,
-            nombre,
-            apellido_paterno,
-            apellido_materno,
-            i_tipo,
-            clabe,
-            id_banco,
-            banco,
-            telefono,
-            email,
-            rfc,
-            curp,
-            id_direccion,
+        const data: ColaboradorProyecto = {
+          ...resto,
+          direccion: {
+            id: id_direccion,
             calle,
             numero_ext,
             numero_int,
             colonia,
             municipio,
-            cp_direccion,
+            cp: cp_direccion,
             id_estado,
             estado,
-          } = colaborador
+          },
+          periodos_servicio,
+        }
 
-          let periodos_servicio: PeriodoServicioColaborador[] = null
+        return data
+      })
 
-          if (id_colaborador) {
-            const rePeriodosServicio = await this.obtenerPeriodosServicio(id)
-            if (rePeriodosServicio.error) throw rePeriodosServicio.data
-            periodos_servicio =
-              rePeriodosServicio.data as PeriodoServicioColaborador[]
-          }
-
-          return {
-            id,
-            id_proyecto,
-            id_responsable,
-            id_empleado,
-            nombre,
-            apellido_paterno,
-            apellido_materno,
-            i_tipo,
-            tipo: this.obtenerTipo(i_tipo),
-            clabe,
-            id_banco,
-            banco,
-            telefono,
-            email,
-            rfc,
-            curp,
-            direccion: {
-              id: id_direccion,
-              calle,
-              numero_ext,
-              numero_int,
-              colonia,
-              municipio,
-              cp: cp_direccion,
-              id_estado,
-              estado,
-            },
-            periodos_servicio,
-          }
-        })
-      )
-
-      return RespuestaController.exitosa(
-        200,
-        "Consulta exitosa",
-        dataTransformada
-      )
+      return RespuestaController.exitosa(200, "Consulta exitosa", colaboradores)
     } catch (error) {
       return RespuestaController.fallida(
         400,
@@ -112,37 +70,10 @@ class ColaboradorServices {
 
   static async crear(data: ColaboradorProyecto) {
     try {
-      const { direccion, periodos_servicio } = data
-
       const cr = await ColaboradorDB.crear(data)
-      if (cr.error) throw cr.data
-
-      // @ts-ignore
-      const idInsertado = cr.data[0].insertId as number
-      const idAltProyecto = cr.data[1][0].id_alt
-      const [idFinanciador, idCoparte, idProyecto] = idAltProyecto.split("_")
-      const idEmpleado = `${idFinanciador}${idCoparte}${idProyecto}_${idInsertado}`
-
-      const upNumeroEmpleado = ColaboradorDB.actualizarIdEmpleado(
-        idEmpleado,
-        idInsertado
-      )
-      const crDireccion = ColaboradorDB.crearDireccion(idInsertado, direccion)
-
-      const promesas = [upNumeroEmpleado, crDireccion]
-
-      for (const ps of periodos_servicio) {
-        promesas.push(ColaboradorDB.crearPeriodoServicio(idInsertado, ps))
-      }
-
-      const resCombinadas = await Promise.all(promesas)
-
-      for (const rc of resCombinadas) {
-        if (rc.error) throw rc.data
-      }
 
       return RespuestaController.exitosa(201, "Colaborador creado con éxito", {
-        idInsertado,
+        idInsertado: cr,
       })
     } catch (error) {
       return RespuestaController.fallida(
@@ -162,13 +93,13 @@ class ColaboradorServices {
 
       const promesas = [up, upDireccion]
 
-      for (const ps of periodos_servicio) {
-        if (ps.id) {
-          promesas.push(ColaboradorDB.actualizarPeriodoServicio(ps))
-        } else {
-          promesas.push(ColaboradorDB.crearPeriodoServicio(id_colaborador, ps))
-        }
-      }
+      // for (const ps of periodos_servicio) {
+      //   if (ps.id) {
+      //     promesas.push(ColaboradorDB.actualizarPeriodoServicio(ps))
+      //   } else {
+      //     promesas.push(ColaboradorDB.crearPeriodoServicio(id_colaborador, ps))
+      //   }
+      // }
 
       const resCombinadas = await Promise.all(promesas)
 
@@ -212,29 +143,7 @@ class ColaboradorServices {
     )
   }
 
-  static async obtenerPeriodosServicio(id_colaborador: number) {
-    const re = await ColaboradorDB.obtenerPeriodoServicio(id_colaborador)
 
-    if (re.error) {
-      return RespuestaController.fallida(
-        400,
-        "Error al obtener periodos de servicio de colaborador",
-        null
-      )
-    }
-
-    const periodosServicio = re.data as PeriodoServicioColaborador[]
-    const dataTransformada = periodosServicio.map((periodo) => ({
-      ...periodo,
-      f_monto: Number(periodo.f_monto),
-    }))
-
-    return RespuestaController.exitosa(
-      200,
-      "Consulta exitosa",
-      dataTransformada
-    )
-  }
 }
 
 export { ColaboradorServices }
