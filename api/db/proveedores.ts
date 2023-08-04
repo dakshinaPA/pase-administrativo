@@ -140,8 +140,7 @@ class ProveedorDB {
   }
 
   static async actualizar(id_proveedor: number, data: ProveedorProyecto) {
-
-    const {direccion} = data
+    const { direccion } = data
 
     const qProveedor = `UPDATE proveedores SET nombre=?, i_tipo=?, clabe=?, id_banco=?,
     telefono=?, email=?, rfc=?, descripcion_servicio=? WHERE id=? LIMIT 1`
@@ -169,8 +168,11 @@ class ProveedorDB {
       direccion.municipio,
       direccion.cp,
       direccion.id_estado,
-      direccion.id
+      direccion.id,
     ]
+
+    const qCombinados = [qProveedor, qDireccion]
+    const phCombinados = [...phProveedor, ...phDireccion]
 
     return new Promise((res, rej) => {
       connectionDB.getConnection((err, connection) => {
@@ -184,8 +186,8 @@ class ProveedorDB {
 
           //actualizar proveedor
           connection.query(
-            qProveedor,
-            phProveedor,
+            qCombinados.join(";"),
+            phCombinados,
             (error, results, fields) => {
               if (error) {
                 return connection.rollback(() => {
@@ -194,25 +196,11 @@ class ProveedorDB {
                 })
               }
 
-              //actuqlizar direccion
-              connection.query(
-                qDireccion,
-                phDireccion,
-                (error, results, fields) => {
-                  if (error) {
-                    return connection.rollback(() => {
-                      connection.destroy()
-                      rej(error)
-                    })
-                  }
-
-                  connection.commit((err) => {
-                    if (err) connection.rollback(() => rej(err))
-                    connection.destroy()
-                    res(true)
-                  })
-                }
-              )
+              connection.commit((err) => {
+                if (err) connection.rollback(() => rej(err))
+                connection.destroy()
+                res(true)
+              })
             }
           )
         })
