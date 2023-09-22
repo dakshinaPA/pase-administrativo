@@ -16,10 +16,11 @@ import {
 } from "@assets/utils/common"
 import { crearExcel } from "@assets/utils/crearExcel"
 import { useAuth } from "@contexts/auth.context"
-import { Proyecto, ProyectoMin } from "@models/proyecto.model"
+import { Proyecto, ProyectoMin, QueriesProyecto } from "@models/proyecto.model"
 import {
   EstatusSolicitud,
   PayloadCambioEstatus,
+  QueriesSolicitud,
   SolicitudPresupuesto,
 } from "@models/solicitud-presupuesto.model"
 import { BtnAccion, BtnNeutro } from "@components/Botones"
@@ -28,25 +29,82 @@ import styles from "@components/styles/Filtros.module.css"
 import { TooltipInfo } from "@components/Tooltip"
 
 interface FiltrosSolicitud {
+  id_coparte: number
+  id_proyecto: number
   i_estatus: 0 | EstatusSolicitud
   titular: string
   dt_inicio: string
   dt_fin: string
 }
 
-const Filtros = ({ show, setShow, aplicarFiltros }) => {
+interface FiltrosProps {
+  show: boolean
+  setShow: (show: boolean) => void
+  aplicarFiltros: (filtros: FiltrosSolicitud) => void
+}
+
+const Filtros = ({ show, setShow, aplicarFiltros }: FiltrosProps) => {
   const estadoInicialForma: FiltrosSolicitud = {
+    id_coparte: 0,
+    id_proyecto: 0,
     i_estatus: 0,
     titular: "",
     dt_inicio: "",
     dt_fin: "",
   }
 
+  const { user } = useAuth()
   const [estaforma, setEstadoForma] = useState(estadoInicialForma)
+  const [copartesUsuario, setCopartesUsuario] = useState<CoparteMin[]>([])
+  const [proyectosUsuario, setProyectosUsuario] = useState<ProyectoMin[]>([])
 
   useEffect(() => {
     setEstadoForma(estadoInicialForma)
   }, [show])
+
+  useEffect(() => {
+    cargarDataUsuario()
+  }, [])
+
+  useEffect(() => {
+    if (!estaforma.id_coparte) return
+
+    cargarProyectos({ id_coparte: estaforma.id_coparte })
+  }, [estaforma.id_coparte])
+
+  const cargarDataUsuario = async () => {
+    //llenar select de copartes si no es usuario coparte
+    if (user.id_rol != 3) {
+      cargarCopartesUsuario()
+    } else {
+      cargarProyectos({ id_responsable: user.id })
+    }
+  }
+
+  const cargarCopartesUsuario = async () => {
+    const queries: QueriesCoparte =
+      user.id_rol == 2 ? { id_admin: user.id } : {}
+
+    try {
+      const reCopartes = await obtenerCopartes(queries)
+      if (reCopartes.error) throw reCopartes.data
+      const copartes = reCopartes.data as CoparteMin[]
+      setCopartesUsuario(copartes)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const cargarProyectos = async (queries: QueriesProyecto) => {
+    try {
+      const reProyectos = await obtenerProyectos(queries)
+      if (reProyectos.error) throw reProyectos.data
+      const proyectos = reProyectos.data as ProyectoMin[]
+      setProyectosUsuario(proyectos)
+    } catch (error) {
+      console.log(error)
+    }
+  }
 
   const handleChange = (ev) => {
     const { name, value } = ev.target
@@ -58,14 +116,15 @@ const Filtros = ({ show, setShow, aplicarFiltros }) => {
   }
 
   const buscarSolicitudes = () => {
-    const dataTranformada = {
-      i_estatus: Number(estaforma.i_estatus),
-      titular: estaforma.titular,
-      dt_inicio: estaforma.dt_inicio ? inputDateAEpoch(estaforma.dt_inicio) : 0,
-      dt_fin: estaforma.dt_fin ? inputDateAEpoch(estaforma.dt_fin) : 0,
-    }
+    console.log(estaforma)
+    // const dataTranformada = {
+    //   i_estatus: Number(estaforma.i_estatus),
+    //   titular: estaforma.titular,
+    //   dt_inicio: estaforma.dt_inicio ? inputDateAEpoch(estaforma.dt_inicio) : 0,
+    //   dt_fin: estaforma.dt_fin ? inputDateAEpoch(estaforma.dt_fin) : 0,
+    // }
 
-    aplicarFiltros(dataTranformada)
+    // aplicarFiltros(dataTranformada)
     setShow(false)
   }
 
@@ -74,6 +133,44 @@ const Filtros = ({ show, setShow, aplicarFiltros }) => {
   return (
     <div className={styles.filtro}>
       <div className="border px-2 py-3">
+        {user.id_rol != 3 && (
+          <div className="mb-3">
+            <label className="form-label color1 fw-semibold">Coparte</label>
+            <select
+              className="form-control"
+              name="id_coparte"
+              onChange={handleChange}
+              value={estaforma.id_coparte}
+            >
+              <option value="0" disabled>
+                Selecciona coparte
+              </option>
+              {copartesUsuario.map(({ id, nombre }) => (
+                <option key={id} value={id}>
+                  {nombre}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+        <div className="mb-3">
+          <label className="form-label color1 fw-semibold">Proyecto</label>
+          <select
+            className="form-control"
+            name="id_proyecto"
+            onChange={handleChange}
+            value={estaforma.id_proyecto}
+          >
+            <option value="0" disabled>
+              Selecciona proyecto
+            </option>
+            {proyectosUsuario.map(({ id, id_alt, nombre }) => (
+              <option key={id} value={id}>
+                {id_alt} - {nombre}
+              </option>
+            ))}
+          </select>
+        </div>
         <div className="mb-3">
           <label className="form-label color1 fw-semibold">Estatus</label>
           <select
@@ -142,6 +239,7 @@ const SolicitudesPresupuesto = () => {
   const [copartesDB, setCopartesDB] = useState<CoparteMin[]>([])
   const [proyectosDB, setProyectosDB] = useState<ProyectoMin[]>([])
   const [infoProyectoDB, setInfoProyectoDB] = useState<Proyecto>(null)
+  const [solicitudesDB, setSolicitudesDB] = useState<SolicitudPresupuesto[]>([])
   const [solicitudesFiltradas, setSolicitudesFiltradas] = useState<
     SolicitudPresupuesto[]
   >([])
@@ -161,22 +259,41 @@ const SolicitudesPresupuesto = () => {
     cargarData()
   }, [])
 
-  useEffect(() => {
-    if (selectCoparte) {
-      cargarProyectosDB()
-    }
-  }, [selectCoparte])
+  // useEffect(() => {
+  //   if (selectCoparte) {
+  //     cargarProyectosDB()
+  //   }
+  // }, [selectCoparte])
 
-  useEffect(() => {
-    // cargarSolicitudes()
-    cargarInfoProyecto()
-  }, [selectProyecto])
+  // useEffect(() => {
+  //   // cargarSolicitudes()
+  //   cargarInfoProyecto()
+  // }, [selectProyecto])
 
   const cargarData = async () => {
-    if (user.id_rol != 3) {
-      cargarCopartesDB()
-    } else {
-      cargarProyectosDB()
+    // if (user.id_rol != 3) {
+    //   cargarCopartesDB()
+    // } else {
+    //   cargarProyectosDB()
+    // }
+    cargarSolicitudes()
+  }
+
+  const cargarSolicitudes = async () => {
+    try {
+      const queries: QueriesSolicitud =
+        user.id_rol == 3
+          ? { id_responsable: user.id, i_estatus: 1 }
+          : { i_estatus: 1 }
+
+      const reSolicitudes = await obtenerSolicitudes(queries)
+      if (reSolicitudes.error) throw reSolicitudes.data
+
+      const solicitudesDB = reSolicitudes.data as SolicitudPresupuesto[]
+      setSolicitudesDB(solicitudesDB)
+      setSolicitudesFiltradas(solicitudesDB)
+    } catch (error) {
+      console.log(error)
     }
   }
 
@@ -440,7 +557,7 @@ const SolicitudesPresupuesto = () => {
             />
           </div>
         )}
-        {user.id_rol != 3 && (
+        {/* {user.id_rol != 3 && (
           <div className="col-12 col-sm-6 col-lg-3 mb-3">
             <select
               className="form-control"
@@ -459,8 +576,8 @@ const SolicitudesPresupuesto = () => {
               ))}
             </select>
           </div>
-        )}
-        <div className="col-12 col-sm-6 col-lg-3 mb-3">
+        )} */}
+        {/* <div className="col-12 col-sm-6 col-lg-3 mb-3">
           <select
             className="form-control"
             onChange={({ target: { value } }) =>
@@ -477,7 +594,7 @@ const SolicitudesPresupuesto = () => {
               </option>
             ))}
           </select>
-        </div>
+        </div> */}
         <div
           className={`col-12 col-sm-6 col-lg-3 mb-3 ${styles.filtros_contenedor}`}
         >
@@ -537,9 +654,9 @@ const SolicitudesPresupuesto = () => {
         )}
       </div>
       {isLoading && <Loader />}
-      {infoProyectoDB && (
-        <>
-          <div className="row mb-3">
+
+      <>
+        {/* <div className="row mb-3">
             <div className="col-12 mb-2">
               <h4 className="color1 mb-0">Saldo del proyecto</h4>
             </div>
@@ -554,11 +671,7 @@ const SolicitudesPresupuesto = () => {
                     <th>Por comprobar</th>
                     <th>ISR (35%)</th>
                     <th>Retenciones</th>
-                    <th>
-                      PA
-                      {/* <span className="me-1">PA</span>
-                      <TooltipInfo texto="Gestión financiera de Dakshina" /> */}
-                    </th>
+                    <th>PA</th>
                     <th>Total ejecutado</th>
                     <th>Remanente</th>
                     <th>Avance</th>
@@ -566,7 +679,9 @@ const SolicitudesPresupuesto = () => {
                 </thead>
                 <tbody>
                   <tr>
-                    <td>{montoALocaleString(infoProyectoDB.saldo.f_monto_total)}</td>
+                    <td>
+                      {montoALocaleString(infoProyectoDB.saldo.f_monto_total)}
+                    </td>
                     <td>
                       {montoALocaleString(infoProyectoDB.saldo.f_transferido)}
                     </td>
@@ -595,130 +710,131 @@ const SolicitudesPresupuesto = () => {
                 </tbody>
               </table>
             </div>
-          </div>
-          <div className="row">
-            <div className="col-12 mb-2">
-              <h4 className="color1 mb-0">Solicitudes</h4>
-            </div>
-            <div className="col-12 table-responsive">
-              <table className="table">
-                <thead className="table-light">
-                  <tr>
-                    <th>#id</th>
-                    <th>Tipo de gasto</th>
-                    <th>Partida presupuestal</th>
-                    <th>Titular</th>
-                    <th>Proveedor</th>
-                    <th>Descripción</th>
-                    <th>Importe solicitado</th>
-                    <th>Comprobado</th>
-                    <th>Por comprobar</th>
-                    <th>Retenciones</th>
-                    <th>Total</th>
-                    <th>Estatus</th>
-                    <th>Fecha registro</th>
-                    {user.id_rol == 1 && (
-                      <th>
-                        <input
-                          type="checkbox"
-                          className="form-check-input"
-                          onChange={({ target }) =>
-                            seleccionarTodasSolicitudes(target.checked)
-                          }
-                          checked={showSelectCambioStatus}
-                        />
-                      </th>
-                    )}
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {solicitudesFiltradas.map((solicitud) => {
-                    const {
-                      id,
-                      id_proyecto,
-                      tipo_gasto,
-                      titular_cuenta,
-                      proveedor,
-                      descripcion_gasto,
-                      rubro,
-                      f_importe,
-                      saldo,
-                      i_estatus,
-                      estatus,
-                      dt_registro,
-                    } = solicitud
+          </div> */}
+        <div className="row">
+          {/* <div className="col-12 mb-2">
+            <h4 className="color1 mb-0">Solicitudes</h4>
+          </div> */}
+          <div className="col-12 table-responsive">
+            <table className="table">
+              <thead className="table-light">
+                <tr>
+                  <th>#id</th>
+                  <th>Proyecto</th>
+                  <th>Tipo de gasto</th>
+                  <th>Partida presupuestal</th>
+                  <th>Titular</th>
+                  <th>Proveedor</th>
+                  <th>Descripción</th>
+                  <th>Importe solicitado</th>
+                  <th>Comprobado</th>
+                  <th>Por comprobar</th>
+                  <th>Retenciones</th>
+                  <th>Total</th>
+                  <th>Estatus</th>
+                  <th>Fecha registro</th>
+                  {user.id_rol == 1 && (
+                    <th>
+                      <input
+                        type="checkbox"
+                        className="form-check-input"
+                        onChange={({ target }) =>
+                          seleccionarTodasSolicitudes(target.checked)
+                        }
+                        checked={showSelectCambioStatus}
+                      />
+                    </th>
+                  )}
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {solicitudesFiltradas.map((solicitud) => {
+                  const {
+                    id,
+                    id_proyecto,
+                    proyecto,
+                    tipo_gasto,
+                    titular_cuenta,
+                    proveedor,
+                    descripcion_gasto,
+                    rubro,
+                    f_importe,
+                    saldo,
+                    i_estatus,
+                    estatus,
+                    dt_registro,
+                  } = solicitud
 
-                    const colorBadge = obtenerBadgeStatusSolicitud(i_estatus)
+                  const colorBadge = obtenerBadgeStatusSolicitud(i_estatus)
 
-                    return (
-                      <tr key={id}>
-                        <td>{id}</td>
-                        <td>{tipo_gasto}</td>
-                        <td>{rubro}</td>
-                        <td>{titular_cuenta}</td>
-                        <td>{proveedor}</td>
-                        <td>{descripcion_gasto}</td>
-                        <td>{montoALocaleString(f_importe)}</td>
+                  return (
+                    <tr key={id}>
+                      <td>{id}</td>
+                      <td>{proyecto}</td>
+                      <td>{tipo_gasto}</td>
+                      <td>{rubro}</td>
+                      <td>{titular_cuenta}</td>
+                      <td>{proveedor}</td>
+                      <td>{descripcion_gasto}</td>
+                      <td>{montoALocaleString(f_importe)}</td>
+                      <td>
+                        {montoALocaleString(saldo.f_total_comprobaciones)}
+                      </td>
+                      <td>{montoALocaleString(saldo.f_monto_comprobar)}</td>
+                      <td>
+                        {montoALocaleString(saldo.f_total_impuestos_retenidos)}
+                      </td>
+                      <td>{montoALocaleString(saldo.f_total)}</td>
+                      <td>
+                        <span className={`badge bg-${colorBadge}`}>
+                          {estatus}
+                        </span>
+                      </td>
+                      <td>{epochAFecha(dt_registro)}</td>
+                      {user.id_rol == 1 && (
                         <td>
-                          {montoALocaleString(saldo.f_total_comprobaciones)}
+                          <input
+                            type="checkbox"
+                            className="form-check-input"
+                            onChange={({ target }) =>
+                              seleccionarSolicitud(target.checked, id)
+                            }
+                            checked={idsCambioStatus[id]}
+                          />
                         </td>
-                        <td>{montoALocaleString(saldo.f_monto_comprobar)}</td>
-                        <td>
-                          {montoALocaleString(
-                            saldo.f_total_impuestos_retenidos
-                          )}
-                        </td>
-                        <td>{montoALocaleString(saldo.f_total)}</td>
-                        <td>
-                          <span className={`badge bg-${colorBadge}`}>
-                            {estatus}
-                          </span>
-                        </td>
-                        <td>{epochAFecha(dt_registro)}</td>
-                        {user.id_rol == 1 && (
-                          <td>
-                            <input
-                              type="checkbox"
-                              className="form-check-input"
-                              onChange={({ target }) =>
-                                seleccionarSolicitud(target.checked, id)
-                              }
-                              checked={idsCambioStatus[id]}
-                            />
-                          </td>
-                        )}
-                        <td>
-                          <div className="d-flex">
+                      )}
+                      <td>
+                        <div className="d-flex">
+                          <BtnAccion
+                            margin={false}
+                            icono="bi-eye-fill"
+                            onclick={() =>
+                              router.push(
+                                `/proyectos/${id_proyecto}/solicitudes-presupuesto/${id}`
+                              )
+                            }
+                            title="ver detalle"
+                          />
+                          {user.id_rol == 1 && (
                             <BtnAccion
-                              margin={false}
-                              icono="bi-eye-fill"
-                              onclick={() =>
-                                router.push(
-                                  `/proyectos/${id_proyecto}/solicitudes-presupuesto/${id}`
-                                )
-                              }
-                              title="ver detalle"
+                              margin="l"
+                              icono="bi-x-circle"
+                              onclick={() => abrirModalEliminarSolicitud(id)}
+                              title="eliminar solicitud"
                             />
-                            {user.id_rol == 1 && (
-                              <BtnAccion
-                                margin="l"
-                                icono="bi-x-circle"
-                                onclick={() => abrirModalEliminarSolicitud(id)}
-                                title="eliminar solicitud"
-                              />
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
           </div>
-        </>
-      )}
+        </div>
+      </>
+
       <ModalEliminar
         show={showModalEliminar}
         aceptar={eliminarSolicitud}

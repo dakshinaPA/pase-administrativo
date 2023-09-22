@@ -1,4 +1,5 @@
 import { queryDB, queryDBPlaceHolder } from "./query"
+import { connectionDB } from "./connectionPool"
 import {
   SolicitudPresupuesto,
   ComprobanteSolicitud,
@@ -12,7 +13,7 @@ import { fechaActualAEpoch } from "@assets/utils/common"
 
 class SolicitudesPresupuestoDB {
   static queryRe = (queries: QueriesSolicitud) => {
-    const { id, id_proyecto, id_responsable } = queries
+    const { id, id_proyecto, id_responsable, i_estatus } = queries
 
     let query = `SELECT sp.id, sp.id_proyecto, sp.i_tipo_gasto, sp.clabe, sp.id_banco, sp.titular_cuenta,
       sp.email, sp.proveedor, sp.descripcion_gasto, sp.id_partida_presupuestal, sp.f_importe, sp.i_estatus, sp.dt_registro,
@@ -32,6 +33,12 @@ class SolicitudesPresupuestoDB {
       query += " AND sp.id_proyecto=?"
     } else if (id) {
       query += " AND sp.id=?"
+    } else if (id_responsable) {
+      query += " AND p.id_responsable=?"
+    }
+
+    if (i_estatus) {
+      query += " AND sp.i_estatus=?"
     }
 
     query += " GROUP BY sp.id"
@@ -40,66 +47,126 @@ class SolicitudesPresupuestoDB {
   }
 
   static async obtener(queries: QueriesSolicitud) {
-    const { id, id_proyecto, id_responsable } = queries
+    const { id, id_proyecto, id_responsable, i_estatus } = queries
 
     const qSolicitud = this.queryRe(queries)
 
-    const phSolicitud = []
+    const phSolicitud = [id_proyecto || id || id_responsable]
 
-    if (id_proyecto) {
-      phSolicitud.push(id_proyecto)
-    } else if (id) {
-      phSolicitud.push(id)
+    if (i_estatus) {
+      phSolicitud.push(i_estatus)
     }
 
-    try {
-      const res = await queryDBPlaceHolder(qSolicitud, phSolicitud)
-      return RespuestaDB.exitosa(res)
-    } catch (error) {
-      return RespuestaDB.fallida(error)
-    }
+    return new Promise((res, rej) => {
+      connectionDB.getConnection((err, connection) => {
+        if (err) return rej(err)
+
+        connection.query(qSolicitud, phSolicitud, (error, results, fields) => {
+          if (error) {
+            connection.destroy()
+            return rej(error)
+          }
+
+          connection.destroy()
+          res(results)
+        })
+      })
+    })
+  }
+
+  static qCrComprobante = () => {
+    return `INSERT INTO solicitud_presupuesto_comprobantes ( id_solicitud_presupuesto, folio_fiscal, f_total,
+      f_retenciones, i_metodo_pago, id_forma_pago, id_regimen_fiscal, dt_registro ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )`
   }
 
   static async crear(data: SolicitudPresupuesto) {
-    const {
-      id_proyecto,
-      i_tipo_gasto,
-      clabe,
-      id_banco,
-      titular_cuenta,
-      email,
-      proveedor,
-      descripcion_gasto,
-      id_partida_presupuestal,
-      f_importe,
-      // f_monto_comprobar,
-    } = data
+    const { comprobantes } = data
 
-    const query = `INSERT INTO solicitudes_presupuesto (id_proyecto, i_tipo_gasto, clabe, id_banco, titular_cuenta, email, proveedor,
+    const qSolicitud = `INSERT INTO solicitudes_presupuesto (id_proyecto, i_tipo_gasto, clabe, id_banco, titular_cuenta, email, proveedor,
       descripcion_gasto, id_partida_presupuestal, f_importe, i_estatus, dt_registro ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
-    const placeHolders = [
-      id_proyecto,
-      i_tipo_gasto,
-      clabe,
-      id_banco,
-      titular_cuenta,
-      email,
-      proveedor,
-      descripcion_gasto,
-      id_partida_presupuestal,
-      f_importe,
-      // f_monto_comprobar,
+    const phSolicitud = [
+      data.id_proyecto,
+      data.i_tipo_gasto,
+      data.clabe,
+      data.id_banco,
+      data.titular_cuenta,
+      data.email,
+      data.proveedor,
+      data.descripcion_gasto,
+      data.id_partida_presupuestal,
+      data.f_importe,
       1,
       fechaActualAEpoch(),
     ]
 
-    try {
-      const res = await queryDBPlaceHolder(query, placeHolders)
-      return RespuestaDB.exitosa(res)
-    } catch (error) {
-      return RespuestaDB.fallida(error)
-    }
+    const qComprobantes = []
+    const phComprobantes = []
+
+    return new Promise((res, rej) => {
+      connectionDB.getConnection((err, connection) => {
+        if (err) return rej(err)
+
+        connection.beginTransaction((err) => {
+          if (err) {
+            connection.destroy()
+            return rej(err)
+          }
+
+          //crear solicitud
+          connection.query(
+            qSolicitud,
+            phSolicitud,
+            (error, results, fields) => {
+              if (error) {
+                return connection.rollback(() => {
+                  connection.destroy()
+                  rej(error)
+                })
+              }
+
+              // @ts-ignore
+              const idSolicitud = results.insertId
+
+              for (const comp of comprobantes) {
+                qComprobantes.push(this.qCrComprobante())
+
+                phComprobantes.push(
+                  idSolicitud,
+                  comp.folio_fiscal,
+                  comp.f_total,
+                  comp.f_retenciones,
+                  comp.i_metodo_pago,
+                  comp.id_forma_pago,
+                  comp.id_regimen_fiscal,
+                  fechaActualAEpoch()
+                )
+              }
+
+              //crear comprobantes
+              connection.query(
+                qComprobantes.join(";"),
+                phComprobantes,
+                (error, results, fields) => {
+                  if (error) {
+                    return connection.rollback(() => {
+                      connection.destroy()
+                      rej(error)
+                    })
+                  }
+
+                  connection.commit((err) => {
+                    if (err) connection.rollback(() => rej(err))
+                    connection.destroy()
+                    res(idSolicitud)
+                  })
+                }
+              )
+            }
+          )
+        })
+      })
+    })
   }
 
   static async actualizar(id: number, data: SolicitudPresupuesto) {
@@ -138,9 +205,9 @@ class SolicitudesPresupuestoDB {
   }
 
   static async borrar(id: number) {
-    const query = `UPDATE solicitudes_presupuesto SET b_activo=0 WHERE id=${id} LIMIT 1`
+    const query = `UPDATE solicitudes_presupuesto SET b_activo=0 WHERE id=? LIMIT 1`
     try {
-      const res = await queryDB(query)
+      const res = await queryDBPlaceHolder(query, [id])
       return RespuestaDB.exitosa(res)
     } catch (error) {
       return RespuestaDB.fallida(error)
@@ -164,40 +231,40 @@ class SolicitudesPresupuestoDB {
     }
   }
 
-  static async crearComprobante(
-    id_solicitud: number,
-    data: ComprobanteSolicitud
-  ) {
-    const {
-      folio_fiscal,
-      f_total,
-      f_retenciones,
-      i_metodo_pago,
-      id_forma_pago,
-      id_regimen_fiscal,
-    } = data
+  // static async crearComprobante(
+  //   id_solicitud: number,
+  //   data: ComprobanteSolicitud
+  // ) {
+  //   const {
+  //     folio_fiscal,
+  //     f_total,
+  //     f_retenciones,
+  //     i_metodo_pago,
+  //     id_forma_pago,
+  //     id_regimen_fiscal,
+  //   } = data
 
-    const query = `INSERT INTO solicitud_presupuesto_comprobantes ( id_solicitud_presupuesto, folio_fiscal, f_total,
-      f_retenciones, i_metodo_pago, id_forma_pago, id_regimen_fiscal, dt_registro ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )`
+  //   const query = `INSERT INTO solicitud_presupuesto_comprobantes ( id_solicitud_presupuesto, folio_fiscal, f_total,
+  //     f_retenciones, i_metodo_pago, id_forma_pago, id_regimen_fiscal, dt_registro ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )`
 
-    const placeHolders = [
-      id_solicitud,
-      folio_fiscal,
-      f_total,
-      f_retenciones,
-      i_metodo_pago,
-      id_forma_pago,
-      id_regimen_fiscal,
-      fechaActualAEpoch(),
-    ]
+  //   const placeHolders = [
+  //     id_solicitud,
+  //     folio_fiscal,
+  //     f_total,
+  //     f_retenciones,
+  //     i_metodo_pago,
+  //     id_forma_pago,
+  //     id_regimen_fiscal,
+  //     fechaActualAEpoch(),
+  //   ]
 
-    try {
-      const res = await queryDBPlaceHolder(query, placeHolders)
-      return RespuestaDB.exitosa(res)
-    } catch (error) {
-      return RespuestaDB.fallida(error)
-    }
-  }
+  //   try {
+  //     const res = await queryDBPlaceHolder(query, placeHolders)
+  //     return RespuestaDB.exitosa(res)
+  //   } catch (error) {
+  //     return RespuestaDB.fallida(error)
+  //   }
+  // }
 
   static async borrarComprobante(id: number) {
     const query = `DELETE FROM solicitud_presupuesto_comprobantes WHERE id=? LIMIT 1`

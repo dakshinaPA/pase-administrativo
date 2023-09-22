@@ -129,7 +129,7 @@ class ColaboradorDB {
             return rej(err)
           }
 
-          //crear proveedor
+          //crear colaborador
           connection.query(
             qIniciales,
             phIniciales,

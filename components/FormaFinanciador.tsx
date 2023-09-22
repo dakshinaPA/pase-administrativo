@@ -244,7 +244,7 @@ const FormaFinanciador = () => {
         setModoEditar(false)
       } else {
         //@ts-ignore
-        router.push(`/financiadores/${res.data.financiador}`)
+        router.push(`/financiadores/${res.data.idInsertado}`)
       }
     }
   }

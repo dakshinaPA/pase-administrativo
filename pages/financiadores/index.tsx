@@ -126,7 +126,7 @@ const Financiadores = () => {
             <table className="table">
               <thead>
                 <tr>
-                  <th>#Dd</th>
+                  <th>#Id</th>
                   <th>Id Alt</th>
                   <th>Nombre</th>
                   <th>Tipo</th>

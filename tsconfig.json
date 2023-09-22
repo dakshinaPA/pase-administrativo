@@ -32,7 +32,7 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx"
-  ],
+, "scripts/financiadores.js"  ],
   "exclude": [
     "node_modules"
   ]

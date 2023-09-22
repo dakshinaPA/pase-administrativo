@@ -2,6 +2,7 @@ import { QueriesProyecto } from "@models/proyecto.model"
 import { ApiCall } from "./apiCalls"
 import { QueriesCoparte } from "@models/coparte.model"
 import { QueriesUsuario } from "@models/usuario.model"
+import { QueriesSolicitud } from "@models/solicitud-presupuesto.model"
 
 const aMinuscula = (clave: string) => clave.toLowerCase()
 
@@ -140,7 +141,7 @@ const obtenerProyectos = (queries: QueriesProyecto) => {
     url += `?id_coparte=${id_coparte}`
   } else if (id_responsable) {
     url += `?id_responsable=${id_responsable}`
-  } else if (id_admin){
+  } else if (id_admin) {
     url += `?id_admin=${id_admin}`
   }
 
@@ -183,13 +184,23 @@ const obtenerProveedores = (id_proyecto?: number, id?: number) => {
   return ApiCall.get(url)
 }
 
-const obtenerSolicitudes = (id_proyecto?: number, id?: number) => {
-  let url = ""
+const obtenerSolicitudes = (queries: QueriesSolicitud) => {
+  const { id, id_proyecto, id_responsable, i_estatus, dt_inicio, dt_fin } =
+    queries
+  let url = "/solicitudes-presupuesto"
 
+  // if (id) {
+  //   url = `/solicitudes-presupuesto/${id}`
+  // } else if (id_proyecto) {
+  //   url = `/proyectos/${id_proyecto}/solicitudes-presupuesto`
+  // }
   if (id) {
-    url = `/solicitudes-presupuesto/${id}`
-  } else if (id_proyecto) {
-    url = `/proyectos/${id_proyecto}/solicitudes-presupuesto`
+    url += `/${id}`
+  } else if (id_responsable) {
+    url += `?id_responsable=${id_responsable}`
+  }
+  if (i_estatus) {
+    url += `&i_estatus=${i_estatus}`
   }
 
   return ApiCall.get(url)

@@ -244,10 +244,10 @@ class UsuarioDB {
   }
 
   static async borrar(id: number) {
-    const query = `UPDATE usuarios SET b_activo=0 WHERE id=${id} LIMIT 1`
+    const query = `UPDATE usuarios SET b_activo=0 WHERE id=? LIMIT 1`
 
     try {
-      const res = await queryDB(query)
+      const res = await queryDBPlaceHolder(query, [id])
       return RespuestaDB.exitosa(res)
     } catch (error) {
       return RespuestaDB.fallida(error)

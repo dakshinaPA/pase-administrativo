@@ -700,3 +700,28 @@ TRUNCATE TABLE solicitud_presupuesto_notas;
 alter table usuarios modify column password varbinary(200) not null;
 update usuarios set password=AES_ENCRYPT('123', 'dakshina23');
 select id, nombre, CAST(AES_DECRYPT(password, 'dakshina23') AS CHAR) from usuarios;
+
+INSERT INTO paises (nombre) VALUES
+('PERU'),
+('PAISES BAJOS'),
+('NICARAGUA');
+
+INSERT INTO financiadores (nombre, representante_legal, rfc_representante_legal, pagina_web, rfc, actividad, i_tipo, dt_constitucion, dt_registro) VALUES
+()
+
+INSERT INTO financiadores (nombre, representante_legal, rfc_representante_legal, pagina_web, rfc, actividad, i_tipo, dt_constitucion, dt_registro) VALUES
+()
+
+INSERT INTO financiadores (nombre, representante_legal, rfc_representante_legal, pagina_web, rfc, actividad, i_tipo, dt_constitucion, dt_registro) VALUES
+()
+
+-- id alt	nombre	representante legal	rfc representante legal	rfc financiador	pagina web	objeto social	tipo	fecha constitucion	calle	numero exterior	numero interior	colonia	municipio	cp	id estado (DB) (mexicanos)	estado (extranjeros)	id pais (DB)
+-- 206	Fondo semillas	María Gabriela Toledo Peralta	TOPG7803103X1	MPD901211UR0	https://semillas.org.mx/	Promoción de la equidad de género y actividades asistenciales	1	1990/11/12	Fragonard	84		San Juan	Benito Juárez	14000	10	0	1
+-- 207	AVINA Americas	Valeria Scorza	0	26-3525897	https://www.avina.net/	Fundación sin fines de lucro	1	2008/08/01	1300 I Street NW	Suite 400E, PMB – 500104		Washington, DC	Washington, DC		0	Washington, DC	2
+-- 208	FASOL (Fondo Accion Solidaria)	María Artemisa Castro Felix		FAS070622D51	http://fasol-ac.org/	Promoción de la participación organizada de la población en las acciones que propicien el desarrollo comunitario integral.	2	2007/03/07	Marcelo Rubio	1640		Zona Central	La Paz	23000	3	0	1
+-- 209	HIP Give				https://hipgive.org/es	Fundación sin fines de lucro	1								10	0	1
+-- 210	FIMI (Foro Internacional de las Mujeres Indígenas)	Tarcila Rivera Zea	25514759	20556228257	https://fimi-iiwf.org/	Fundación sin fines de lucro	2		Horacio Urteaga	534	602	Jesus Maria	Lima 11	0	0	Lima	4
+-- 211	WOMEN-WIN	María Bobenrieth			https://www.womenwin.org/about-us/history/	Fundación sin fines de lucro	2		Rapenburgerstraat	173	1011	VM	Amsterdam	0	0	Amsterdam	5
+-- 212	PAWANKA	Myrna Cunningham			https://pawankafund.org/	Fundación sin fines de lucro	2		B. Aeropuerto			Biliwi	Pto Cabezas	71000	0	Pto. cabezas	6
+-- 213	IPAS MEXICO	María Antonieta Alcalde Castro		IME9508161J2	https://ipasmexico.org/	Fundación sin fines de lucro	2		Av. Insurgentes Sur	1079	07-108	Noche buena	Benito Juárez	3720	10	0	1
+-- 214	MADRE	Yifat Susskind	0	13-3280194	https://www.madre.org/	Organización sin fines de lucro	2	1983/01/01	West 27th Street	121	604	New York	New York	10001-6299	0	New York	2

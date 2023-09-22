@@ -71,7 +71,11 @@ class FinanciadoresServices {
             id_pais: financiadorDB.id_pais,
             pais: financiadorDB.pais,
           },
-          notas: financiadorDB.notas || [],
+          notas:
+            financiadorDB.notas?.map((nota) => ({
+              ...nota,
+              dt_registro: epochAFecha(nota.dt_registro),
+            })) || [],
         })
       )
 
@@ -89,11 +93,9 @@ class FinanciadoresServices {
     try {
       const cr = await FinanciadorDB.crear(data)
 
-      return RespuestaController.exitosa(
-        201,
-        "Financiador creado con éxito",
-        cr
-      )
+      return RespuestaController.exitosa(201, "Financiador creado con éxito", {
+        idInsertado: cr,
+      })
     } catch (error) {
       return RespuestaController.fallida(
         400,

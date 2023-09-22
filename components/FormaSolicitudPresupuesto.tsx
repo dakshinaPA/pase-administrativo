@@ -466,7 +466,7 @@ const FormaSolicitudPresupuesto = () => {
   }
 
   const obtener = async () => {
-    const re = await obtenerSolicitudes(null, idSolicitud)
+    const re = await obtenerSolicitudes({id: idSolicitud})
     if (re.error) {
       console.log(re.data)
     } else {
@@ -863,9 +863,9 @@ const FormaSolicitudPresupuesto = () => {
                     Selecciona una opción
                   </option>
                   {dataTipoGasto.partidas_presupuestales.map(
-                    ({ id_rubro, nombre }) => (
+                    ({ id_rubro, rubro }) => (
                       <option key={id_rubro} value={id_rubro}>
-                        {nombre}
+                        {rubro}
                       </option>
                     )
                   )}

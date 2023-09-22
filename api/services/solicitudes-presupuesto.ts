@@ -29,92 +29,68 @@ class SolicitudesPresupuestoServices {
   }
 
   static async obtener(queries: QueriesSolicitud) {
-    const id_solicitud = Number(queries.id)
+    // const id_solicitud = Number(queries.id)
 
     try {
-      const re = await SolicitudesPresupuestoDB.obtener(queries)
-      if (re.error) throw re.data
+      const re = (await SolicitudesPresupuestoDB.obtener(
+        queries
+      )) as ResSolicitudPresupuestoDB[]
 
-      const solicitudesDB = re.data as ResSolicitudPresupuestoDB[]
+      const solicitudes: SolicitudPresupuesto[] = re.map((solicitud) => {
+        const {
+          id,
+          id_proyecto,
+          id_responsable,
+          proyecto,
+          i_tipo_gasto,
+          clabe,
+          id_banco,
+          banco,
+          titular_cuenta,
+          email,
+          proveedor,
+          descripcion_gasto,
+          id_partida_presupuestal,
+          rubro,
+          f_importe,
+          f_total_comprobaciones,
+          f_total_impuestos_retenidos,
+          i_estatus,
+          dt_registro,
+        } = solicitud
 
-      const dataTransformada: SolicitudPresupuesto[] = await Promise.all(
-        solicitudesDB.map(async (solicitud) => {
-          const {
-            id,
-            id_proyecto,
-            id_responsable,
-            proyecto,
-            i_tipo_gasto,
-            clabe,
-            id_banco,
-            banco,
-            titular_cuenta,
-            email,
-            proveedor,
-            descripcion_gasto,
-            id_partida_presupuestal,
-            rubro,
-            f_importe,
+        return {
+          id,
+          id_proyecto,
+          proyecto,
+          id_responsable,
+          i_tipo_gasto,
+          tipo_gasto: this.obtenerTipoGasto(i_tipo_gasto),
+          clabe,
+          id_banco,
+          banco,
+          titular_cuenta,
+          email,
+          id_partida_presupuestal,
+          rubro,
+          proveedor,
+          descripcion_gasto,
+          f_importe: Number(f_importe),
+          i_estatus,
+          estatus: obtenerEstatusSolicitud(i_estatus),
+          dt_registro,
+          saldo: {
             f_total_comprobaciones,
+            f_monto_comprobar: Number(f_importe) - f_total_comprobaciones,
             f_total_impuestos_retenidos,
-            i_estatus,
-            dt_registro,
-          } = solicitud
+            f_total: Number(f_importe) + f_total_impuestos_retenidos,
+          },
+          comprobantes: [],
+          notas: [],
+        }
+      })
 
-          let comprobantes: ComprobanteSolicitud[] = null
-          let notas: NotaSolicitud[] = null
-
-          if (id_solicitud) {
-            const reComprobantes = this.obtenerComprobantes(id_solicitud)
-            const reNotas = this.obtenerNotas(id_solicitud)
-
-            const resCombinadas = await Promise.all([reComprobantes, reNotas])
-
-            for (const rc of resCombinadas) {
-              if (rc.error) throw rc.data
-            }
-
-            comprobantes = resCombinadas[0].data as ComprobanteSolicitud[]
-            notas = resCombinadas[1].data as NotaSolicitud[]
-          }
-
-          return {
-            id,
-            id_proyecto,
-            proyecto,
-            id_responsable,
-            i_tipo_gasto,
-            tipo_gasto: this.obtenerTipoGasto(i_tipo_gasto),
-            clabe,
-            id_banco,
-            banco,
-            titular_cuenta,
-            email,
-            id_partida_presupuestal,
-            rubro,
-            proveedor,
-            descripcion_gasto,
-            f_importe: Number(f_importe),
-            i_estatus,
-            estatus: obtenerEstatusSolicitud(i_estatus),
-            dt_registro,
-            saldo: {
-              f_total_comprobaciones,
-              f_monto_comprobar: Number(f_importe) - f_total_comprobaciones,
-              f_total_impuestos_retenidos,
-              f_total: Number(f_importe) + f_total_impuestos_retenidos
-            },
-            comprobantes,
-            notas,
-          }
-        })
-      )
-
-      return RespuestaController.exitosa(
-        200,
-        "Consulta exitosa",
-        dataTransformada
-      )
+      return RespuestaController.exitosa(200, "Consulta exitosa", solicitudes)
     } catch (error) {
       return RespuestaController.fallida(
         400,
@@ -126,27 +102,12 @@ class SolicitudesPresupuestoServices {
 
   static async crear(data: SolicitudPresupuesto) {
     try {
-      const { comprobantes } = data
       const cr = await SolicitudesPresupuestoDB.crear(data)
-      if (cr.error) throw cr.data
-
-      // @ts-ignore
-      const idInsertado = cr.data.insertId
-
-      await Promise.all(
-        comprobantes.map(async (comprobante) => {
-          const crComprobantes = await this.crearComprobante(
-            idInsertado,
-            comprobante
-          )
-          if (crComprobantes.error) throw crComprobantes.data
-        })
-      )
 
       return RespuestaController.exitosa(
         201,
         "Solicitud de presupuesto creada con éxito",
-        { idInsertado }
+        { idInsertado: cr }
       )
     } catch (error) {
       return RespuestaController.fallida(
@@ -160,37 +121,37 @@ class SolicitudesPresupuestoServices {
   static async actualizar(id: number, data: SolicitudPresupuesto) {
     try {
       const up = await SolicitudesPresupuestoDB.actualizar(id, data)
-      const reComprobantes = await this.obtenerComprobantes(id)
+      // const reComprobantes = await this.obtenerComprobantes(id)
 
-      const promesas1 = await Promise.all([up, reComprobantes])
+      // const promesas1 = await Promise.all([up, reComprobantes])
 
-      for (const promesa of promesas1) {
-        if (promesa.error) throw promesa.data
-      }
+      // for (const promesa of promesas1) {
+      //   if (promesa.error) throw promesa.data
+      // }
 
-      const { comprobantes } = data
+      // const { comprobantes } = data
 
-      //insertar comprobantes nuevos
-      for (const com of comprobantes) {
-        if (!com.id) {
-          const crComprobante = await this.crearComprobante(id, com)
-          if (crComprobante.error) throw crComprobante.data
-        }
-      }
+      // //insertar comprobantes nuevos
+      // for (const com of comprobantes) {
+      //   if (!com.id) {
+      //     const crComprobante = await this.crearComprobante(id, com)
+      //     if (crComprobante.error) throw crComprobante.data
+      //   }
+      // }
 
-      //checar si se borro algun comprobantes
-      const comprobantesActivosDB =
-        reComprobantes.data as ComprobanteSolicitud[]
-      for (const ca of comprobantesActivosDB) {
-        const matchVista = comprobantes.find(
-          (comprobante) => comprobante.id == ca.id
-        )
-        if (!matchVista) {
-          const dlComprobante =
-            await SolicitudesPresupuestoDB.borrarComprobante(ca.id)
-          if (dlComprobante.error) throw dlComprobante.data
-        }
-      }
+      // //checar si se borro algun comprobantes
+      // const comprobantesActivosDB =
+      //   reComprobantes.data as ComprobanteSolicitud[]
+      // for (const ca of comprobantesActivosDB) {
+      //   const matchVista = comprobantes.find(
+      //     (comprobante) => comprobante.id == ca.id
+      //   )
+      //   if (!matchVista) {
+      //     const dlComprobante =
+      //       await SolicitudesPresupuestoDB.borrarComprobante(ca.id)
+      //     if (dlComprobante.error) throw dlComprobante.data
+      //   }
+      // }
 
       return RespuestaController.exitosa(
         200,
@@ -258,33 +219,33 @@ class SolicitudesPresupuestoServices {
     )
   }
 
-  static async crearComprobante(
-    id_solicitud: number,
-    data: ComprobanteSolicitud
-  ) {
-    try {
-      const cr = await SolicitudesPresupuestoDB.crearComprobante(
-        id_solicitud,
-        data
-      )
-      if (cr.error) throw cr.data
+  // static async crearComprobante(
+  //   id_solicitud: number,
+  //   data: ComprobanteSolicitud
+  // ) {
+  //   try {
+  //     const cr = await SolicitudesPresupuestoDB.crearComprobante(
+  //       id_solicitud,
+  //       data
+  //     )
+  //     if (cr.error) throw cr.data
 
-      // @ts-ignore
-      const idInsertado = cr.data.insertId
+  //     // @ts-ignore
+  //     const idInsertado = cr.data.insertId
 
-      return RespuestaController.exitosa(
-        201,
-        "Solicitud de presupuesto creada con éxito",
-        { idInsertado }
-      )
-    } catch (error) {
-      return RespuestaController.fallida(
-        400,
-        "Error al crear solicitud de presupuesto",
-        error
-      )
-    }
-  }
+  //     return RespuestaController.exitosa(
+  //       201,
+  //       "Solicitud de presupuesto creada con éxito",
+  //       { idInsertado }
+  //     )
+  //   } catch (error) {
+  //     return RespuestaController.fallida(
+  //       400,
+  //       "Error al crear solicitud de presupuesto",
+  //       error
+  //     )
+  //   }
+  // }
 
   static async buscarFactura(folio: string) {
     try {

@@ -1,10 +1,7 @@
 import { RespuestaDB } from "@api/utils/response"
 import { queryDB, queryDBPlaceHolder } from "./query"
 import { connectionDB } from "./connectionPool"
-import {
-  Financiador,
-  NotaFinanciador,
-} from "@models/financiador.model"
+import { Financiador, NotaFinanciador } from "@models/financiador.model"
 import { fechaActualAEpoch } from "@assets/utils/common"
 
 class FinanciadorDB {
@@ -17,6 +14,13 @@ class FinanciadorDB {
     } catch (error) {
       return RespuestaDB.fallida(error)
     }
+  }
+
+  static qReNotas(){
+    return `SELECT fn.id, fn.mensaje, fn.dt_registro,
+      CONCAT(u.nombre, ' ', u.apellido_paterno) usuario
+      FROM financiador_notas fn JOIN usuarios u ON fn.id_usuario = u.id
+      WHERE fn.id_financiador=? AND fn.b_activo=1`
   }
 
   static async obtener(id: number) {
@@ -34,10 +38,7 @@ class FinanciadorDB {
       qFinanciador += " AND f.id=? LIMIT 1"
     }
 
-    const qNotas = `SELECT fn.id, fn.mensaje, fn.dt_registro,
-      CONCAT(u.nombre, ' ', u.apellido_paterno) usuario
-      FROM financiador_notas fn JOIN usuarios u ON fn.id_usuario = u.id
-      WHERE fn.id_financiador=? AND fn.b_activo=1`
+    const qNotas = this.qReNotas()
 
     return new Promise((res, rej) => {
       connectionDB.getConnection((err, connection) => {
@@ -59,10 +60,12 @@ class FinanciadorDB {
               }
 
               connection.destroy()
-              res([{
-                ...financiador,
-                notas: results,
-              }])
+              res([
+                {
+                  ...financiador,
+                  notas: results,
+                },
+              ])
             })
             return
           }
@@ -118,6 +121,8 @@ class FinanciadorDB {
       direccion.id_pais,
     ]
 
+    const qSecundarios = [qEnlace, qDireccion]
+
     return new Promise((res, rej) => {
       connectionDB.getConnection((err, connection) => {
         if (err) return rej(err)
@@ -126,12 +131,6 @@ class FinanciadorDB {
           if (err) {
             connection.destroy()
             return rej(err)
-          }
-
-          const idsCreados = {
-            financiador: 0,
-            enlace: 0,
-            direccion: 0,
           }
 
           //guardar financiador
@@ -147,43 +146,33 @@ class FinanciadorDB {
               }
               // @ts-ignore
               const idFinanciador = results.insertId
-              idsCreados.financiador = idFinanciador
-              phEnlace.unshift(idFinanciador)
-              phDireccion.unshift(idFinanciador)
 
-              //guardar enlace
-              connection.query(qEnlace, phEnlace, (error, results, fields) => {
-                if (error) {
-                  return connection.rollback(() => {
-                    connection.destroy()
-                    rej(error)
-                  })
-                }
-                // @ts-ignore
-                idsCreados.enlace = results.insertId
+              const phSecundarios = [
+                idFinanciador,
+                ...phEnlace,
+                idFinanciador,
+                ...phDireccion,
+              ]
 
-                //guardar direccion
-                connection.query(
-                  qDireccion,
-                  phDireccion,
-                  (error, results, fields) => {
-                    if (error) {
-                      return connection.rollback(() => {
-                        connection.destroy()
-                        rej(error)
-                      })
-                    }
-                    // @ts-ignore
-                    idsCreados.direccion = results.insertId
-
-                    connection.commit((err) => {
-                      if (err) connection.rollback(() => rej(err))
+              //guardar enlace y direccion
+              connection.query(
+                qSecundarios.join(";"),
+                phSecundarios,
+                (error, results, fields) => {
+                  if (error) {
+                    return connection.rollback(() => {
                       connection.destroy()
-                      res(idsCreados)
+                      rej(error)
                     })
                   }
-                )
-              })
+
+                  connection.commit((err) => {
+                    if (err) connection.rollback(() => rej(err))
+                    connection.destroy()
+                    res(idFinanciador)
+                  })
+                }
+              )
             }
           )
         })
@@ -237,6 +226,9 @@ class FinanciadorDB {
       direccion.id,
     ]
 
+    const qCombinados = [qFinanciador, qEnlace, qDireccion]
+    const phCombinados = [...phFinanciador, ...phEnlace, ...phDireccion]
+
     return new Promise((res, rej) => {
       connectionDB.getConnection((err, connection) => {
         if (err) return rej(err)
@@ -249,8 +241,8 @@ class FinanciadorDB {
 
           //actualizar financiador
           connection.query(
-            qFinanciador,
-            phFinanciador,
+            qCombinados.join(";"),
+            phCombinados,
             (error, results, fields) => {
               if (error) {
                 return connection.rollback(() => {
@@ -259,34 +251,10 @@ class FinanciadorDB {
                 })
               }
 
-              //actualizar enlace
-              connection.query(qEnlace, phEnlace, (error, results, fields) => {
-                if (error) {
-                  return connection.rollback(() => {
-                    connection.destroy()
-                    rej(error)
-                  })
-                }
-
-                //actualizar direccion
-                connection.query(
-                  qDireccion,
-                  phDireccion,
-                  (error, results, fields) => {
-                    if (error) {
-                      return connection.rollback(() => {
-                        connection.destroy()
-                        rej(error)
-                      })
-                    }
-
-                    connection.commit((err) => {
-                      if (err) connection.rollback(() => rej(err))
-                      connection.destroy()
-                      res(true)
-                    })
-                  }
-                )
+              connection.commit((err) => {
+                if (err) connection.rollback(() => rej(err))
+                connection.destroy()
+                res(true)
               })
             }
           )
@@ -296,10 +264,10 @@ class FinanciadorDB {
   }
 
   static async borrar(id: number) {
-    const query = `UPDATE financiadores SET b_activo=0 WHERE id=${id} LIMIT 1`
+    const query = `UPDATE financiadores SET b_activo=0 WHERE id=? LIMIT 1`
 
     try {
-      const res = await queryDB(query)
+      const res = await queryDBPlaceHolder(query, [id])
       return RespuestaDB.exitosa(res)
     } catch (error) {
       return RespuestaDB.fallida(error)
@@ -307,13 +275,10 @@ class FinanciadorDB {
   }
 
   static async obtenerNotas(idFinanciador: number) {
-    let query = `SELECT fn.id, fn.mensaje, fn.dt_registro,
-      CONCAT(u.nombre, ' ', u.apellido_paterno) usuario
-      FROM financiador_notas fn JOIN usuarios u ON fn.id_usuario = u.id
-      WHERE fn.id_financiador=${idFinanciador} AND fn.b_activo=1`
+    const query = this.qReNotas()
 
     try {
-      const res = await queryDB(query)
+      const res = await queryDBPlaceHolder(query, [idFinanciador])
       return RespuestaDB.exitosa(res)
     } catch (error) {
       return RespuestaDB.fallida(error)
