@@ -1,11 +1,14 @@
 export interface QueriesSolicitud {
   id?: number
+  id_coparte?: number
   id_proyecto?: number
   id_responsable?: number
   id_admin?: number
   i_estatus?: number
+  limit?: number
   dt_inicio?: string
   dt_fin?: string
+  titular?: string
 }
 
 export interface ComprobanteSolicitud {

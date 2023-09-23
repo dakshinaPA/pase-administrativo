@@ -13,7 +13,16 @@ import { fechaActualAEpoch } from "@assets/utils/common"
 
 class SolicitudesPresupuestoDB {
   static queryRe = (queries: QueriesSolicitud) => {
-    const { id, id_proyecto, id_responsable, i_estatus } = queries
+    const {
+      id,
+      id_proyecto,
+      id_responsable,
+      id_admin,
+      i_estatus,
+      limit,
+      dt_inicio,
+      dt_fin,
+    } = queries
 
     let query = `SELECT sp.id, sp.id_proyecto, sp.i_tipo_gasto, sp.clabe, sp.id_banco, sp.titular_cuenta,
       sp.email, sp.proveedor, sp.descripcion_gasto, sp.id_partida_presupuestal, sp.f_importe, sp.i_estatus, sp.dt_registro,
@@ -24,6 +33,7 @@ class SolicitudesPresupuestoDB {
       SUM(spc.f_retenciones) f_total_impuestos_retenidos
       FROM solicitudes_presupuesto sp
       JOIN proyectos p ON sp.id_proyecto=p.id
+      JOIN copartes c ON p.id_coparte=c.id
       JOIN bancos b ON sp.id_banco=b.id
       JOIN rubros_presupuestales r ON sp.id_partida_presupuestal=r.id
       LEFT JOIN solicitud_presupuesto_comprobantes spc ON spc.id_solicitud_presupuesto=sp.id
@@ -35,26 +45,60 @@ class SolicitudesPresupuestoDB {
       query += " AND sp.id=?"
     } else if (id_responsable) {
       query += " AND p.id_responsable=?"
+    } else if (id_admin) {
+      query += " AND c.id_administrador=?"
     }
 
     if (i_estatus) {
       query += " AND sp.i_estatus=?"
     }
+    if (dt_inicio) {
+      query += " AND sp.dt_registro >= ?"
+    }
+    if (dt_fin) {
+      query += " AND sp.dt_registro =< ?"
+    }
 
     query += " GROUP BY sp.id"
+
+    if (limit) {
+      query += " LIMIT ?"
+    }
 
     return query
   }
 
   static async obtener(queries: QueriesSolicitud) {
-    const { id, id_proyecto, id_responsable, i_estatus } = queries
+    const {
+      id,
+      id_proyecto,
+      id_responsable,
+      id_admin,
+      i_estatus,
+      limit,
+      dt_inicio,
+      dt_fin,
+    } = queries
 
     const qSolicitud = this.queryRe(queries)
 
-    const phSolicitud = [id_proyecto || id || id_responsable]
+    const phSolicitud = []
+
+    if (id || id_proyecto || id_responsable || id_admin) {
+      phSolicitud.push(id || id_proyecto || id_responsable || id_admin)
+    }
 
     if (i_estatus) {
       phSolicitud.push(i_estatus)
+    }
+    if (limit) {
+      phSolicitud.push(Number(limit))
+    }
+    if (dt_inicio) {
+      phSolicitud.push(dt_inicio)
+    }
+    if (dt_fin) {
+      phSolicitud.push(dt_fin)
     }
 
     return new Promise((res, rej) => {

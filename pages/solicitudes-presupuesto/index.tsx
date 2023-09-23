@@ -28,23 +28,26 @@ import { CoparteMin, QueriesCoparte } from "@models/coparte.model"
 import styles from "@components/styles/Filtros.module.css"
 import { TooltipInfo } from "@components/Tooltip"
 
-interface FiltrosSolicitud {
-  id_coparte: number
-  id_proyecto: number
-  i_estatus: 0 | EstatusSolicitud
-  titular: string
-  dt_inicio: string
-  dt_fin: string
-}
+// interface FiltrosSolicitud {
+//   id_coparte: number
+//   id_proyecto: number
+//   i_estatus: 0 | EstatusSolicitud
+//   titular: string
+//   dt_inicio: string
+//   dt_fin: string
+// }
+// interface FiltrosSolicitud extends QueriesSolicitud {
+//   id_coparte: number
+// }
 
 interface FiltrosProps {
   show: boolean
   setShow: (show: boolean) => void
-  aplicarFiltros: (filtros: FiltrosSolicitud) => void
+  aplicarFiltros: (filtros: QueriesSolicitud) => void
 }
 
 const Filtros = ({ show, setShow, aplicarFiltros }: FiltrosProps) => {
-  const estadoInicialForma: FiltrosSolicitud = {
+  const estadoInicialForma: QueriesSolicitud = {
     id_coparte: 0,
     id_proyecto: 0,
     i_estatus: 0,
@@ -59,7 +62,8 @@ const Filtros = ({ show, setShow, aplicarFiltros }: FiltrosProps) => {
   const [proyectosUsuario, setProyectosUsuario] = useState<ProyectoMin[]>([])
 
   useEffect(() => {
-    setEstadoForma(estadoInicialForma)
+    // setEstadoForma(estadoInicialForma)
+    // setProyectosUsuario([])
   }, [show])
 
   useEffect(() => {
@@ -116,15 +120,29 @@ const Filtros = ({ show, setShow, aplicarFiltros }: FiltrosProps) => {
   }
 
   const buscarSolicitudes = () => {
-    console.log(estaforma)
-    // const dataTranformada = {
-    //   i_estatus: Number(estaforma.i_estatus),
-    //   titular: estaforma.titular,
-    //   dt_inicio: estaforma.dt_inicio ? inputDateAEpoch(estaforma.dt_inicio) : 0,
-    //   dt_fin: estaforma.dt_fin ? inputDateAEpoch(estaforma.dt_fin) : 0,
-    // }
+    // console.log(estaforma)
 
-    // aplicarFiltros(dataTranformada)
+    const {
+      id_coparte,
+      id_proyecto,
+      i_estatus,
+      titular,
+      dt_inicio,
+      dt_fin,
+    } = estaforma
+
+    const filtrosSeleccionados: QueriesSolicitud = {}
+
+    if(Number(id_coparte)) filtrosSeleccionados.id_coparte = id_coparte
+    if(Number(id_proyecto)) filtrosSeleccionados.id_proyecto = id_proyecto
+    if(Number(i_estatus)) filtrosSeleccionados.i_estatus = i_estatus
+    if(titular) filtrosSeleccionados.titular = titular
+    if(dt_inicio) filtrosSeleccionados.dt_inicio = String(inputDateAEpoch(dt_inicio))
+    if(dt_fin) filtrosSeleccionados.dt_fin = String(inputDateAEpoch(dt_fin))
+
+    console.log(filtrosSeleccionados)
+
+    aplicarFiltros(filtrosSeleccionados)
     setShow(false)
   }
 
@@ -142,8 +160,8 @@ const Filtros = ({ show, setShow, aplicarFiltros }: FiltrosProps) => {
               onChange={handleChange}
               value={estaforma.id_coparte}
             >
-              <option value="0" disabled>
-                Selecciona coparte
+              <option value="0">
+                Todas
               </option>
               {copartesUsuario.map(({ id, nombre }) => (
                 <option key={id} value={id}>
@@ -161,8 +179,8 @@ const Filtros = ({ show, setShow, aplicarFiltros }: FiltrosProps) => {
             onChange={handleChange}
             value={estaforma.id_proyecto}
           >
-            <option value="0" disabled>
-              Selecciona proyecto
+            <option value="0">
+              Todos
             </option>
             {proyectosUsuario.map(({ id, id_alt, nombre }) => (
               <option key={id} value={id}>
@@ -281,10 +299,14 @@ const SolicitudesPresupuesto = () => {
 
   const cargarSolicitudes = async () => {
     try {
-      const queries: QueriesSolicitud =
-        user.id_rol == 3
-          ? { id_responsable: user.id, i_estatus: 1 }
-          : { i_estatus: 1 }
+
+      const queries: QueriesSolicitud = {limit: 1}
+
+      if (user.id_rol == 2) {
+        queries.id_admin = user.id
+      } else if (user.id_rol == 3) {
+        queries.id_responsable = user.id
+      }
 
       const reSolicitudes = await obtenerSolicitudes(queries)
       if (reSolicitudes.error) throw reSolicitudes.data
@@ -297,46 +319,46 @@ const SolicitudesPresupuesto = () => {
     }
   }
 
-  const cargarCopartesDB = async () => {
-    setIsLoading(true)
+  // const cargarCopartesDB = async () => {
+  //   setIsLoading(true)
 
-    const query: QueriesCoparte = user.id_rol == 2 ? { id_admin: user.id } : {}
+  //   const query: QueriesCoparte = user.id_rol == 2 ? { id_admin: user.id } : {}
 
-    const reCopartesDB = await obtenerCopartes(query)
-    if (reCopartesDB.error) {
-      console.log(reCopartesDB.data)
-    } else {
-      const copartesDB = reCopartesDB.data as CoparteMin[]
-      setCopartesDB(copartesDB)
-      if (copartesDB.length == 1) {
-        setSelectCoparte(copartesDB[0].id || 0)
-      }
-    }
+  //   const reCopartesDB = await obtenerCopartes(query)
+  //   if (reCopartesDB.error) {
+  //     console.log(reCopartesDB.data)
+  //   } else {
+  //     const copartesDB = reCopartesDB.data as CoparteMin[]
+  //     setCopartesDB(copartesDB)
+  //     if (copartesDB.length == 1) {
+  //       setSelectCoparte(copartesDB[0].id || 0)
+  //     }
+  //   }
 
-    setIsLoading(false)
-  }
+  //   setIsLoading(false)
+  // }
 
-  const cargarProyectosDB = async () => {
-    setIsLoading(true)
+  // const cargarProyectosDB = async () => {
+  //   setIsLoading(true)
 
-    const query =
-      user.id_rol == 3
-        ? { id_responsable: user.id }
-        : { id_coparte: selectCoparte }
+  //   const query =
+  //     user.id_rol == 3
+  //       ? { id_responsable: user.id }
+  //       : { id_coparte: selectCoparte }
 
-    const reProyectosDB = await obtenerProyectos(query)
-    if (reProyectosDB.error) {
-      console.log(reProyectosDB.data)
-    } else {
-      const proyectosDB = reProyectosDB.data as ProyectoMin[]
-      setProyectosDB(proyectosDB)
-      if (proyectosDB.length == 1) {
-        setSelectProyecto(proyectosDB[0].id || 0)
-      }
-    }
+  //   const reProyectosDB = await obtenerProyectos(query)
+  //   if (reProyectosDB.error) {
+  //     console.log(reProyectosDB.data)
+  //   } else {
+  //     const proyectosDB = reProyectosDB.data as ProyectoMin[]
+  //     setProyectosDB(proyectosDB)
+  //     if (proyectosDB.length == 1) {
+  //       setSelectProyecto(proyectosDB[0].id || 0)
+  //     }
+  //   }
 
-    setIsLoading(false)
-  }
+  //   setIsLoading(false)
+  // }
 
   // const cargarSolicitudes = async () => {
   //   if (!selectProyecto) return
@@ -361,33 +383,33 @@ const SolicitudesPresupuesto = () => {
   //   setIsLoading(false)
   // }
 
-  const cargarInfoProyecto = async () => {
-    if (!selectProyecto) return
+  // const cargarInfoProyecto = async () => {
+  //   if (!selectProyecto) return
 
-    setIsLoading(true)
+  //   setIsLoading(true)
 
-    const reProyecto = await obtenerProyectos({
-      id: selectProyecto,
-      min: false,
-    })
-    if (reProyecto.error) {
-      console.log(reProyecto.data)
-    } else {
-      const infoProyecto = reProyecto.data as Proyecto
-      const solicitudesDB = infoProyecto.solicitudes_presupuesto
-      setInfoProyectoDB(infoProyecto)
-      setSolicitudesFiltradas(solicitudesDB)
+  //   const reProyecto = await obtenerProyectos({
+  //     id: selectProyecto,
+  //     min: false,
+  //   })
+  //   if (reProyecto.error) {
+  //     console.log(reProyecto.data)
+  //   } else {
+  //     const infoProyecto = reProyecto.data as Proyecto
+  //     const solicitudesDB = infoProyecto.solicitudes_presupuesto
+  //     setInfoProyectoDB(infoProyecto)
+  //     setSolicitudesFiltradas(solicitudesDB)
 
-      //set del objeto de las solicitudes para cambios de estatus
-      const objIdsSolicitudes = {}
-      for (const solicitud of solicitudesDB) {
-        objIdsSolicitudes[solicitud.id] = false
-      }
-      setIdsCambioStatus(objIdsSolicitudes)
-    }
+  //     //set del objeto de las solicitudes para cambios de estatus
+  //     const objIdsSolicitudes = {}
+  //     for (const solicitud of solicitudesDB) {
+  //       objIdsSolicitudes[solicitud.id] = false
+  //     }
+  //     setIdsCambioStatus(objIdsSolicitudes)
+  //   }
 
-    setIsLoading(false)
-  }
+  //   setIsLoading(false)
+  // }
 
   const cambiarEstatusSolicitudes = async (i_estatus: EstatusSolicitud) => {
     const idsAarray = Object.entries(idsCambioStatus)
@@ -504,31 +526,31 @@ const SolicitudesPresupuesto = () => {
     })
   }
 
-  const aplicarFiltros = (filtros: FiltrosSolicitud) => {
+  const aplicarFiltros = (filtros: QueriesSolicitud) => {
     const { i_estatus, titular, dt_inicio, dt_fin } = filtros
 
-    const solicitudesFiltro = infoProyectoDB.solicitudes_presupuesto.filter(
-      (solicitud) => {
-        const condicionEstatus =
-          i_estatus > 0 ? solicitud.i_estatus === i_estatus : true
-        const condicionTitular = titular
-          ? aMinuscula(solicitud.titular_cuenta).includes(aMinuscula(titular))
-          : true
-        const condicionDtInicio = dt_inicio
-          ? solicitud.dt_registro >= dt_inicio
-          : true
-        const condicionDtFin = dt_fin ? solicitud.dt_registro <= dt_fin : true
+    // const solicitudesFiltro = infoProyectoDB.solicitudes_presupuesto.filter(
+    //   (solicitud) => {
+    //     const condicionEstatus =
+    //       i_estatus > 0 ? solicitud.i_estatus === i_estatus : true
+    //     const condicionTitular = titular
+    //       ? aMinuscula(solicitud.titular_cuenta).includes(aMinuscula(titular))
+    //       : true
+    //     const condicionDtInicio = dt_inicio
+    //       ? solicitud.dt_registro >= dt_inicio
+    //       : true
+    //     const condicionDtFin = dt_fin ? solicitud.dt_registro <= dt_fin : true
 
-        return (
-          condicionEstatus &&
-          condicionTitular &&
-          condicionDtInicio &&
-          condicionDtFin
-        )
-      }
-    )
+    //     return (
+    //       condicionEstatus &&
+    //       condicionTitular &&
+    //       condicionDtInicio &&
+    //       condicionDtFin
+    //     )
+    //   }
+    // )
 
-    setSolicitudesFiltradas(solicitudesFiltro)
+    // setSolicitudesFiltradas(solicitudesFiltro)
     // if (i_estatus > 0) {
 
     //   const solicitudesFiltro = infoProyectoDB.solicitudes_presupuesto.filter(
