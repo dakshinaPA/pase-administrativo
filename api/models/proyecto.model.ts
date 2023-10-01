@@ -32,7 +32,6 @@ export interface ResProyectoDB {
   f_comprobado: number
   f_retenciones: number
   f_pa: number
-  p_avance: number
   ministraciones?: MinistracionProyecto[]
   rubros_ministracion?: RubroMinistracion[]
   colaboradores?: ColaboradorProyecto[]

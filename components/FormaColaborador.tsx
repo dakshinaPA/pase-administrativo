@@ -159,28 +159,17 @@ const FormaColaborador = () => {
 
   useEffect(() => {
     //el banco depende de los primero 3 digios de la clabe
-    if (estadoForma.clabe.length < 3 && estadoForma.id_banco > 0) {
-      dispatch({
-        type: "HANDLE_CHANGE",
-        payload: {
-          name: "id_banco",
-          value: 0,
-        },
-      })
-    } else if (estadoForma.clabe.length == 3 && estadoForma.id_banco == 0) {
-      const matchBanco = bancos.find(
-        (banco) => banco.clave === estadoForma.clabe
-      )
-      if (matchBanco) {
-        dispatch({
-          type: "HANDLE_CHANGE",
-          payload: {
-            name: "id_banco",
-            value: matchBanco.id,
-          },
-        })
-      }
-    }
+    const matchBanco = bancos.find(
+      (banco) => banco.clave === estadoForma.clabe.substring(0, 3)
+    )
+
+    dispatch({
+      type: "HANDLE_CHANGE",
+      payload: {
+        name: "id_banco",
+        value: matchBanco?.id || 0,
+      },
+    })
   }, [estadoForma.clabe])
 
   const cargarData = async () => {

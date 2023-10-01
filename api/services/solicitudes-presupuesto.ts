@@ -179,69 +179,6 @@ class SolicitudesPresupuestoServices {
     )
   }
 
-  // static async obtenerComprobantes(id_solicitud: number) {
-  //   const determinarMetodoPago = (i_metodo_pago: number) => {
-  //     let metodo_pago: "PUE" | "PPD" = "PUE"
-
-  //     if (i_metodo_pago == 2) {
-  //       metodo_pago = "PPD"
-  //     }
-
-  //     return metodo_pago
-  //   }
-
-  //   const re = await SolicitudesPresupuestoDB.obtenerComprobantes(id_solicitud)
-  //   if (re.error) {
-  //     return RespuestaController.fallida(
-  //       400,
-  //       "Error al obtener comprobantes de solicitud",
-  //       re.data
-  //     )
-  //   }
-
-  //   const comprobantes = re.data as ComprobanteSolicitud[]
-  //   const comprobantesHidratados: ComprobanteSolicitud[] = comprobantes.map(
-  //     (comprobante) => ({
-  //       ...comprobante,
-  //       metodo_pago: determinarMetodoPago(comprobante.i_metodo_pago),
-  //     })
-  //   )
-
-  //   return RespuestaController.exitosa(
-  //     200,
-  //     "Comprobantes de solicitud obtenidos con éxito",
-  //     comprobantesHidratados
-  //   )
-  // }
-
-  // static async crearComprobante(
-  //   id_solicitud: number,
-  //   data: ComprobanteSolicitud
-  // ) {
-  //   try {
-  //     const cr = await SolicitudesPresupuestoDB.crearComprobante(
-  //       id_solicitud,
-  //       data
-  //     )
-  //     if (cr.error) throw cr.data
-
-  //     // @ts-ignore
-  //     const idInsertado = cr.data.insertId
-
-  //     return RespuestaController.exitosa(
-  //       201,
-  //       "Solicitud de presupuesto creada con éxito",
-  //       { idInsertado }
-  //     )
-  //   } catch (error) {
-  //     return RespuestaController.fallida(
-  //       400,
-  //       "Error al crear solicitud de presupuesto",
-  //       error
-  //     )
-  //   }
-  // }
-
   static async buscarFactura(folio: string) {
     try {
       const re = await SolicitudesPresupuestoDB.buscarFactura(folio)

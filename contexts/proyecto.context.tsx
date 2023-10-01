@@ -45,7 +45,6 @@ export type ActionTypes =
   | "ACTUALIZAR_MINISTRACIONES"
   | "CAMBIAR_TIPO_FINANCIAMIENTO"
   | "RECARGAR_NOTAS"
-  | "ACTUALIZAR_SALDO"
 
 interface ActionDispatch {
   type: ActionTypes
@@ -97,18 +96,6 @@ const reducer = (state: Proyecto, action: ActionDispatch): Proyecto => {
       return {
         ...state,
         ministraciones: [],
-      }
-    case "ACTUALIZAR_SALDO":
-      return {
-        ...state,
-        saldo: {
-          ...state.saldo,
-          f_monto_total: payload.f_monto_total,
-          f_pa: payload.f_pa,
-          f_ejecutado: payload.f_ejecutado,
-          f_remanente: payload.f_remanente,
-          p_avance: payload.p_avance,
-        },
       }
     case "RECARGAR_NOTAS":
       return {
@@ -185,36 +172,6 @@ const ProyectoProvider = ({ children }) => {
     }
   }, [estadoForma.i_tipo_financiamiento])
 
-  useEffect(() => {
-    let f_monto_total = 0
-    let f_pa = 0
-
-    for (const ministracion of estadoForma.ministraciones) {
-      for (const rp of ministracion.rubros_presupuestales) {
-        f_monto_total += Number(rp.f_monto)
-        if (rp.id_rubro == 1) {
-          f_pa += Number(rp.f_monto)
-        }
-      }
-    }
-
-    const { f_transferido, f_isr, f_retenciones } = estadoForma.saldo
-
-    const f_ejecutado = f_transferido + f_isr + f_retenciones + f_pa
-    const f_remanente = f_monto_total - f_ejecutado
-    const p_avance = Number(((f_ejecutado * 100) / f_monto_total).toFixed(2))
-
-    dispatch({
-      type: "ACTUALIZAR_SALDO",
-      payload: {
-        f_monto_total,
-        f_pa,
-        f_ejecutado,
-        f_remanente,
-        p_avance,
-      },
-    })
-  }, [estadoForma.ministraciones])
 
   const handleTipoCambioFinanciamineto = () => {
     dispatch({

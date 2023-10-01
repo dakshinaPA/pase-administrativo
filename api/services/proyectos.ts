@@ -10,6 +10,7 @@ import {
   QueriesProyecto,
   RubroMinistracion,
   NotaProyecto,
+  DataProyecto,
 } from "@models/proyecto.model"
 
 import { ResProyectoDB } from "@api/models/proyecto.model"
@@ -46,20 +47,28 @@ class ProyectosServices {
   }
 
   static transformarDataProyecto = (data: ResProyectoDB): Proyecto => {
-    const { id_proyecto_saldo, proveedores, ...resto } = data
+    let {
+      f_monto_total,
+      f_solicitado,
+      f_comprobado,
+      f_transferido,
+      f_retenciones,
+      f_pa,
+      ...resto
+    } = data
 
-    const f_monto_total = Number(data.f_monto_total)
-    const f_solicitado = Number(data.f_solicitado)
-    const f_comprobado = Number(data.f_comprobado)
-    const f_transferido = Number(data.f_transferido)
-    const f_retenciones = Number(data.f_retenciones)
-    const f_pa = Number(data.f_pa)
-    const p_avance = Number(data.p_avance)
+    f_monto_total = Number(data.f_monto_total)
+    f_solicitado = Number(data.f_solicitado)
+    f_comprobado = Number(data.f_comprobado)
+    f_transferido = Number(data.f_transferido)
+    f_retenciones = Number(data.f_retenciones)
+    f_pa = Number(f_pa)
 
     const f_por_comprobar = f_solicitado - f_comprobado
     const f_isr = f_por_comprobar * 0.35
     const f_ejecutado = f_transferido + f_retenciones + f_isr + f_pa
     const f_remanente = f_monto_total - f_ejecutado
+    const p_avance = Number((f_ejecutado * 100 / f_monto_total).toFixed(2))
 
     return {
       ...resto,
@@ -67,13 +76,12 @@ class ProyectosServices {
         resto.i_tipo_financiamiento
       ),
       saldo: {
-        id: id_proyecto_saldo,
         f_monto_total,
         f_solicitado,
         f_transferido,
         f_comprobado,
         f_por_comprobar,
-        f_isr,
+        f_isr: f_isr < 0 ? 0 : f_isr, //evitar que isr de numero negativo
         f_remanente,
         p_avance,
         f_retenciones,
@@ -97,7 +105,7 @@ class ProyectosServices {
     } catch (error) {
       return RespuestaController.fallida(
         400,
-        "Error al obtener financiadores",
+        "Error al obtener proyectos",
         error
       )
     }
@@ -170,29 +178,25 @@ class ProyectosServices {
 
   static async obtenerData(id_proyecto: number) {
     try {
-      const reColaboradores = ColaboradorServices.obtener(id_proyecto)
-      const reProveedores = ProveedorServices.obtener(id_proyecto)
-      const rerubros = ProyectoDB.obtenerRubrosMinistraciones(id_proyecto)
+      const reData = (await ProyectoDB.obtenerData(id_proyecto)) as DataProyecto
 
-      const resCombinadas = await Promise.all([
-        reColaboradores,
-        reProveedores,
-        rerubros,
-      ])
-
-      for (const rc of resCombinadas) {
-        if (rc.error) throw rc.data
+      //quiatr rubros repetidos
+      const rubrosSinRepetir = []
+      for (const { id_rubro, rubro } of reData.rubros_presupuestales) {
+        const match = rubrosSinRepetir.find((rsr) => rsr.id_rubro == id_rubro)
+        if (!match) rubrosSinRepetir.push({ id_rubro, rubro })
       }
 
-      const colaboradores = resCombinadas[0].data as ColaboradorProyecto[]
-      const proveedores = resCombinadas[1].data as ProveedorProyecto[]
-      const rubros_presupuestales = resCombinadas[2].data as RubroMinistracion[]
+      const dataTransformada: DataProyecto = {
+        ...reData,
+        rubros_presupuestales: rubrosSinRepetir,
+      }
 
-      return RespuestaController.exitosa(200, "Consulta exitosa", {
-        colaboradores,
-        proveedores,
-        rubros_presupuestales,
-      })
+      return RespuestaController.exitosa(
+        200,
+        "Consulta exitosa",
+        dataTransformada
+      )
     } catch (error) {
       return RespuestaController.fallida(
         400,

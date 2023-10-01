@@ -466,7 +466,7 @@ const FormaSolicitudPresupuesto = () => {
   }
 
   const obtener = async () => {
-    const re = await obtenerSolicitudes({id: idSolicitud})
+    const re = await obtenerSolicitudes({ id: idSolicitud })
     if (re.error) {
       console.log(re.data)
     } else {
@@ -568,8 +568,6 @@ const FormaSolicitudPresupuesto = () => {
         "application/xml"
       )
 
-      // console.log(xml)
-
       const [comprobante] = xml.getElementsByTagName("cfdi:Comprobante")
       const [timbre] = xml.getElementsByTagName("tfd:TimbreFiscalDigital")
       const [emisor] = xml.getElementsByTagName("cfdi:Emisor")
@@ -615,7 +613,13 @@ const FormaSolicitudPresupuesto = () => {
       const formaPago = asignarIdFormaPAgo(clave_forma_pago)
       const regimenFiscal = obtenerRegimenXClave(clave_regimen_fiscal)
 
-      if (!folio_fiscal || !metodo_pago || !f_total || !clave_regimen_fiscal) {
+      if (
+        !folio_fiscal ||
+        !metodo_pago ||
+        !f_total ||
+        !clave_regimen_fiscal ||
+        !regimenFiscal.id
+      ) {
         console.log("no se identificaron los datos de la factura")
         return
       }
