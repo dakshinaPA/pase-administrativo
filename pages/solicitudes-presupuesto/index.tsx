@@ -5,18 +5,14 @@ import { Loader } from "@components/Loader"
 import { TablaContenedor } from "@components/Contenedores"
 import { ModalEliminar } from "@components/ModalEliminar"
 import {
-  aMinuscula,
   epochAFecha,
   inputDateAEpoch,
   montoALocaleString,
   obtenerBadgeStatusSolicitud,
-  obtenerCopartes,
-  obtenerProyectos,
   obtenerSolicitudes,
 } from "@assets/utils/common"
 import { crearExcel } from "@assets/utils/crearExcel"
 import { useAuth } from "@contexts/auth.context"
-import { Proyecto, ProyectoMin, QueriesProyecto } from "@models/proyecto.model"
 import {
   EstatusSolicitud,
   PayloadCambioEstatus,
@@ -24,7 +20,6 @@ import {
   SolicitudPresupuesto,
 } from "@models/solicitud-presupuesto.model"
 import { BtnAccion, BtnNeutro } from "@components/Botones"
-import { CoparteMin, QueriesCoparte } from "@models/coparte.model"
 import { TooltipInfo } from "@components/Tooltip"
 import { Filtros } from "@components/FiltrosSolicitudes"
 import { Toast } from "@components/Toast"
@@ -47,9 +42,6 @@ const SolicitudesPresupuesto = () => {
   const { user } = useAuth()
   if (!user) return null
   const router = useRouter()
-  const [copartesDB, setCopartesDB] = useState<CoparteMin[]>([])
-  const [proyectosDB, setProyectosDB] = useState<ProyectoMin[]>([])
-  const [infoProyectoDB, setInfoProyectoDB] = useState<Proyecto>(null)
 
   const [solicitudesFiltradas, setSolicitudesFiltradas] = useState<
     SolicitudPresupuestoVista[]
@@ -170,7 +162,7 @@ const SolicitudesPresupuesto = () => {
     if (error) {
       console.log(data)
     } else {
-      // await cargarSolicitudes()
+      await cargarSolicitudes()
     }
 
     setIsLoading(false)
@@ -238,6 +230,9 @@ const SolicitudesPresupuesto = () => {
     setSolicitudesFiltradas(nuevaListaSolicitudes)
   }
 
+  const showSelectEstatus = solicitudesFiltradas.some((sol) => !!sol.checked)
+  const showCbStatus = user.id_rol != 3
+
   return (
     <TablaContenedor>
       <div className="row mb-2">
@@ -272,26 +267,28 @@ const SolicitudesPresupuesto = () => {
           />
         </div>
         <div className="col d-none d-xl-block"></div>
-        <div className="col-12 col-sm-6 col-lg-3 mb-3">
-          <select
-            className="form-control"
-            onChange={({ target }) =>
-              cambiarEstatusSolicitudes(
-                Number(target.value) as EstatusSolicitud
-              )
-            }
-            value={nuevoEstatus}
-          >
-            <option value="0" disabled>
-              Selecciona estatus
-            </option>
-            <option value="1">Revisión</option>
-            <option value="2">Autorizada</option>
-            <option value="3">Rechazada</option>
-            <option value="4">Procesada</option>
-            <option value="5">Devolución</option>
-          </select>
-        </div>
+        {showSelectEstatus && (
+          <div className="col-12 col-sm-6 col-lg-3 mb-3">
+            <select
+              className="form-control"
+              onChange={({ target }) =>
+                cambiarEstatusSolicitudes(
+                  Number(target.value) as EstatusSolicitud
+                )
+              }
+              value={nuevoEstatus}
+            >
+              <option value="0" disabled>
+                Selecciona estatus
+              </option>
+              <option value="1">Revisión</option>
+              <option value="2">Autorizada</option>
+              <option value="3">Rechazada</option>
+              <option value="4">Procesada</option>
+              <option value="5">Devolución</option>
+            </select>
+          </div>
+        )}
         <div className="col-12 col-sm-6 col-lg-3 col-xl-2 mb-3">
           <button
             className="btn btn-outline-secondary w-100"
@@ -307,67 +304,8 @@ const SolicitudesPresupuesto = () => {
         </div>
       </div>
       {isLoading && <Loader />}
-
       <>
-        {/* <div className="row mb-3">
-            <div className="col-12 mb-2">
-              <h4 className="color1 mb-0">Saldo del proyecto</h4>
-            </div>
-            <div className="col-12 table-responsive">
-              <table className="table">
-                <thead className="table-light">
-                  <tr>
-                    <th>Monto total</th>
-                    <th>Transferido</th>
-                    <th>Solicitado</th>
-                    <th>Comprobado</th>
-                    <th>Por comprobar</th>
-                    <th>ISR (35%)</th>
-                    <th>Retenciones</th>
-                    <th>PA</th>
-                    <th>Total ejecutado</th>
-                    <th>Remanente</th>
-                    <th>Avance</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>
-                      {montoALocaleString(infoProyectoDB.saldo.f_monto_total)}
-                    </td>
-                    <td>
-                      {montoALocaleString(infoProyectoDB.saldo.f_transferido)}
-                    </td>
-                    <td>
-                      {montoALocaleString(infoProyectoDB.saldo.f_solicitado)}
-                    </td>
-                    <td>
-                      {montoALocaleString(infoProyectoDB.saldo.f_comprobado)}
-                    </td>
-                    <td>
-                      {montoALocaleString(infoProyectoDB.saldo.f_por_comprobar)}
-                    </td>
-                    <td>{montoALocaleString(infoProyectoDB.saldo.f_isr)}</td>
-                    <td>
-                      {montoALocaleString(infoProyectoDB.saldo.f_retenciones)}
-                    </td>
-                    <td>{montoALocaleString(infoProyectoDB.saldo.f_pa)}</td>
-                    <td>
-                      {montoALocaleString(infoProyectoDB.saldo.f_ejecutado)}
-                    </td>
-                    <td>
-                      {montoALocaleString(infoProyectoDB.saldo.f_remanente)}
-                    </td>
-                    <td>{infoProyectoDB.saldo.p_avance}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div> */}
         <div className="row">
-          {/* <div className="col-12 mb-2">
-            <h4 className="color1 mb-0">Solicitudes</h4>
-          </div> */}
           <div className="col-12 table-responsive">
             <table className="table">
               <thead className="table-light">
@@ -386,7 +324,7 @@ const SolicitudesPresupuesto = () => {
                   <th>Total</th>
                   <th>Estatus</th>
                   <th>Fecha registro</th>
-                  {user.id_rol == 1 && (
+                  {showCbStatus && (
                     <th>
                       <input
                         type="checkbox"
@@ -449,7 +387,7 @@ const SolicitudesPresupuesto = () => {
                         </span>
                       </td>
                       <td>{epochAFecha(dt_registro)}</td>
-                      {user.id_rol == 1 && (
+                      {showCbStatus && (
                         <td>
                           <input
                             type="checkbox"

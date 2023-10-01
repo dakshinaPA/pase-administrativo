@@ -14,6 +14,7 @@ import {
 
 import { ResProyectoDB } from "@api/models/proyecto.model"
 import { epochAFecha } from "@assets/utils/common"
+import { SolicitudesPresupuestoServices } from "./solicitudes-presupuesto"
 
 class ProyectosServices {
   static async obtenerVMin(queries: QueriesProyecto) {
@@ -144,12 +145,16 @@ class ProyectosServices {
         tipo: ProveedorServices.obtenerTipo(prov.i_tipo),
       }))
 
+      const solicitudesHyd = solicitudes.map((sol) =>
+        SolicitudesPresupuestoServices.trasnformarData(sol)
+      )
+
       const proyecto: Proyecto = {
         ...this.transformarDataProyecto(dataProyecto),
         ministraciones: ministracionesConRubros,
         colaboradores: colaboradoresHyd,
         proveedores: proveedoresHyd,
-        solicitudes_presupuesto: solicitudes,
+        solicitudes_presupuesto: solicitudesHyd,
         notas,
       }
 

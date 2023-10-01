@@ -11,13 +11,16 @@ export interface QueriesSolicitud {
   titular?: string
 }
 
+export type MetodosPAgo = "PUE" | "PPD"
+export type IMetodosPAgo = 1 | 2
+
 export interface ComprobanteSolicitud {
   id?: number
   folio_fiscal: string
   f_total: string
   f_retenciones: string
-  i_metodo_pago: 1 | 2 // 1.PUE 2.PPD
-  metodo_pago?: "PUE" | "PPD"
+  i_metodo_pago: IMetodosPAgo // 1.PUE 2.PPD
+  metodo_pago?: MetodosPAgo
   id_forma_pago: number
   clave_forma_pago?: string
   forma_pago?: string

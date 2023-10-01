@@ -77,6 +77,27 @@ class SolicitudesPresupuestoDB {
     return query
   }
 
+  static qReComprobantes = () => {
+    return `
+      SELECT spc.id, spc.folio_fiscal, spc.f_total, spc.f_retenciones, spc.i_metodo_pago, spc.id_forma_pago, spc.id_regimen_fiscal, spc.dt_registro,
+      fp.nombre forma_pago, fp.clave clave_forma_pago,
+      rf.nombre regimen_fiscal, rf.clave clave_regimen_fiscal
+      FROM solicitud_presupuesto_comprobantes spc
+      JOIN formas_pago fp ON spc.id_forma_pago = fp.id
+      JOIN regimenes_fiscales rf ON spc.id_regimen_fiscal = rf.id
+      WHERE spc.id_solicitud_presupuesto=? AND spc.b_activo=1
+    `
+  }
+
+  static qReNotas = () => {
+    return `
+      SELECT spn.id, spn.mensaje, spn.dt_registro,
+      CONCAT(u.nombre, ' ', u.apellido_paterno) usuario
+      FROM solicitud_presupuesto_notas spn JOIN usuarios u ON spn.id_usuario = u.id
+      WHERE spn.id_solicitud=? AND spn.b_activo=1
+    `
+  }
+
   static async obtener(queries: QueriesSolicitud) {
     const {
       id,
@@ -106,7 +127,7 @@ class SolicitudesPresupuestoDB {
     if (dt_inicio) phSolicitud.push(dt_inicio)
     if (dt_fin) phSolicitud.push(dt_fin)
     if (limit) phSolicitud.push(Number(limit))
-    
+
     return new Promise((res, rej) => {
       connectionDB.getConnection((err, connection) => {
         if (err) return rej(err)
@@ -117,8 +138,37 @@ class SolicitudesPresupuestoDB {
             return rej(error)
           }
 
+          const proyectos = results
+
+          if (id) {
+            const qComprobantes = this.qReComprobantes()
+            const qnotas = this.qReNotas()
+            const qCombinados = [qComprobantes, qnotas].join(";")
+
+            connection.query(
+              qCombinados,
+              [id, id],
+              (error, results, fields) => {
+                if (error) {
+                  connection.destroy()
+                  return rej(error)
+                }
+
+                connection.destroy()
+                res([
+                  {
+                    ...proyectos[0],
+                    comprobantes: results[0],
+                    notas: results[1],
+                  },
+                ])
+              }
+            )
+            return
+          }
+
           connection.destroy()
-          res(results)
+          res(proyectos)
         })
       })
     })
@@ -264,22 +314,22 @@ class SolicitudesPresupuestoDB {
     }
   }
 
-  static async obtenerComprobantes(id_solicitud: number) {
-    let query = `SELECT spc.id, spc.folio_fiscal, spc.f_total, spc.f_retenciones, spc.i_metodo_pago, spc.id_forma_pago, spc.id_regimen_fiscal, spc.dt_registro,
-      fp.nombre forma_pago, fp.clave clave_forma_pago,
-      rf.nombre regimen_fiscal, rf.clave clave_regimen_fiscal
-      FROM solicitud_presupuesto_comprobantes spc
-      JOIN formas_pago fp ON spc.id_forma_pago = fp.id
-      JOIN regimenes_fiscales rf ON spc.id_regimen_fiscal = rf.id
-      WHERE spc.id_solicitud_presupuesto=${id_solicitud} AND spc.b_activo=1`
+  // static async obtenerComprobantes(id_solicitud: number) {
+  //   let query = `SELECT spc.id, spc.folio_fiscal, spc.f_total, spc.f_retenciones, spc.i_metodo_pago, spc.id_forma_pago, spc.id_regimen_fiscal, spc.dt_registro,
+  //     fp.nombre forma_pago, fp.clave clave_forma_pago,
+  //     rf.nombre regimen_fiscal, rf.clave clave_regimen_fiscal
+  //     FROM solicitud_presupuesto_comprobantes spc
+  //     JOIN formas_pago fp ON spc.id_forma_pago = fp.id
+  //     JOIN regimenes_fiscales rf ON spc.id_regimen_fiscal = rf.id
+  //     WHERE spc.id_solicitud_presupuesto=${id_solicitud} AND spc.b_activo=1`
 
-    try {
-      const res = await queryDB(query)
-      return RespuestaDB.exitosa(res)
-    } catch (error) {
-      return RespuestaDB.fallida(error)
-    }
-  }
+  //   try {
+  //     const res = await queryDB(query)
+  //     return RespuestaDB.exitosa(res)
+  //   } catch (error) {
+  //     return RespuestaDB.fallida(error)
+  //   }
+  // }
 
   // static async crearComprobante(
   //   id_solicitud: number,
@@ -364,13 +414,10 @@ class SolicitudesPresupuestoDB {
   }
 
   static async obtenerNotas(id_solicitud: number) {
-    let query = `SELECT spn.id, spn.mensaje, spn.dt_registro,
-      CONCAT(u.nombre, ' ', u.apellido_paterno) usuario
-      FROM solicitud_presupuesto_notas spn JOIN usuarios u ON spn.id_usuario = u.id
-      WHERE spn.id_solicitud=${id_solicitud} AND spn.b_activo=1`
+    let query = this.qReNotas()
 
     try {
-      const res = await queryDB(query)
+      const res = await queryDBPlaceHolder(query, [id_solicitud])
       return RespuestaDB.exitosa(res)
     } catch (error) {
       return RespuestaDB.fallida(error)

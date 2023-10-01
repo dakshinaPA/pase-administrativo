@@ -10,7 +10,11 @@ import {
   PayloadCambioEstatus,
   NotaSolicitud,
 } from "@models/solicitud-presupuesto.model"
-import { epochAFecha, obtenerEstatusSolicitud } from "@assets/utils/common"
+import {
+  epochAFecha,
+  obtenerEstatusSolicitud,
+  obtenerMetodoPago,
+} from "@assets/utils/common"
 
 class SolicitudesPresupuestoServices {
   static obtenerTipoGasto(i_tipo_gasto: TipoGastoSolicitud) {
@@ -28,74 +32,65 @@ class SolicitudesPresupuestoServices {
     }
   }
 
-  static async obtener(queries: QueriesSolicitud) {
-    // const id_solicitud = Number(queries.id)
+  static trasnformarData(
+    solicitudRes: ResSolicitudPresupuestoDB
+  ): SolicitudPresupuesto {
+    const {
+      i_tipo_gasto,
+      f_importe,
+      f_total_comprobaciones,
+      f_total_impuestos_retenidos,
+      i_estatus,
+    } = solicitudRes
 
+    return {
+      ...solicitudRes,
+      tipo_gasto: this.obtenerTipoGasto(i_tipo_gasto),
+      f_importe: Number(f_importe),
+      estatus: obtenerEstatusSolicitud(i_estatus),
+      saldo: {
+        f_total_comprobaciones,
+        f_monto_comprobar: Number(f_importe) - f_total_comprobaciones,
+        f_total_impuestos_retenidos,
+        f_total: Number(f_importe) + f_total_impuestos_retenidos,
+      },
+    }
+  }
+
+  static tranformDataComprobantes(
+    comprobanteRes: ComprobanteSolicitud
+  ): ComprobanteSolicitud {
+    return {
+      ...comprobanteRes,
+      metodo_pago: obtenerMetodoPago(comprobanteRes.i_metodo_pago),
+    }
+  }
+
+  static async obtener(queries: QueriesSolicitud) {
     try {
       const re = (await SolicitudesPresupuestoDB.obtener(
         queries
       )) as ResSolicitudPresupuestoDB[]
 
-      const solicitudes: SolicitudPresupuesto[] = re.map((solicitud) => {
-        const {
-          id,
-          id_proyecto,
-          id_responsable,
-          proyecto,
-          i_tipo_gasto,
-          clabe,
-          id_banco,
-          banco,
-          titular_cuenta,
-          email,
-          proveedor,
-          descripcion_gasto,
-          id_partida_presupuestal,
-          rubro,
-          f_importe,
-          f_total_comprobaciones,
-          f_total_impuestos_retenidos,
-          i_estatus,
-          dt_registro,
-        } = solicitud
+      let solicitudes: SolicitudPresupuesto[] = re.map((sol) =>
+        this.trasnformarData(sol)
+      )
 
-        return {
-          id,
-          id_proyecto,
-          proyecto,
-          id_responsable,
-          i_tipo_gasto,
-          tipo_gasto: this.obtenerTipoGasto(i_tipo_gasto),
-          clabe,
-          id_banco,
-          banco,
-          titular_cuenta,
-          email,
-          id_partida_presupuestal,
-          rubro,
-          proveedor,
-          descripcion_gasto,
-          f_importe: Number(f_importe),
-          i_estatus,
-          estatus: obtenerEstatusSolicitud(i_estatus),
-          dt_registro,
-          saldo: {
-            f_total_comprobaciones,
-            f_monto_comprobar: Number(f_importe) - f_total_comprobaciones,
-            f_total_impuestos_retenidos,
-            f_total: Number(f_importe) + f_total_impuestos_retenidos,
-          },
-          comprobantes: [],
-          notas: [],
-        }
-      })
+      if (queries.id) {
+        solicitudes = solicitudes.map((sol) => {
+          return {
+            ...sol,
+            comprobantes: sol.comprobantes.map(this.tranformDataComprobantes),
+          }
+        })
+      }
 
       return RespuestaController.exitosa(200, "Consulta exitosa", solicitudes)
     } catch (error) {
       return RespuestaController.fallida(
         400,
         "Error al obtener solicitudes de presupuesto",
-        error
+        error?.message || error
       )
     }
   }
@@ -184,40 +179,40 @@ class SolicitudesPresupuestoServices {
     )
   }
 
-  static async obtenerComprobantes(id_solicitud: number) {
-    const determinarMetodoPago = (i_metodo_pago: number) => {
-      let metodo_pago: "PUE" | "PPD" = "PUE"
+  // static async obtenerComprobantes(id_solicitud: number) {
+  //   const determinarMetodoPago = (i_metodo_pago: number) => {
+  //     let metodo_pago: "PUE" | "PPD" = "PUE"
 
-      if (i_metodo_pago == 2) {
-        metodo_pago = "PPD"
-      }
+  //     if (i_metodo_pago == 2) {
+  //       metodo_pago = "PPD"
+  //     }
 
-      return metodo_pago
-    }
+  //     return metodo_pago
+  //   }
 
-    const re = await SolicitudesPresupuestoDB.obtenerComprobantes(id_solicitud)
-    if (re.error) {
-      return RespuestaController.fallida(
-        400,
-        "Error al obtener comprobantes de solicitud",
-        re.data
-      )
-    }
+  //   const re = await SolicitudesPresupuestoDB.obtenerComprobantes(id_solicitud)
+  //   if (re.error) {
+  //     return RespuestaController.fallida(
+  //       400,
+  //       "Error al obtener comprobantes de solicitud",
+  //       re.data
+  //     )
+  //   }
 
-    const comprobantes = re.data as ComprobanteSolicitud[]
-    const comprobantesHidratados: ComprobanteSolicitud[] = comprobantes.map(
-      (comprobante) => ({
-        ...comprobante,
-        metodo_pago: determinarMetodoPago(comprobante.i_metodo_pago),
-      })
-    )
+  //   const comprobantes = re.data as ComprobanteSolicitud[]
+  //   const comprobantesHidratados: ComprobanteSolicitud[] = comprobantes.map(
+  //     (comprobante) => ({
+  //       ...comprobante,
+  //       metodo_pago: determinarMetodoPago(comprobante.i_metodo_pago),
+  //     })
+  //   )
 
-    return RespuestaController.exitosa(
-      200,
-      "Comprobantes de solicitud obtenidos con éxito",
-      comprobantesHidratados
-    )
-  }
+  //   return RespuestaController.exitosa(
+  //     200,
+  //     "Comprobantes de solicitud obtenidos con éxito",
+  //     comprobantesHidratados
+  //   )
+  // }
 
   // static async crearComprobante(
   //   id_solicitud: number,

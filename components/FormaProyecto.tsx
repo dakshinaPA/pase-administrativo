@@ -381,7 +381,6 @@ const SolicitudesPresupuesto = () => {
               <th>Proveedor</th>
               <th>Titular cuenta</th>
               <th>Importe</th>
-              <th>Monto a comprobar</th>
               <th>Estatus</th>
               <th>Acciones</th>
             </tr>
@@ -407,7 +406,6 @@ const SolicitudesPresupuesto = () => {
                   <td>{proveedor}</td>
                   <td>{titular_cuenta}</td>
                   <td>{montoALocaleString(f_importe)}</td>
-                  <td>{montoALocaleString(saldo.f_monto_comprobar)}</td>
                   <td>
                     <span
                       className={`badge bg-${obtenerBadgeStatusSolicitud(

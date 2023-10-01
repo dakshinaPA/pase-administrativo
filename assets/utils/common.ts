@@ -2,7 +2,7 @@ import { QueriesProyecto } from "@models/proyecto.model"
 import { ApiCall } from "./apiCalls"
 import { QueriesCoparte } from "@models/coparte.model"
 import { QueriesUsuario } from "@models/usuario.model"
-import { QueriesSolicitud } from "@models/solicitud-presupuesto.model"
+import { IMetodosPAgo, MetodosPAgo, QueriesSolicitud } from "@models/solicitud-presupuesto.model"
 
 const aMinuscula = (clave: string) => clave.toLowerCase()
 
@@ -281,6 +281,10 @@ const obtenerEstatusSolicitud = (i_estatus: number) => {
   }
 }
 
+const obtenerMetodoPago = (i_metodo_pago: IMetodosPAgo): MetodosPAgo => {
+  return i_metodo_pago == 1 ? "PUE" : "PPD"
+}
+
 export {
   meses,
   aMinuscula,
@@ -302,4 +306,5 @@ export {
   inputDateAEpoch,
   fechaMasDiasFutuosString,
   fechaMasMesesFutuosString,
+  obtenerMetodoPago
 }
