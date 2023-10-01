@@ -10,6 +10,7 @@ import {
   QueriesProyecto,
   RubroMinistracion,
   NotaProyecto,
+  DataProyecto,
 } from "@models/proyecto.model"
 
 import { ResProyectoDB } from "@api/models/proyecto.model"
@@ -73,7 +74,7 @@ class ProyectosServices {
         f_transferido,
         f_comprobado,
         f_por_comprobar,
-        f_isr,
+        f_isr: f_isr < 0 ? 0 : f_isr, //evitar que isr de numero negativo
         f_remanente,
         p_avance,
         f_retenciones,
@@ -170,29 +171,25 @@ class ProyectosServices {
 
   static async obtenerData(id_proyecto: number) {
     try {
-      const reColaboradores = ColaboradorServices.obtener(id_proyecto)
-      const reProveedores = ProveedorServices.obtener(id_proyecto)
-      const rerubros = ProyectoDB.obtenerRubrosMinistraciones(id_proyecto)
+      const reData = (await ProyectoDB.obtenerData(id_proyecto)) as DataProyecto
 
-      const resCombinadas = await Promise.all([
-        reColaboradores,
-        reProveedores,
-        rerubros,
-      ])
-
-      for (const rc of resCombinadas) {
-        if (rc.error) throw rc.data
+      //quiatr rubros repetidos
+      const rubrosSinRepetir = []
+      for (const { id_rubro, rubro } of reData.rubros_presupuestales) {
+        const match = rubrosSinRepetir.find((rsr) => rsr.id_rubro == id_rubro)
+        if (!match) rubrosSinRepetir.push({ id_rubro, rubro })
       }
 
-      const colaboradores = resCombinadas[0].data as ColaboradorProyecto[]
-      const proveedores = resCombinadas[1].data as ProveedorProyecto[]
-      const rubros_presupuestales = resCombinadas[2].data as RubroMinistracion[]
+      const dataTransformada: DataProyecto = {
+        ...reData,
+        rubros_presupuestales: rubrosSinRepetir,
+      }
 
-      return RespuestaController.exitosa(200, "Consulta exitosa", {
-        colaboradores,
-        proveedores,
-        rubros_presupuestales,
-      })
+      return RespuestaController.exitosa(
+        200,
+        "Consulta exitosa",
+        dataTransformada
+      )
     } catch (error) {
       return RespuestaController.fallida(
         400,

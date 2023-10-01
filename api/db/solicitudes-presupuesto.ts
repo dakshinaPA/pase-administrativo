@@ -89,6 +89,11 @@ class SolicitudesPresupuestoDB {
     `
   }
 
+  static qCrComprobante = () => {
+    return `INSERT INTO solicitud_presupuesto_comprobantes ( id_solicitud_presupuesto, folio_fiscal, f_total,
+      f_retenciones, i_metodo_pago, id_forma_pago, id_regimen_fiscal, dt_registro ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )`
+  }
+
   static qReNotas = () => {
     return `
       SELECT spn.id, spn.mensaje, spn.dt_registro,
@@ -174,19 +179,14 @@ class SolicitudesPresupuestoDB {
     })
   }
 
-  static qCrComprobante = () => {
-    return `INSERT INTO solicitud_presupuesto_comprobantes ( id_solicitud_presupuesto, folio_fiscal, f_total,
-      f_retenciones, i_metodo_pago, id_forma_pago, id_regimen_fiscal, dt_registro ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )`
-  }
-
   static async crear(data: SolicitudPresupuesto) {
-    const { comprobantes } = data
+    const { comprobantes, id_proyecto } = data
 
     const qSolicitud = `INSERT INTO solicitudes_presupuesto (id_proyecto, i_tipo_gasto, clabe, id_banco, titular_cuenta, email, proveedor,
       descripcion_gasto, id_partida_presupuestal, f_importe, i_estatus, dt_registro ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
     const phSolicitud = [
-      data.id_proyecto,
+      id_proyecto,
       data.i_tipo_gasto,
       data.clabe,
       data.id_banco,
@@ -255,11 +255,81 @@ class SolicitudesPresupuestoDB {
                     })
                   }
 
-                  connection.commit((err) => {
-                    if (err) connection.rollback(() => rej(err))
-                    connection.destroy()
-                    res(idSolicitud)
-                  })
+                  //solicitar saldos solicitudes y comprobantes
+                  const qSumaSolicitado =
+                    "SELECT SUM(f_importe) f_solicitado FROM solicitudes_presupuesto WHERE id_proyecto=? AND b_activo=1"
+                  const qSumasComprobantes =
+                    "SELECT SUM(f_total) f_comprobado, SUM(f_retenciones) f_retenciones FROM solicitud_presupuesto_comprobantes WHERE id_solicitud_presupuesto IN(SELECT id FROM solicitudes_presupuesto WHERE id_proyecto=? AND b_activo=1) AND b_activo=1"
+                  const qPaProyecto = "SELECT f_monto_total, f_pa FROM proyecto_saldo WHERE id_proyecto=?"
+                  
+                  const qCombinados = [
+                    qSumaSolicitado,
+                    qSumasComprobantes,
+                    qPaProyecto
+                  ].join(";")
+
+                  connection.query(
+                    qCombinados,
+                    [id_proyecto, id_proyecto, id_proyecto],
+                    (error, results, fields) => {
+                      if (error) {
+                        return connection.rollback(() => {
+                          connection.destroy()
+                          rej(error)
+                        })
+                      }
+
+                      // actualizar saldo de proyecto
+                      const f_solicitado = results[0][0].f_solicitado
+                      const f_comprobado = results[1][0].f_comprobado
+                      const f_retenciones = results[1][0].f_retenciones
+                      const f_pa = results[2][0].f_pa
+                      const f_total_proyecto = results[2][0].f_monto_total
+                      const f_por_comprobar = Number(f_solicitado) - Number(f_comprobado)
+                      const f_isr = f_por_comprobar * 0.35
+                      const f_ejecutado = Number(f_retenciones) + f_isr + Number(f_pa)
+                      const p_avance = (f_ejecutado * 100 / Number(f_total_proyecto)).toFixed(1)
+
+                      const qUpSaldoProyecto =
+                        "UPDATE proyecto_saldo SET f_solicitado=?, f_comprobado=?, f_retenciones=?, p_avance=? WHERE id_proyecto=?"
+                      connection.query(
+                        qUpSaldoProyecto,
+                        [
+                          f_solicitado,
+                          f_comprobado,
+                          f_retenciones,
+                          p_avance,
+                          id_proyecto,
+                        ],
+                        (error, results, fields) => {
+                          if (error) {
+                            return connection.rollback(() => {
+                              connection.destroy()
+                              rej(error)
+                            })
+                          }
+
+                          connection.commit((err) => {
+                            if (err) connection.rollback(() => rej(err))
+                            connection.destroy()
+                            res(idSolicitud)
+                          })
+                        }
+                      )
+
+                      // connection.commit((err) => {
+                      //   if (err) connection.rollback(() => rej(err))
+                      //   connection.destroy()
+                      //   res(idSolicitud)
+                      // })
+                    }
+                  )
+
+                  // connection.commit((err) => {
+                  //   if (err) connection.rollback(() => rej(err))
+                  //   connection.destroy()
+                  //   res(idSolicitud)
+                  // })
                 }
               )
             }
@@ -313,58 +383,6 @@ class SolicitudesPresupuestoDB {
       return RespuestaDB.fallida(error)
     }
   }
-
-  // static async obtenerComprobantes(id_solicitud: number) {
-  //   let query = `SELECT spc.id, spc.folio_fiscal, spc.f_total, spc.f_retenciones, spc.i_metodo_pago, spc.id_forma_pago, spc.id_regimen_fiscal, spc.dt_registro,
-  //     fp.nombre forma_pago, fp.clave clave_forma_pago,
-  //     rf.nombre regimen_fiscal, rf.clave clave_regimen_fiscal
-  //     FROM solicitud_presupuesto_comprobantes spc
-  //     JOIN formas_pago fp ON spc.id_forma_pago = fp.id
-  //     JOIN regimenes_fiscales rf ON spc.id_regimen_fiscal = rf.id
-  //     WHERE spc.id_solicitud_presupuesto=${id_solicitud} AND spc.b_activo=1`
-
-  //   try {
-  //     const res = await queryDB(query)
-  //     return RespuestaDB.exitosa(res)
-  //   } catch (error) {
-  //     return RespuestaDB.fallida(error)
-  //   }
-  // }
-
-  // static async crearComprobante(
-  //   id_solicitud: number,
-  //   data: ComprobanteSolicitud
-  // ) {
-  //   const {
-  //     folio_fiscal,
-  //     f_total,
-  //     f_retenciones,
-  //     i_metodo_pago,
-  //     id_forma_pago,
-  //     id_regimen_fiscal,
-  //   } = data
-
-  //   const query = `INSERT INTO solicitud_presupuesto_comprobantes ( id_solicitud_presupuesto, folio_fiscal, f_total,
-  //     f_retenciones, i_metodo_pago, id_forma_pago, id_regimen_fiscal, dt_registro ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )`
-
-  //   const placeHolders = [
-  //     id_solicitud,
-  //     folio_fiscal,
-  //     f_total,
-  //     f_retenciones,
-  //     i_metodo_pago,
-  //     id_forma_pago,
-  //     id_regimen_fiscal,
-  //     fechaActualAEpoch(),
-  //   ]
-
-  //   try {
-  //     const res = await queryDBPlaceHolder(query, placeHolders)
-  //     return RespuestaDB.exitosa(res)
-  //   } catch (error) {
-  //     return RespuestaDB.fallida(error)
-  //   }
-  // }
 
   static async borrarComprobante(id: number) {
     const query = `DELETE FROM solicitud_presupuesto_comprobantes WHERE id=? LIMIT 1`

@@ -552,23 +552,35 @@ class ProyectoDB {
     }
   }
 
-  static async obtenerRubrosMinistraciones(id_proyecto: number) {
-    const query = `SELECT DISTINCT mrp.id_rubro,
-      rp.nombre
-      FROM ministracion_rubros_presupuestales mrp
-      JOIN rubros_presupuestales rp ON mrp.id_rubro = rp.id
-      WHERE mrp.id_ministracion IN
-      (SELECT pm.id FROM proyecto_ministraciones pm WHERE pm.id_proyecto=?)
-      AND mrp.id_rubro!=1 AND mrp.b_activo=1`
+  static async obtenerData(id_proyecto: number) {
+    const qColaboradores = ColaboradorDB.queryRe(id_proyecto)
+    const qProveedores = ProveedorDB.queryRe(id_proyecto)
+    const qRubrosProyecto = this.qReRubrosMinistracion()
+    const qCombinados = [qColaboradores, qProveedores, qRubrosProyecto].join(";")
+    const ph = [id_proyecto, id_proyecto, id_proyecto]
 
-    const placeHolders = [id_proyecto]
+    return new Promise((res, rej) => {
+      connectionDB.getConnection((err, connection) => {
+        if (err) return rej(err)
 
-    try {
-      const res = await queryDBPlaceHolder(query, placeHolders)
-      return RespuestaDB.exitosa(res)
-    } catch (error) {
-      return RespuestaDB.fallida(error)
-    }
+        connection.query(qCombinados, ph, (error, results, fields) => {
+          if (error) {
+            connection.destroy()
+            return rej(error)
+          }
+
+          connection.destroy()
+
+          const dataProyecto = {
+            colaboradores: results[0],
+            proveedores: results[1],
+            rubros_presupuestales: results[2],
+          }
+
+          res(dataProyecto)
+        })
+      })
+    })
   }
 
   static reNotas = () => {

@@ -110,7 +110,7 @@ const useErrores = () => {
           case "dt_constitucion":
           case "dt_inicio":
           case "dt_fin":
-            if (!/^[0-9]{4}\-[0-1][1-9]\-[0-3][0-9]$/.test(campos[key]))
+            if (!/^[0-9]{4}\-[0-1][0-9]\-[0-3][0-9]$/.test(campos[key]))
               throw [key, "Fecha inválida"]
             break
         }
