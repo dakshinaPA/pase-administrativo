@@ -466,6 +466,7 @@ CREATE TABLE `proyectos` (
   `id_estado` INT UNSIGNED NOT NULL COMMENT 'estado de accion',
   `municipio` VARCHAR(70) NOT NULL COMMENT 'municipio de accion',
   `descripcion` TEXT NOT NULL,
+  `f_monto_total` VARCHAR(20) NOT NULL,
   `dt_inicio` VARCHAR(10) NOT NULL COMMENT 'inicio de ejecucion',
   `dt_fin` VARCHAR(10) NOT NULL COMMENT 'fin de ejecucion',
   `b_activo` TINYINT UNSIGNED NOT NULL DEFAULT 1,

@@ -94,7 +94,6 @@ export interface NotaProyecto {
 }
 
 export interface SaldoProyecto {
-  id?: number
   f_monto_total: number
   f_transferido: number
   f_solicitado: number

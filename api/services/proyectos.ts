@@ -47,20 +47,28 @@ class ProyectosServices {
   }
 
   static transformarDataProyecto = (data: ResProyectoDB): Proyecto => {
-    const { id_proyecto_saldo, proveedores, ...resto } = data
+    let {
+      f_monto_total,
+      f_solicitado,
+      f_comprobado,
+      f_transferido,
+      f_retenciones,
+      f_pa,
+      ...resto
+    } = data
 
-    const f_monto_total = Number(data.f_monto_total)
-    const f_solicitado = Number(data.f_solicitado)
-    const f_comprobado = Number(data.f_comprobado)
-    const f_transferido = Number(data.f_transferido)
-    const f_retenciones = Number(data.f_retenciones)
-    const f_pa = Number(data.f_pa)
-    const p_avance = Number(data.p_avance)
+    f_monto_total = Number(data.f_monto_total)
+    f_solicitado = Number(data.f_solicitado)
+    f_comprobado = Number(data.f_comprobado)
+    f_transferido = Number(data.f_transferido)
+    f_retenciones = Number(data.f_retenciones)
+    f_pa = Number(f_pa)
 
     const f_por_comprobar = f_solicitado - f_comprobado
     const f_isr = f_por_comprobar * 0.35
     const f_ejecutado = f_transferido + f_retenciones + f_isr + f_pa
     const f_remanente = f_monto_total - f_ejecutado
+    const p_avance = Number((f_ejecutado * 100 / f_monto_total).toFixed(2))
 
     return {
       ...resto,
@@ -68,7 +76,6 @@ class ProyectosServices {
         resto.i_tipo_financiamiento
       ),
       saldo: {
-        id: id_proyecto_saldo,
         f_monto_total,
         f_solicitado,
         f_transferido,
@@ -98,7 +105,7 @@ class ProyectosServices {
     } catch (error) {
       return RespuestaController.fallida(
         400,
-        "Error al obtener financiadores",
+        "Error al obtener proyectos",
         error
       )
     }

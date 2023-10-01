@@ -19,6 +19,7 @@ import { ColaboradorDB } from "./colaboradores"
 import proveedores from "pages/api/proveedores"
 import { ProveedorDB } from "./proveedores"
 import { SolicitudesPresupuestoDB } from "./solicitudes-presupuesto"
+import PoolConnection from "mysql2/typings/mysql/lib/PoolConnection"
 
 interface RubrosConIdMinistracion {
   id_ministracion: number
@@ -60,10 +61,8 @@ class ProyectoDB {
       c.nombre coparte, c.id_administrador,
       CONCAT(u.nombre, ' ', u.apellido_paterno) responsable,
       ts.nombre tema_social,
-      e.nombre estado,
-      ps.id id_proyecto_saldo, ps.f_monto_total, ps.f_solicitado, ps.f_transferido, ps.f_comprobado, ps.f_retenciones, ps.f_pa, ps.p_avance
+      e.nombre estado
       FROM proyectos p
-      JOIN proyecto_saldo ps ON ps.id_proyecto = p.id
       JOIN financiadores f ON p.id_financiador = f.id
       JOIN copartes c ON p.id_coparte = c.id
       JOIN usuarios u ON p.id_responsable = u.id
@@ -82,6 +81,84 @@ class ProyectoDB {
     }
 
     return query
+  }
+
+  static qReMontoTotal() {
+    return `
+      SELECT SUM(f_monto) f_monto_total FROM ministracion_rubros_presupuestales WHERE id_ministracion IN (
+        SELECT id FROM proyecto_ministraciones WHERE id_proyecto=? and b_activo=1
+      ) AND b_activo=1
+    `
+  }
+
+  static qRePA() {
+    return `
+      SELECT SUM(f_monto) f_pa FROM ministracion_rubros_presupuestales WHERE id_ministracion IN (
+        SELECT id FROM proyecto_ministraciones WHERE id_proyecto=? and b_activo=1
+      ) AND b_activo=1 AND id_rubro=1
+    `
+  }
+
+  static qReSolicitado() {
+    return `
+      SELECT SUM(f_importe) f_solicitado FROM solicitudes_presupuesto WHERE id_proyecto=? AND b_activo=1
+    `
+  }
+
+  static qReSaldoComprobantes() {
+    return `
+      SELECT SUM(f_total) f_comprobado, SUM(f_retenciones) f_retenciones FROM solicitud_presupuesto_comprobantes WHERE id_solicitud_presupuesto IN (
+        SELECT id FROM solicitudes_presupuesto WHERE id_proyecto=? AND b_activo=1
+      ) AND b_activo=1
+    `
+  }
+
+  static qReSaldoTransferido() {
+    return `
+      SELECT SUM(f_total) f_transferido FROM solicitud_presupuesto_comprobantes WHERE id_solicitud_presupuesto IN (
+        SELECT id FROM solicitudes_presupuesto WHERE id_proyecto=? AND b_activo=1 AND i_estatus=4
+      ) AND b_activo=1
+    `
+  }
+
+  static obtenerSaldo(
+    connection: PoolConnection,
+    proyecto: ResProyectoDB
+  ): Promise<ResProyectoDB> {
+    const { id } = proyecto
+
+    return new Promise((res, rej) => {
+      const qCombinados = [
+        this.qReMontoTotal(),
+        this.qRePA(),
+        this.qReSolicitado(),
+        this.qReSaldoComprobantes(),
+        this.qReSaldoTransferido(),
+      ].join(";")
+
+      connection.query(
+        qCombinados,
+        [id, id, id, id, id],
+        (error, results, fields) => {
+          if (error) {
+            connection.destroy()
+            return rej(error)
+          }
+
+          const proyectoHyd = {
+            ...proyecto,
+            f_monto_total: results[0][0].f_monto_total,
+            f_pa: results[1][0].f_pa,
+            f_solicitado: results[2][0].f_solicitado,
+            f_comprobado: results[3][0].f_comprobado,
+            f_retenciones: results[3][0].f_retenciones,
+            f_transferido: results[4][0].f_transferido,
+          }
+
+          res(proyectoHyd)
+        }
+      )
+    })
   }
 
   static async obtener(queries: QueriesProyecto) {
@@ -103,15 +180,28 @@ class ProyectoDB {
       connectionDB.getConnection((err, connection) => {
         if (err) return rej(err)
 
-        connection.query(qProyectos, phProyectos, (error, results, fields) => {
-          if (error) {
-            connection.destroy()
-            return rej(error)
-          }
+        connection.query(
+          qProyectos,
+          phProyectos,
+          async (error, results, fields) => {
+            if (error) {
+              connection.destroy()
+              return rej(error)
+            }
 
-          connection.destroy()
-          res(results)
-        })
+            const proyectosDB = results as ResProyectoDB[]
+
+            const proyectosHyd = await Promise.all(
+              proyectosDB.map(
+                async (proyecto) =>
+                  await this.obtenerSaldo(connection, proyecto)
+              )
+            )
+
+            connection.destroy()
+            res(proyectosHyd)
+          }
+        )
       })
     })
   }
@@ -165,16 +255,22 @@ class ProyectoDB {
         connection.query(
           qCombinados,
           phCombinados,
-          (error, results, fields) => {
+          async (error, results, fields) => {
             if (error) {
               connection.destroy()
               return rej(error)
             }
 
+            const proyectoDB = results[0][0] as ResProyectoDB
+            const proyectoConSaldo = await this.obtenerSaldo(
+              connection,
+              proyectoDB
+            )
+
             connection.destroy()
 
             const dataProyecto: ResProyectoDB = {
-              ...results[0][0],
+              ...proyectoConSaldo,
               ministraciones: results[1],
               rubros_ministracion: results[2],
               colaboradores: results[3],
@@ -198,7 +294,7 @@ class ProyectoDB {
     `INSERT INTO ministracion_rubros_presupuestales ( id_ministracion, id_rubro, f_monto ) VALUES ( ?, ?, ? )`
 
   static async crear(data: Proyecto) {
-    const { ministraciones, saldo } = data
+    const { ministraciones } = data
 
     const qProyecto = `INSERT INTO proyectos ( id_alt, id_financiador, id_coparte, id_responsable, nombre, id_tema_social, sector_beneficiado,
       i_tipo_financiamiento, i_beneficiados, id_estado, municipio, descripcion, dt_inicio, dt_fin, dt_registro) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )`
@@ -219,11 +315,6 @@ class ProyectoDB {
       data.dt_fin,
       fechaActualAEpoch(),
     ]
-
-    const qSaldoProyecto = `INSERT INTO proyecto_saldo (id_proyecto, f_monto_total, 
-      f_pa, p_avance) VALUES(?, ?, ?, ?)`
-
-    const phSaldoProyecto = [saldo.f_monto_total, saldo.f_pa, saldo.p_avance]
 
     const qIdAlt = [
       "SELECT id_alt FROM financiadores WHERE id=? LIMIT 1",
@@ -285,12 +376,27 @@ class ProyectoDB {
                 }
                 // @ts-ignore
                 const idProyecto = results.insertId
-                phSaldoProyecto.unshift(idProyecto)
+                // phSaldoProyecto.unshift(idProyecto)
 
-                //crear saldo proyecto
+                const qMinistraciones = []
+                const phMinistracion = []
+
+                for (const min of ministraciones) {
+                  const { i_numero, i_grupo, dt_recepcion } = min
+                  qMinistraciones.push(this.qCrMinistracion())
+                  phMinistracion.push(
+                    idProyecto,
+                    i_numero,
+                    i_grupo,
+                    dt_recepcion,
+                    fechaActualAEpoch()
+                  )
+                }
+
+                //crear ministraciones
                 connection.query(
-                  qSaldoProyecto,
-                  phSaldoProyecto,
+                  qMinistraciones.join(";"),
+                  phMinistracion,
                   (error, results, fields) => {
                     if (error) {
                       return connection.rollback(() => {
@@ -299,25 +405,26 @@ class ProyectoDB {
                       })
                     }
 
-                    const qMinistraciones = []
-                    const phMinistracion = []
+                    // @ts-ignore
+                    const idsMinistracion = Array.isArray(results)
+                      ? results.map((res) => res.insertId)
+                      : [results.insertId]
 
-                    for (const min of ministraciones) {
-                      const { i_numero, i_grupo, dt_recepcion } = min
-                      qMinistraciones.push(this.qCrMinistracion())
-                      phMinistracion.push(
-                        idProyecto,
-                        i_numero,
-                        i_grupo,
-                        dt_recepcion,
-                        fechaActualAEpoch()
-                      )
-                    }
+                    const qRubros = []
+                    const phRubros = []
 
-                    //crear ministraciones
+                    ministraciones.forEach((min, index) => {
+                      for (const rp of min.rubros_presupuestales) {
+                        const { id_rubro, f_monto } = rp
+                        qRubros.push(this.qCrRubrosMinistracion())
+                        phRubros.push(idsMinistracion[index], id_rubro, f_monto)
+                      }
+                    })
+
+                    //crear rubros de ministracion
                     connection.query(
-                      qMinistraciones.join(";"),
-                      phMinistracion,
+                      qRubros.join(";"),
+                      phRubros,
                       (error, results, fields) => {
                         if (error) {
                           return connection.rollback(() => {
@@ -325,45 +432,11 @@ class ProyectoDB {
                             rej(error)
                           })
                         }
-
-                        // @ts-ignore
-                        const idsMinistracion = Array.isArray(results)
-                          ? results.map((res) => res.insertId)
-                          : [results.insertId]
-
-                        const qRubros = []
-                        const phRubros = []
-
-                        ministraciones.forEach((min, index) => {
-                          for (const rp of min.rubros_presupuestales) {
-                            const { id_rubro, f_monto } = rp
-                            qRubros.push(this.qCrRubrosMinistracion())
-                            phRubros.push(
-                              idsMinistracion[index],
-                              id_rubro,
-                              f_monto
-                            )
-                          }
+                        connection.commit((err) => {
+                          if (err) connection.rollback(() => rej(err))
+                          connection.destroy()
+                          res(idProyecto)
                         })
-
-                        //crear rubros de ministracion
-                        connection.query(
-                          qRubros.join(";"),
-                          phRubros,
-                          (error, results, fields) => {
-                            if (error) {
-                              return connection.rollback(() => {
-                                connection.destroy()
-                                rej(error)
-                              })
-                            }
-                            connection.commit((err) => {
-                              if (err) connection.rollback(() => rej(err))
-                              connection.destroy()
-                              res(idProyecto)
-                            })
-                          }
-                        )
                       }
                     )
                   }
@@ -381,11 +454,6 @@ class ProyectoDB {
 
     const qProyecto = `UPDATE proyectos SET id_responsable=?, nombre=?, id_tema_social=?, sector_beneficiado=?,
       i_beneficiados=?, id_estado=?, municipio=?, descripcion=?, dt_inicio=?, dt_fin=? WHERE id=? LIMIT 1`
-
-    const qReSaldo = `SELECT f_solicitado, f_transferido, f_comprobado, f_retenciones
-      FROM proyecto_saldo WHERE id=?`
-
-    const qUpSaldo = `UPDATE proyecto_saldo SET f_monto_total=?, f_pa=?, p_avance=? WHERE id=? LIMIT 1`
 
     const qUpMinistracion = `UPDATE proyecto_ministraciones SET i_grupo=?,
       dt_recepcion=? WHERE id=? LIMIT 1`
@@ -413,8 +481,8 @@ class ProyectoDB {
       id_proyecto,
     ]
 
-    const qIniciales = [this.qReRubrosMinistracion(false), qReSaldo].join(";")
-    const phIniciales = [id_proyecto, saldo.id]
+    const qIniciales = this.qReRubrosMinistracion(false)
+    const phIniciales = [id_proyecto]
 
     return new Promise((res, rej) => {
       connectionDB.getConnection((err, connection) => {
@@ -438,8 +506,7 @@ class ProyectoDB {
                 })
               }
 
-              const rubrosDB = results[0] as RubroMinistracion[]
-              const saldoDB = results[1][0] as SaldoProyecto
+              const rubrosDB = results as RubroMinistracion[]
               let rubrosVista: RubroMinistracion[] = []
 
               for (const min of ministraciones) {
@@ -500,21 +567,6 @@ class ProyectoDB {
                 }
               }
 
-              //actualizar saldo del proyecto
-              const { f_monto_total, f_pa } = saldo
-              const f_solicitado = Number(saldoDB.f_solicitado)
-              const f_comprobado = Number(saldoDB.f_comprobado)
-              const f_transferido = Number(saldoDB.f_transferido)
-              const f_retenciones = Number(saldoDB.f_retenciones)
-              const f_por_comprobar = f_solicitado - f_comprobado
-              const f_isr = f_por_comprobar * 0.35
-              const f_ejecutado = f_transferido + f_retenciones + f_isr + f_pa
-              const p_avance = Number(
-                ((f_ejecutado * 100) / f_monto_total).toFixed(2)
-              )
-              qCombinados.push(qUpSaldo)
-              phCombinados.push(f_monto_total, f_pa, p_avance, saldo.id)
-
               //actualizar todo
               connection.query(
                 qCombinados.join(";"),
@@ -556,7 +608,9 @@ class ProyectoDB {
     const qColaboradores = ColaboradorDB.queryRe(id_proyecto)
     const qProveedores = ProveedorDB.queryRe(id_proyecto)
     const qRubrosProyecto = this.qReRubrosMinistracion()
-    const qCombinados = [qColaboradores, qProveedores, qRubrosProyecto].join(";")
+    const qCombinados = [qColaboradores, qProveedores, qRubrosProyecto].join(
+      ";"
+    )
     const ph = [id_proyecto, id_proyecto, id_proyecto]
 
     return new Promise((res, rej) => {

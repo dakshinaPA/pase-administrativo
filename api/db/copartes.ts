@@ -71,11 +71,11 @@ class CoparteDB {
           if (id) {
             const coparte = results[0]
             const qUsuarios = UsuarioDB.queryRe({ id_coparte: id })
-            // const qProyectos = ProyectoDB.queryRe({ id_coparte: id })
+            const qProyectos = ProyectoDB.queryRe({ id_coparte: id })
             const qNotas = this.queryNotas()
 
-            const qCombinados = [qUsuarios, qNotas].join(";")
-            const phCombinados = [id, id]
+            const qCombinados = [qUsuarios, qProyectos, qNotas].join(";")
+            const phCombinados = [id, id, id]
 
             connection.query(
               qCombinados,
@@ -91,8 +91,8 @@ class CoparteDB {
                   {
                     ...coparte,
                     usuarios: results[0],
-                    // proyectos: results[1],
-                    notas: results[1],
+                    proyectos: results[1],
+                    notas: results[2],
                   },
                 ])
               }

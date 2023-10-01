@@ -720,12 +720,11 @@ const FormaCoparte = () => {
                   <tr>
                     <th>Id Alt</th>
                     <th>Nombre</th>
+                    <th>Financiador</th>
                     <th>Responsable</th>
-                    <th>Monto total</th>
-                    <th>Transferido</th>
-                    <th>Solicitado</th>
-                    <th>Ejecutado</th>
-                    <th>Avance</th>
+                    <th>Descripción</th>
+                    <th>Municipio</th>
+                    <th>Beneficiados</th>
                     <th>Ver</th>
                   </tr>
                 </thead>
@@ -735,18 +734,20 @@ const FormaCoparte = () => {
                       id,
                       id_alt,
                       nombre,
+                      financiador,
                       responsable,
-                      saldo,
+                      descripcion,
+                      municipio,
+                      i_beneficiados,
                     }) => (
                       <tr key={id}>
                         <td>{id_alt}</td>
                         <td>{nombre}</td>
+                        <td>{financiador}</td>
                         <td>{responsable}</td>
-                        <td>{montoALocaleString(saldo.f_monto_total)}</td>
-                        <td>{montoALocaleString(saldo.f_transferido)}</td>
-                        <td>{montoALocaleString(saldo.f_solicitado)}</td>
-                        <td>{montoALocaleString(saldo.f_ejecutado)}</td>
-                        <td>{saldo.p_avance}</td>
+                        <td>{descripcion}</td>
+                        <td>{municipio}</td>
+                        <td>{i_beneficiados}</td>
                         <td>
                           <BtnAccion
                             margin={false}

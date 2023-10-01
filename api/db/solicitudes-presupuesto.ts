@@ -255,81 +255,11 @@ class SolicitudesPresupuestoDB {
                     })
                   }
 
-                  //solicitar saldos solicitudes y comprobantes
-                  const qSumaSolicitado =
-                    "SELECT SUM(f_importe) f_solicitado FROM solicitudes_presupuesto WHERE id_proyecto=? AND b_activo=1"
-                  const qSumasComprobantes =
-                    "SELECT SUM(f_total) f_comprobado, SUM(f_retenciones) f_retenciones FROM solicitud_presupuesto_comprobantes WHERE id_solicitud_presupuesto IN(SELECT id FROM solicitudes_presupuesto WHERE id_proyecto=? AND b_activo=1) AND b_activo=1"
-                  const qPaProyecto = "SELECT f_monto_total, f_pa FROM proyecto_saldo WHERE id_proyecto=?"
-                  
-                  const qCombinados = [
-                    qSumaSolicitado,
-                    qSumasComprobantes,
-                    qPaProyecto
-                  ].join(";")
-
-                  connection.query(
-                    qCombinados,
-                    [id_proyecto, id_proyecto, id_proyecto],
-                    (error, results, fields) => {
-                      if (error) {
-                        return connection.rollback(() => {
-                          connection.destroy()
-                          rej(error)
-                        })
-                      }
-
-                      // actualizar saldo de proyecto
-                      const f_solicitado = results[0][0].f_solicitado
-                      const f_comprobado = results[1][0].f_comprobado
-                      const f_retenciones = results[1][0].f_retenciones
-                      const f_pa = results[2][0].f_pa
-                      const f_total_proyecto = results[2][0].f_monto_total
-                      const f_por_comprobar = Number(f_solicitado) - Number(f_comprobado)
-                      const f_isr = f_por_comprobar * 0.35
-                      const f_ejecutado = Number(f_retenciones) + f_isr + Number(f_pa)
-                      const p_avance = (f_ejecutado * 100 / Number(f_total_proyecto)).toFixed(1)
-
-                      const qUpSaldoProyecto =
-                        "UPDATE proyecto_saldo SET f_solicitado=?, f_comprobado=?, f_retenciones=?, p_avance=? WHERE id_proyecto=?"
-                      connection.query(
-                        qUpSaldoProyecto,
-                        [
-                          f_solicitado,
-                          f_comprobado,
-                          f_retenciones,
-                          p_avance,
-                          id_proyecto,
-                        ],
-                        (error, results, fields) => {
-                          if (error) {
-                            return connection.rollback(() => {
-                              connection.destroy()
-                              rej(error)
-                            })
-                          }
-
-                          connection.commit((err) => {
-                            if (err) connection.rollback(() => rej(err))
-                            connection.destroy()
-                            res(idSolicitud)
-                          })
-                        }
-                      )
-
-                      // connection.commit((err) => {
-                      //   if (err) connection.rollback(() => rej(err))
-                      //   connection.destroy()
-                      //   res(idSolicitud)
-                      // })
-                    }
-                  )
-
-                  // connection.commit((err) => {
-                  //   if (err) connection.rollback(() => rej(err))
-                  //   connection.destroy()
-                  //   res(idSolicitud)
-                  // })
+                  connection.commit((err) => {
+                    if (err) connection.rollback(() => rej(err))
+                    connection.destroy()
+                    res(idSolicitud)
+                  })
                 }
               )
             }
