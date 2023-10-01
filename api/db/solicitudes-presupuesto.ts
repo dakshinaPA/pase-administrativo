@@ -15,13 +15,15 @@ class SolicitudesPresupuestoDB {
   static queryRe = (queries: QueriesSolicitud) => {
     const {
       id,
+      id_coparte,
       id_proyecto,
       id_responsable,
       id_admin,
       i_estatus,
-      limit,
+      titular,
       dt_inicio,
       dt_fin,
+      limit,
     } = queries
 
     let query = `SELECT sp.id, sp.id_proyecto, sp.i_tipo_gasto, sp.clabe, sp.id_banco, sp.titular_cuenta,
@@ -39,24 +41,31 @@ class SolicitudesPresupuestoDB {
       LEFT JOIN solicitud_presupuesto_comprobantes spc ON spc.id_solicitud_presupuesto=sp.id
       WHERE sp.b_activo=1`
 
-    if (id_proyecto) {
+    if (id_coparte) {
+      query += " AND c.id=?"
+    } else if (id_proyecto) {
       query += " AND sp.id_proyecto=?"
     } else if (id) {
       query += " AND sp.id=?"
-    } else if (id_responsable) {
-      query += " AND p.id_responsable=?"
-    } else if (id_admin) {
-      query += " AND c.id_administrador=?"
     }
 
+    if (id_responsable) {
+      query += " AND p.id_responsable=?"
+    }
+    if (id_admin) {
+      query += " AND c.id_administrador=?"
+    }
     if (i_estatus) {
       query += " AND sp.i_estatus=?"
+    }
+    if (titular) {
+      query += " AND sp.titular_cuenta LIKE ?"
     }
     if (dt_inicio) {
       query += " AND sp.dt_registro >= ?"
     }
     if (dt_fin) {
-      query += " AND sp.dt_registro =< ?"
+      query += " AND sp.dt_registro <= ?"
     }
 
     query += " GROUP BY sp.id"
@@ -71,11 +80,13 @@ class SolicitudesPresupuestoDB {
   static async obtener(queries: QueriesSolicitud) {
     const {
       id,
+      id_coparte,
       id_proyecto,
       id_responsable,
       id_admin,
       i_estatus,
       limit,
+      titular,
       dt_inicio,
       dt_fin,
     } = queries
@@ -84,23 +95,18 @@ class SolicitudesPresupuestoDB {
 
     const phSolicitud = []
 
-    if (id || id_proyecto || id_responsable || id_admin) {
-      phSolicitud.push(id || id_proyecto || id_responsable || id_admin)
+    if (id_coparte || id_proyecto || id) {
+      phSolicitud.push(id_coparte || id_proyecto || id)
     }
 
-    if (i_estatus) {
-      phSolicitud.push(i_estatus)
-    }
-    if (limit) {
-      phSolicitud.push(Number(limit))
-    }
-    if (dt_inicio) {
-      phSolicitud.push(dt_inicio)
-    }
-    if (dt_fin) {
-      phSolicitud.push(dt_fin)
-    }
-
+    if (id_responsable) phSolicitud.push(id_responsable)
+    if (id_admin) phSolicitud.push(id_admin)
+    if (i_estatus) phSolicitud.push(i_estatus)
+    if (titular) phSolicitud.push(`%${titular}%`)
+    if (dt_inicio) phSolicitud.push(dt_inicio)
+    if (dt_fin) phSolicitud.push(dt_fin)
+    if (limit) phSolicitud.push(Number(limit))
+    
     return new Promise((res, rej) => {
       connectionDB.getConnection((err, connection) => {
         if (err) return rej(err)

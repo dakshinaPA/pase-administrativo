@@ -187,45 +187,50 @@ const obtenerProveedores = (id_proyecto?: number, id?: number) => {
 const obtenerSolicitudes = (queries: QueriesSolicitud) => {
   const {
     id,
+    id_coparte,
     id_proyecto,
     id_responsable,
     id_admin,
     i_estatus,
-    limit,
+    titular,
     dt_inicio,
     dt_fin,
+    limit,
   } = queries
   let url = "/solicitudes-presupuesto"
 
   if (id) {
     url += `/${id}`
-  } else {
+  }
 
-    url += "?default=0"
+  url += "?default=0"
 
-    if(id_proyecto){
-      url += `&id_proyecto=${id_proyecto}`
-    } else if (id_responsable) {
-      url += `&id_responsable=${id_responsable}`
-    } else if (id_admin) {
-      url += `&id_admin=${id_admin}`
-    }
+  if (id_coparte) {
+    url += `&id_coparte=${id_coparte}`
+  } else if (id_proyecto) {
+    url += `&id_proyecto=${id_proyecto}`
+  }
 
-    if (i_estatus) {
-      url += `&i_estatus=${i_estatus}`
-    }
-
-    if (limit) {
-      url += `&limit=${limit}`
-    }
-
-    if (dt_inicio) {
-      url += `&dt_inicio=${dt_inicio}`
-    }
-
-    if (dt_fin) {
-      url += `&dt_fin=${dt_fin}`
-    }
+  if (id_responsable) {
+    url += `&id_responsable=${id_responsable}`
+  }
+  if (id_admin) {
+    url += `&id_admin=${id_admin}`
+  }
+  if (i_estatus) {
+    url += `&i_estatus=${i_estatus}`
+  }
+  if (titular) {
+    url += `&titular=${titular}`
+  }
+  if (dt_inicio) {
+    url += `&dt_inicio=${dt_inicio}`
+  }
+  if (dt_fin) {
+    url += `&dt_fin=${dt_fin}`
+  }
+  if (limit) {
+    url += `&limit=${limit}`
   }
 
   return ApiCall.get(url)
