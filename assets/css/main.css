@@ -50,6 +50,13 @@ a {
   flex: 0 0 250px;
   /* border: 1px solid gray; */
   background-color: var(--color-ternario);
+  position: relative;
+  /* transition: 1s; */
+}
+
+.main_contenedor > div:nth-child(1) i{
+  color: white;
+  font-size: 25px;
 }
 
 .main_contenedor > div:nth-child(2){

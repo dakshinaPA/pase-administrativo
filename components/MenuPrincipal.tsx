@@ -1,7 +1,7 @@
 import { useAuth } from "@contexts/auth.context"
 import Link from "next/link"
 
-const MenuPrincipal = () => {
+const MenuPrincipal = ({ shrinkMenu }) => {
   const { user } = useAuth()
 
   return (
@@ -18,7 +18,11 @@ const MenuPrincipal = () => {
                 // aria-expanded="false"
                 // aria-controls="flush-collapse1"
               >
-                Usuarios
+                {shrinkMenu ? (
+                  <i className="bi bi-person-circle"></i>
+                ) : (
+                  "Usuarios"
+                )}
               </button>
             </h3>
             <div
@@ -53,7 +57,11 @@ const MenuPrincipal = () => {
                 data-bs-toggle="collapse"
                 data-bs-target="#flush-collapse2"
               >
-                Financiadores
+                {shrinkMenu ? (
+                  <i className="bi bi-cash-coin"></i>
+                ) : (
+                  "Financiadores"
+                )}
               </button>
             </h2>
             <div id="flush-collapse2" className="accordion-collapse collapse">
@@ -86,7 +94,7 @@ const MenuPrincipal = () => {
                 data-bs-toggle="collapse"
                 data-bs-target="#flush-collapse3"
               >
-                Copartes
+                {shrinkMenu ? <i className="bi bi-people"></i> : "Copartes"}
               </button>
             </h2>
             <div id="flush-collapse3" className="accordion-collapse collapse">
@@ -120,7 +128,7 @@ const MenuPrincipal = () => {
             data-bs-toggle="collapse"
             data-bs-target="#flush-collapse4"
           >
-            Proyectos
+            {shrinkMenu ? <i className="bi bi-folder2-open"></i> : "Proyectos"}
           </button>
         </h2>
         <div id="flush-collapse4" className="accordion-collapse collapse">
@@ -153,7 +161,7 @@ const MenuPrincipal = () => {
             data-bs-toggle="collapse"
             data-bs-target="#flush-collapse5"
           >
-            Solicitudes
+            {shrinkMenu ? <i className="bi bi-ui-checks"></i> : "Solicitudes"}
           </button>
         </h2>
         <div id="flush-collapse5" className="accordion-collapse collapse">
@@ -188,7 +196,11 @@ const MenuPrincipal = () => {
                 data-bs-toggle="collapse"
                 data-bs-target="#flush-collapse6"
               >
-                Colaboradores
+                {shrinkMenu ? (
+                  <i className="bi bi-person-plus"></i>
+                ) : (
+                  "Colaboradores"
+                )}
               </button>
             </h2>
             <div id="flush-collapse6" className="accordion-collapse collapse">
@@ -219,7 +231,7 @@ const MenuPrincipal = () => {
                 data-bs-toggle="collapse"
                 data-bs-target="#flush-collapse7"
               >
-                Proveedores
+                {shrinkMenu ? <i className="bi bi-truck"></i> : "Proveedores"}
               </button>
             </h2>
             <div id="flush-collapse7" className="accordion-collapse collapse">
