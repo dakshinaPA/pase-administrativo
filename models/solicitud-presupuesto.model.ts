@@ -16,6 +16,7 @@ export type IMetodosPAgo = 1 | 2
 
 export interface ComprobanteSolicitud {
   id?: number
+  id_solicitud_presupuesto?: number
   folio_fiscal: string
   f_total: string
   f_retenciones: string

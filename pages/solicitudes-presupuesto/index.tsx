@@ -303,7 +303,6 @@ const SolicitudesPresupuesto = () => {
           </a>
         </div>
       </div>
-      {isLoading && <Loader />}
       <>
         <div className="row">
           <div className="col-12 table-responsive">
@@ -342,92 +341,104 @@ const SolicitudesPresupuesto = () => {
                   <th>Acciones</th>
                 </tr>
               </thead>
-              <tbody>
-                {solicitudesFiltradas.map((solicitud) => {
-                  const {
-                    id,
-                    id_proyecto,
-                    proyecto,
-                    tipo_gasto,
-                    titular_cuenta,
-                    proveedor,
-                    descripcion_gasto,
-                    rubro,
-                    f_importe,
-                    saldo,
-                    i_estatus,
-                    estatus,
-                    dt_registro,
-                    checked,
-                  } = solicitud
+              {isLoading ? (
+                <tbody>
+                  <tr>
+                    <td colSpan={14}>
+                      <Loader />
+                    </td>
+                  </tr>
+                </tbody>
+              ) : (
+                <tbody>
+                  {solicitudesFiltradas.map((solicitud) => {
+                    const {
+                      id,
+                      id_proyecto,
+                      proyecto,
+                      tipo_gasto,
+                      titular_cuenta,
+                      proveedor,
+                      descripcion_gasto,
+                      rubro,
+                      f_importe,
+                      saldo,
+                      i_estatus,
+                      estatus,
+                      dt_registro,
+                      checked,
+                    } = solicitud
 
-                  const colorBadge = obtenerBadgeStatusSolicitud(i_estatus)
+                    const colorBadge = obtenerBadgeStatusSolicitud(i_estatus)
 
-                  return (
-                    <tr key={id}>
-                      <td>{id}</td>
-                      <td>{proyecto}</td>
-                      <td>{tipo_gasto}</td>
-                      <td>{rubro}</td>
-                      <td>{titular_cuenta}</td>
-                      <td>{proveedor}</td>
-                      <td>{descripcion_gasto}</td>
-                      <td>{montoALocaleString(f_importe)}</td>
-                      <td>
-                        {montoALocaleString(saldo.f_total_comprobaciones)}
-                      </td>
-                      <td>{montoALocaleString(saldo.f_monto_comprobar)}</td>
-                      <td>
-                        {montoALocaleString(saldo.f_total_impuestos_retenidos)}
-                      </td>
-                      <td>{montoALocaleString(saldo.f_total)}</td>
-                      <td>
-                        <span className={`badge bg-${colorBadge}`}>
-                          {estatus}
-                        </span>
-                      </td>
-                      <td>{epochAFecha(dt_registro)}</td>
-                      {showCbStatus && (
+                    return (
+                      <tr key={id}>
+                        <td>{id}</td>
+                        <td>{proyecto}</td>
+                        <td>{tipo_gasto}</td>
+                        <td>{rubro}</td>
+                        <td>{titular_cuenta}</td>
+                        <td>{proveedor}</td>
+                        <td>{descripcion_gasto}</td>
+                        <td>{montoALocaleString(f_importe)}</td>
                         <td>
-                          <input
-                            type="checkbox"
-                            className="form-check-input"
-                            onChange={({ target }) =>
-                              seleccionarSolicitudCambioStatus(
-                                target.checked,
-                                id
-                              )
-                            }
-                            checked={checked}
-                          />
+                          {montoALocaleString(saldo.f_total_comprobaciones)}
                         </td>
-                      )}
-                      <td>
-                        <div className="d-flex">
-                          <BtnAccion
-                            margin={false}
-                            icono="bi-eye-fill"
-                            onclick={() =>
-                              router.push(
-                                `/proyectos/${id_proyecto}/solicitudes-presupuesto/${id}`
-                              )
-                            }
-                            title="ver detalle"
-                          />
-                          {user.id_rol == 1 && (
-                            <BtnAccion
-                              margin="l"
-                              icono="bi-x-circle"
-                              onclick={() => abrirModalEliminarSolicitud(id)}
-                              title="eliminar solicitud"
-                            />
+                        <td>{montoALocaleString(saldo.f_monto_comprobar)}</td>
+                        <td>
+                          {montoALocaleString(
+                            saldo.f_total_impuestos_retenidos
                           )}
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
+                        </td>
+                        <td>{montoALocaleString(saldo.f_total)}</td>
+                        <td>
+                          <span className={`badge bg-${colorBadge}`}>
+                            {estatus}
+                          </span>
+                        </td>
+                        <td>{epochAFecha(dt_registro)}</td>
+                        {showCbStatus && (
+                          <td>
+                            <input
+                              type="checkbox"
+                              className="form-check-input"
+                              onChange={({ target }) =>
+                                seleccionarSolicitudCambioStatus(
+                                  target.checked,
+                                  id
+                                )
+                              }
+                              checked={checked}
+                            />
+                          </td>
+                        )}
+                        <td>
+                          <div className="d-flex">
+                            <BtnAccion
+                              margin={false}
+                              icono="bi-eye-fill"
+                              onclick={() =>
+                                router.push(
+                                  `/proyectos/${id_proyecto}/solicitudes-presupuesto/${id}`
+                                )
+                              }
+                              title="ver detalle"
+                            />
+                            {user.id_rol == 1 && (
+                              <BtnAccion
+                                margin="l"
+                                icono="bi-x-circle"
+                                onclick={() => abrirModalEliminarSolicitud(id)}
+                                title="eliminar solicitud"
+                              />
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              )}
             </table>
           </div>
         </div>

@@ -59,7 +59,7 @@ class SolicitudesPresupuestoDB {
       query += " AND sp.i_estatus=?"
     }
     if (titular) {
-      query += " AND sp.titular_cuenta LIKE ?"
+      query += " AND UPPER(sp.titular_cuenta) LIKE UPPER(?)"
     }
     if (dt_inicio) {
       query += " AND sp.dt_registro >= ?"
@@ -286,7 +286,7 @@ class SolicitudesPresupuestoDB {
       email=?, proveedor=?, descripcion_gasto=?, f_importe=?, i_estatus=? WHERE id=?`
 
     const qReComprobantes =
-      "SELECT id, folio_fiscal, b_activo FROM solicitud_presupuesto_comprobantes WHERE id_solicitud_presupuesto=?"
+      "SELECT id, id_solicitud_presupuesto, folio_fiscal, b_activo FROM solicitud_presupuesto_comprobantes WHERE id_solicitud_presupuesto=?"
 
     return new Promise((res, rej) => {
       connectionDB.getConnection((err, connection) => {
@@ -330,10 +330,12 @@ class SolicitudesPresupuestoDB {
                   (comDB) => comDB.folio_fiscal == comp.folio_fiscal
                 )
 
-                if (match) {
+                if (match && match.id_solicitud_presupuesto == id) {
+                  //reactivar solicitud
                   qCombinados.push(this.qReactivarComprobante())
                   phCombinados.push(match.id)
                 } else {
+                  //registrar nueva
                   qCombinados.push(this.qCrComprobante())
                   phCombinados.push(
                     id,
