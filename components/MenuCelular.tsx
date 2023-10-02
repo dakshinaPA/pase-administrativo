@@ -12,7 +12,7 @@ const MenuCelular = ({ cerrarMenu }) => {
           onClick={cerrarMenu}
         ></i>
       </div>
-      <MenuPrincipal />
+      <MenuPrincipal shrinkMenu={false} />
     </div>,
     document.querySelector("#menu_celular")
   )
