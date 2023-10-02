@@ -691,6 +691,8 @@ TRUNCATE TABLE proveedor_direccion;
 TRUNCATE TABLE solicitudes_presupuesto;
 TRUNCATE TABLE solicitud_presupuesto_comprobantes;
 TRUNCATE TABLE solicitud_presupuesto_notas;
+DELETE FROM solicitudes_presupuesto WHERE id > 1;
+DELETE FROM solicitud_presupuesto_comprobantes WHERE id_solicitud_presupuesto > 1;
 
 
 -- mysqldump -u root -p dakshina > dakshina.sql 

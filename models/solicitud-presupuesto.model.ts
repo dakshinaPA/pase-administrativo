@@ -28,6 +28,7 @@ export interface ComprobanteSolicitud {
   clave_regimen_fiscal?: string
   regimen_fiscal?: string
   dt_registro?: string
+  b_activo?: boolean
 }
 
 export type TipoGastoSolicitud = 0 | 1 | 2 | 3 | 4 | 5

@@ -116,37 +116,6 @@ class SolicitudesPresupuestoServices {
   static async actualizar(id: number, data: SolicitudPresupuesto) {
     try {
       const up = await SolicitudesPresupuestoDB.actualizar(id, data)
-      // const reComprobantes = await this.obtenerComprobantes(id)
-
-      // const promesas1 = await Promise.all([up, reComprobantes])
-
-      // for (const promesa of promesas1) {
-      //   if (promesa.error) throw promesa.data
-      // }
-
-      // const { comprobantes } = data
-
-      // //insertar comprobantes nuevos
-      // for (const com of comprobantes) {
-      //   if (!com.id) {
-      //     const crComprobante = await this.crearComprobante(id, com)
-      //     if (crComprobante.error) throw crComprobante.data
-      //   }
-      // }
-
-      // //checar si se borro algun comprobantes
-      // const comprobantesActivosDB =
-      //   reComprobantes.data as ComprobanteSolicitud[]
-      // for (const ca of comprobantesActivosDB) {
-      //   const matchVista = comprobantes.find(
-      //     (comprobante) => comprobante.id == ca.id
-      //   )
-      //   if (!matchVista) {
-      //     const dlComprobante =
-      //       await SolicitudesPresupuestoDB.borrarComprobante(ca.id)
-      //     if (dlComprobante.error) throw dlComprobante.data
-      //   }
-      // }
 
       return RespuestaController.exitosa(
         200,
@@ -206,34 +175,6 @@ class SolicitudesPresupuestoServices {
         error
       )
     }
-  }
-
-  static async actualizarEstatus(
-    id_solicitud: number,
-    i_estatus: EstatusSolicitud
-  ) {
-    const up = await SolicitudesPresupuestoDB.actualizarEstatus(
-      id_solicitud,
-      i_estatus
-    )
-    if (up.error) {
-      return RespuestaController.fallida(
-        400,
-        "Error al actualziar estatus de solicitud de presupuesto",
-        up.data
-      )
-    }
-
-    const res = {
-      i_estatus,
-      estatus: obtenerEstatusSolicitud(i_estatus),
-    }
-
-    return RespuestaController.exitosa(
-      200,
-      "Estatus de solicitud de presupuesto actualizada con éxito",
-      res
-    )
   }
 
   static async cambiarEstatus(payload: PayloadCambioEstatus) {
