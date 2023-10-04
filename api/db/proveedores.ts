@@ -6,7 +6,7 @@ import { fechaActualAEpoch } from "@assets/utils/common"
 
 class ProveedorDB {
   static queryRe = (id_proyecto: number, id_proveedor?: number) => {
-    let query = `SELECT p.id, p.id_proyecto, p.nombre, p.i_tipo, p.clabe, p.id_banco, p.telefono, p.email, p.rfc, p.descripcion_servicio, p.dt_registro,
+    let query = `SELECT p.id, p.id_proyecto, p.nombre, p.i_tipo, p.clabe, p.id_banco, p.telefono, p.email, p.rfc, p.bank, p.bank_branch_address, p.account_number, p.bic_code, p.intermediary_bank, p.routing_number, p.descripcion_servicio, p.dt_registro,
     pd.id id_direccion, pd.calle, pd.numero_ext, pd.numero_int, pd.colonia, pd.municipio, pd.cp, pd.id_estado,
     pr.id_responsable, CONCAT(pr.nombre, ' - ', pr.id_alt) proyecto,
     e.nombre estado,
@@ -15,7 +15,7 @@ class ProveedorDB {
     JOIN proyectos pr ON p.id_proyecto = pr.id
     JOIN proveedor_direccion pd ON p.id = pd.id_proveedor
     JOIN estados e ON pd.id_estado = e.id
-    JOIN bancos b ON p.id_banco = b.id
+    LEFT JOIN bancos b ON p.id_banco = b.id
     WHERE p.b_activo = 1`
 
     if (id_proyecto) {
@@ -58,8 +58,8 @@ class ProveedorDB {
   static async crear(data: ProveedorProyecto) {
     const { direccion } = data
 
-    const qProveedor = `INSERT INTO proveedores ( id_proyecto, nombre, i_tipo, clabe, id_banco, telefono, email, rfc,
-      descripcion_servicio, dt_registro ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )`
+    const qProveedor = `INSERT INTO proveedores ( id_proyecto, nombre, i_tipo, clabe, id_banco, telefono, email, rfc, bank, bank_branch_address,
+      account_number, bic_code, intermediary_bank, routing_number, descripcion_servicio, dt_registro ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )`
 
     const phProveedor = [
       data.id_proyecto,
@@ -70,6 +70,12 @@ class ProveedorDB {
       data.telefono,
       data.email,
       data.rfc,
+      data.bank,
+      data.bank_branch_address,
+      data.account_number,
+      data.bic_code,
+      data.intermediary_bank,
+      data.routing_number,
       data.descripcion_servicio,
       fechaActualAEpoch(),
     ]
@@ -142,8 +148,8 @@ class ProveedorDB {
   static async actualizar(id_proveedor: number, data: ProveedorProyecto) {
     const { direccion } = data
 
-    const qProveedor = `UPDATE proveedores SET nombre=?, i_tipo=?, clabe=?, id_banco=?,
-    telefono=?, email=?, rfc=?, descripcion_servicio=? WHERE id=? LIMIT 1`
+    const qProveedor = `UPDATE proveedores SET nombre=?, i_tipo=?, clabe=?, id_banco=?, telefono=?, email=?, rfc=?, bank=?, bank_branch_address=?, account_number=?,
+      bic_code=?, intermediary_bank=?, routing_number=?, descripcion_servicio=? WHERE id=? LIMIT 1`
 
     const phProveedor = [
       data.nombre,
@@ -153,6 +159,12 @@ class ProveedorDB {
       data.telefono,
       data.email,
       data.rfc,
+      data.bank,
+      data.bank_branch_address,
+      data.account_number,
+      data.bic_code,
+      data.intermediary_bank,
+      data.routing_number,
       data.descripcion_servicio,
       id_proveedor,
     ]

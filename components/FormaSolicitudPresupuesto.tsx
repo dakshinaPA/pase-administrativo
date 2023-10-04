@@ -692,6 +692,10 @@ const FormaSolicitudPresupuesto = () => {
       delete campos.proveedor
     }
 
+    if ([3, 4].includes(Number(estadoForma.i_tipo_gasto))) {
+      delete campos.descripcion_gasto
+    }
+
     // console.log(campos)
     return validarCampos(campos)
   }
@@ -1077,83 +1081,87 @@ const FormaSolicitudPresupuesto = () => {
               </div>
             </div>
           )}
-          <div className="col-12">
-            <hr />
-          </div>
           {/* Seccion comprobantes */}
-          <div className="col-12 mb-3">
-            <h4 className="color1 mb-0">Comprobantes</h4>
-          </div>
-          <div className="col-12 col-lg-4 mb-3">
-            <label className="form-label">Agregar factura</label>
-            <input
-              className="form-control"
-              type="file"
-              onChange={agregarFactura}
-              name="comprobante"
-              accept=".xml"
-              ref={fileInput}
-              disabled={disableInputFile}
-            />
-          </div>
-          <div className="col-12 mb-3 table-responsive">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Folio fiscal</th>
-                  <th>Régimen fiscal</th>
-                  <th>Método de pago</th>
-                  <th>Forma de pago</th>
-                  <th>Impuestos retenedios</th>
-                  <th>Total</th>
-                  {modoEditar && (
-                    <th>
-                      <i className="bi bi-trash"></i>
-                    </th>
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {estadoForma.comprobantes.map((comprobante) => {
-                  const {
-                    id,
-                    clave_regimen_fiscal,
-                    regimen_fiscal,
-                    folio_fiscal,
-                    metodo_pago,
-                    clave_forma_pago,
-                    forma_pago,
-                    f_retenciones,
-                    f_total,
-                  } = comprobante
-                  return (
-                    <tr key={folio_fiscal}>
-                      <td>{folio_fiscal}</td>
-                      <td>
-                        {clave_regimen_fiscal} - {regimen_fiscal}
-                      </td>
-                      <td>{metodo_pago}</td>
-                      <td>
-                        {clave_forma_pago} - {forma_pago}
-                      </td>
-                      <td>{f_retenciones}</td>
-                      <td>{f_total}</td>
+          {estadoForma.i_tipo_gasto != 3 && (
+            <>
+              <div className="col-12">
+                <hr />
+              </div>
+              <div className="col-12 mb-3">
+                <h4 className="color1 mb-0">Comprobantes</h4>
+              </div>
+              <div className="col-12 col-lg-4 mb-3">
+                <label className="form-label">Agregar factura</label>
+                <input
+                  className="form-control"
+                  type="file"
+                  onChange={agregarFactura}
+                  name="comprobante"
+                  accept=".xml"
+                  ref={fileInput}
+                  disabled={disableInputFile}
+                />
+              </div>
+              <div className="col-12 mb-3 table-responsive">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Folio fiscal</th>
+                      <th>Régimen fiscal</th>
+                      <th>Método de pago</th>
+                      <th>Forma de pago</th>
+                      <th>Impuestos retenedios</th>
+                      <th>Total</th>
                       {modoEditar && (
-                        <td>
-                          <BtnAccion
-                            margin={false}
-                            icono="bi-x-circle"
-                            onclick={() => quitarFactura(folio_fiscal)}
-                            title="eliminar factura"
-                          />
-                        </td>
+                        <th>
+                          <i className="bi bi-trash"></i>
+                        </th>
                       )}
                     </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
+                  </thead>
+                  <tbody>
+                    {estadoForma.comprobantes.map((comprobante) => {
+                      const {
+                        id,
+                        clave_regimen_fiscal,
+                        regimen_fiscal,
+                        folio_fiscal,
+                        metodo_pago,
+                        clave_forma_pago,
+                        forma_pago,
+                        f_retenciones,
+                        f_total,
+                      } = comprobante
+                      return (
+                        <tr key={folio_fiscal}>
+                          <td>{folio_fiscal}</td>
+                          <td>
+                            {clave_regimen_fiscal} - {regimen_fiscal}
+                          </td>
+                          <td>{metodo_pago}</td>
+                          <td>
+                            {clave_forma_pago} - {forma_pago}
+                          </td>
+                          <td>{f_retenciones}</td>
+                          <td>{f_total}</td>
+                          {modoEditar && (
+                            <td>
+                              <BtnAccion
+                                margin={false}
+                                icono="bi-x-circle"
+                                onclick={() => quitarFactura(folio_fiscal)}
+                                title="eliminar factura"
+                              />
+                            </td>
+                          )}
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
           {modoEditar && (
             <div className="col-12 text-end">
               <BtnCancelar onclick={cancelar} margin={"r"} />

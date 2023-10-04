@@ -1,6 +1,9 @@
 import { SolicitudesPresupuestoDB } from "@api/db/solicitudes-presupuesto"
 import { RespuestaController } from "@api/utils/response"
-import { ResSolicitudPresupuestoDB } from "@api/models/solicitudes-presupuesto.model"
+import {
+  ResSolicitudPresupuestoDB,
+  SolicitudesDB,
+} from "@api/models/solicitudes-presupuesto.model"
 import {
   SolicitudPresupuesto,
   TipoGastoSolicitud,
@@ -33,15 +36,18 @@ class SolicitudesPresupuestoServices {
   }
 
   static trasnformarData(
-    solicitudRes: ResSolicitudPresupuestoDB
+    solicitudRes: SolicitudPresupuesto
   ): SolicitudPresupuesto {
-    const {
-      i_tipo_gasto,
-      f_importe,
-      f_total_comprobaciones,
-      f_total_impuestos_retenidos,
-      i_estatus,
-    } = solicitudRes
+    const { i_tipo_gasto, f_importe, i_estatus, comprobantes } = solicitudRes
+
+    const f_total_comprobaciones = comprobantes.reduce(
+      (acum, com) => acum + Number(com.f_total),
+      0
+    )
+    const f_total_impuestos_retenidos = comprobantes.reduce(
+      (acum, com) => acum + Number(com.f_retenciones),
+      0
+    )
 
     return {
       ...solicitudRes,
@@ -67,25 +73,47 @@ class SolicitudesPresupuestoServices {
   }
 
   static async obtener(queries: QueriesSolicitud) {
+    if (queries.id) return this.obtenerUna(queries.id)
     try {
       const re = (await SolicitudesPresupuestoDB.obtener(
         queries
-      )) as ResSolicitudPresupuestoDB[]
+      )) as SolicitudesDB
 
-      let solicitudes: SolicitudPresupuesto[] = re.map((sol) =>
+      //hacer match de solicitudes con comprobantes
+      const solicitudesDB = re.solicitudes.map((sol) => {
+        const comprobantes = re.comprobantes.filter(
+          (comp) => comp.id_solicitud_presupuesto == sol.id
+        )
+
+        return {
+          ...sol,
+          comprobantes,
+        }
+      })
+
+      const solicitudes: SolicitudPresupuesto[] = solicitudesDB.map((sol) =>
         this.trasnformarData(sol)
       )
 
-      if (queries.id) {
-        solicitudes = solicitudes.map((sol) => {
-          return {
-            ...sol,
-            comprobantes: sol.comprobantes.map(this.tranformDataComprobantes),
-          }
-        })
-      }
-
       return RespuestaController.exitosa(200, "Consulta exitosa", solicitudes)
+    } catch (error) {
+      return RespuestaController.fallida(
+        400,
+        "Error al obtener solicitudes de presupuesto",
+        error?.message || error
+      )
+    }
+  }
+
+  static async obtenerUna(id: number) {
+    try {
+      const re = (await SolicitudesPresupuestoDB.obtenerUna(
+        id
+      )) as ResSolicitudPresupuestoDB[]
+
+      const solicitud = this.trasnformarData(re[0])
+      
+      return RespuestaController.exitosa(200, "Consulta exitosa", [solicitud])
     } catch (error) {
       return RespuestaController.fallida(
         400,

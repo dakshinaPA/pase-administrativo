@@ -37,6 +37,8 @@ const useErrores = () => {
           case "cargo":
           case "actividad":
           case "sector_beneficiado":
+          case "bank_branch_address":
+          case "bic_code":
             if (!/^[a-zA-Z0-9\u00C0-\u017F\s]{5,}$/.test(campos[key]))
               throw [key, "Mínimo 5 caracteres"]
             break
@@ -61,7 +63,7 @@ const useErrores = () => {
           case "descripcion":
           case "descripcion_servicio":
           case "descripcion_gasto":
-            if (!/^[a-zA-Z\u00C0-\u017F\s]{10,}$/.test(campos[key]))
+            if (!/^[a-zA-Z0-9\u00C0-\u017F\s]{10,}$/.test(campos[key]))
               throw [key, "Mínimo 10 caracteres"]
             break
           case "nombre_financiador":
@@ -71,11 +73,13 @@ const useErrores = () => {
           case "municipio":
           case "estado":
           case "proveedor":
-            if (!/^[a-zA-Z\u00C0-\u017F\s]{3,}$/.test(campos[key]))
+          case "bank":
+          case "intermediary_bank":
+            if (!/^[a-zA-Z0-9\u00C0-\u017F\s]{3,}$/.test(campos[key]))
               throw [key, "Mínimo 3 caracteres"]
             break
           case "nombre_corto":
-            if (!/^[a-zA-Z]{2,}$/.test(campos[key]))
+            if (!/^[a-zA-Z\u00C0-\u017F\s]{2,}$/.test(campos[key]))
               throw [key, "Mínimo 2 caracteres"]
             break
           case "numero_ext":
@@ -112,6 +116,12 @@ const useErrores = () => {
           case "dt_fin":
             if (!/^[0-9]{4}\-[0-1][0-9]\-[0-3][0-9]$/.test(campos[key]))
               throw [key, "Fecha inválida"]
+            break
+          case "telefono":
+          case "account_number":
+          case "routing_number":
+            if (!/^[0-9]{1,}$/.test(campos[key]))
+              throw [key, "Sólo dígitos"]
             break
         }
       }

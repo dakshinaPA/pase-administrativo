@@ -9,7 +9,7 @@ export interface ResColaboradoreDB {
   nombre: string
   apellido_paterno: string
   apellido_materno: string
-  i_tipo: 1 | 2 // asimilados, salarios
+  i_tipo: 1 | 2 | 3// asimilados, salarios, persona fisica extranjera
   clabe: string
   id_banco: number
   banco: string
@@ -29,3 +29,19 @@ export interface ResColaboradoreDB {
   estado?: string
   periodos_servicio?: PeriodoServicioColaborador[]
 }
+
+/*
+  extranjeros
+Nombre del banco	
+Bank branch address:	
+Account number:	numerico
+BIC/SWIFT Code:	
+Intermediary bank:	
+Routing number: numerico 
+
+--no clabe
+--no rfc
+
+
+
+*/

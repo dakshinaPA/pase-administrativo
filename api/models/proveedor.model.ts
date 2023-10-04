@@ -11,6 +11,12 @@ export interface ResProveedorDB {
   telefono: string
   email: string
   rfc: string
+  bank: string
+  bank_branch_address: string
+  account_number: string
+  bic_code: string
+  intermediary_bank: string
+  routing_number: string
   descripcion_servicio: string
   dt_registro: string
   id_direccion: number

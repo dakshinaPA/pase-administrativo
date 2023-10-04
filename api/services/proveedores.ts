@@ -4,12 +4,14 @@ import { ResProveedorDB } from "@api/models/proveedor.model"
 import { ProveedorProyecto } from "@models/proyecto.model"
 
 class ProveedorServices {
-  static obtenerTipo(id_tipo: 1 | 2) {
+  static obtenerTipo(id_tipo: 1 | 2 | 3) {
     switch (id_tipo) {
       case 1:
         return "Persona Física"
       case 2:
         return "Persona Moral"
+      case 3:
+        return "Extranjero"
     }
   }
 
@@ -31,10 +33,16 @@ class ProveedorServices {
           tipo: this.obtenerTipo(proveedor.i_tipo),
           clabe: proveedor.clabe,
           id_banco: proveedor.id_banco,
-          banco: proveedor.banco,
+          banco: proveedor.banco || "",
           telefono: proveedor.telefono,
           email: proveedor.email,
           rfc: proveedor.rfc,
+          bank: proveedor.bank,
+          bank_branch_address: proveedor.bank_branch_address,
+          account_number: proveedor.account_number,
+          bic_code: proveedor.bic_code,
+          intermediary_bank: proveedor.intermediary_bank,
+          routing_number: proveedor.routing_number,
           descripcion_servicio: proveedor.descripcion_servicio,
           direccion: {
             id: proveedor.id_direccion,

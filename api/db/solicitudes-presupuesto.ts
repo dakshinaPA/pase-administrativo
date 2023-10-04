@@ -10,6 +10,8 @@ import {
 } from "@models/solicitud-presupuesto.model"
 import { RespuestaDB } from "@api/utils/response"
 import { fechaActualAEpoch } from "@assets/utils/common"
+import { Proyecto } from "@models/proyecto.model"
+import { ResSolicitudPresupuestoDB } from "@api/models/solicitudes-presupuesto.model"
 
 class SolicitudesPresupuestoDB {
   static queryRe = (queries: QueriesSolicitud) => {
@@ -30,16 +32,13 @@ class SolicitudesPresupuestoDB {
       sp.email, sp.proveedor, sp.descripcion_gasto, sp.id_partida_presupuestal, sp.f_importe, sp.i_estatus, sp.dt_registro,
       CONCAT(p.id_alt, ' - ', p.nombre) proyecto, p.id_responsable,
       b.nombre banco,
-      r.nombre rubro,
-      SUM(spc.f_total) f_total_comprobaciones,
-      SUM(spc.f_retenciones) f_total_impuestos_retenidos
+      r.nombre rubro
       FROM solicitudes_presupuesto sp
       JOIN proyectos p ON sp.id_proyecto=p.id
       JOIN copartes c ON p.id_coparte=c.id
       JOIN bancos b ON sp.id_banco=b.id
       JOIN rubros_presupuestales r ON sp.id_partida_presupuestal=r.id
-      LEFT JOIN solicitud_presupuesto_comprobantes spc ON spc.id_solicitud_presupuesto=sp.id
-      WHERE sp.b_activo=1 AND spc.b_activo=1`
+      WHERE sp.b_activo=1`
 
     if (id_coparte) {
       query += " AND c.id=?"
@@ -79,13 +78,21 @@ class SolicitudesPresupuestoDB {
 
   static qReComprobantes = () => {
     return `
-      SELECT spc.id, spc.folio_fiscal, spc.f_total, spc.f_retenciones, spc.i_metodo_pago, spc.id_forma_pago, spc.id_regimen_fiscal, spc.dt_registro,
+      SELECT spc.id, spc.id_solicitud_presupuesto, spc.folio_fiscal, spc.f_total, spc.f_retenciones, spc.i_metodo_pago, spc.id_forma_pago, spc.id_regimen_fiscal, spc.dt_registro,
       fp.nombre forma_pago, fp.clave clave_forma_pago,
       rf.nombre regimen_fiscal, rf.clave clave_regimen_fiscal
       FROM solicitud_presupuesto_comprobantes spc
       JOIN formas_pago fp ON spc.id_forma_pago = fp.id
       JOIN regimenes_fiscales rf ON spc.id_regimen_fiscal = rf.id
       WHERE spc.id_solicitud_presupuesto=? AND spc.b_activo=1
+    `
+  }
+
+  static qReSaldoComprobantes = () => {
+    return `
+      SELECT spc.id, spc.id_solicitud_presupuesto, spc.f_total, spc.f_retenciones
+      FROM solicitud_presupuesto_comprobantes spc
+      WHERE spc.id_solicitud_presupuesto IN (?) AND spc.b_activo=1
     `
   }
 
@@ -115,7 +122,6 @@ class SolicitudesPresupuestoDB {
 
   static async obtener(queries: QueriesSolicitud) {
     const {
-      id,
       id_coparte,
       id_proyecto,
       id_responsable,
@@ -131,8 +137,8 @@ class SolicitudesPresupuestoDB {
 
     const phSolicitud = []
 
-    if (id_coparte || id_proyecto || id) {
-      phSolicitud.push(id_coparte || id_proyecto || id)
+    if (id_coparte || id_proyecto) {
+      phSolicitud.push(id_coparte || id_proyecto)
     }
 
     if (id_responsable) phSolicitud.push(id_responsable)
@@ -153,38 +159,64 @@ class SolicitudesPresupuestoDB {
             return rej(error)
           }
 
-          const proyectos = results
+          const solicitudes = results as ResSolicitudPresupuestoDB[]
+          const ids = solicitudes.map((sol) => sol.id)
+          const qComprobantes = this.qReSaldoComprobantes()
 
-          if (id) {
-            const qComprobantes = this.qReComprobantes()
-            const qnotas = this.qReNotas()
-            const qCombinados = [qComprobantes, qnotas].join(";")
-
-            connection.query(
-              qCombinados,
-              [id, id],
-              (error, results, fields) => {
-                if (error) {
-                  connection.destroy()
-                  return rej(error)
-                }
-
+          connection.query(
+            qComprobantes,
+            ids.join(","),
+            (error, results, fields) => {
+              if (error) {
                 connection.destroy()
-                res([
-                  {
-                    ...proyectos[0],
-                    comprobantes: results[0],
-                    notas: results[1],
-                  },
-                ])
+                return rej(error)
               }
-            )
-            return
-          }
 
-          connection.destroy()
-          res(proyectos)
+              const comprobantes = results
+
+              connection.destroy()
+              res({
+                solicitudes,
+                comprobantes,
+              })
+            }
+          )
         })
+      })
+    })
+  }
+
+  static async obtenerUna(id: number) {
+    const qSolicitud = this.queryRe({ id })
+    const qComprobantes = this.qReComprobantes()
+    const qnotas = this.qReNotas()
+    const qCombinados = [qSolicitud, qComprobantes, qnotas].join(";")
+
+    const phCombinados = [id, id, id]
+
+    return new Promise((res, rej) => {
+      connectionDB.getConnection((err, connection) => {
+        if (err) return rej(err)
+
+        connection.query(
+          qCombinados,
+          phCombinados,
+          (error, results, fields) => {
+            if (error) {
+              connection.destroy()
+              return rej(error)
+            }
+
+            connection.destroy()
+            res([
+              {
+                ...results[0][0],
+                comprobantes: results[1],
+                notas: results[2],
+              },
+            ])
+          }
+        )
       })
     })
   }
@@ -253,25 +285,34 @@ class SolicitudesPresupuestoDB {
                 )
               }
 
-              //crear comprobantes
-              connection.query(
-                qComprobantes.join(";"),
-                phComprobantes,
-                (error, results, fields) => {
-                  if (error) {
-                    return connection.rollback(() => {
+              if (qComprobantes.length > 0) {
+                //crear comprobantes
+                connection.query(
+                  qComprobantes.join(";"),
+                  phComprobantes,
+                  (error, results, fields) => {
+                    if (error) {
+                      return connection.rollback(() => {
+                        connection.destroy()
+                        rej(error)
+                      })
+                    }
+
+                    connection.commit((err) => {
+                      if (err) connection.rollback(() => rej(err))
                       connection.destroy()
-                      rej(error)
+                      res(idSolicitud)
                     })
                   }
+                )
+                return
+              }
 
-                  connection.commit((err) => {
-                    if (err) connection.rollback(() => rej(err))
-                    connection.destroy()
-                    res(idSolicitud)
-                  })
-                }
-              )
+              connection.commit((err) => {
+                if (err) connection.rollback(() => rej(err))
+                connection.destroy()
+                res(idSolicitud)
+              })
             }
           )
         })

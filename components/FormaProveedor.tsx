@@ -17,7 +17,12 @@ import { obtenerProveedores, obtenerProyectos } from "@assets/utils/common"
 import { useErrores } from "@hooks/useErrores"
 import { MensajeError } from "./Mensajes"
 
-type ActionTypes = "CARGA_INICIAL" | "HANDLE_CHANGE" | "HANDLE_CHANGE_DIRECCION"
+type ActionTypes =
+  | "CARGA_INICIAL"
+  | "HANDLE_CHANGE"
+  | "HANDLE_CHANGE_DIRECCION"
+  | "NO_EXTRANJERO"
+  | "EXTRANJERO"
 
 interface ActionDispatch {
   type: ActionTypes
@@ -46,6 +51,24 @@ const reducer = (
           [payload.name]: payload.value,
         },
       }
+    case "EXTRANJERO":
+      return {
+        ...state,
+        clabe: "",
+        id_banco: 0,
+        banco: "",
+        rfc: "",
+      }
+    case "NO_EXTRANJERO":
+      return {
+        ...state,
+        bank: "",
+        bank_branch_address: "",
+        account_number: "",
+        bic_code: "",
+        intermediary_bank: "",
+        routing_number: "",
+      }
     default:
       return state
   }
@@ -67,6 +90,12 @@ const FormaProveedor = () => {
     telefono: "",
     email: "",
     rfc: "",
+    bank: "",
+    bank_branch_address: "",
+    account_number: "",
+    bic_code: "",
+    intermediary_bank: "",
+    routing_number: "",
     descripcion_servicio: "",
     direccion: {
       calle: "",
@@ -105,6 +134,15 @@ const FormaProveedor = () => {
       },
     })
   }, [estadoForma.clabe])
+
+  useEffect(() => {
+    const type = estadoForma.i_tipo == 3 ? "EXTRANJERO" : "NO_EXTRANJERO"
+
+    dispatch({
+      type,
+      payload: {},
+    })
+  }, [estadoForma.i_tipo])
 
   const cargarData = async () => {
     setIsLoading(true)
@@ -178,13 +216,19 @@ const FormaProveedor = () => {
   const validarForma = () => {
     const campos = {
       id_proyecto: estadoForma.id_proyecto,
-      nombre: estadoForma.nombre,
+      proveedor: estadoForma.nombre,
       clabe: estadoForma.clabe,
       id_banco: estadoForma.id_banco,
       email: estadoForma.email,
       telefono: estadoForma.telefono,
       rfc: estadoForma.rfc,
       rfc_organizacion: estadoForma.rfc,
+      bank: estadoForma.bank,
+      bank_branch_address: estadoForma.bank_branch_address,
+      account_number: estadoForma.account_number,
+      bic_code: estadoForma.bic_code,
+      intermediary_bank: estadoForma.intermediary_bank,
+      routing_number: estadoForma.routing_number,
       descripcion_servicio: estadoForma.descripcion_servicio,
       calle: estadoForma.direccion.calle,
       numero_ext: estadoForma.direccion.numero_ext,
@@ -193,10 +237,24 @@ const FormaProveedor = () => {
       cp: estadoForma.direccion.cp,
     }
 
-    if (estadoForma.i_tipo == 1) {
+    if (estadoForma.i_tipo == 3) {
+      delete campos.clabe
+      delete campos.id_banco
+      delete campos.rfc
       delete campos.rfc_organizacion
     } else {
-      delete campos.rfc
+      delete campos.bank
+      delete campos.bank_branch_address
+      delete campos.account_number
+      delete campos.bic_code
+      delete campos.intermediary_bank
+      delete campos.routing_number
+
+      if (estadoForma.i_tipo == 1) {
+        delete campos.rfc_organizacion
+      } else {
+        delete campos.rfc
+      }
     }
 
     // console.log(campos)
@@ -288,7 +346,7 @@ const FormaProveedor = () => {
             value={estadoForma.nombre}
             disabled={!modoEditar}
           />
-          {error.campo == "nombre" && <MensajeError mensaje={error.mensaje} />}
+          {error.campo == "proveedor" && <MensajeError mensaje={error.mensaje} />}
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Tipo</label>
@@ -301,41 +359,150 @@ const FormaProveedor = () => {
           >
             <option value="1">Persona física</option>
             <option value="2">Persona moral</option>
+            <option value="3">Extranjero</option>
           </select>
         </div>
-        <div className="col-12 col-md-6 col-lg-4 mb-3">
-          <label className="form-label">CLABE</label>
-          <input
-            className="form-control"
-            type="text"
-            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-            name="clabe"
-            value={estadoForma.clabe}
-            disabled={!modoEditar}
-          />
-          {error.campo == "clabe" && <MensajeError mensaje={error.mensaje} />}
-        </div>
-        <div className="col-12 col-md-6 col-lg-4 mb-3">
-          <label className="form-label">Banco</label>
-          <select
-            className="form-control"
-            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-            name="id_banco"
-            value={estadoForma.id_banco}
-            // disabled={!modoEditar}
-            disabled
-          >
-            <option value="0" disabled></option>
-            {bancos.map(({ id, nombre }) => (
-              <option key={id} value={id}>
-                {nombre}
-              </option>
-            ))}
-          </select>
-          {error.campo == "id_banco" && (
-            <MensajeError mensaje={error.mensaje} />
-          )}
-        </div>
+        {estadoForma.i_tipo == 3 ? (
+          <>
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label">Bank</label>
+              <input
+                className="form-control"
+                type="text"
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+                name="bank"
+                value={estadoForma.bank}
+                disabled={!modoEditar}
+              />
+              {error.campo == "bank" && (
+                <MensajeError mensaje={error.mensaje} />
+              )}
+            </div>
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label">Bank branch address</label>
+              <input
+                className="form-control"
+                type="text"
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+                name="bank_branch_address"
+                value={estadoForma.bank_branch_address}
+                disabled={!modoEditar}
+              />
+              {error.campo == "bank_branch_address" && (
+                <MensajeError mensaje={error.mensaje} />
+              )}
+            </div>
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label">Account number</label>
+              <input
+                className="form-control"
+                type="text"
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+                name="account_number"
+                value={estadoForma.account_number}
+                disabled={!modoEditar}
+              />
+              {error.campo == "account_number" && (
+                <MensajeError mensaje={error.mensaje} />
+              )}
+            </div>
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label">BIC/SWIFT code</label>
+              <input
+                className="form-control"
+                type="text"
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+                name="bic_code"
+                value={estadoForma.bic_code}
+                disabled={!modoEditar}
+              />
+              {error.campo == "bic_code" && (
+                <MensajeError mensaje={error.mensaje} />
+              )}
+            </div>
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label">Intermediary bank</label>
+              <input
+                className="form-control"
+                type="text"
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+                name="intermediary_bank"
+                value={estadoForma.intermediary_bank}
+                disabled={!modoEditar}
+              />
+              {error.campo == "intermediary_bank" && (
+                <MensajeError mensaje={error.mensaje} />
+              )}
+            </div>
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label">Routing number</label>
+              <input
+                className="form-control"
+                type="text"
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+                name="routing_number"
+                value={estadoForma.routing_number}
+                disabled={!modoEditar}
+              />
+              {error.campo == "routing_number" && (
+                <MensajeError mensaje={error.mensaje} />
+              )}
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label">CLABE</label>
+              <input
+                className="form-control"
+                type="text"
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+                name="clabe"
+                value={estadoForma.clabe}
+                disabled={!modoEditar}
+              />
+              {error.campo == "clabe" && (
+                <MensajeError mensaje={error.mensaje} />
+              )}
+            </div>
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label">Banco</label>
+              <select
+                className="form-control"
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+                name="id_banco"
+                value={estadoForma.id_banco}
+                // disabled={!modoEditar}
+                disabled
+              >
+                <option value="0" disabled></option>
+                {bancos.map(({ id, nombre }) => (
+                  <option key={id} value={id}>
+                    {nombre}
+                  </option>
+                ))}
+              </select>
+              {error.campo == "id_banco" && (
+                <MensajeError mensaje={error.mensaje} />
+              )}
+            </div>
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label">RFC</label>
+              <input
+                className="form-control"
+                type="text"
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+                name={estadoForma.i_tipo == 1 ? "rfc" : "rfc_organizacion"}
+                value={estadoForma.rfc}
+                disabled={!modoEditar}
+              />
+              {error.campo ==
+                (estadoForma.i_tipo == 1 ? "rfc" : "rfc_organizacion") && (
+                <MensajeError mensaje={error.mensaje} />
+              )}
+            </div>
+          </>
+        )}
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Email</label>
           <input
@@ -359,21 +526,6 @@ const FormaProveedor = () => {
             disabled={!modoEditar}
           />
           {error.campo == "telefono" && (
-            <MensajeError mensaje={error.mensaje} />
-          )}
-        </div>
-        <div className="col-12 col-md-6 col-lg-4 mb-3">
-          <label className="form-label">RFC</label>
-          <input
-            className="form-control"
-            type="text"
-            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-            name={estadoForma.i_tipo == 1 ? "rfc" : "rfc_organizacion"}
-            value={estadoForma.rfc}
-            disabled={!modoEditar}
-          />
-          {error.campo ==
-            (estadoForma.i_tipo == 1 ? "rfc" : "rfc_organizacion") && (
             <MensajeError mensaje={error.mensaje} />
           )}
         </div>

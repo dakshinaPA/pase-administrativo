@@ -587,6 +587,12 @@ CREATE TABLE `proyectos` (
     `telefono` VARCHAR(10) NOT NULL,
     `email` VARCHAR(50) NOT NULL,
     `rfc` VARCHAR(20) NOT NULL,
+    `bank` VARCHAR(30) NOT NULL,
+    `bank_branch_address` VARCHAR(50) NOT NULL,
+    `account_number` VARCHAR(30) NOT NULL,
+    `bic_code` VARCHAR(30) NOT NULL,
+    `intermediary_bank` VARCHAR(50) NOT NULL,
+    `routing_number` VARCHAR(30) NOT NULL,
     `descripcion_servicio` VARCHAR(150) NOT NULL,
     `b_activo` TINYINT UNSIGNED NOT NULL DEFAULT 1,
     `dt_registro` VARCHAR(10) NOT NULL,
@@ -594,7 +600,7 @@ CREATE TABLE `proyectos` (
     INDEX (`id_proyecto`),
     INDEX (`id_banco`));
 
-  
+
   CREATE TABLE `proveedor_direccion` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
     `id_proveedor` INT UNSIGNED NOT NULL,

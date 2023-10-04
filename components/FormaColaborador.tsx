@@ -711,9 +711,9 @@ const FormaColaborador = () => {
                               min={determinarMinDataFinPeriodoServicio(
                                 dt_inicio
                               )}
-                              max={determinarMaxDataFinPeriodoServicio(
-                                dt_inicio
-                              )}
+                              // max={determinarMaxDataFinPeriodoServicio(
+                              //   dt_inicio
+                              // )}
                               onChange={(e) => handleChangePeriodo(e, index)}
                               value={dt_fin}
                             />

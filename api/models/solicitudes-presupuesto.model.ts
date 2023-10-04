@@ -1,6 +1,7 @@
 import {
   TipoGastoSolicitud,
   EstatusSolicitud,
+  ComprobanteSolicitud,
 } from "@models/solicitud-presupuesto.model"
 
 export interface ResSolicitudPresupuestoDB {
@@ -23,4 +24,9 @@ export interface ResSolicitudPresupuestoDB {
   f_total_impuestos_retenidos: number
   i_estatus: EstatusSolicitud
   dt_registro: string
+}
+
+export interface SolicitudesDB {
+  solicitudes: ResSolicitudPresupuestoDB[]
+  comprobantes: ComprobanteSolicitud[]
 }
