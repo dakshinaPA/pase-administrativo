@@ -2,24 +2,16 @@ import { RespuestaDB } from "@api/utils/response"
 import { queryDB, queryDBPlaceHolder } from "./query"
 import {
   Proyecto,
-  MinistracionProyecto,
   RubroMinistracion,
   NotaProyecto,
   QueriesProyecto,
-  SaldoProyecto,
 } from "@models/proyecto.model"
 import { fechaActualAEpoch } from "@assets/utils/common"
 import { connectionDB } from "./connectionPool"
 import { ResProyectoDB } from "@api/models/proyecto.model"
-import {
-  ComprobanteSolicitud,
-  SolicitudPresupuesto,
-} from "@models/solicitud-presupuesto.model"
 import { ColaboradorDB } from "./colaboradores"
-import proveedores from "pages/api/proveedores"
 import { ProveedorDB } from "./proveedores"
 import { SolicitudesPresupuestoDB } from "./solicitudes-presupuesto"
-import PoolConnection from "mysql2/typings/mysql/lib/PoolConnection"
 
 interface RubrosConIdMinistracion {
   id_ministracion: number
@@ -83,82 +75,52 @@ class ProyectoDB {
     return query
   }
 
-  static qReMontoTotal() {
-    return `
-      SELECT SUM(f_monto) f_monto_total FROM ministracion_rubros_presupuestales WHERE id_ministracion IN (
-        SELECT id FROM proyecto_ministraciones WHERE id_proyecto=? and b_activo=1
-      ) AND b_activo=1
-    `
-  }
 
-  static qRePA() {
+
+  static qReRubros() {
     return `
-      SELECT SUM(f_monto) f_pa FROM ministracion_rubros_presupuestales WHERE id_ministracion IN (
-        SELECT id FROM proyecto_ministraciones WHERE id_proyecto=? and b_activo=1
-      ) AND b_activo=1 AND id_rubro=1
+      SELECT mrp.f_monto, p.id id_proyecto, mrp.id_rubro
+      FROM ministracion_rubros_presupuestales mrp 
+      JOIN proyecto_ministraciones pm ON pm.id = mrp.id_ministracion
+      JOIN proyectos p ON p.id = pm.id_proyecto
+      WHERE p.id IN (?) AND pm.b_activo=1 AND mrp.b_activo=1
     `
   }
 
   static qReSolicitado() {
     return `
-      SELECT SUM(f_importe) f_solicitado FROM solicitudes_presupuesto WHERE id_proyecto=? AND b_activo=1
+      SELECT SUM(f_importe) f_solicitado, id_proyecto FROM solicitudes_presupuesto
+      WHERE id_proyecto IN(?) AND b_activo=1 GROUP BY id_proyecto
     `
   }
 
   static qReSaldoComprobantes() {
     return `
-      SELECT SUM(f_total) f_comprobado, SUM(f_retenciones) f_retenciones FROM solicitud_presupuesto_comprobantes WHERE id_solicitud_presupuesto IN (
-        SELECT id FROM solicitudes_presupuesto WHERE id_proyecto=? AND b_activo=1
-      ) AND b_activo=1
+      SELECT p.id id_proyecto, spc.f_total, spc.f_retenciones, sp.i_estatus FROM solicitud_presupuesto_comprobantes spc
+      JOIN solicitudes_presupuesto sp ON sp.id = spc.id_solicitud_presupuesto
+      JOIN proyectos p ON p.id = sp.id_proyecto
+      WHERE p.id IN (?) AND sp.b_activo=1 AND spc.b_activo=1
     `
   }
 
-  static qReSaldoTransferido() {
-    return `
-      SELECT SUM(f_total) f_transferido FROM solicitud_presupuesto_comprobantes WHERE id_solicitud_presupuesto IN (
-        SELECT id FROM solicitudes_presupuesto WHERE id_proyecto=? AND b_activo=1 AND i_estatus=4
-      ) AND b_activo=1
-    `
+  static qReMinistraciones = () => {
+    return `SELECT id, id_proyecto, i_numero, i_grupo, dt_recepcion, dt_registro
+      FROM proyecto_ministraciones pm WHERE id_proyecto=? AND b_activo=1`
   }
 
-  static obtenerSaldo(
-    connection: PoolConnection,
-    proyecto: ResProyectoDB
-  ): Promise<ResProyectoDB> {
-    const { id } = proyecto
+  static qReRubrosMinistracion = (activos = true) => {
+    let query = `SELECT mrp.id, mrp.id_ministracion, mrp.id_rubro, mrp.f_monto, mrp.b_activo, rp.nombre rubro
+      FROM ministracion_rubros_presupuestales mrp
+      JOIN rubros_presupuestales rp ON rp.id = mrp.id_rubro
+      WHERE mrp.id_ministracion IN (
+      SELECT id FROM proyecto_ministraciones WHERE id_proyecto=? AND b_activo=1
+      )`
 
-    return new Promise((res, rej) => {
-      const qCombinados = [
-        this.qReMontoTotal(),
-        this.qRePA(),
-        this.qReSolicitado(),
-        this.qReSaldoComprobantes(),
-        this.qReSaldoTransferido(),
-      ].join(";")
+    if (activos) {
+      query += "  AND mrp.b_activo=1"
+    }
 
-      connection.query(
-        qCombinados,
-        [id, id, id, id, id],
-        (error, results, fields) => {
-          if (error) {
-            connection.destroy()
-            return rej(error)
-          }
-
-          const proyectoHyd = {
-            ...proyecto,
-            f_monto_total: results[0][0].f_monto_total,
-            f_pa: results[1][0].f_pa,
-            f_solicitado: results[2][0].f_solicitado,
-            f_comprobado: results[3][0].f_comprobado,
-            f_retenciones: results[3][0].f_retenciones,
-            f_transferido: results[4][0].f_transferido,
-          }
-
-          res(proyectoHyd)
-        }
-      )
-    })
+    return query
   }
 
   static async obtener(queries: QueriesProyecto) {
@@ -190,44 +152,46 @@ class ProyectoDB {
             }
 
             const proyectosDB = results as ResProyectoDB[]
+            const idsProyectos = proyectosDB.map((proy) => proy.id)
 
-            const proyectosHyd = await Promise.all(
-              proyectosDB.map(
-                async (proyecto) =>
-                  await this.obtenerSaldo(connection, proyecto)
-              )
+            //queries saldos
+            const qRubros = this.qReRubros()
+            const qSaldoSolicitudes = this.qReSolicitado()
+            const qSaldoComprobantes = this.qReSaldoComprobantes()
+            const qCombinados = [qRubros, qSaldoSolicitudes, qSaldoComprobantes].join(";")
+
+            const phCombinados = [idsProyectos, idsProyectos, idsProyectos]
+
+            connection.query(
+              qCombinados,
+              phCombinados,
+              (error, results, fields) => {
+                if (error) {
+                  connection.destroy()
+                  return rej(error)
+                }
+
+                connection.destroy()
+                res({
+                  proyectos: proyectosDB,
+                  rubros: results[0],
+                  solicitado: results[1],
+                  comprobantes: results[2],
+                })
+              }
             )
-
-            connection.destroy()
-            res(proyectosHyd)
           }
         )
       })
     })
   }
 
-  static qReMinistraciones = () => {
-    return `SELECT id, id_proyecto, i_numero, i_grupo, dt_recepcion, dt_registro
-      FROM proyecto_ministraciones pm WHERE id_proyecto=? AND b_activo=1`
-  }
 
-  static qReRubrosMinistracion = (activos = true) => {
-    let query = `SELECT mrp.id, mrp.id_ministracion, mrp.id_rubro, mrp.f_monto, mrp.b_activo, rp.nombre rubro
-      FROM ministracion_rubros_presupuestales mrp
-      JOIN rubros_presupuestales rp ON rp.id = mrp.id_rubro
-      WHERE mrp.id_ministracion IN (
-      SELECT id FROM proyecto_ministraciones WHERE id_proyecto=? AND b_activo=1
-      )`
-
-    if (activos) {
-      query += "  AND mrp.b_activo=1"
-    }
-
-    return query
-  }
 
   static obtenerUno = async (id: number) => {
     const qProyecto = this.queryRe({ id })
+    const qSaldoSolicitudes = this.qReSolicitado()
+    const qSaldoComprobantes = this.qReSaldoComprobantes()
     const qMinistracioens = this.qReMinistraciones()
     const qRubrosMinistracion = this.qReRubrosMinistracion()
     const qColaboradores = ColaboradorDB.queryRe(id)
@@ -237,6 +201,8 @@ class ProyectoDB {
 
     const qCombinados = [
       qProyecto,
+      qSaldoSolicitudes,
+      qSaldoComprobantes,
       qMinistracioens,
       qRubrosMinistracion,
       qColaboradores,
@@ -245,7 +211,7 @@ class ProyectoDB {
       qNotas,
     ].join(";")
 
-    const phCombinados = [id, id, id, id, id, id, id]
+    const phCombinados = [id, id, id, id, id, id, id, id, id]
 
     return new Promise((res, rej) => {
       connectionDB.getConnection((err, connection) => {
@@ -261,22 +227,19 @@ class ProyectoDB {
               return rej(error)
             }
 
-            const proyectoDB = results[0][0] as ResProyectoDB
-            const proyectoConSaldo = await this.obtenerSaldo(
-              connection,
-              proyectoDB
-            )
 
             connection.destroy()
 
-            const dataProyecto: ResProyectoDB = {
-              ...proyectoConSaldo,
-              ministraciones: results[1],
-              rubros_ministracion: results[2],
-              colaboradores: results[3],
-              proveedores: results[4],
-              solicitudes: results[5],
-              notas: results[6],
+            const dataProyecto = {
+              proyectos: results[0],
+              solicitado: results[1],
+              comprobantes: results[2],
+              ministraciones: results[3],
+              rubros_ministracion: results[4],
+              colaboradores: results[5],
+              proveedores: results[6],
+              solicitudes: results[7],
+              notas: results[8],
             }
 
             res(dataProyecto)

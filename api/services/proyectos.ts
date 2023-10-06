@@ -13,8 +13,8 @@ import {
   DataProyecto,
 } from "@models/proyecto.model"
 
-import { ResProyectoDB } from "@api/models/proyecto.model"
-import { epochAFecha } from "@assets/utils/common"
+import { ResProyectoDB, ResProyectos } from "@api/models/proyecto.model"
+import { epochAFecha, obtenerEstatusSolicitud } from "@assets/utils/common"
 import { SolicitudesPresupuestoServices } from "./solicitudes-presupuesto"
 
 class ProyectosServices {
@@ -46,50 +46,7 @@ class ProyectosServices {
     }
   }
 
-  static transformarDataProyecto = (data: ResProyectoDB): Proyecto => {
-    let {
-      f_monto_total,
-      f_solicitado,
-      f_comprobado,
-      f_transferido,
-      f_retenciones,
-      f_pa,
-      ...resto
-    } = data
-
-    f_monto_total = Number(data.f_monto_total)
-    f_solicitado = Number(data.f_solicitado)
-    f_comprobado = Number(data.f_comprobado)
-    f_transferido = Number(data.f_transferido)
-    f_retenciones = Number(data.f_retenciones)
-    f_pa = Number(f_pa)
-
-    const f_por_comprobar = f_solicitado - f_comprobado
-    const f_isr = f_por_comprobar * 0.35
-    const f_ejecutado = f_transferido + f_retenciones + f_isr + f_pa
-    const f_remanente = f_monto_total - f_ejecutado
-    const p_avance = Number((f_ejecutado * 100 / f_monto_total).toFixed(2))
-
-    return {
-      ...resto,
-      tipo_financiamiento: this.obtenerTipoFinanciamiento(
-        resto.i_tipo_financiamiento
-      ),
-      saldo: {
-        f_monto_total,
-        f_solicitado,
-        f_transferido,
-        f_comprobado,
-        f_por_comprobar,
-        f_isr: f_isr < 0 ? 0 : f_isr, //evitar que isr de numero negativo
-        f_remanente,
-        p_avance,
-        f_retenciones,
-        f_ejecutado,
-        f_pa,
-      },
-    }
-  }
+  static obtenerSaldo() {}
 
   static async obtener(queries: QueriesProyecto) {
     const { id, min } = queries
@@ -97,11 +54,77 @@ class ProyectosServices {
     if (min) return this.obtenerVMin(queries)
     if (id) return this.obtenerUno(id)
     try {
-      const re = (await ProyectoDB.obtener(queries)) as ResProyectoDB[]
+      const re = (await ProyectoDB.obtener(queries)) as ResProyectos
 
-      const proyectos = re.map(this.transformarDataProyecto)
+      const proyectosEstructurados: Proyecto[] = re.proyectos.map(
+        (proyecto) => {
+          const rubros = re.rubros.filter((pa) => pa.id_proyecto == proyecto.id)
+          const f_monto_total = rubros.reduce(
+            (acum, { f_monto }) => acum + Number(f_monto),
+            0
+          )
+          const f_pa = rubros
+            .filter((rub) => rub.id_rubro == 1)
+            .reduce((acum, { f_monto }) => acum + Number(f_monto), 0)
+          const f_solicitado = re.solicitado
+            .filter((sol) => sol.id_proyecto == proyecto.id)
+            .reduce((acum, { f_solicitado }) => acum + Number(f_solicitado), 0)
 
-      return RespuestaController.exitosa(200, "Consulta exitosa", proyectos)
+          // separar comprobantes
+          const comprobantes = re.comprobantes.filter(
+            (com) => com.id_proyecto == proyecto.id
+          )
+
+          const f_comprobado = comprobantes.reduce(
+            (acum, { f_total }) => acum + Number(f_total),
+            0
+          )
+          const f_transferido = comprobantes
+            .filter((com) => com.i_estatus == 4)
+            .reduce((acum, { f_total }) => acum + Number(f_total), 0)
+
+          const f_retenciones = comprobantes.reduce(
+            (acum, { f_retenciones }) => acum + Number(f_retenciones),
+            0
+          )
+
+          const f_por_comprobar = f_solicitado - f_comprobado
+          const f_isr = f_por_comprobar * 0.35
+          const f_ejecutado = f_transferido + f_retenciones + f_isr + f_pa
+          const f_remanente = f_monto_total - f_ejecutado
+          const p_avance = Number(
+            ((f_ejecutado * 100) / f_monto_total).toFixed(2)
+          )
+
+          return {
+            ...proyecto,
+            tipo_financiamiento: this.obtenerTipoFinanciamiento(
+              proyecto.i_tipo_financiamiento
+            ),
+            saldo: {
+              f_monto_total,
+              f_pa,
+              f_solicitado,
+              f_transferido,
+              f_comprobado,
+              f_retenciones,
+              f_por_comprobar,
+              f_isr: f_isr < 0 ? 0 : f_isr, //evitar que isr de numero negativo
+              f_ejecutado,
+              f_remanente,
+              p_avance,
+            },
+          }
+        }
+      )
+
+      // const proyectos = re.map(this.transformarDataProyecto)
+
+      return RespuestaController.exitosa(
+        200,
+        "Consulta exitosa",
+        proyectosEstructurados
+      )
     } catch (error) {
       return RespuestaController.fallida(
         400,
@@ -113,17 +136,72 @@ class ProyectosServices {
 
   static async obtenerUno(id_proyecto: number) {
     try {
-      const re = (await ProyectoDB.obtenerUno(id_proyecto)) as ResProyectoDB
+      const re = (await ProyectoDB.obtenerUno(id_proyecto)) as ResProyectos
 
       const {
+        proyectos,
+        solicitado,
+        comprobantes,
         ministraciones,
         rubros_ministracion,
         colaboradores,
         proveedores,
         solicitudes,
         notas,
-        ...dataProyecto
       } = re
+
+      const proyectoDB = proyectos[0]
+
+      const f_monto_total = rubros_ministracion.reduce(
+        (acum, { f_monto }) => acum + Number(f_monto),
+        0
+      )
+      const f_pa = rubros_ministracion
+        .filter((rub) => rub.id_rubro == 1)
+        .reduce((acum, { f_monto }) => acum + Number(f_monto), 0)
+      const f_solicitado = solicitado.reduce(
+        (acum, { f_solicitado }) => acum + Number(f_solicitado),
+        0
+      )
+
+      const f_comprobado = comprobantes.reduce(
+        (acum, { f_total }) => acum + Number(f_total),
+        0
+      )
+      const f_transferido = comprobantes
+        .filter((com) => com.i_estatus == 4)
+        .reduce((acum, { f_total }) => acum + Number(f_total), 0)
+
+      const f_retenciones = comprobantes.reduce(
+        (acum, { f_retenciones }) => acum + Number(f_retenciones),
+        0
+      )
+
+      const f_por_comprobar = f_solicitado - f_comprobado
+      const f_isr = f_por_comprobar * 0.35
+      const f_ejecutado = f_transferido + f_retenciones + f_isr + f_pa
+      const f_remanente = f_monto_total - f_ejecutado
+      const p_avance = Number(((f_ejecutado * 100) / f_monto_total).toFixed(2))
+
+      const dataProyecto = {
+        ...proyectoDB,
+        tipo_financiamiento: this.obtenerTipoFinanciamiento(
+          proyectoDB.i_tipo_financiamiento
+        ),
+        saldo: {
+          f_monto_total,
+          f_pa,
+          f_solicitado,
+          f_transferido,
+          f_comprobado,
+          f_retenciones,
+          f_por_comprobar,
+          f_isr: f_isr < 0 ? 0 : f_isr, //evitar que isr de numero negativo
+          f_ejecutado,
+          f_remanente,
+          p_avance,
+        },
+      }
 
       const ministracionesConRubros: MinistracionProyecto[] =
         ministraciones.map((ministracion) => {
@@ -153,12 +231,17 @@ class ProyectosServices {
         tipo: ProveedorServices.obtenerTipo(prov.i_tipo),
       }))
 
-      const solicitudesHyd = solicitudes.map((sol) =>
-        SolicitudesPresupuestoServices.trasnformarData(sol)
-      )
+      const solicitudesHyd = solicitudes.map((sol) => {
+        return {
+          ...sol,
+          tipo_gasto: SolicitudesPresupuestoServices.obtenerTipoGasto(sol.i_tipo_gasto),
+          f_importe: Number(sol.f_importe),
+          estatus: obtenerEstatusSolicitud(sol.i_estatus),
+        }
+      })
 
       const proyecto: Proyecto = {
-        ...this.transformarDataProyecto(dataProyecto),
+        ...dataProyecto,
         ministraciones: ministracionesConRubros,
         colaboradores: colaboradoresHyd,
         proveedores: proveedoresHyd,

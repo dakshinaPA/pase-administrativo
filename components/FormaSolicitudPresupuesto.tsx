@@ -441,9 +441,9 @@ const FormaSolicitudPresupuesto = () => {
         }
       } catch (error) {
         console.log(error)
+      } finally {
+        setIsLoading(false)
       }
-
-      setIsLoading(false)
     }
   }
 
@@ -466,6 +466,7 @@ const FormaSolicitudPresupuesto = () => {
   }
 
   const obtener = async () => {
+    setIsLoading(true)
     const re = await obtenerSolicitudes({ id: idSolicitud })
     if (re.error) {
       console.log(re.data)
@@ -480,6 +481,7 @@ const FormaSolicitudPresupuesto = () => {
       // para que se mantenga el badge
       estatusCarga.current = solicitud.i_estatus
     }
+    setIsLoading(false)
   }
 
   const obtenerProyectosDB = () => {

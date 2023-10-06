@@ -112,8 +112,15 @@ class SolicitudesPresupuestoServices {
       )) as ResSolicitudPresupuestoDB[]
 
       const solicitud = this.trasnformarData(re[0])
-      
-      return RespuestaController.exitosa(200, "Consulta exitosa", [solicitud])
+
+      const solicitudComprobantes: SolicitudPresupuesto = {
+        ...solicitud,
+        comprobantes: solicitud.comprobantes.map(this.tranformDataComprobantes),
+      }
+
+      return RespuestaController.exitosa(200, "Consulta exitosa", [
+        solicitudComprobantes,
+      ])
     } catch (error) {
       return RespuestaController.fallida(
         400,
