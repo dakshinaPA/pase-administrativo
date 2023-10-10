@@ -46,8 +46,6 @@ class ProyectosServices {
     }
   }
 
-  static obtenerSaldo() {}
-
   static async obtener(queries: QueriesProyecto) {
     const { id, min } = queries
 
@@ -59,6 +57,13 @@ class ProyectosServices {
       const proyectosEstructurados: Proyecto[] = re.proyectos.map(
         (proyecto) => {
           const rubros = re.rubros.filter((pa) => pa.id_proyecto == proyecto.id)
+          const solicitudes = re.solicitudes.filter(
+            (sol) => sol.id_proyecto == proyecto.id
+          )
+          const comprobantes = re.comprobantes.filter(
+            (com) => com.id_proyecto == proyecto.id
+          )
+
           const f_monto_total = rubros.reduce(
             (acum, { f_monto }) => acum + Number(f_monto),
             0
@@ -66,22 +71,17 @@ class ProyectosServices {
           const f_pa = rubros
             .filter((rub) => rub.id_rubro == 1)
             .reduce((acum, { f_monto }) => acum + Number(f_monto), 0)
-          const f_solicitado = re.solicitado
-            .filter((sol) => sol.id_proyecto == proyecto.id)
-            .reduce((acum, { f_solicitado }) => acum + Number(f_solicitado), 0)
-
-          // separar comprobantes
-          const comprobantes = re.comprobantes.filter(
-            (com) => com.id_proyecto == proyecto.id
+          const f_solicitado = solicitudes.reduce(
+            (acum, { f_importe }) => acum + Number(f_importe),
+            0
           )
-
           const f_comprobado = comprobantes.reduce(
             (acum, { f_total }) => acum + Number(f_total),
             0
           )
-          const f_transferido = comprobantes
-            .filter((com) => com.i_estatus == 4)
-            .reduce((acum, { f_total }) => acum + Number(f_total), 0)
+          const f_transferido = solicitudes
+            .filter((sol) => sol.i_estatus == 4)
+            .reduce((acum, { f_importe }) => acum + Number(f_importe), 0)
 
           const f_retenciones = comprobantes.reduce(
             (acum, { f_retenciones }) => acum + Number(f_retenciones),
@@ -118,8 +118,6 @@ class ProyectosServices {
         }
       )
 
-      // const proyectos = re.map(this.transformarDataProyecto)
-
       return RespuestaController.exitosa(
         200,
         "Consulta exitosa",
@@ -140,7 +138,6 @@ class ProyectosServices {
 
       const {
         proyectos,
-        solicitado,
         comprobantes,
         ministraciones,
         rubros_ministracion,
@@ -159,19 +156,17 @@ class ProyectosServices {
       const f_pa = rubros_ministracion
         .filter((rub) => rub.id_rubro == 1)
         .reduce((acum, { f_monto }) => acum + Number(f_monto), 0)
-      const f_solicitado = solicitado.reduce(
-        (acum, { f_solicitado }) => acum + Number(f_solicitado),
+      const f_solicitado = solicitudes.reduce(
+        (acum, { f_importe }) => acum + Number(f_importe),
         0
       )
-
       const f_comprobado = comprobantes.reduce(
         (acum, { f_total }) => acum + Number(f_total),
         0
       )
-      const f_transferido = comprobantes
-        .filter((com) => com.i_estatus == 4)
-        .reduce((acum, { f_total }) => acum + Number(f_total), 0)
-
+      const f_transferido = solicitudes
+        .filter((sol) => sol.i_estatus == 4)
+        .reduce((acum, { f_importe }) => acum + Number(f_importe), 0)
       const f_retenciones = comprobantes.reduce(
         (acum, { f_retenciones }) => acum + Number(f_retenciones),
         0
@@ -234,7 +229,9 @@ class ProyectosServices {
       const solicitudesHyd = solicitudes.map((sol) => {
         return {
           ...sol,
-          tipo_gasto: SolicitudesPresupuestoServices.obtenerTipoGasto(sol.i_tipo_gasto),
+          tipo_gasto: SolicitudesPresupuestoServices.obtenerTipoGasto(
+            sol.i_tipo_gasto
+          ),
           f_importe: Number(sol.f_importe),
           estatus: obtenerEstatusSolicitud(sol.i_estatus),
         }

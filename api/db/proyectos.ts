@@ -89,8 +89,8 @@ class ProyectoDB {
 
   static qReSolicitado() {
     return `
-      SELECT SUM(f_importe) f_solicitado, id_proyecto FROM solicitudes_presupuesto
-      WHERE id_proyecto IN(?) AND b_activo=1 GROUP BY id_proyecto
+      SELECT id, f_importe, id_proyecto, i_estatus FROM solicitudes_presupuesto
+      WHERE id_proyecto IN(?) AND b_activo=1
     `
   }
 
@@ -175,7 +175,7 @@ class ProyectoDB {
                 res({
                   proyectos: proyectosDB,
                   rubros: results[0],
-                  solicitado: results[1],
+                  solicitudes: results[1],
                   comprobantes: results[2],
                 })
               }
@@ -190,7 +190,6 @@ class ProyectoDB {
 
   static obtenerUno = async (id: number) => {
     const qProyecto = this.queryRe({ id })
-    const qSaldoSolicitudes = this.qReSolicitado()
     const qSaldoComprobantes = this.qReSaldoComprobantes()
     const qMinistracioens = this.qReMinistraciones()
     const qRubrosMinistracion = this.qReRubrosMinistracion()
@@ -201,7 +200,6 @@ class ProyectoDB {
 
     const qCombinados = [
       qProyecto,
-      qSaldoSolicitudes,
       qSaldoComprobantes,
       qMinistracioens,
       qRubrosMinistracion,
@@ -211,7 +209,7 @@ class ProyectoDB {
       qNotas,
     ].join(";")
 
-    const phCombinados = [id, id, id, id, id, id, id, id, id]
+    const phCombinados = [id, id, id, id, id, id, id, id]
 
     return new Promise((res, rej) => {
       connectionDB.getConnection((err, connection) => {
@@ -227,19 +225,17 @@ class ProyectoDB {
               return rej(error)
             }
 
-
             connection.destroy()
 
             const dataProyecto = {
               proyectos: results[0],
-              solicitado: results[1],
-              comprobantes: results[2],
-              ministraciones: results[3],
-              rubros_ministracion: results[4],
-              colaboradores: results[5],
-              proveedores: results[6],
-              solicitudes: results[7],
-              notas: results[8],
+              comprobantes: results[1],
+              ministraciones: results[2],
+              rubros_ministracion: results[3],
+              colaboradores: results[4],
+              proveedores: results[5],
+              solicitudes: results[6],
+              notas: results[7],
             }
 
             res(dataProyecto)

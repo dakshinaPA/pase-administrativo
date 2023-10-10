@@ -46,10 +46,10 @@ interface Rubro {
   id_rubro: number
 }
 
-interface Solicitado {
-  f_solicitado: number,
-  id_proyecto: number
-}
+// interface Solicitado {
+//   f_solicitado: number,
+//   id_proyecto: number
+// }
 
 interface Comprobante {
   id_proyecto: number
@@ -61,7 +61,7 @@ interface Comprobante {
 export interface ResProyectos {
   proyectos: ResProyectoDB[]
   rubros?: Rubro[]
-  solicitado: Solicitado[]
+  // solicitado: Solicitado[]
   comprobantes: Comprobante[]
   ministraciones?: MinistracionProyecto[]
   rubros_ministracion?: RubroMinistracion[]
