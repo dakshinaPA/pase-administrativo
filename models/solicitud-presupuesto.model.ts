@@ -64,6 +64,7 @@ export interface SolicitudPresupuesto {
   id_partida_presupuestal: number //id rubro
   rubro?: string
   f_importe: number
+  f_retenciones: number
   i_estatus?: EstatusSolicitud
   estatus?: string
   titular_cuenta: string

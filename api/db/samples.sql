@@ -734,3 +734,8 @@ INSERT INTO financiadores (nombre, representante_legal, rfc_representante_legal,
 -- 212	PAWANKA	Myrna Cunningham			https://pawankafund.org/	Fundación sin fines de lucro	2		B. Aeropuerto			Biliwi	Pto Cabezas	71000	0	Pto. cabezas	6
 -- 213	IPAS MEXICO	María Antonieta Alcalde Castro		IME9508161J2	https://ipasmexico.org/	Fundación sin fines de lucro	2		Av. Insurgentes Sur	1079	07-108	Noche buena	Benito Juárez	3720	10	0	1
 -- 214	MADRE	Yifat Susskind	0	13-3280194	https://www.madre.org/	Organización sin fines de lucro	2	1983/01/01	West 27th Street	121	604	New York	New York	10001-6299	0	New York	2
+
+
+-- alters
+
+ALTER TABLE solicitudes_presupuesto ADD f_retenciones VARCHAR(20) NOT NULL DEFAULT '0' AFTER f_importe

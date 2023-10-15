@@ -38,7 +38,7 @@ class SolicitudesPresupuestoServices {
   static trasnformarData(
     solicitudRes: SolicitudPresupuesto
   ): SolicitudPresupuesto {
-    const { i_tipo_gasto, f_importe, i_estatus, comprobantes } = solicitudRes
+    const { i_tipo_gasto, f_importe, f_retenciones, i_estatus, comprobantes } = solicitudRes
 
     const f_total_comprobaciones = comprobantes.reduce(
       (acum, com) => acum + Number(com.f_total),
@@ -47,12 +47,13 @@ class SolicitudesPresupuestoServices {
     const f_total_impuestos_retenidos = comprobantes.reduce(
       (acum, com) => acum + Number(com.f_retenciones),
       0
-    )
+    ) + Number(f_retenciones)
 
     return {
       ...solicitudRes,
       tipo_gasto: this.obtenerTipoGasto(i_tipo_gasto),
       f_importe: Number(f_importe),
+      f_retenciones: Number(f_retenciones),
       estatus: obtenerEstatusSolicitud(i_estatus),
       saldo: {
         f_total_comprobaciones,

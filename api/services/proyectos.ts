@@ -13,7 +13,7 @@ import {
   DataProyecto,
 } from "@models/proyecto.model"
 
-import { ResProyectoDB, ResProyectos } from "@api/models/proyecto.model"
+import { ResProyectos } from "@api/models/proyecto.model"
 import { epochAFecha, obtenerEstatusSolicitud } from "@assets/utils/common"
 import { SolicitudesPresupuestoServices } from "./solicitudes-presupuesto"
 
@@ -83,10 +83,16 @@ class ProyectosServices {
             .filter((sol) => sol.i_estatus == 4)
             .reduce((acum, { f_importe }) => acum + Number(f_importe), 0)
 
-          const f_retenciones = comprobantes.reduce(
+          // sumar las retenciones de solicitudes de asimilados que se teclean a mano
+          const f_retenciones_solicitudes = solicitudes.reduce(
             (acum, { f_retenciones }) => acum + Number(f_retenciones),
             0
           )
+          const f_retenciones_comprobantes = comprobantes.reduce(
+            (acum, { f_retenciones }) => acum + Number(f_retenciones),
+            0
+          )
+          const f_retenciones = f_retenciones_solicitudes + f_retenciones_comprobantes
 
           const f_por_comprobar = f_solicitado - f_comprobado
           const f_isr = f_por_comprobar * 0.35
@@ -167,10 +173,16 @@ class ProyectosServices {
       const f_transferido = solicitudes
         .filter((sol) => sol.i_estatus == 4)
         .reduce((acum, { f_importe }) => acum + Number(f_importe), 0)
-      const f_retenciones = comprobantes.reduce(
+      // sumar retenciones de solicitudes de asimilados y comprobantes
+      const f_retenciones_solicitudes = solicitudes.reduce(
         (acum, { f_retenciones }) => acum + Number(f_retenciones),
         0
       )
+      const f_retenciones_comprobantes = comprobantes.reduce(
+        (acum, { f_retenciones }) => acum + Number(f_retenciones),
+        0
+      )
+      const f_retenciones = f_retenciones_solicitudes + f_retenciones_comprobantes
 
       const f_por_comprobar = f_solicitado - f_comprobado
       const f_isr = f_por_comprobar * 0.35

@@ -54,6 +54,7 @@ const useErrores = () => {
             break
           case "i_beneficiados":
           case "f_importe":
+          case "f_retenciones":
             if (!(campos[key] > 0)) throw [key, "Cantidad mayor a 0"]
             break
           case "id_alt":

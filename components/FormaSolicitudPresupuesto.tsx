@@ -1,4 +1,4 @@
-import { useEffect, useState, useReducer, useRef } from "react"
+import { useEffect, useState, useReducer, useRef, use } from "react"
 import { useRouter } from "next/router"
 import { ChangeEvent } from "@assets/models/formEvents.model"
 import {
@@ -247,6 +247,7 @@ const FormaSolicitudPresupuesto = () => {
     id_partida_presupuestal: 0,
     rubro: "",
     f_importe: 0,
+    f_retenciones: 0,
     i_estatus: 1,
     comprobantes: [],
     notas: [],
@@ -575,6 +576,9 @@ const FormaSolicitudPresupuesto = () => {
       const [emisor] = xml.getElementsByTagName("cfdi:Emisor")
       const impuestos = xml.getElementsByTagName("cfdi:Impuestos")
 
+      // console.log(comprobante)
+      // return
+
       //limpiar el input
       fileInput.current.value = ""
 
@@ -688,6 +692,7 @@ const FormaSolicitudPresupuesto = () => {
       proveedor: estadoForma.proveedor,
       descripcion_gasto: estadoForma.descripcion_gasto,
       f_importe: estadoForma.f_importe,
+      f_retenciones: estadoForma.f_retenciones,
     }
 
     if (estadoForma.i_tipo_gasto == 5) {
@@ -696,6 +701,10 @@ const FormaSolicitudPresupuesto = () => {
 
     if ([3, 4].includes(Number(estadoForma.i_tipo_gasto))) {
       delete campos.descripcion_gasto
+    }
+
+    if (user.id_rol == 3 || estadoForma.i_tipo_gasto != 3) {
+      delete campos.f_retenciones
     }
 
     // console.log(campos)
@@ -726,10 +735,6 @@ const FormaSolicitudPresupuesto = () => {
 
     setIsLoading(false)
   }
-
-  // const inputFileReembolso =
-  //   [1, 4].includes(Number(estadoForma.i_tipo_gasto)) &&
-  //   estadoForma.comprobantes.length > 0
 
   const disableInputImporte =
     !modoEditar ||
@@ -767,6 +772,14 @@ const FormaSolicitudPresupuesto = () => {
     !modoEditar &&
     idSolicitud &&
     (user.id === estadoForma.id_responsable || [1, 2].includes(user.id_rol))
+
+  const showRetenciones = user.id_rol != 3 && estadoForma.i_tipo_gasto == 3
+  // estadoForma.i_estatus == 1
+
+  const total_comprobantes = estadoForma.comprobantes.reduce(
+    (acum, { f_total }) => acum + Number(f_total),
+    0
+  )
 
   if (isLoading) {
     return <Loader />
@@ -1038,17 +1051,35 @@ const FormaSolicitudPresupuesto = () => {
               <MensajeError mensaje={error.mensaje} />
             )}
           </div>
-          <div className="col-12 col-md-6 col-lg-4 mb-3">
-            <label className="form-label">Monto a comprobar</label>
-            <input
-              className="form-control"
-              type="text"
-              value={(
-                Number(estadoForma.f_importe) - obtenerTotalComprobaciones()
-              ).toFixed(2)}
-              disabled
-            />
-          </div>
+          {showRetenciones && (
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label">Retenciones</label>
+              <input
+                className="form-control"
+                type="text"
+                name="f_retenciones"
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+                value={estadoForma.f_retenciones}
+                disabled={!modoEditar || estadoForma.i_estatus != 1}
+              />
+              {error.campo == "f_retenciones" && (
+                <MensajeError mensaje={error.mensaje} />
+              )}
+            </div>
+          )}
+          {estadoForma.i_tipo_gasto != 3 && (
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label">Monto a comprobar</label>
+              <input
+                className="form-control"
+                type="text"
+                value={(
+                  Number(estadoForma.f_importe) - obtenerTotalComprobaciones()
+                ).toFixed(2)}
+                disabled
+              />
+            </div>
+          )}
           {user.id_rol != 3 && (
             <div className="col-12 col-md-6 col-lg-4 mb-3">
               <label className="form-label">Estatus</label>
@@ -1159,6 +1190,11 @@ const FormaSolicitudPresupuesto = () => {
                         </tr>
                       )
                     })}
+                    <tr>
+                      <td colSpan={5}></td>
+                      <td>{total_comprobantes}</td>
+                      {modoEditar && <td></td>}
+                    </tr>
                   </tbody>
                 </table>
               </div>

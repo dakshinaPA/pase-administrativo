@@ -29,7 +29,7 @@ class SolicitudesPresupuestoDB {
     } = queries
 
     let query = `SELECT sp.id, sp.id_proyecto, sp.i_tipo_gasto, sp.clabe, sp.id_banco, sp.titular_cuenta,
-      sp.email, sp.proveedor, sp.descripcion_gasto, sp.id_partida_presupuestal, sp.f_importe, sp.i_estatus, sp.dt_registro,
+      sp.email, sp.proveedor, sp.descripcion_gasto, sp.id_partida_presupuestal, sp.f_importe, sp.f_retenciones, sp.i_estatus, sp.dt_registro,
       CONCAT(p.id_alt, ' - ', p.nombre) proyecto, p.id_responsable,
       b.nombre banco,
       r.nombre rubro
@@ -165,7 +165,7 @@ class SolicitudesPresupuestoDB {
 
           connection.query(
             qComprobantes,
-            ids.join(","),
+            [ids],
             (error, results, fields) => {
               if (error) {
                 connection.destroy()
@@ -324,7 +324,7 @@ class SolicitudesPresupuestoDB {
     const { comprobantes } = data
 
     const qUpSolicitud = `UPDATE solicitudes_presupuesto SET clabe=?, id_banco=?, titular_cuenta=?,
-      email=?, proveedor=?, descripcion_gasto=?, f_importe=?, i_estatus=? WHERE id=?`
+      email=?, proveedor=?, descripcion_gasto=?, f_importe=?, f_retenciones=?, i_estatus=? WHERE id=?`
 
     const qReComprobantes =
       "SELECT id, id_solicitud_presupuesto, folio_fiscal, b_activo FROM solicitud_presupuesto_comprobantes WHERE id_solicitud_presupuesto=?"
@@ -359,6 +359,7 @@ class SolicitudesPresupuestoDB {
               data.proveedor,
               data.descripcion_gasto,
               data.f_importe,
+              data.f_retenciones,
               data.i_estatus,
               id,
             ]

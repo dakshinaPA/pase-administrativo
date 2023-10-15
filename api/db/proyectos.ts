@@ -13,11 +13,6 @@ import { ColaboradorDB } from "./colaboradores"
 import { ProveedorDB } from "./proveedores"
 import { SolicitudesPresupuestoDB } from "./solicitudes-presupuesto"
 
-interface RubrosConIdMinistracion {
-  id_ministracion: number
-  rubros: RubroMinistracion[]
-}
-
 class ProyectoDB {
   static async obtenerVMin(queries: QueriesProyecto) {
     const { id_responsable, id_coparte, id } = queries
@@ -75,8 +70,6 @@ class ProyectoDB {
     return query
   }
 
-
-
   static qReRubros() {
     return `
       SELECT mrp.f_monto, p.id id_proyecto, mrp.id_rubro
@@ -89,7 +82,7 @@ class ProyectoDB {
 
   static qReSolicitado() {
     return `
-      SELECT id, f_importe, id_proyecto, i_estatus FROM solicitudes_presupuesto
+      SELECT id, f_importe, f_retenciones, id_proyecto, i_estatus FROM solicitudes_presupuesto
       WHERE id_proyecto IN(?) AND b_activo=1
     `
   }
@@ -122,6 +115,13 @@ class ProyectoDB {
 
     return query
   }
+
+  static qCrMinistracion =
+    () => `INSERT INTO proyecto_ministraciones ( id_proyecto, i_numero, i_grupo,
+    dt_recepcion, dt_registro ) VALUES ( ?, ?, ?, ?, ? )`
+
+  static qCrRubrosMinistracion = () =>
+    `INSERT INTO ministracion_rubros_presupuestales ( id_ministracion, id_rubro, f_monto ) VALUES ( ?, ?, ? )`
 
   static async obtener(queries: QueriesProyecto) {
     const { id_coparte, id_responsable, id_admin } = queries
@@ -158,7 +158,11 @@ class ProyectoDB {
             const qRubros = this.qReRubros()
             const qSaldoSolicitudes = this.qReSolicitado()
             const qSaldoComprobantes = this.qReSaldoComprobantes()
-            const qCombinados = [qRubros, qSaldoSolicitudes, qSaldoComprobantes].join(";")
+            const qCombinados = [
+              qRubros,
+              qSaldoSolicitudes,
+              qSaldoComprobantes,
+            ].join(";")
 
             const phCombinados = [idsProyectos, idsProyectos, idsProyectos]
 
@@ -185,8 +189,6 @@ class ProyectoDB {
       })
     })
   }
-
-
 
   static obtenerUno = async (id: number) => {
     const qProyecto = this.queryRe({ id })
@@ -244,13 +246,6 @@ class ProyectoDB {
       })
     })
   }
-
-  static qCrMinistracion =
-    () => `INSERT INTO proyecto_ministraciones ( id_proyecto, i_numero, i_grupo,
-    dt_recepcion, dt_registro ) VALUES ( ?, ?, ?, ?, ? )`
-
-  static qCrRubrosMinistracion = () =>
-    `INSERT INTO ministracion_rubros_presupuestales ( id_ministracion, id_rubro, f_monto ) VALUES ( ?, ?, ? )`
 
   static async crear(data: Proyecto) {
     const { ministraciones } = data
