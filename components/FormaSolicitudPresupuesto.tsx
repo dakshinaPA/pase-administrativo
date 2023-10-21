@@ -571,18 +571,61 @@ const FormaSolicitudPresupuesto = () => {
         "application/xml"
       )
 
-      const [comprobante] = xml.getElementsByTagName("cfdi:Comprobante")
-      const [timbre] = xml.getElementsByTagName("tfd:TimbreFiscalDigital")
-      const [emisor] = xml.getElementsByTagName("cfdi:Emisor")
-      const impuestos = xml.getElementsByTagName("cfdi:Impuestos")
-
-      // console.log(comprobante)
-      // return
-
       //limpiar el input
       fileInput.current.value = ""
 
-      const folio_fiscal = timbre?.getAttribute("UUID") || ""
+      const [comprobante] = xml.getElementsByTagName("cfdi:Comprobante")
+      const [timbre] = xml.getElementsByTagName("tfd:TimbreFiscalDigital")
+      const [emisor] = xml.getElementsByTagName("cfdi:Emisor")
+      const [receptor] = xml.getElementsByTagName("cfdi:Receptor")
+      const impuestos = xml.getElementsByTagName("cfdi:Impuestos")
+      const [concepto] = xml.getElementsByTagName("cfdi:Concepto")
+
+      const folio_fiscal = timbre?.getAttribute("UUID")
+      const RegFisReceptor = receptor.getAttribute("RegimenFiscalReceptor")
+      const UsoCFDI = receptor.getAttribute("UsoCFDI")
+      const f_total = comprobante?.getAttribute("Total")
+      const f_claveProdServ = concepto?.getAttribute("ClaveProdServ")
+      const clavesProdServCombustibles = ["15101514", "15101515", "15101505"]
+      const metodo_pago = comprobante?.getAttribute("MetodoPago") as
+        | "PUE"
+        | "PPD"
+      const clave_forma_pago = comprobante?.getAttribute("FormaPago")
+      const formaPago = asignarIdFormaPAgo(clave_forma_pago)
+      const clave_regimen_fiscal = emisor?.getAttribute("RegimenFiscal")
+      const regimenFiscal = obtenerRegimenXClave(clave_regimen_fiscal)
+
+      try {
+        if (!f_total) throw "Total de factura no identificado"
+        if (!clave_forma_pago) throw "Forma de pago no identificado"
+        if (!clave_regimen_fiscal || !regimenFiscal.id)
+          throw "Regimen fiscal no identificado"
+        if (!folio_fiscal) throw "Folio fiscal no encontrado"
+        if (!metodo_pago) throw "Método de pago no identificado"
+        if (RegFisReceptor !== "603") throw "Regimen Fiscal Receptor inválido"
+        if (UsoCFDI !== "G03") throw "Uso CFDI inválido"
+        if (clave_forma_pago === "01" && Number(f_total) >= 2000)
+          throw "Pago en efectivo mayor o igual a 2000 no permitido"
+        if (
+          clavesProdServCombustibles.includes(f_claveProdServ) &&
+          clave_forma_pago === "01"
+        )
+          throw "Combustibles con pago en efectivo no permitido"
+
+        //revisar que folio fiscal no se repita
+        const matchFolioFiscal = estadoForma.comprobantes.find(
+          (comprobante) => comprobante.folio_fiscal == folio_fiscal
+        )
+        if (matchFolioFiscal) throw "factura repetida"
+      } catch (error) {
+        console.log(error)
+        setToastState({
+          show: true,
+          mensaje: "Factura inválida, favor de verificar",
+        })
+        return
+      }
+
       // buscar si el folio que se quiere subir ya existe en base de datos
       const reFactura = await ApiCall.get(
         `/solicitudes-presupuesto/buscar-factura?folio=${folio_fiscal}`
@@ -610,35 +653,6 @@ const FormaSolicitudPresupuesto = () => {
         }
       }
 
-      const metodo_pago =
-        (comprobante?.getAttribute("MetodoPago") as "PUE" | "PPD") || ""
-      const clave_forma_pago = comprobante?.getAttribute("FormaPago") || ""
-      const f_total = comprobante?.getAttribute("Total") || ""
-      const clave_regimen_fiscal = emisor?.getAttribute("RegimenFiscal") || ""
-
-      const formaPago = asignarIdFormaPAgo(clave_forma_pago)
-      const regimenFiscal = obtenerRegimenXClave(clave_regimen_fiscal)
-
-      if (
-        !folio_fiscal ||
-        !metodo_pago ||
-        !f_total ||
-        !clave_regimen_fiscal ||
-        !regimenFiscal.id
-      ) {
-        console.log("no se identificaron los datos de la factura")
-        return
-      }
-
-      //revisar que folio fiscal no se repita
-      const matchFolioFiscal = estadoForma.comprobantes.find(
-        (comprobante) => comprobante.folio_fiscal == folio_fiscal
-      )
-      if (matchFolioFiscal) {
-        console.log("folio repetido")
-        return
-      }
-
       const dataComprobante: ComprobanteSolicitud = {
         folio_fiscal,
         id_regimen_fiscal: regimenFiscal.id,
@@ -647,7 +661,7 @@ const FormaSolicitudPresupuesto = () => {
         i_metodo_pago: asignarIMetodoPago(metodo_pago),
         metodo_pago,
         id_forma_pago: formaPago.id,
-        clave_forma_pago: clave_forma_pago || "",
+        clave_forma_pago: clave_forma_pago,
         forma_pago: formaPago.nombre,
         f_total,
         f_retenciones: f_retenciones || "",
