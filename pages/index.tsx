@@ -7,7 +7,14 @@ const Home = () => {
   if (!user) return null
   // const router = useRouter()
 
-  return <h1>Inicio</h1>
+  return (
+    <div className="d-flex justify-content-center align-items-center h-100">
+      <img
+        src="https://dakshina-imagen.s3.us-east-2.amazonaws.com/logo_circulo.jpg"
+        alt="logo dakshina"
+      />
+    </div>
+  )
 }
 
 export default Home

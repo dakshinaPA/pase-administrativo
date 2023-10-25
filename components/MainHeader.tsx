@@ -19,10 +19,15 @@ const MainHeader = ({ abrirMenu }) => {
     >
       <div>
         <Link href="/" className="d-none d-md-block">
-          <i
+          {/* <i
             className="bi bi-house-gear text-white"
             style={{ fontSize: "30px" }}
-          ></i>
+          ></i> */}
+          <img
+            src="https://dakshina-imagen.s3.us-east-2.amazonaws.com/logo-blanco.png"
+            alt="logo dakshina"
+            height={40}
+          />
         </Link>
         <i
           className="bi bi-list text-white d-md-none"
