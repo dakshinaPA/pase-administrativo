@@ -11,6 +11,7 @@ const Login = () => {
 
   const { login, error, limpiarError } = useAuth()
   const [estadoForma, setEstadoForma] = useState(estadoInicialUsuario)
+  const [showPassword, setShowPassword] = useState(false)
 
   const onInputChange = (ev: ChangeEvent) => {
     if (error.hay) limpiarError()
@@ -42,13 +43,26 @@ const Login = () => {
       </div>
       <div className="mb-3">
         <label className="form-label color1 fw-bold">Contraseña</label>
-        <input
-          type="password"
-          className="form-control"
-          name="password"
-          value={estadoForma.password}
-          onChange={onInputChange}
-        />
+        <div className="input-group">
+          <input
+            type={showPassword ? "text" : "password"}
+            className="form-control"
+            name="password"
+            value={estadoForma.password}
+            onChange={onInputChange}
+          />
+          <span
+            className="input-group-text"
+            onClick={() => setShowPassword(!showPassword)}
+            style={{ cursor: "pointer" }}
+          >
+            <i
+              className={`bi ${
+                !showPassword ? "bi-eye-fill" : "bi-eye-slash-fill"
+              }`}
+            ></i>
+          </span>
+        </div>
       </div>
       <div className="text-center">
         <button type="submit" className="btn btn-outline-secondary w-100">

@@ -12,7 +12,6 @@ import {
 import { IdRolUsuario, QueriesUsuario, Usuario } from "@models/usuario.model"
 import {
   CoparteMin,
-  CoparteUsuario,
   QueriesCoparte,
 } from "@models/coparte.model"
 import { useAuth } from "@contexts/auth.context"
