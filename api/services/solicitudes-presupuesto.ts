@@ -38,16 +38,16 @@ class SolicitudesPresupuestoServices {
   static trasnformarData(
     solicitudRes: SolicitudPresupuesto
   ): SolicitudPresupuesto {
-    const { i_tipo_gasto, f_importe, f_retenciones, i_estatus, comprobantes } = solicitudRes
+    const { i_tipo_gasto, f_importe, f_retenciones, i_estatus, comprobantes } =
+      solicitudRes
 
-    const f_total_comprobaciones = comprobantes.reduce(
-      (acum, com) => acum + Number(com.f_total),
-      0
-    )
-    const f_total_impuestos_retenidos = comprobantes.reduce(
-      (acum, com) => acum + Number(com.f_retenciones),
-      0
-    ) + Number(f_retenciones)
+    const f_total_comprobaciones =
+      i_tipo_gasto == 3
+        ? f_importe
+        : comprobantes.reduce((acum, com) => acum + Number(com.f_total), 0)
+    const f_total_impuestos_retenidos =
+      comprobantes.reduce((acum, com) => acum + Number(com.f_retenciones), 0) +
+      Number(f_retenciones)
 
     return {
       ...solicitudRes,

@@ -75,10 +75,20 @@ class ProyectosServices {
             (acum, { f_importe }) => acum + Number(f_importe),
             0
           )
-          const f_comprobado = comprobantes.reduce(
+          const f_comprobado_solicitudes_asimilados = re.solicitudes.reduce(
+            (acum, { i_tipo_gasto, f_importe }) => {
+              if(i_tipo_gasto == 3){
+                return acum + Number(f_importe)
+              }
+              return acum
+            },
+            0
+          )
+          const f_comprobado_comprobantes = comprobantes.reduce(
             (acum, { f_total }) => acum + Number(f_total),
             0
           )
+          const f_comprobado = f_comprobado_solicitudes_asimilados + f_comprobado_comprobantes
           const f_transferido = solicitudes
             .filter((sol) => sol.i_estatus == 4)
             .reduce((acum, { f_importe }) => acum + Number(f_importe), 0)
@@ -166,10 +176,20 @@ class ProyectosServices {
         (acum, { f_importe }) => acum + Number(f_importe),
         0
       )
-      const f_comprobado = comprobantes.reduce(
+      const f_comprobado_solicitudes_asimilados = solicitudes.reduce(
+        (acum, { i_tipo_gasto, f_importe }) => {
+          if(i_tipo_gasto == 3){
+            return acum + Number(f_importe)
+          }
+          return acum
+        },
+        0
+      )
+      const f_comprobado_comprobantes = comprobantes.reduce(
         (acum, { f_total }) => acum + Number(f_total),
         0
       )
+      const f_comprobado = f_comprobado_solicitudes_asimilados + f_comprobado_comprobantes
       const f_transferido = solicitudes
         .filter((sol) => sol.i_estatus == 4)
         .reduce((acum, { f_importe }) => acum + Number(f_importe), 0)

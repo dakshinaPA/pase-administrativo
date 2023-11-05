@@ -82,7 +82,7 @@ class ProyectoDB {
 
   static qReSolicitado() {
     return `
-      SELECT id, f_importe, f_retenciones, id_proyecto, i_estatus FROM solicitudes_presupuesto
+      SELECT id, i_tipo_gasto, f_importe, f_retenciones, id_proyecto, i_estatus FROM solicitudes_presupuesto
       WHERE id_proyecto IN(?) AND b_activo=1
     `
   }
