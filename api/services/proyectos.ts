@@ -75,7 +75,7 @@ class ProyectosServices {
             (acum, { f_importe }) => acum + Number(f_importe),
             0
           )
-          const f_comprobado_solicitudes_asimilados = re.solicitudes.reduce(
+          const f_comprobado_solicitudes_asimilados = solicitudes.reduce(
             (acum, { i_tipo_gasto, f_importe }) => {
               if(i_tipo_gasto == 3){
                 return acum + Number(f_importe)
