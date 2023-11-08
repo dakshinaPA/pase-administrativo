@@ -54,8 +54,8 @@ export interface NotaSolicitud {
 
 export interface SolicitudPresupuesto {
   id?: number
-  id_coparte: number
-  coparte: string
+  id_coparte?: number
+  coparte?: string
   id_proyecto: number
   proyecto?: string
   id_responsable?: number
