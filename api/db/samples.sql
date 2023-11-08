@@ -739,3 +739,4 @@ INSERT INTO financiadores (nombre, representante_legal, rfc_representante_legal,
 -- alters
 
 ALTER TABLE solicitudes_presupuesto ADD f_retenciones VARCHAR(20) NOT NULL DEFAULT '0' AFTER f_importe
+update estados set nombre='Ciudad de México' where nombre='Distrito Federal' limit 1;

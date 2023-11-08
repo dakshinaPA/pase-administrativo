@@ -219,16 +219,14 @@ const FormaProveedor = () => {
       proveedor: estadoForma.nombre,
       clabe: estadoForma.clabe,
       id_banco: estadoForma.id_banco,
-      email: estadoForma.email,
-      telefono: estadoForma.telefono,
       rfc: estadoForma.rfc,
       rfc_organizacion: estadoForma.rfc,
       bank: estadoForma.bank,
       bank_branch_address: estadoForma.bank_branch_address,
       account_number: estadoForma.account_number,
       bic_code: estadoForma.bic_code,
-      intermediary_bank: estadoForma.intermediary_bank,
-      routing_number: estadoForma.routing_number,
+      email: estadoForma.email,
+      telefono: estadoForma.telefono,
       descripcion_servicio: estadoForma.descripcion_servicio,
       calle: estadoForma.direccion.calle,
       numero_ext: estadoForma.direccion.numero_ext,
@@ -247,8 +245,6 @@ const FormaProveedor = () => {
       delete campos.bank_branch_address
       delete campos.account_number
       delete campos.bic_code
-      delete campos.intermediary_bank
-      delete campos.routing_number
 
       if (estadoForma.i_tipo == 1) {
         delete campos.rfc_organizacion
@@ -365,7 +361,7 @@ const FormaProveedor = () => {
         {estadoForma.i_tipo == 3 ? (
           <>
             <div className="col-12 col-md-6 col-lg-4 mb-3">
-              <label className="form-label">Bank</label>
+              <label className="form-label">Banco destino</label>
               <input
                 className="form-control"
                 type="text"
@@ -379,7 +375,7 @@ const FormaProveedor = () => {
               )}
             </div>
             <div className="col-12 col-md-6 col-lg-4 mb-3">
-              <label className="form-label">Bank branch address</label>
+              <label className="form-label">Dirección del banco destino</label>
               <input
                 className="form-control"
                 type="text"
@@ -393,7 +389,7 @@ const FormaProveedor = () => {
               )}
             </div>
             <div className="col-12 col-md-6 col-lg-4 mb-3">
-              <label className="form-label">Account number</label>
+              <label className="form-label">Cuenta de destino</label>
               <input
                 className="form-control"
                 type="text"
@@ -407,7 +403,7 @@ const FormaProveedor = () => {
               )}
             </div>
             <div className="col-12 col-md-6 col-lg-4 mb-3">
-              <label className="form-label">BIC/SWIFT code</label>
+              <label className="form-label">Código BIC/SWIFT</label>
               <input
                 className="form-control"
                 type="text"
@@ -421,7 +417,7 @@ const FormaProveedor = () => {
               )}
             </div>
             <div className="col-12 col-md-6 col-lg-4 mb-3">
-              <label className="form-label">Intermediary bank</label>
+              <label className="form-label">Banco Intermediario</label>
               <input
                 className="form-control"
                 type="text"
@@ -435,7 +431,7 @@ const FormaProveedor = () => {
               )}
             </div>
             <div className="col-12 col-md-6 col-lg-4 mb-3">
-              <label className="form-label">Routing number</label>
+              <label className="form-label">Número de ruta</label>
               <input
                 className="form-control"
                 type="text"

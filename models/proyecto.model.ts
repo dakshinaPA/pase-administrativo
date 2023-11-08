@@ -76,7 +76,7 @@ export interface RubroMinistracion {
   id_ministracion?: number
   id_rubro: number
   rubro?: string
-  f_monto: number
+  f_monto: number | string
   b_activo?: boolean
 }
 

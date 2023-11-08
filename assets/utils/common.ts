@@ -8,6 +8,7 @@ const aMinuscula = (clave: string) => clave.toLowerCase()
 
 const montoALocaleString = (f_monto: number) => {
   return Number(Number(f_monto).toFixed(2)).toLocaleString()
+  // return Number(f_monto).toFixed(2)
 }
 
 const epochAFecha = (epoch: string): string => {

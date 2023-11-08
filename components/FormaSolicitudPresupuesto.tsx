@@ -23,6 +23,7 @@ import {
 import { useAuth } from "@contexts/auth.context"
 import {
   meses,
+  montoALocaleString,
   obtenerBadgeStatusSolicitud,
   obtenerEstatusSolicitud,
   obtenerProyectos,
@@ -1189,8 +1190,10 @@ const FormaSolicitudPresupuesto = () => {
                           <td>
                             {clave_forma_pago} - {forma_pago}
                           </td>
-                          <td>{f_retenciones}</td>
-                          <td>{f_total}</td>
+                          <td>
+                            ${montoALocaleString(Number(f_retenciones) || 0)}
+                          </td>
+                          <td>${montoALocaleString(Number(f_total))}</td>
                           {modoEditar && (
                             <td>
                               <BtnAccion
@@ -1206,7 +1209,7 @@ const FormaSolicitudPresupuesto = () => {
                     })}
                     <tr>
                       <td colSpan={5}></td>
-                      <td>{total_comprobantes}</td>
+                      <td>${montoALocaleString(total_comprobantes)}</td>
                       {modoEditar && <td></td>}
                     </tr>
                   </tbody>

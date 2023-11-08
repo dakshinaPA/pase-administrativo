@@ -28,8 +28,8 @@ const useErrores = () => {
               throw [key, "Correo inválido"]
             break
           case "telefono":
-            if (!/^[0-9]{10}$/.test(campos[key]))
-              throw [key, "Número a 10 dígitos"]
+            if (!/^[0-9]{10,15}$/.test(campos[key]))
+              throw [key, "Número de 10 a 15 dígitos"]
             break
           case "password":
             if (!/^.{8,}$/.test(campos[key])) throw [key, "Mínimo 8 caracteres"]
@@ -38,9 +38,12 @@ const useErrores = () => {
           case "actividad":
           case "sector_beneficiado":
           case "bank_branch_address":
-          case "bic_code":
             if (!/^[a-zA-Z0-9\u00C0-\u017F\s]{5,}$/.test(campos[key]))
               throw [key, "Mínimo 5 caracteres"]
+            break
+          case "bic_code":
+            if (!/^.{8,11}$/.test(campos[key]))
+              throw [key, "Código de 8 a 11 caracteres"]
             break
           case "id_coparte":
           case "id_administrador":
@@ -64,7 +67,7 @@ const useErrores = () => {
           case "descripcion":
           case "descripcion_servicio":
           case "descripcion_gasto":
-            if (!/^[a-zA-Z0-9\u00C0-\u017F\s]{10,}$/.test(campos[key]))
+            if (!/^.{10,}$/.test(campos[key]))
               throw [key, "Mínimo 10 caracteres"]
             break
           case "nombre_financiador":
@@ -109,8 +112,8 @@ const useErrores = () => {
               throw [key, "CURP inválido"]
             break
           case "cp":
-            if (!/^[0-9]{5}$/.test(campos[key]))
-              throw [key, "Código postal a 5 dígitos"]
+            if (!/^.{5,9}$/.test(campos[key]))
+              throw [key, "Código postal inválido"]
             break
           case "dt_constitucion":
           case "dt_inicio":

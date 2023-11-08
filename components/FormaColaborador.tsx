@@ -736,7 +736,7 @@ const FormaColaborador = () => {
                     return (
                       <tr key={id || `periodo_${index}`}>
                         <td>{i_numero_ministracion}</td>
-                        <td>{montoALocaleString(f_monto)}</td>
+                        <td>${montoALocaleString(f_monto)}</td>
                         <td>{servicio}</td>
                         <td>{descripcion}</td>
                         <td>{cp}</td>

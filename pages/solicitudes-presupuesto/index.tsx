@@ -32,7 +32,7 @@ interface SolicitudPresupuestoVista extends SolicitudPresupuesto {
 const estadoInicialFiltros: QueriesSolicitud = {
   id_coparte: 0,
   id_proyecto: 0,
-  i_estatus: 0,
+  i_estatus: 1,
   titular: "",
   dt_inicio: "",
   dt_fin: "",
@@ -175,32 +175,40 @@ const SolicitudesPresupuesto = () => {
 
   const descargarExcel = () => {
     const encabezado = [
-      "Tipo de gasto",
-      "Rubro",
-      "Titular de la cuenta",
-      "CLABE",
-      "Banco",
-      "Descricpión del gasto",
+      "Id proyecto",
+      "Coparte",
       "Proveedor",
-      "Fecha de registro",
+      "ClABE/Cuenta",
+      "Titular",
+      "Email",
+      "Tipo de gasto",
+      "Descricpión del gasto",
+      "Partida presupuestal",
+      "Importe solicitado",
+      "Comprobado",
+      "Por comprobar",
+      "Retenciones",
+      "Total",
       "Estatus",
-      "Importe",
-      "Monto a comprobar",
     ]
 
     const solicituesAArray = solicitudesFiltradas.map((solicitud) => {
       return [
-        solicitud.tipo_gasto,
-        solicitud.rubro,
-        solicitud.titular_cuenta,
-        solicitud.clabe,
-        solicitud.banco,
-        solicitud.descripcion_gasto,
+        solicitud.proyecto.split(" ")[0],
+        solicitud.coparte,
         solicitud.proveedor,
-        epochAFecha(solicitud.dt_registro),
-        solicitud.estatus,
+        solicitud.clabe,
+        solicitud.titular_cuenta,
+        solicitud.email,
+        solicitud.tipo_gasto,
+        solicitud.descripcion_gasto,
+        solicitud.rubro,
         solicitud.f_importe,
+        solicitud.saldo.f_total_comprobaciones,
         solicitud.saldo.f_monto_comprobar,
+        solicitud.saldo.f_total_impuestos_retenidos,
+        solicitud.saldo.f_total,
+        solicitud.estatus,
       ]
     })
 
@@ -311,6 +319,7 @@ const SolicitudesPresupuesto = () => {
                 <tr>
                   <th>#id</th>
                   <th>Proyecto</th>
+                  {user.id_rol != 3 && <th>Coparte</th>}
                   <th>Tipo de gasto</th>
                   <th>Partida presupuestal</th>
                   <th>Titular</th>
@@ -356,6 +365,7 @@ const SolicitudesPresupuesto = () => {
                       id,
                       id_proyecto,
                       proyecto,
+                      coparte,
                       tipo_gasto,
                       titular_cuenta,
                       proveedor,
@@ -374,23 +384,25 @@ const SolicitudesPresupuesto = () => {
                     return (
                       <tr key={id}>
                         <td>{id}</td>
-                        <td>{proyecto}</td>
+                        <td>{proyecto.split(" ")[0]}</td>
+                        {user.id_rol != 3 && <td>{coparte}</td>}
                         <td>{tipo_gasto}</td>
                         <td>{rubro}</td>
                         <td>{titular_cuenta}</td>
                         <td>{proveedor}</td>
                         <td>{descripcion_gasto}</td>
-                        <td>{montoALocaleString(f_importe)}</td>
+                        <td>${montoALocaleString(f_importe)}</td>
                         <td>
-                          {montoALocaleString(saldo.f_total_comprobaciones)}
+                          ${montoALocaleString(saldo.f_total_comprobaciones)}
                         </td>
-                        <td>{montoALocaleString(saldo.f_monto_comprobar)}</td>
+                        <td>${montoALocaleString(saldo.f_monto_comprobar)}</td>
                         <td>
+                          $
                           {montoALocaleString(
                             saldo.f_total_impuestos_retenidos
                           )}
                         </td>
-                        <td>{montoALocaleString(saldo.f_total)}</td>
+                        <td>${montoALocaleString(saldo.f_total)}</td>
                         <td>
                           <span className={`badge bg-${colorBadge}`}>
                             {estatus}

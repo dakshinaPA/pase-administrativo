@@ -140,7 +140,7 @@ const MenuPrincipal = ({ shrinkMenu }) => {
                     Listado
                   </Link>
                 </li>
-                {user?.id_rol == 2 && (
+                {user?.id_rol != 3 && (
                   <li>
                     <Link href="/proyectos/registro" className="">
                       Registrar

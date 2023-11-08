@@ -71,7 +71,7 @@ const FormaMinistracion = () => {
     })
   }
 
-  const actualizarMontoRubro = (monto: number, id_rubro: number) => {
+  const actualizarMontoRubro = (monto: string, id_rubro: number) => {
     const indexRubro = formaMinistracion.rubros_presupuestales.findIndex(
       (rp) => rp.id_rubro == id_rubro
     )
@@ -196,7 +196,7 @@ const FormaMinistracion = () => {
   }
 
   const sumaRubros = formaMinistracion.rubros_presupuestales.reduce(
-    (acum, rp) => acum + rp.f_monto,
+    (acum, rp) => acum + Number(rp.f_monto),
     0
   )
 
@@ -290,7 +290,7 @@ const FormaMinistracion = () => {
                         className="form-control"
                         value={f_monto}
                         onChange={({ target: { value } }) =>
-                          actualizarMontoRubro(Number(value), id_rubro)
+                          actualizarMontoRubro(value, id_rubro)
                         }
                       />
                     </td>

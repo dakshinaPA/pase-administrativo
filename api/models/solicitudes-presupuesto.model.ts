@@ -6,6 +6,8 @@ import {
 
 export interface ResSolicitudPresupuestoDB {
   id?: number
+  id_coparte: number
+  coparte: string
   id_proyecto: number
   id_responsable: number
   proyecto: string

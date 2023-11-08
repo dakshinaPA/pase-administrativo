@@ -146,7 +146,7 @@ const Financiadores = () => {
   return (
     <TablaContenedor>
       <div className="row mb-2">
-        {user.id_rol == 2 && (
+        {user.id_rol != 3 && (
           <div className="col-12 col-sm-6 col-lg-3 col-xl-2 mb-3">
             <BtnNeutro
               texto="Registrar +"
@@ -250,16 +250,16 @@ const Financiadores = () => {
                         </>
                       )}
                       <td>{tipo_financiamiento}</td>
-                      <td>{montoALocaleString(saldo.f_monto_total)}</td>
-                      <td>{montoALocaleString(saldo.f_solicitado)}</td>
-                      <td>{montoALocaleString(saldo.f_transferido)}</td>
-                      <td>{montoALocaleString(saldo.f_comprobado)}</td>
-                      <td>{montoALocaleString(saldo.f_por_comprobar)}</td>
-                      <td>{montoALocaleString(saldo.f_isr)}</td>
-                      <td>{montoALocaleString(saldo.f_retenciones)}</td>
-                      <td>{montoALocaleString(saldo.f_pa)}</td>
-                      <td>{montoALocaleString(saldo.f_ejecutado)}</td>
-                      <td>{montoALocaleString(saldo.f_remanente)}</td>
+                      <td>${montoALocaleString(saldo.f_monto_total)}</td>
+                      <td>${montoALocaleString(saldo.f_solicitado)}</td>
+                      <td>${montoALocaleString(saldo.f_transferido)}</td>
+                      <td>${montoALocaleString(saldo.f_comprobado)}</td>
+                      <td>${montoALocaleString(saldo.f_por_comprobar)}</td>
+                      <td>${montoALocaleString(saldo.f_isr)}</td>
+                      <td>${montoALocaleString(saldo.f_retenciones)}</td>
+                      <td>${montoALocaleString(saldo.f_pa)}</td>
+                      <td>${montoALocaleString(saldo.f_ejecutado)}</td>
+                      <td>${montoALocaleString(saldo.f_remanente)}</td>
                       <td>{`${saldo.p_avance}%`}</td>
                       <td>
                         <div className="d-flex">

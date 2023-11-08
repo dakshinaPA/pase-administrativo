@@ -32,7 +32,8 @@ class SolicitudesPresupuestoDB {
       sp.email, sp.proveedor, sp.descripcion_gasto, sp.id_partida_presupuestal, sp.f_importe, sp.f_retenciones, sp.i_estatus, sp.dt_registro,
       CONCAT(p.id_alt, ' - ', p.nombre) proyecto, p.id_responsable,
       b.nombre banco,
-      r.nombre rubro
+      r.nombre rubro,
+      c.id id_coparte, c.nombre_corto coparte
       FROM solicitudes_presupuesto sp
       JOIN proyectos p ON sp.id_proyecto=p.id
       JOIN copartes c ON p.id_coparte=c.id
