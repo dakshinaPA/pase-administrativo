@@ -60,7 +60,10 @@ const TablaMinistraciones = () => {
   const sumaRubros = estadoForma.ministraciones.reduce(
     (acum, min) =>
       acum +
-      min.rubros_presupuestales.reduce((acum, rp) => acum + Number(rp.f_monto), 0),
+      min.rubros_presupuestales.reduce(
+        (acum, rp) => acum + Number(rp.f_monto),
+        0
+      ),
     0
   )
 
@@ -107,7 +110,7 @@ const TablaMinistraciones = () => {
                               <tr key={id_rubro}>
                                 <td>{rubro}</td>
                                 <td className="w-25">
-                                  ${montoALocaleString(Number(f_monto))}
+                                  {montoALocaleString(Number(f_monto))}
                                 </td>
                               </tr>
                             )
@@ -116,7 +119,7 @@ const TablaMinistraciones = () => {
                       </tbody>
                     </table>
                   </td>
-                  <td>${montoALocaleString(f_monto)}</td>
+                  <td>{montoALocaleString(f_monto)}</td>
                   {showAcciones && (
                     <td>
                       {id ? (
@@ -142,7 +145,7 @@ const TablaMinistraciones = () => {
           )}
           <tr>
             <td colSpan={4}></td>
-            <td>${montoALocaleString(sumaRubros)}</td>
+            <td>{montoALocaleString(sumaRubros)}</td>
             {showAcciones && <td></td>}
           </tr>
         </tbody>
@@ -178,16 +181,16 @@ const Saldos = () => {
           </thead>
           <tbody>
             <tr>
-              <td>${montoALocaleString(estadoForma.saldo.f_monto_total)}</td>
-              <td>${montoALocaleString(estadoForma.saldo.f_transferido)}</td>
-              <td>${montoALocaleString(estadoForma.saldo.f_solicitado)}</td>
-              <td>${montoALocaleString(estadoForma.saldo.f_comprobado)}</td>
-              <td>${montoALocaleString(estadoForma.saldo.f_por_comprobar)}</td>
-              <td>${montoALocaleString(estadoForma.saldo.f_isr)}</td>
-              <td>${montoALocaleString(estadoForma.saldo.f_retenciones)}</td>
-              <td>${montoALocaleString(estadoForma.saldo.f_pa)}</td>
-              <td>${montoALocaleString(estadoForma.saldo.f_ejecutado)}</td>
-              <td>${montoALocaleString(estadoForma.saldo.f_remanente)}</td>
+              <td>{montoALocaleString(estadoForma.saldo.f_monto_total)}</td>
+              <td>{montoALocaleString(estadoForma.saldo.f_transferido)}</td>
+              <td>{montoALocaleString(estadoForma.saldo.f_solicitado)}</td>
+              <td>{montoALocaleString(estadoForma.saldo.f_comprobado)}</td>
+              <td>{montoALocaleString(estadoForma.saldo.f_por_comprobar)}</td>
+              <td>{montoALocaleString(estadoForma.saldo.f_isr)}</td>
+              <td>{montoALocaleString(estadoForma.saldo.f_retenciones)}</td>
+              <td>{montoALocaleString(estadoForma.saldo.f_pa)}</td>
+              <td>{montoALocaleString(estadoForma.saldo.f_ejecutado)}</td>
+              <td>{montoALocaleString(estadoForma.saldo.f_remanente)}</td>
               <td>{estadoForma.saldo.p_avance}%</td>
             </tr>
           </tbody>

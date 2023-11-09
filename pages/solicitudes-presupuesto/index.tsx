@@ -391,18 +391,17 @@ const SolicitudesPresupuesto = () => {
                         <td>{titular_cuenta}</td>
                         <td>{proveedor}</td>
                         <td>{descripcion_gasto}</td>
-                        <td>${montoALocaleString(f_importe)}</td>
+                        <td>{montoALocaleString(f_importe)}</td>
                         <td>
-                          ${montoALocaleString(saldo.f_total_comprobaciones)}
+                          {montoALocaleString(saldo.f_total_comprobaciones)}
                         </td>
-                        <td>${montoALocaleString(saldo.f_monto_comprobar)}</td>
+                        <td>{montoALocaleString(saldo.f_monto_comprobar)}</td>
                         <td>
-                          $
                           {montoALocaleString(
                             saldo.f_total_impuestos_retenidos
                           )}
                         </td>
-                        <td>${montoALocaleString(saldo.f_total)}</td>
+                        <td>{montoALocaleString(saldo.f_total)}</td>
                         <td>
                           <span className={`badge bg-${colorBadge}`}>
                             {estatus}

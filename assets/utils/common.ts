@@ -2,12 +2,19 @@ import { QueriesProyecto } from "@models/proyecto.model"
 import { ApiCall } from "./apiCalls"
 import { QueriesCoparte } from "@models/coparte.model"
 import { QueriesUsuario } from "@models/usuario.model"
-import { IMetodosPAgo, MetodosPAgo, QueriesSolicitud } from "@models/solicitud-presupuesto.model"
+import {
+  IMetodosPAgo,
+  MetodosPAgo,
+  QueriesSolicitud,
+} from "@models/solicitud-presupuesto.model"
 
 const aMinuscula = (clave: string) => clave.toLowerCase()
 
 const montoALocaleString = (f_monto: number) => {
-  return Number(Number(f_monto).toFixed(2)).toLocaleString()
+  return Number(Number(f_monto)).toLocaleString("es-MX", {
+    style: "currency",
+    currency: "MXN",
+  })
   // return Number(f_monto).toFixed(2)
 }
 
@@ -307,5 +314,5 @@ export {
   inputDateAEpoch,
   fechaMasDiasFutuosString,
   fechaMasMesesFutuosString,
-  obtenerMetodoPago
+  obtenerMetodoPago,
 }
