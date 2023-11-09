@@ -161,13 +161,11 @@ class SolicitudesPresupuestoDB {
           }
 
           const solicitudes = results as ResSolicitudPresupuestoDB[]
-          const ids = solicitudes.map((sol) => sol.id)
-          const qComprobantes = this.qReSaldoComprobantes()
+          if (!!solicitudes.length) {
+            const ids = solicitudes.map((sol) => sol.id)
+            const qComprobantes = this.qReSaldoComprobantes()
 
-          connection.query(
-            qComprobantes,
-            [ids],
-            (error, results, fields) => {
+            connection.query(qComprobantes, [ids], (error, results, fields) => {
               if (error) {
                 connection.destroy()
                 return rej(error)
@@ -180,8 +178,14 @@ class SolicitudesPresupuestoDB {
                 solicitudes,
                 comprobantes,
               })
-            }
-          )
+            })
+          } else {
+            connection.destroy()
+            res({
+              solicitudes,
+              comprobantes: [],
+            })
+          }
         })
       })
     })
