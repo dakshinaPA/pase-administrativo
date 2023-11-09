@@ -155,7 +155,7 @@ const Filtros = ({
             <option value="2">Autorizada</option>
             <option value="3">Rechazada</option>
             <option value="4">Procesada</option>
-            <option value="3">Devolución</option>
+            <option value="5">Devolución</option>
           </select>
         </div>
         <div className="mb-3">
