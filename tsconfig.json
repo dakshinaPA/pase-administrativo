@@ -3,7 +3,7 @@
     "lib": [
       "dom",
       "dom.iterable",
-      "esnext"
+      "esnext",
     ],
     "target": "es2015",
     "allowJs": true,
@@ -20,20 +20,20 @@
     "jsx": "preserve",
     "baseUrl": ".",
     "paths": {
-        "@components/*": ["components/*"],
-        "@contexts/*": ["contexts/*"],
-        "@hooks/*": ["hooks/*"],
-        "@assets/*": ["assets/*"],
-        "@api/*": ["api/*"],
-        "@models/*": ["models/*"],
+      "@components/*": ["components/*"],
+      "@contexts/*": ["contexts/*"],
+      "@hooks/*": ["hooks/*"],
+      "@assets/*": ["assets/*"],
+      "@api/*": ["api/*"],
+      "@models/*": ["models/*"],
     }
   },
   "include": [
     "next-env.d.ts",
     "**/*.ts",
-    "**/*.tsx"
-, "scripts/financiadores.js"  ],
+    "**/*.tsx",
+  ],
   "exclude": [
-    "node_modules"
+    "node_modules",
   ]
 }

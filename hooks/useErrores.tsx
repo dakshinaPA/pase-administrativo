@@ -82,6 +82,10 @@ const useErrores = () => {
             if (!/^[a-zA-Z0-9\u00C0-\u017F\s]{3,}$/.test(campos[key]))
               throw [key, "Mínimo 3 caracteres"]
             break
+          case "banco":
+            if (!/^.{1,}$/.test(campos[key]))
+              throw [key, "Campo requerido"]
+            break
           case "nombre_corto":
             if (!/^[a-zA-Z\u00C0-\u017F\s]{2,}$/.test(campos[key]))
               throw [key, "Mínimo 2 caracteres"]
@@ -102,6 +106,10 @@ const useErrores = () => {
           case "clabe":
             if (!/^[0-9]{18}$/.test(campos[key]))
               throw [key, "CLABE a 18 dígitos"]
+            break
+          case "clabe_account":
+            if (!/^[0-9]{1,}$/.test(campos[key]))
+              throw [key, "Campo requerido"]
             break
           case "curp":
             if (
@@ -126,6 +134,10 @@ const useErrores = () => {
           case "routing_number":
             if (!/^[0-9]{1,}$/.test(campos[key]))
               throw [key, "Sólo dígitos"]
+            break
+          case "f_retenciones_extranjeros":
+            if (!Number(campos[key]) && campos[key] != 0)
+              throw ["f_retenciones", "Sólo dígitos"]
             break
         }
       }

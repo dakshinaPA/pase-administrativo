@@ -28,16 +28,14 @@ class SolicitudesPresupuestoDB {
       limit,
     } = queries
 
-    let query = `SELECT sp.id, sp.id_proyecto, sp.i_tipo_gasto, sp.clabe, sp.id_banco, sp.titular_cuenta,
+    let query = `SELECT sp.id, sp.id_proyecto, sp.i_tipo_gasto, sp.clabe, sp.banco, sp.titular_cuenta,
       sp.email, sp.proveedor, sp.descripcion_gasto, sp.id_partida_presupuestal, sp.f_importe, sp.f_retenciones, sp.i_estatus, sp.dt_registro,
       CONCAT(p.id_alt, ' - ', p.nombre) proyecto, p.id_responsable,
-      b.nombre banco,
       r.nombre rubro,
       c.id id_coparte, c.nombre_corto coparte
       FROM solicitudes_presupuesto sp
       JOIN proyectos p ON sp.id_proyecto=p.id
       JOIN copartes c ON p.id_coparte=c.id
-      JOIN bancos b ON sp.id_banco=b.id
       JOIN rubros_presupuestales r ON sp.id_partida_presupuestal=r.id
       WHERE sp.b_activo=1`
 
@@ -229,14 +227,14 @@ class SolicitudesPresupuestoDB {
   static async crear(data: SolicitudPresupuesto) {
     const { comprobantes, id_proyecto } = data
 
-    const qSolicitud = `INSERT INTO solicitudes_presupuesto (id_proyecto, i_tipo_gasto, clabe, id_banco, titular_cuenta, email, proveedor,
+    const qSolicitud = `INSERT INTO solicitudes_presupuesto (id_proyecto, i_tipo_gasto, clabe, banco, titular_cuenta, email, proveedor,
       descripcion_gasto, id_partida_presupuestal, f_importe, i_estatus, dt_registro ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
     const phSolicitud = [
       id_proyecto,
       data.i_tipo_gasto,
       data.clabe,
-      data.id_banco,
+      data.banco,
       data.titular_cuenta,
       data.email,
       data.proveedor,
@@ -328,7 +326,7 @@ class SolicitudesPresupuestoDB {
   static async actualizar(id: number, data: SolicitudPresupuesto) {
     const { comprobantes } = data
 
-    const qUpSolicitud = `UPDATE solicitudes_presupuesto SET clabe=?, id_banco=?, titular_cuenta=?,
+    const qUpSolicitud = `UPDATE solicitudes_presupuesto SET clabe=?, banco=?, titular_cuenta=?,
       email=?, proveedor=?, descripcion_gasto=?, f_importe=?, f_retenciones=?, i_estatus=? WHERE id=?`
 
     const qReComprobantes =
@@ -358,7 +356,7 @@ class SolicitudesPresupuestoDB {
             const qCombinados = [qUpSolicitud]
             const phCombinados = [
               data.clabe,
-              data.id_banco,
+              data.banco,
               data.titular_cuenta,
               data.email,
               data.proveedor,

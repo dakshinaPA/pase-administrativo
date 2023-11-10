@@ -71,8 +71,7 @@ export interface SolicitudPresupuesto {
   estatus?: string
   titular_cuenta: string
   clabe: string
-  id_banco: number
-  banco?: string
+  banco: string
   email: string
   saldo?: SaldoSolicitud
   dt_registro?: string

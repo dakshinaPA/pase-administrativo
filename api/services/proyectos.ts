@@ -63,7 +63,6 @@ class ProyectosServices {
           const comprobantes = re.comprobantes.filter(
             (com) => com.id_proyecto == proyecto.id
           )
-
           const f_monto_total = rubros.reduce(
             (acum, { f_monto }) => acum + Number(f_monto),
             0
@@ -75,9 +74,9 @@ class ProyectosServices {
             (acum, { f_importe }) => acum + Number(f_importe),
             0
           )
-          const f_comprobado_solicitudes_asimilados = solicitudes.reduce(
-            (acum, { i_tipo_gasto, f_importe }) => {
-              if(i_tipo_gasto == 3){
+          const f_comprobado_excepciones = solicitudes.reduce(
+            (acum, { i_tipo_gasto, f_importe, id_partida_presupuestal }) => {
+              if(i_tipo_gasto == 3 || id_partida_presupuestal == 22){
                 return acum + Number(f_importe)
               }
               return acum
@@ -88,7 +87,7 @@ class ProyectosServices {
             (acum, { f_total }) => acum + Number(f_total),
             0
           )
-          const f_comprobado = f_comprobado_solicitudes_asimilados + f_comprobado_comprobantes
+          const f_comprobado = f_comprobado_excepciones + f_comprobado_comprobantes
           const f_transferido = solicitudes
             .filter((sol) => sol.i_estatus == 4)
             .reduce((acum, { f_importe }) => acum + Number(f_importe), 0)
@@ -176,9 +175,9 @@ class ProyectosServices {
         (acum, { f_importe }) => acum + Number(f_importe),
         0
       )
-      const f_comprobado_solicitudes_asimilados = solicitudes.reduce(
-        (acum, { i_tipo_gasto, f_importe }) => {
-          if(i_tipo_gasto == 3){
+      const f_comprobado_excepciones = solicitudes.reduce(
+        (acum, { i_tipo_gasto, f_importe, id_partida_presupuestal }) => {
+          if(i_tipo_gasto == 3 || id_partida_presupuestal == 22){
             return acum + Number(f_importe)
           }
           return acum
@@ -189,7 +188,7 @@ class ProyectosServices {
         (acum, { f_total }) => acum + Number(f_total),
         0
       )
-      const f_comprobado = f_comprobado_solicitudes_asimilados + f_comprobado_comprobantes
+      const f_comprobado = f_comprobado_excepciones + f_comprobado_comprobantes
       const f_transferido = solicitudes
         .filter((sol) => sol.i_estatus == 4)
         .reduce((acum, { f_importe }) => acum + Number(f_importe), 0)

@@ -39,6 +39,7 @@ type ActionTypes =
   | "AGREGAR_FACTURA"
   | "QUITAR_FACTURA"
   | "CAMBIO_TIPO_GASTO"
+  | "CAMBIO_PARTIDA_PRESUPUESTAL"
   | "CAMBIO_TITULAR"
   | "CAMBIO_ESTATUS"
   | "CAMBIO_PROYECTO"
@@ -86,6 +87,7 @@ const reducer = (
         id_partida_presupuestal: 0,
         titular_cuenta: "",
         descripcion_gasto: "",
+        comprobantes: [],
       }
     case "CAMBIO_TIPO_GASTO":
       return {
@@ -93,12 +95,19 @@ const reducer = (
         id_partida_presupuestal: payload.id_partida_presupuestal,
         titular_cuenta: "",
         descripcion_gasto: payload.descripcion_gasto,
+        comprobantes: [],
+      }
+    case "CAMBIO_PARTIDA_PRESUPUESTAL":
+      return {
+        ...state,
+        titular_cuenta: "",
+        comprobantes: [],
       }
     case "CAMBIO_TITULAR":
       return {
         ...state,
         clabe: payload.clabe,
-        id_banco: payload.id_banco,
+        banco: payload.banco,
         proveedor: payload.proveedor,
       }
     case "CAMBIO_ESTATUS":
@@ -241,7 +250,7 @@ const FormaSolicitudPresupuesto = () => {
     tipo_gasto: "",
     titular_cuenta: "",
     clabe: "",
-    id_banco: 0,
+    banco: "",
     email: "",
     proveedor: "",
     descripcion_gasto: "",
@@ -254,7 +263,7 @@ const FormaSolicitudPresupuesto = () => {
     notas: [],
   }
 
-  const { bancos, formas_pago, regimenes_fiscales } = useCatalogos()
+  const { formas_pago, regimenes_fiscales } = useCatalogos()
   const [estadoForma, dispatch] = useReducer(reducer, estadoInicialForma)
   const [proyectosDB, setProyectosDB] = useState<ProyectoMin[]>([])
   const [dataProyecto, setDataProyecto] = useState(estadoInicialDataProyecto)
@@ -290,7 +299,7 @@ const FormaSolicitudPresupuesto = () => {
 
     let partidas_presupuestales = []
     let titulares = []
-    // let id_partida_presupuestal = 0
+
     const payload = {
       id_partida_presupuestal: 0,
       descripcion_gasto: "",
@@ -299,30 +308,16 @@ const FormaSolicitudPresupuesto = () => {
     switch (Number(estadoForma.i_tipo_gasto)) {
       case 1:
       case 5:
-        //muestra todos colaboradores
-        titulares = dataProyecto.colaboradores.map((colaborador) => ({
-          ...colaborador,
-          nombre: `${colaborador.nombre} ${colaborador.apellido_paterno} ${colaborador.apellido_materno}`,
-        }))
         partidas_presupuestales = dataProyecto.rubros_presupuestales.filter(
-          (rp) => rp.id_rubro != 2 //![1, 2].includes(rp.id_rubro)
+          (rp) => ![1, 22].includes(rp.id_rubro)
         )
         break
       case 2:
-        //muestra todos los proveedores
-        titulares = dataProyecto.proveedores
         partidas_presupuestales = dataProyecto.rubros_presupuestales.filter(
           (rp) => rp.id_rubro != 2
         )
         break
       case 3:
-        //muestra solo colaboradores registrados como asimilados
-        titulares = dataProyecto.colaboradores
-          .filter((col) => col.i_tipo == 1)
-          .map((colaborador) => ({
-            ...colaborador,
-            nombre: `${colaborador.nombre} ${colaborador.apellido_paterno} ${colaborador.apellido_materno}`,
-          }))
         partidas_presupuestales = dataProyecto.rubros_presupuestales.filter(
           (rp) => rp.id_rubro == 2
         )
@@ -330,13 +325,6 @@ const FormaSolicitudPresupuesto = () => {
         payload.descripcion_gasto = "Enero"
         break
       case 4:
-        //muestra solo colaboradores registrados como asimilados
-        titulares = dataProyecto.colaboradores
-          .filter((col) => col.i_tipo == 2)
-          .map((colaborador) => ({
-            ...colaborador,
-            nombre: `${colaborador.nombre} ${colaborador.apellido_paterno} ${colaborador.apellido_materno}`,
-          }))
         partidas_presupuestales = dataProyecto.rubros_presupuestales.filter(
           (rp) => rp.id_rubro == 3
         )
@@ -360,12 +348,66 @@ const FormaSolicitudPresupuesto = () => {
   }, [estadoForma.i_tipo_gasto])
 
   useEffect(() => {
+    if (!estadoForma.id_partida_presupuestal) return
+
+    let titulares = []
+
+    switch (Number(estadoForma.i_tipo_gasto)) {
+      case 1:
+      case 5:
+        //muestra todos colaboradores
+        titulares = dataProyecto.colaboradores.map((colaborador) => ({
+          ...colaborador,
+          nombre: `${colaborador.nombre} ${colaborador.apellido_paterno} ${colaborador.apellido_materno}`,
+        }))
+        break
+      case 2:
+        //muestra todos los proveedores
+        titulares = dataProyecto.proveedores.filter(({ i_tipo }) =>
+          estadoForma.id_partida_presupuestal == 22 ? i_tipo == 3 : i_tipo != 3
+        )
+        break
+      case 3:
+        //muestra solo colaboradores registrados como asimilados
+        titulares = dataProyecto.colaboradores
+          .filter((col) => col.i_tipo == 1)
+          .map((colaborador) => ({
+            ...colaborador,
+            nombre: `${colaborador.nombre} ${colaborador.apellido_paterno} ${colaborador.apellido_materno}`,
+          }))
+        break
+      case 4:
+        //muestra solo colaboradores registrados como honorarios
+        titulares = dataProyecto.colaboradores
+          .filter((col) => col.i_tipo == 2)
+          .map((colaborador) => ({
+            ...colaborador,
+            nombre: `${colaborador.nombre} ${colaborador.apellido_paterno} ${colaborador.apellido_materno}`,
+          }))
+        break
+      default:
+    }
+
+    setDataTipoGasto((prevState) => ({
+      ...prevState,
+      titulares,
+    }))
+
+    if (modalidad == "CREAR") {
+      dispatch({
+        type: "CAMBIO_PARTIDA_PRESUPUESTAL",
+        payload: null,
+      })
+    }
+  }, [estadoForma.id_partida_presupuestal])
+
+  useEffect(() => {
     if (!estadoForma.titular_cuenta) {
       dispatch({
         type: "CAMBIO_TITULAR",
         payload: {
           clabe: "",
-          id_banco: 0,
+          banco: "",
           proveedor: "",
         },
       })
@@ -382,8 +424,10 @@ const FormaSolicitudPresupuesto = () => {
     }
 
     const payload = {
-      clabe: matchTitular.clabe,
-      id_banco: matchTitular.id_banco,
+      // @ts-ignore
+      clabe: matchTitular.clabe || matchTitular.account_number,
+      // @ts-ignore
+      banco: matchTitular.banco || matchTitular.bank,
       proveedor: "",
     }
 
@@ -478,8 +522,6 @@ const FormaSolicitudPresupuesto = () => {
         type: "CARGA_INICIAL",
         payload: solicitud,
       })
-
-      // setEstatus(solicitud.i_estatus)
       // para que se mantenga el badge
       estatusCarga.current = solicitud.i_estatus
     }
@@ -701,13 +743,14 @@ const FormaSolicitudPresupuesto = () => {
       i_tipo_gasto: estadoForma.i_tipo_gasto,
       id_partida_presupuestal: estadoForma.id_partida_presupuestal,
       titular_cuenta: estadoForma.titular_cuenta,
-      clabe: estadoForma.clabe,
-      id_banco: estadoForma.id_banco,
+      clabe_account: estadoForma.clabe,
+      banco: estadoForma.banco,
       email: estadoForma.email,
       proveedor: estadoForma.proveedor,
       descripcion_gasto: estadoForma.descripcion_gasto,
       f_importe: estadoForma.f_importe,
       f_retenciones: estadoForma.f_retenciones,
+      f_retenciones_extranjeros: estadoForma.f_retenciones,
     }
 
     if (estadoForma.i_tipo_gasto == 5) {
@@ -720,6 +763,10 @@ const FormaSolicitudPresupuesto = () => {
 
     if (user.id_rol == 3 || estadoForma.i_tipo_gasto != 3) {
       delete campos.f_retenciones
+    }
+
+    if (user.id_rol == 3 || estadoForma.id_partida_presupuestal != 22) {
+      delete campos.f_retenciones_extranjeros
     }
 
     // console.log(campos)
@@ -788,13 +835,18 @@ const FormaSolicitudPresupuesto = () => {
     idSolicitud &&
     (user.id === estadoForma.id_responsable || [1, 2].includes(user.id_rol))
 
-  const showRetenciones = user.id_rol != 3 && estadoForma.i_tipo_gasto == 3
+  const showRetenciones =
+    user.id_rol != 3 &&
+    (estadoForma.i_tipo_gasto == 3 || estadoForma.id_partida_presupuestal == 22)
   // estadoForma.i_estatus == 1
 
   const total_comprobantes = estadoForma.comprobantes.reduce(
     (acum, { f_total }) => acum + Number(f_total),
     0
   )
+
+  const showComprobantesNecesarios =
+    estadoForma.i_tipo_gasto != 3 && estadoForma.id_partida_presupuestal != 22
 
   if (isLoading) {
     return <Loader />
@@ -964,36 +1016,28 @@ const FormaSolicitudPresupuesto = () => {
             )}
           </div>
           <div className="col-12 col-md-6 col-lg-4 mb-3">
-            <label className="form-label">CLABE</label>
+            <label className="form-label">CLABE / cuenta</label>
             <input
               className="form-control"
               type="text"
-              onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-              name="clabe"
+              name="clabe_account"
               value={estadoForma.clabe}
               disabled
             />
-            {error.campo == "clabe" && <MensajeError mensaje={error.mensaje} />}
+            {error.campo == "clabe_account" && (
+              <MensajeError mensaje={error.mensaje} />
+            )}
           </div>
           <div className="col-12 col-md-6 col-lg-4 mb-3">
             <label className="form-label">Banco</label>
-            <select
+            <input
               className="form-control"
-              onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-              name="id_banco"
-              value={estadoForma.id_banco}
+              type="text"
+              name="banco"
+              value={estadoForma.banco}
               disabled
-            >
-              <option value="0" disabled></option>
-              {bancos.map(({ id, nombre }) => (
-                <option key={id} value={id}>
-                  {nombre}
-                </option>
-              ))}
-            </select>
-            {error.campo == "id_banco" && (
-              <MensajeError mensaje={error.mensaje} />
-            )}
+            />
+            {error.campo == "banco" && <MensajeError mensaje={error.mensaje} />}
           </div>
           <div className="col-12 col-md-6 col-lg-4 mb-3">
             <label className="form-label">Email</label>
@@ -1082,7 +1126,7 @@ const FormaSolicitudPresupuesto = () => {
               )}
             </div>
           )}
-          {estadoForma.i_tipo_gasto != 3 && (
+          {showComprobantesNecesarios && (
             <div className="col-12 col-md-6 col-lg-4 mb-3">
               <label className="form-label">Monto a comprobar</label>
               <input
@@ -1130,7 +1174,7 @@ const FormaSolicitudPresupuesto = () => {
             </div>
           )}
           {/* Seccion comprobantes */}
-          {estadoForma.i_tipo_gasto != 3 && (
+          {showComprobantesNecesarios && (
             <>
               <div className="col-12">
                 <hr />
