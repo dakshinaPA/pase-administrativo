@@ -22,6 +22,7 @@ import {
 } from "@models/solicitud-presupuesto.model"
 import { useAuth } from "@contexts/auth.context"
 import {
+  epochAFecha,
   meses,
   montoALocaleString,
   obtenerBadgeStatusSolicitud,
@@ -207,7 +208,7 @@ const Notas = ({ notas, dispatch }) => {
               <tr key={id}>
                 <td>{usuario}</td>
                 <td>{mensaje}</td>
-                <td>{dt_registro}</td>
+                <td>{epochAFecha(dt_registro)}</td>
               </tr>
             ))}
           </tbody>
