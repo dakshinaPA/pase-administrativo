@@ -6,3 +6,13 @@
 .logoPdf:hover {
   font-size: 220px;
 }
+
+.logoFormatos {
+  font-size: 150px;
+  transition: .5s;
+}
+
+.logoFormatos:hover {
+  font-size: 170px;
+}
+

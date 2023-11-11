@@ -255,9 +255,14 @@ const MenuPrincipal = ({ shrinkMenu }) => {
           </div>
         </>
       )}
-      <div  style={{ padding: "1rem 1.25rem"}}>
+      <div style={{ padding: "1rem 1.25rem" }}>
         <Link href="/legal" className="text-white">
           Legal
+        </Link>
+      </div>
+      <div style={{ padding: "1rem 1.25rem" }}>
+        <Link href="/" className="text-white">
+          Formatos
         </Link>
       </div>
     </div>
