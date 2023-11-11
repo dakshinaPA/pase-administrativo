@@ -306,7 +306,7 @@ const Proveedores = () => {
               <th>Servicio</th>
               <th>Teléfono</th>
               <th>RFC</th>
-              <th>CLABE</th>
+              <th>CLABE / cuenta</th>
               <th>Banco</th>
               <th>Acciones</th>
             </tr>
@@ -322,6 +322,8 @@ const Proveedores = () => {
                 rfc,
                 clabe,
                 banco,
+                account_number,
+                bank
               }) => (
                 <tr key={id}>
                   <td>{nombre}</td>
@@ -329,8 +331,8 @@ const Proveedores = () => {
                   <td>{descripcion_servicio}</td>
                   <td>{telefono}</td>
                   <td>{rfc}</td>
-                  <td>{clabe}</td>
-                  <td>{banco}</td>
+                  <td>{clabe || account_number}</td>
+                  <td>{banco || bank}</td>
                   <td>
                     <BtnAccion
                       margin={false}
