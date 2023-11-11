@@ -28,4 +28,5 @@ export interface ResProveedorDB {
   cp: string
   id_estado: number
   estado?: string
+  pais: string
 }

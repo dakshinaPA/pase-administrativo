@@ -7,14 +7,12 @@ import { fechaActualAEpoch } from "@assets/utils/common"
 class ProveedorDB {
   static queryRe = (id_proyecto: number, id_proveedor?: number) => {
     let query = `SELECT p.id, p.id_proyecto, p.nombre, p.i_tipo, p.clabe, p.id_banco, p.telefono, p.email, p.rfc, p.bank, p.bank_branch_address, p.account_number, p.bic_code, p.intermediary_bank, p.routing_number, p.descripcion_servicio, p.dt_registro,
-    pd.id id_direccion, pd.calle, pd.numero_ext, pd.numero_int, pd.colonia, pd.municipio, pd.cp, pd.id_estado,
+    pd.id id_direccion, pd.calle, pd.numero_ext, pd.numero_int, pd.colonia, pd.municipio, pd.cp, pd.id_estado, pd.estado, pd.pais,
     pr.id_responsable, CONCAT(pr.nombre, ' - ', pr.id_alt) proyecto,
-    e.nombre estado,
     b.nombre banco
     FROM proveedores p
     JOIN proyectos pr ON p.id_proyecto = pr.id
     JOIN proveedor_direccion pd ON p.id = pd.id_proveedor
-    JOIN estados e ON pd.id_estado = e.id
     LEFT JOIN bancos b ON p.id_banco = b.id
     WHERE p.b_activo = 1`
 
@@ -81,7 +79,7 @@ class ProveedorDB {
     ]
 
     const qDireccion = `INSERT INTO proveedor_direccion ( id_proveedor, calle, numero_ext, numero_int,
-      colonia, municipio, cp, id_estado ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )`
+      colonia, municipio, cp, id_estado, estado, pais ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )`
 
     const phDireccion = [
       direccion.calle,
@@ -91,6 +89,8 @@ class ProveedorDB {
       direccion.municipio,
       direccion.cp,
       direccion.id_estado,
+      direccion.estado,
+      direccion.pais,
     ]
 
     return new Promise((res, rej) => {
@@ -170,7 +170,7 @@ class ProveedorDB {
     ]
 
     const qDireccion = `UPDATE proveedor_direccion SET calle=?, numero_ext=?, numero_int=?,
-      colonia=?, municipio=?, cp=?, id_estado=? WHERE id=?`
+      colonia=?, municipio=?, cp=?, id_estado=?, estado=?, pais=? WHERE id=?`
 
     const phDireccion = [
       direccion.calle,
@@ -180,6 +180,8 @@ class ProveedorDB {
       direccion.municipio,
       direccion.cp,
       direccion.id_estado,
+      direccion.estado,
+      direccion.pais,
       direccion.id,
     ]
 

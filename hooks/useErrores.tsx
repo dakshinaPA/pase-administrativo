@@ -18,6 +18,7 @@ const useErrores = () => {
           case "apellido_materno":
           case "representante_legal":
           case "titular_cuenta":
+          case "pais":
             if (!/^[a-zA-Z\u00C0-\u017F\s]{2,}$/.test(campos[key]))
               throw [key, "Nombre inválido"]
             break
@@ -53,6 +54,7 @@ const useErrores = () => {
           case "id_banco":
           case "i_tipo_gasto":
           case "id_partida_presupuestal":
+          case "id_estado":
             if (!(campos[key] > 0)) throw [key, "Campo requerido"]
             break
           case "i_beneficiados":

@@ -46,6 +46,10 @@ export interface ColaboradorProyecto {
   periodos_servicio: PeriodoServicioColaborador[]
 }
 
+export interface DireccionProveedor extends Direccion {
+  pais: string
+}
+
 export interface ProveedorProyecto {
   id?: number
   id_proyecto: number
@@ -68,7 +72,7 @@ export interface ProveedorProyecto {
   routing_number: string
   descripcion_servicio: string
   dt_registro?: string
-  direccion: Direccion
+  direccion: DireccionProveedor
 }
 
 export interface RubroMinistracion {

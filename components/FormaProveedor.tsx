@@ -58,6 +58,10 @@ const reducer = (
         id_banco: 0,
         banco: "",
         rfc: "",
+        direccion: {
+          ...state.direccion,
+          id_estado: 0
+        }
       }
     case "NO_EXTRANJERO":
       return {
@@ -68,6 +72,11 @@ const reducer = (
         bic_code: "",
         intermediary_bank: "",
         routing_number: "",
+        direccion: {
+          ...state.direccion,
+          estado: "",
+          pais: ""
+        }
       }
     default:
       return state
@@ -104,7 +113,9 @@ const FormaProveedor = () => {
       colonia: "",
       municipio: "",
       cp: "",
-      id_estado: 1,
+      id_estado: 0,
+      estado: "",
+      pais: "",
     },
   }
 
@@ -233,6 +244,8 @@ const FormaProveedor = () => {
       colonia: estadoForma.direccion.colonia,
       municipio: estadoForma.direccion.municipio,
       cp: estadoForma.direccion.cp,
+      id_estado: estadoForma.direccion.id_estado,
+      pais: estadoForma.direccion.pais,
     }
 
     if (estadoForma.i_tipo == 3) {
@@ -240,11 +253,13 @@ const FormaProveedor = () => {
       delete campos.id_banco
       delete campos.rfc
       delete campos.rfc_organizacion
+      delete campos.id_estado
     } else {
       delete campos.bank
       delete campos.bank_branch_address
       delete campos.account_number
       delete campos.bic_code
+      delete campos.pais
 
       if (estadoForma.i_tipo == 1) {
         delete campos.rfc_organizacion
@@ -342,7 +357,9 @@ const FormaProveedor = () => {
             value={estadoForma.nombre}
             disabled={!modoEditar}
           />
-          {error.campo == "proveedor" && <MensajeError mensaje={error.mensaje} />}
+          {error.campo == "proveedor" && (
+            <MensajeError mensaje={error.mensaje} />
+          )}
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Tipo</label>
@@ -622,22 +639,56 @@ const FormaProveedor = () => {
           />
           {error.campo == "cp" && <MensajeError mensaje={error.mensaje} />}
         </div>
-        <div className="col-12 col-md-6 col-lg-3 mb-3">
-          <label className="form-label">Estado</label>
-          <select
-            className="form-control"
-            onChange={(e) => handleChange(e, "HANDLE_CHANGE_DIRECCION")}
-            name="id_estado"
-            value={estadoForma.direccion.id_estado}
-            disabled={!modoEditar}
-          >
-            {estados.map(({ id, nombre }) => (
-              <option key={id} value={id}>
-                {nombre}
-              </option>
-            ))}
-          </select>
-        </div>
+        {estadoForma.i_tipo == 3 ? (
+          <>
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label">Estado</label>
+              <input
+                className="form-control"
+                type="text"
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE_DIRECCION")}
+                name="estado"
+                value={estadoForma.direccion.estado}
+                disabled={!modoEditar}
+              />
+            </div>
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label">País</label>
+              <input
+                className="form-control"
+                type="text"
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE_DIRECCION")}
+                name="pais"
+                value={estadoForma.direccion.pais}
+                disabled={!modoEditar}
+              />
+              {error.campo == "pais" && (
+                <MensajeError mensaje={error.mensaje} />
+              )}
+            </div>
+          </>
+        ) : (
+          <div className="col-12 col-md-6 col-lg-3 mb-3">
+            <label className="form-label">Estado</label>
+            <select
+              className="form-control"
+              onChange={(e) => handleChange(e, "HANDLE_CHANGE_DIRECCION")}
+              name="id_estado"
+              value={estadoForma.direccion.id_estado}
+              disabled={!modoEditar}
+            >
+              <option value="0" disabled>Selecciona un estado</option>
+              {estados.map(({ id, nombre }) => (
+                <option key={id} value={id}>
+                  {nombre}
+                </option>
+              ))}
+            </select>
+            {error.campo == "id_estado" && (
+                <MensajeError mensaje={error.mensaje} />
+              )}
+          </div>
+        )}
         {modoEditar && (
           <div className="col-12 text-end">
             <BtnCancelar onclick={cancelar} margin={"r"} />

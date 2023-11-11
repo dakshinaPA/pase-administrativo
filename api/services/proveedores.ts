@@ -54,6 +54,7 @@ class ProveedorServices {
             cp: proveedor.cp,
             id_estado: proveedor.id_estado,
             estado: proveedor.estado,
+            pais: proveedor.pais
           },
         }
       })
