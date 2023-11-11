@@ -323,7 +323,7 @@ const Proveedores = () => {
                 clabe,
                 banco,
                 account_number,
-                bank
+                bank,
               }) => (
                 <tr key={id}>
                   <td>{nombre}</td>
@@ -376,7 +376,10 @@ const SolicitudesPresupuesto = () => {
           />
         )}
       </div>
-      <div className="col-12 table-responsive">
+      <div
+        className="col-12 table-responsive"
+        style={{ maxHeight: "500px", overflowY: "auto" }}
+      >
         <table className="table">
           <thead className="table-light">
             <tr>

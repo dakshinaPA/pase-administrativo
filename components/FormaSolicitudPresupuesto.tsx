@@ -33,6 +33,7 @@ import {
 import { Toast } from "./Toast"
 import { useErrores } from "@hooks/useErrores"
 import { MensajeError } from "./Mensajes"
+import Link from "next/link"
 
 type ActionTypes =
   | "CARGA_INICIAL"
@@ -1169,7 +1170,11 @@ const FormaSolicitudPresupuesto = () => {
                   checked={aceptarTerminos}
                 />
                 <label className="form-check-label">
-                  Acepto los términos y condiciones
+                  Acepto los
+                  <Link href="/legal" className="color1 fw-bold">
+                    {" "}
+                    términos y condiciones
+                  </Link>
                 </label>
               </div>
             </div>

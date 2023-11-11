@@ -1,0 +1,8 @@
+.logoPdf {
+  font-size: 200px;
+  transition: .5s;
+}
+
+.logoPdf:hover {
+  font-size: 220px;
+}
