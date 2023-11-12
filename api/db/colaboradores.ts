@@ -1,9 +1,7 @@
 import { RespuestaDB } from "@api/utils/response"
 import { queryDBPlaceHolder } from "./query"
 import { connectionDB } from "./connectionPool"
-import {
-  ColaboradorProyecto,
-} from "@models/proyecto.model"
+import { ColaboradorProyecto } from "@models/proyecto.model"
 import { fechaActualAEpoch } from "@assets/utils/common"
 
 class ColaboradorDB {
@@ -90,7 +88,7 @@ class ColaboradorDB {
     const { periodos_servicio, direccion } = data
 
     const qColaborador = `INSERT INTO colaboradores ( id_proyecto, nombre, apellido_paterno, apellido_materno, i_tipo, clabe, id_banco,
-      telefono, email, rfc, curp, dt_registro ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )`
+      telefono, email, rfc, curp, dt_registro ) VALUES ( ?, UPPER(?), UPPER(?), UPPER(?), ?, ?, ?, ?, ?, ?, ?, ? )`
 
     const qIdAltProyecto = "SELECT id_alt FROM proyectos WHERE id=?"
 
@@ -208,7 +206,7 @@ class ColaboradorDB {
   static async actualizar(id_colaborador: number, data: ColaboradorProyecto) {
     const { direccion, periodos_servicio } = data
 
-    const qColaborador = `UPDATE colaboradores SET id_empleado=?, nombre=?, apellido_paterno=?, apellido_materno=?,
+    const qColaborador = `UPDATE colaboradores SET id_empleado=?, nombre=UPPER(?), apellido_paterno=UPPER(?), apellido_materno=UPPER(?),
       clabe=?, id_banco=?, telefono=?, email=?, rfc=?, curp=? WHERE id=?`
 
     const phColaborador = [
@@ -318,8 +316,6 @@ class ColaboradorDB {
       return RespuestaDB.fallida(error)
     }
   }
-
-
 }
 
 export { ColaboradorDB }

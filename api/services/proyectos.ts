@@ -14,7 +14,7 @@ import {
 } from "@models/proyecto.model"
 
 import { ResProyectos } from "@api/models/proyecto.model"
-import { epochAFecha, obtenerEstatusSolicitud } from "@assets/utils/common"
+import { epochAFecha, obtenerEstatusSolicitud, textoMayusculaSinAcentos } from "@assets/utils/common"
 import { SolicitudesPresupuestoServices } from "./solicitudes-presupuesto"
 
 class ProyectosServices {
@@ -250,11 +250,15 @@ class ProyectosServices {
       const colaboradoresHyd = colaboradores.map((col) => ({
         ...col,
         tipo: ColaboradorServices.obtenerTipo(col.i_tipo),
+        nombre: textoMayusculaSinAcentos(col.nombre),
+        apellido_paterno: textoMayusculaSinAcentos(col.apellido_paterno),
+        apellido_materno: textoMayusculaSinAcentos(col.apellido_materno),
       }))
 
       const proveedoresHyd = proveedores.map((prov) => ({
         ...prov,
         tipo: ProveedorServices.obtenerTipo(prov.i_tipo),
+        nombre: textoMayusculaSinAcentos(prov.nombre)
       }))
 
       const solicitudesHyd = solicitudes.map((sol) => {

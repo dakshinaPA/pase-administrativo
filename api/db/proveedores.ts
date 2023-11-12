@@ -57,7 +57,7 @@ class ProveedorDB {
     const { direccion } = data
 
     const qProveedor = `INSERT INTO proveedores ( id_proyecto, nombre, i_tipo, clabe, id_banco, telefono, email, rfc, bank, bank_branch_address,
-      account_number, bic_code, intermediary_bank, routing_number, descripcion_servicio, dt_registro ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )`
+      account_number, bic_code, intermediary_bank, routing_number, descripcion_servicio, dt_registro ) VALUES ( ?, UPPER(?), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )`
 
     const phProveedor = [
       data.id_proyecto,
@@ -148,7 +148,7 @@ class ProveedorDB {
   static async actualizar(id_proveedor: number, data: ProveedorProyecto) {
     const { direccion } = data
 
-    const qProveedor = `UPDATE proveedores SET nombre=?, i_tipo=?, clabe=?, id_banco=?, telefono=?, email=?, rfc=?, bank=?, bank_branch_address=?, account_number=?,
+    const qProveedor = `UPDATE proveedores SET nombre=UPPER(?), i_tipo=?, clabe=?, id_banco=?, telefono=?, email=?, rfc=?, bank=?, bank_branch_address=?, account_number=?,
       bic_code=?, intermediary_bank=?, routing_number=?, descripcion_servicio=? WHERE id=? LIMIT 1`
 
     const phProveedor = [

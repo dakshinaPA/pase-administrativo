@@ -7,6 +7,7 @@ import {
   MetodosPAgo,
   QueriesSolicitud,
 } from "@models/solicitud-presupuesto.model"
+import { text } from "stream/consumers"
 
 const aMinuscula = (clave: string) => clave.toLowerCase()
 
@@ -293,6 +294,18 @@ const obtenerMetodoPago = (i_metodo_pago: IMetodosPAgo): MetodosPAgo => {
   return i_metodo_pago == 1 ? "PUE" : "PPD"
 }
 
+const quitarAcentos = (texto: string) =>
+  texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+
+const textoAmasyuscula = (texto: string) =>
+  texto.toUpperCase()
+
+const textoMayusculaSinAcentos = (texto: string) => {
+  const txtSinAcento = quitarAcentos(texto)
+  const txtMayuscula = textoAmasyuscula(txtSinAcento)
+  return txtMayuscula
+} 
+
 export {
   meses,
   aMinuscula,
@@ -315,4 +328,5 @@ export {
   fechaMasDiasFutuosString,
   fechaMasMesesFutuosString,
   obtenerMetodoPago,
+  textoMayusculaSinAcentos
 }

@@ -2,6 +2,7 @@ import { ProveedorDB } from "@api/db/proveedores"
 import { RespuestaController } from "@api/utils/response"
 import { ResProveedorDB } from "@api/models/proveedor.model"
 import { ProveedorProyecto } from "@models/proyecto.model"
+import { textoMayusculaSinAcentos } from "@assets/utils/common"
 
 class ProveedorServices {
   static obtenerTipo(id_tipo: 1 | 2 | 3) {
@@ -28,7 +29,7 @@ class ProveedorServices {
           id_proyecto: proveedor.id_proyecto,
           proyecto: proveedor.proyecto,
           id_responsable: proveedor.id_responsable,
-          nombre: proveedor.nombre,
+          nombre: textoMayusculaSinAcentos(proveedor.nombre),
           i_tipo: proveedor.i_tipo,
           tipo: this.obtenerTipo(proveedor.i_tipo),
           clabe: proveedor.clabe,
@@ -54,7 +55,7 @@ class ProveedorServices {
             cp: proveedor.cp,
             id_estado: proveedor.id_estado,
             estado: proveedor.estado,
-            pais: proveedor.pais
+            pais: proveedor.pais,
           },
         }
       })
@@ -71,7 +72,12 @@ class ProveedorServices {
 
   static async crear(data: ProveedorProyecto) {
     try {
-      const cr = await ProveedorDB.crear(data)
+      const dataTransformada = {
+        ...data,
+        nombre: textoMayusculaSinAcentos(data.nombre),
+      }
+
+      const cr = await ProveedorDB.crear(dataTransformada)
 
       return RespuestaController.exitosa(201, "Proveedor creado con éxito", {
         idInsertado: cr,
@@ -83,7 +89,12 @@ class ProveedorServices {
 
   static async actualizar(id_proveedor: number, data: ProveedorProyecto) {
     try {
-      const up = await ProveedorDB.actualizar(id_proveedor, data)
+      const dataTransformada = {
+        ...data,
+        nombre: textoMayusculaSinAcentos(data.nombre),
+      }
+
+      const up = await ProveedorDB.actualizar(id_proveedor, dataTransformada)
 
       return RespuestaController.exitosa(
         200,

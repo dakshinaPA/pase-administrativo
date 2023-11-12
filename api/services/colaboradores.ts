@@ -2,6 +2,7 @@ import { ColaboradorDB } from "@api/db/colaboradores"
 import { RespuestaController } from "@api/utils/response"
 import { ResColaboradoreDB } from "@api/models/colaborador.model"
 import { ColaboradorProyecto } from "@models/proyecto.model"
+import { textoMayusculaSinAcentos } from "@assets/utils/common"
 
 class ColaboradorServices {
   static obtenerTipo(id_tipo: 1 | 2 | 3) {
@@ -40,6 +41,9 @@ class ColaboradorServices {
         const data: ColaboradorProyecto = {
           ...resto,
           tipo: this.obtenerTipo(resto.i_tipo),
+          nombre: textoMayusculaSinAcentos(resto.nombre),
+          apellido_paterno: textoMayusculaSinAcentos(resto.apellido_paterno),
+          apellido_materno: textoMayusculaSinAcentos(resto.apellido_materno),
           direccion: {
             id: id_direccion,
             calle,
@@ -69,7 +73,14 @@ class ColaboradorServices {
 
   static async crear(data: ColaboradorProyecto) {
     try {
-      const cr = await ColaboradorDB.crear(data)
+      const dataTransformada = {
+        ...data,
+        nombre: textoMayusculaSinAcentos(data.nombre),
+        apellido_paterno: textoMayusculaSinAcentos(data.apellido_paterno),
+        apellido_materno: textoMayusculaSinAcentos(data.apellido_materno),
+      }
+
+      const cr = await ColaboradorDB.crear(dataTransformada)
 
       return RespuestaController.exitosa(201, "Colaborador creado con éxito", {
         idInsertado: cr,
@@ -85,9 +96,15 @@ class ColaboradorServices {
 
   static async actualizar(id_colaborador: number, data: ColaboradorProyecto) {
     try {
-      const up = await ColaboradorDB.actualizar(id_colaborador, data)
+      const dataTransformada = {
+        ...data,
+        nombre: textoMayusculaSinAcentos(data.nombre),
+        apellido_paterno: textoMayusculaSinAcentos(data.apellido_paterno),
+        apellido_materno: textoMayusculaSinAcentos(data.apellido_materno),
+      }
+      const up = await ColaboradorDB.actualizar(id_colaborador, dataTransformada)
       const reColaboradorUp = await this.obtener(null, id_colaborador)
-      if(reColaboradorUp.error) throw reColaboradorUp.data
+      if (reColaboradorUp.error) throw reColaboradorUp.data
 
       const colaboradorUp = reColaboradorUp.data[0] as ColaboradorProyecto
 

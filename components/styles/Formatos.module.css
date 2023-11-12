@@ -13,6 +13,7 @@
 }
 
 .logoFormatos:hover {
-  font-size: 170px;
+  /* font-size: 170px; */
+  color: var(--color-secundario);
 }
 
