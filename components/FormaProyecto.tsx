@@ -663,7 +663,9 @@ const FormaProyecto = () => {
   }
 
   const handleChange = (ev: ChangeEvent, type: ActionTypes) => {
-    const { name, value } = ev.target
+    let { name, value } = ev.target
+
+    if(name === "nombre") name = "nombre_proyecto"
 
     if (error.campo === ev.target.name) {
       validarCampos({ [name]: value })
@@ -697,7 +699,7 @@ const FormaProyecto = () => {
 
   const validarForma = () => {
     const campos = {
-      nombre: estadoForma.nombre,
+      nombre_proyecto: estadoForma.nombre,
       id_financiador: estadoForma.id_financiador,
       id_coparte: estadoForma.id_coparte,
       id_responsable: estadoForma.id_responsable,

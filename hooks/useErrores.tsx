@@ -89,7 +89,7 @@ const useErrores = () => {
               throw [key, "Campo requerido"]
             break
           case "nombre_corto":
-            if (!/^[a-zA-Z\u00C0-\u017F\s]{2,}$/.test(campos[key]))
+            if (!/^.{2,}$/.test(campos[key]))
               throw [key, "Mínimo 2 caracteres"]
             break
           case "numero_ext":
@@ -140,6 +140,9 @@ const useErrores = () => {
           case "f_retenciones_extranjeros":
             if (!Number(campos[key]) && campos[key] != 0)
               throw ["f_retenciones", "Sólo dígitos"]
+          case "nombre_proyecto":
+            if (!/^.{2,}$/.test(campos[key]))
+              throw ["nombre", "Nombre inválido"]
             break
         }
       }
