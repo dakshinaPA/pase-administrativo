@@ -666,7 +666,7 @@ const FormaSolicitudPresupuesto = () => {
         console.log(error)
         setToastState({
           show: true,
-          mensaje: "Factura inválida, favor de verificar",
+          mensaje: error,
         })
         return
       }
