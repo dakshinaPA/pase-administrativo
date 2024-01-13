@@ -4,10 +4,17 @@ export interface ApiCallRes {
   mensaje?: string
 }
 
+const customHeaders = {
+  "Content-Type": "application/json",
+  "api-key": "true",
+}
+
 class ApiCall {
   static async get(url: string): Promise<ApiCallRes> {
     try {
-      let res = await fetch(`/api${url}`)
+      let res = await fetch(`/api${url}`, {
+        headers: customHeaders,
+      })
       return (await res.json()) as ApiCallRes
     } catch (error) {
       console.log(error)
@@ -22,7 +29,7 @@ class ApiCall {
     try {
       let res = await fetch(`/api${url}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: customHeaders,
         body: JSON.stringify(data),
       })
       return (await res.json()) as ApiCallRes
@@ -39,7 +46,7 @@ class ApiCall {
     try {
       let res = await fetch(`/api${url}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json " },
+        headers: customHeaders,
         body: JSON.stringify(data),
       })
       return (await res.json()) as ApiCallRes
@@ -56,6 +63,7 @@ class ApiCall {
     try {
       let res = await fetch(`/api${url}`, {
         method: "DELETE",
+        headers: customHeaders,
       })
       return (await res.json()) as ApiCallRes
     } catch (error) {
