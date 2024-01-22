@@ -1,4 +1,5 @@
-import { useAuth } from "@contexts/auth.context"
+// import { useAuth } from "@contexts/auth.context"
+import { signIn } from "next-auth/react"
 import styles from "@components/styles/LoginForm.module.css"
 import { useState } from "react"
 import { ChangeEvent } from "@assets/models/formEvents.model"
@@ -9,12 +10,12 @@ const Login = () => {
     password: "",
   }
 
-  const { login, error, limpiarError } = useAuth()
+  // const { login, error, limpiarError } = useAuth()
   const [estadoForma, setEstadoForma] = useState(estadoInicialUsuario)
   const [showPassword, setShowPassword] = useState(false)
 
   const onInputChange = (ev: ChangeEvent) => {
-    if (error.hay) limpiarError()
+    // if (error.hay) limpiarError()
     const { name, value } = ev.target
 
     setEstadoForma((prevState) => ({
@@ -25,7 +26,13 @@ const Login = () => {
 
   const onSubmit = (ev: React.SyntheticEvent) => {
     ev.preventDefault()
-    login(estadoForma)
+    // login(estadoForma)
+    signIn("credentials", {
+      // redirect: false,
+      email: estadoForma.email,
+      password: estadoForma.password,
+      callbackUrl: '/'
+    })
   }
 
   return (
@@ -70,13 +77,13 @@ const Login = () => {
           <i className="bi bi-box-arrow-in-left ms-2"></i>
         </button>
       </div>
-      {error.hay && (
+      {/* {error.hay && (
         <div className="col-12 mt-3">
           <div className="alert alert-warning text-center mb-0" role="alert">
             {error.mensaje}
           </div>
         </div>
-      )}
+      )} */}
     </form>
   )
 }

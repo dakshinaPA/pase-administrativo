@@ -1,16 +1,19 @@
 import React, { memo } from "react"
+import { useSession, signOut } from "next-auth/react"
 import Link from "next/link"
-import { useAuth } from "../contexts/auth.context"
+import { Usuario } from "@models/usuario.model"
+// import { useAuth } from "../contexts/auth.context"
 // import logo from '../assets/img/logo.jpeg'
 
 const MainHeader = ({ abrirMenu }) => {
-  const { user, logOut } = useAuth()
+  // const { user, logOut } = useAuth()
+  const { data, status } = useSession()
 
-  if (!user) {
+  if (status !== "authenticated") {
     return <header className="colorHeader" style={{ height: "50px" }}></header>
   }
 
-  const { nombre, apellido_paterno, apellido_materno } = user
+  const { nombre } = data.user as Usuario
 
   return (
     <header
@@ -19,10 +22,6 @@ const MainHeader = ({ abrirMenu }) => {
     >
       <div>
         <Link href="/" className="d-none d-md-block">
-          {/* <i
-            className="bi bi-house-gear text-white"
-            style={{ fontSize: "30px" }}
-          ></i> */}
           <img
             src="https://dakshina-imagen.s3.us-east-2.amazonaws.com/logo-blanco.png"
             alt="logo dakshina"
@@ -36,10 +35,8 @@ const MainHeader = ({ abrirMenu }) => {
         ></i>
       </div>
       <div>
-        <span className="color2">
-          {nombre} {apellido_paterno} {apellido_materno}
-        </span>
-        <button type="button" className="btn btn-sm" onClick={logOut}>
+        <span className="color2">{nombre}</span>
+        <button type="button" className="btn btn-sm" onClick={() => signOut()}>
           <i className="bi bi-box-arrow-right text-white"></i>
         </button>
       </div>

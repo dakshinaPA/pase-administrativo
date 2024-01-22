@@ -23,19 +23,19 @@ const AuthProvider = ({ children }) => {
   const [error, setError] = useState(estadoInicialError)
   const router = useRouter()
 
-  useEffect(() => {
-    if (!user) {
-      router.push("/login")
-    } else {
-      if (user.id_rol == 1) {
-        router.push("/copartes")
-      } else if (user.id_rol == 2) {
-        router.push("/solicitudes-presupuesto")
-      } else {
-        router.push("/proyectos")
-      }
-    }
-  }, [user])
+  // useEffect(() => {
+  //   if (!user) {
+  //     router.push("/login")
+  //   } else {
+  //     if (user.id_rol == 1) {
+  //       router.push("/copartes")
+  //     } else if (user.id_rol == 2) {
+  //       router.push("/solicitudes-presupuesto")
+  //     } else {
+  //       router.push("/proyectos")
+  //     }
+  //   }
+  // }, [user])
 
   const login = async (dataUsuario) => {
     try {
