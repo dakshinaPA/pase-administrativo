@@ -39,7 +39,7 @@ const useErrores = () => {
           case "actividad":
           case "sector_beneficiado":
           case "bank_branch_address":
-            if (!/^[a-zA-Z0-9\u00C0-\u017F\s]{5,}$/.test(campos[key]))
+            if (!/^.{5,}$/.test(campos[key]))
               throw [key, "Mínimo 5 caracteres"]
             break
           case "bic_code":
@@ -81,7 +81,7 @@ const useErrores = () => {
           case "proveedor":
           case "bank":
           case "intermediary_bank":
-            if (!/^[a-zA-Z0-9\u00C0-\u017F\s]{3,}$/.test(campos[key]))
+            if (!/^.{3,}$/.test(campos[key]))
               throw [key, "Mínimo 3 caracteres"]
             break
           case "banco":

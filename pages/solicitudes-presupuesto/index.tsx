@@ -176,6 +176,7 @@ const SolicitudesPresupuesto = () => {
   const descargarExcel = () => {
     const encabezado = [
       "Id proyecto",
+      "Fecha registro",
       "Coparte",
       "Proveedor",
       "ClABE/Cuenta",
@@ -195,6 +196,7 @@ const SolicitudesPresupuesto = () => {
     const solicituesAArray = solicitudesFiltradas.map((solicitud) => {
       return [
         solicitud.proyecto.split(" ")[0],
+        epochAFecha(solicitud.dt_registro),
         solicitud.coparte,
         solicitud.proveedor,
         solicitud.clabe,
