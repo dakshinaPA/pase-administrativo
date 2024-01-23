@@ -99,17 +99,6 @@ class CatalogosDB {
       return RespuestaDB.fallida(error)
     }
   }
-
-  // static async obtenerSectoresBeneficiados() {
-  //   let query = `SELECT id, nombre FROM sectores_beneficiados`
-
-  //   try {
-  //     const res = await queryDB(query)
-  //     return RespuestaDB.exitosa(res)
-  //   } catch (error) {
-  //     return RespuestaDB.fallida(error)
-  //   }
-  // }
 }
 
 export { CatalogosDB }
