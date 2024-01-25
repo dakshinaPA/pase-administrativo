@@ -1,8 +1,8 @@
 import { RegistroContenedor } from "@components/Contenedores"
-import { useAuth } from "@contexts/auth.context"
-// import { useRouter } from "next/router"
-import React, { useEffect } from "react"
+import React from "react"
 import styles from "@components/styles/Formatos.module.css"
+import { GetServerSideProps } from "next"
+import { getSession } from "next-auth/react"
 
 const FormatoFile = ({ link, titulo, formato }) => {
   return (
@@ -22,8 +22,8 @@ const FormatoFile = ({ link, titulo, formato }) => {
 }
 
 const Home = () => {
-  const { user } = useAuth()
-  if (!user) return null
+  // const { user } = useAuth()
+  // if (!user) return null
   // const router = useRouter()
 
   return (
@@ -60,6 +60,23 @@ const Home = () => {
       </div>
     </RegistroContenedor>
   )
+}
+
+export const getServerSideProps: GetServerSideProps<{}> = async (context) => {
+  const session = await getSession(context)
+
+  if (!session) {
+    return {
+      redirect: {
+        destination: "/login",
+        permanent: false,
+      },
+    }
+  }
+
+  return {
+    props: { session },
+  }
 }
 
 export default Home

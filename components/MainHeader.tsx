@@ -1,16 +1,18 @@
-import React, { memo } from "react"
+import React from "react"
 import { useSession, signOut } from "next-auth/react"
 import Link from "next/link"
 import { Usuario } from "@models/usuario.model"
-// import { useAuth } from "../contexts/auth.context"
-// import logo from '../assets/img/logo.jpeg'
 
 const MainHeader = ({ abrirMenu }) => {
-  // const { user, logOut } = useAuth()
   const { data, status } = useSession()
 
+  const logOut = () => {
+    signOut({ callbackUrl: "/login" })
+  }
+
   if (status !== "authenticated") {
-    return <header className="colorHeader" style={{ height: "50px" }}></header>
+    // return <header className="colorHeader" style={{ height: "50px" }}></header>
+    return null
   }
 
   const { nombre } = data.user as Usuario
@@ -36,7 +38,7 @@ const MainHeader = ({ abrirMenu }) => {
       </div>
       <div>
         <span className="color2">{nombre}</span>
-        <button type="button" className="btn btn-sm" onClick={() => signOut()}>
+        <button type="button" className="btn btn-sm" onClick={logOut}>
           <i className="bi bi-box-arrow-right text-white"></i>
         </button>
       </div>

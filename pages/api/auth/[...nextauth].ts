@@ -5,13 +5,16 @@ import NextAuth from "next-auth"
 import type { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 
-const options: NextAuthOptions = {
+export const authOptions: NextAuthOptions = {
   debug: false,
-  session: {},
+  session: {
+    strategy: "jwt",
+  },
   jwt: {},
   // forma en que queremos que se conecte para delegar auth
   pages: {
     signIn: "/login",
+    // error: "/login",
   },
   callbacks: {
     async jwt({ token, account, profile, user }) {
@@ -71,4 +74,5 @@ const options: NextAuthOptions = {
   ],
 }
 
-export default NextAuth(options)
+export default NextAuth(authOptions)
+

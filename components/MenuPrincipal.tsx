@@ -1,12 +1,15 @@
-import { useAuth } from "@contexts/auth.context"
+import { Usuario } from "@models/usuario.model"
+import { useSession } from "next-auth/react"
 import Link from "next/link"
 
 const MenuPrincipal = ({ shrinkMenu }) => {
-  const { user } = useAuth()
+  const { data, status } = useSession()
+  if (data === null) return null
+  const user = data?.user as Usuario
 
   return (
     <div className="accordion accordion-flush">
-      {user?.id_rol != 3 && (
+      {user.id_rol != 3 && (
         <>
           <div className="accordion-item">
             <h3 className="accordion-header">
