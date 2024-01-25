@@ -1,8 +1,26 @@
-// import { useAuth } from "@contexts/auth.context"
-import { signIn } from "next-auth/react"
+import { getSession, signIn, useSession } from "next-auth/react"
 import styles from "@components/styles/LoginForm.module.css"
 import { useState } from "react"
 import { ChangeEvent } from "@assets/models/formEvents.model"
+import { useRouter } from "next/router"
+// import { GetServerSideProps } from "next"
+
+// export const getServerSideProps: GetServerSideProps<{}> = async (context) => {
+//   const session = await getSession(context)
+
+//   if (session) {
+//     return {
+//       redirect: {
+//         destination: "/",
+//         permanent: false,
+//       },
+//     }
+//   }
+
+//   return {
+//     props: { session },
+//   }
+// }
 
 const Login = () => {
   const estadoInicialUsuario = {
@@ -10,12 +28,12 @@ const Login = () => {
     password: "",
   }
 
-  // const { login, error, limpiarError } = useAuth()
+  const router = useRouter()
   const [estadoForma, setEstadoForma] = useState(estadoInicialUsuario)
   const [showPassword, setShowPassword] = useState(false)
+  const [error, setError] = useState(false)
 
   const onInputChange = (ev: ChangeEvent) => {
-    // if (error.hay) limpiarError()
     const { name, value } = ev.target
 
     setEstadoForma((prevState) => ({
@@ -24,15 +42,22 @@ const Login = () => {
     }))
   }
 
-  const onSubmit = (ev: React.SyntheticEvent) => {
+  const onSubmit = async (ev: React.SyntheticEvent) => {
     ev.preventDefault()
-    // login(estadoForma)
-    signIn("credentials", {
-      // redirect: false,
+
+    const res = await signIn("credentials", {
+      redirect: false,
       email: estadoForma.email,
       password: estadoForma.password,
-      callbackUrl: '/'
+      // callbackUrl: '/'
     })
+
+    if (res.error || res.status != 200) {
+      setError(true)
+    } else {
+      console.log(res)
+      router.push('/')
+    }
   }
 
   return (
@@ -77,13 +102,13 @@ const Login = () => {
           <i className="bi bi-box-arrow-in-left ms-2"></i>
         </button>
       </div>
-      {/* {error.hay && (
+      {error && (
         <div className="col-12 mt-3">
           <div className="alert alert-warning text-center mb-0" role="alert">
-            {error.mensaje}
+            Usuario o contraseña inválidos
           </div>
         </div>
-      )} */}
+      )}
     </form>
   )
 }

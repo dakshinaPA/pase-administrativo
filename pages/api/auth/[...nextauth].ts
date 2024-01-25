@@ -1,10 +1,12 @@
+import { UsuariosServices } from "@api/services/usuarios"
 import { Usuario } from "@models/usuario.model"
+// import { Usuario } from "@models/usuario.model"
 import NextAuth from "next-auth"
 import type { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 
 const options: NextAuthOptions = {
-  debug: true,
+  debug: false,
   session: {},
   jwt: {},
   // forma en que queremos que se conecte para delegar auth
@@ -51,17 +53,19 @@ const options: NextAuthOptions = {
         password: {},
       },
       async authorize(creds, req) {
-        // console.log(creds.email)
-        // return null
+        const { error, data } = await UsuariosServices.login(creds)
 
-        const usuario = {
-          id: "22",
-          nombre: "Omar Maldonado",
-          id_rol: 2,
+        if (error) {
+          return null
         }
 
-        return usuario
-        // return null
+        const usuarioEncontrado = data[0] as Usuario
+
+        return {
+          id: String(usuarioEncontrado.id),
+          nombre: `${usuarioEncontrado.nombre} ${usuarioEncontrado.apellido_paterno} ${usuarioEncontrado.apellido_materno}`,
+          id_rol: usuarioEncontrado.id_rol,
+        }
       },
     }),
   ],
