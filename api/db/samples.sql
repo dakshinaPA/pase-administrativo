@@ -744,3 +744,4 @@ ALTER TABLE proveedor_direccion ADD estado VARCHAR(30) NOT NULL DEFAULT '' AFTER
 ALTER TABLE proveedor_direccion ADD pais VARCHAR(30) NOT NULL DEFAULT '' AFTER estado
 ALTER TABLE proveedores MODIFY telefono VARCHAR(20) NOT NULL DEFAULT ''
 ALTER TABLE proveedor_direccion MODIFY cp VARCHAR(10) NOT NULL DEFAULT ''
+INSERT INTO rubros_presupuestales (nombre) VALUES ('Ejecutado servicios anteriores')

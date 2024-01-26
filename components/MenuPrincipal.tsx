@@ -268,6 +268,17 @@ const MenuPrincipal = ({ shrinkMenu }) => {
           {shrinkMenu ? <i className="bi bi-code-square"></i> : "Formatos"}
         </Link>
       </div>
+      {user?.id_rol == 1 && (
+        <div style={{ padding: "1rem 1.25rem" }}>
+          <Link href="/reportes" className="text-white">
+            {shrinkMenu ? (
+              <i className="bi bi-file-earmark-bar-graph"></i>
+            ) : (
+              "Reportes"
+            )}
+          </Link>
+        </div>
+      )}
     </div>
   )
 }
