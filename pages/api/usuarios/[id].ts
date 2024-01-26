@@ -1,8 +1,14 @@
 import { UsuariosServices } from "@api/services/usuarios"
 import { NextApiRequest, NextApiResponse } from "next"
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "../auth/[...nextauth]"
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   const idUsuario = Number(req.query.id)
+  const sesion = await getServerSession(req, res, authOptions)
+  if (!sesion) {
+    return res.status(401).json({ mensaje: "Acceso no autorizado" })
+  }
 
   switch (req.method) {
     case "GET":
@@ -10,7 +16,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       res.status(status).json(data)
       break
     case "PUT":
-      var { status, ...data } = await UsuariosServices.actualizar(idUsuario, req.body)
+      var { status, ...data } = await UsuariosServices.actualizar(
+        idUsuario,
+        req.body
+      )
       res.status(status).json(data)
       break
     case "DELETE":
@@ -18,6 +27,6 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       res.status(status).json(data)
       break
     default:
-      res.status(500).json({ mensaje: "Acceso no autorizado" })
+      res.status(401).json({ mensaje: "Acceso no autorizado" })
   }
 }

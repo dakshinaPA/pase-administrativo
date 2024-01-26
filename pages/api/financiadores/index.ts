@@ -1,8 +1,14 @@
 import { FinanciadoresServices } from "@api/services/financiadores"
 import { NextApiRequest, NextApiResponse } from "next"
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "../auth/[...nextauth]"
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   const min = Boolean(req.query.min)
+  const sesion = await getServerSession(req, res, authOptions)
+  if (!sesion) {
+    return res.status(401).json({ mensaje: "Acceso no autorizado" })
+  }
 
   switch (req.method) {
     case "GET":
@@ -14,6 +20,6 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       res.status(status).json(data)
       break
     default:
-      res.status(500).json({ mensaje: "Acceso no autorizado" })
+      res.status(401).json({ mensaje: "Acceso no autorizado" })
   }
 }

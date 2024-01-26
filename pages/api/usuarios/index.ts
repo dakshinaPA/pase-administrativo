@@ -19,6 +19,6 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       res.status(status).json(data)
       break
     default:
-      res.status(500).json({ mensaje: "Acceso no autorizado" })
+      res.status(401).json({ mensaje: "Acceso no autorizado" })
   }
 }

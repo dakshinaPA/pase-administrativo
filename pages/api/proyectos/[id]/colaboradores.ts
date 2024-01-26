@@ -1,8 +1,14 @@
 import { ColaboradorServices } from "@api/services/colaboradores"
 import { NextApiRequest, NextApiResponse } from "next"
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "pages/api/auth/[...nextauth]"
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   const id_proyecto = Number(req.query.id)
+  const sesion = await getServerSession(req, res, authOptions)
+  if (!sesion) {
+    return res.status(401).json({ mensaje: "Acceso no autorizado" })
+  }
 
   switch (req.method) {
     case "GET":
@@ -10,6 +16,6 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       res.status(status).json(data)
       break
     default:
-      res.status(500).json({ mensaje: "Acceso no autorizado" })
+      res.status(401).json({ mensaje: "Acceso no autorizado" })
   }
 }
