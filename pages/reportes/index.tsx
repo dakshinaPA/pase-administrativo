@@ -2,6 +2,7 @@ import { ComprobanteReportes } from "@api/models/reportes.model"
 import { ApiCall } from "@assets/utils/apiCalls"
 import { crearExcel } from "@assets/utils/crearExcel"
 import { RegistroContenedor } from "@components/Contenedores"
+import { useSesion } from "@hooks/useSesion"
 
 const Comprobantes = () => {
   const genFoliosFiscales = async () => {
@@ -69,6 +70,9 @@ const Comprobantes = () => {
 }
 
 const Reportes = () => {
+  const { status } = useSesion()
+  if (status !== "authenticated") return null
+
   return (
     <RegistroContenedor>
       <div className="row">
