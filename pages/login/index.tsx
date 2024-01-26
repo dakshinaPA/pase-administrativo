@@ -1,34 +1,22 @@
-import { getSession, signIn, useSession } from "next-auth/react"
+import { signIn, useSession } from "next-auth/react"
 import styles from "@components/styles/LoginForm.module.css"
 import { useState } from "react"
 import { ChangeEvent } from "@assets/models/formEvents.model"
 import { useRouter } from "next/router"
-// import { GetServerSideProps } from "next"
-
-// export const getServerSideProps: GetServerSideProps<{}> = async (context) => {
-//   const session = await getSession(context)
-
-//   if (session) {
-//     return {
-//       redirect: {
-//         destination: "/",
-//         permanent: false,
-//       },
-//     }
-//   }
-
-//   return {
-//     props: { session },
-//   }
-// }
 
 const Login = () => {
+  const router = useRouter()
+  const { status } = useSession()
+  if (status === "authenticated") {
+    router.push("/")
+    return null
+  }
+
   const estadoInicialUsuario = {
     email: "",
     password: "",
   }
 
-  const router = useRouter()
   const [estadoForma, setEstadoForma] = useState(estadoInicialUsuario)
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState(false)
@@ -54,14 +42,18 @@ const Login = () => {
 
     if (res.error || res.status != 200) {
       setError(true)
-    } else {
-      console.log(res)
-      router.push('/')
     }
   }
 
   return (
     <form className={`mt-5 px-2 py-4 ${styles.loginForm}`} onSubmit={onSubmit}>
+      <div className="mb-3">
+        <img
+          src="https://dakshina-imagen.s3.us-east-2.amazonaws.com/LOGO-DAKSHINA-verde.png"
+          alt="logo dakshina"
+          className="w-100"
+        />
+      </div>
       <div className="mb-3">
         <label className="form-label color1 fw-bold">Usuario</label>
         <input

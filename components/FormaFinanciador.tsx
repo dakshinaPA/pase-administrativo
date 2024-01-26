@@ -6,12 +6,13 @@ import { Loader } from "@components/Loader"
 import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
 import { BtnBack } from "@components/BtnBack"
 import { ApiCall } from "@assets/utils/apiCalls"
-import { useAuth } from "@contexts/auth.context"
 import { useCatalogos } from "@contexts/catalogos.context"
 import { BtnCancelar, BtnEditar, BtnRegistrar } from "./Botones"
 import { useErrores } from "@hooks/useErrores"
 import { MensajeError } from "./Mensajes"
 import { Toast, estadoInicialToast } from "./Toast"
+import { Usuario } from "@models/usuario.model"
+import { useSesion } from "@hooks/useSesion"
 
 type ActionTypes =
   | "CARGA_INICIAL"
@@ -116,10 +117,16 @@ const estadoInicialForma: Financiador = {
 }
 
 const FormaFinanciador = () => {
-  const { user } = useAuth()
-  if (!user || user.id_rol == 3) return null
-  const { estados, paises } = useCatalogos()
   const router = useRouter()
+  const { data: sesion, status } = useSesion()
+  if (status !== "authenticated") return null
+  const user = sesion.user as Usuario
+  if (user.id_rol == 3) {
+    router.push("/")
+    return null
+  }
+
+  const { estados, paises } = useCatalogos()
   const idFinanciador = router.query.id
   const [estadoForma, dispatch] = useReducer(reducer, estadoInicialForma)
   const [toastState, setToastState] = useState(estadoInicialToast)
@@ -237,7 +244,7 @@ const FormaFinanciador = () => {
       console.log(res.data)
       setToastState({
         show: true,
-        mensaje: res.mensaje
+        mensaje: res.mensaje,
       })
     } else {
       if (modalidad === "EDITAR") {

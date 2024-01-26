@@ -2,16 +2,16 @@ import { useEffect, useState, useReducer, useRef, use } from "react"
 import { useRouter } from "next/router"
 import { ChangeEvent } from "@assets/models/formEvents.model"
 import { Usuario } from "@models/usuario.model"
-import { Coparte, CoparteMin, QueriesCoparte } from "@models/coparte.model"
+import { CoparteMin, QueriesCoparte } from "@models/coparte.model"
 import { Loader } from "@components/Loader"
 import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
 import { BtnBack } from "@components/BtnBack"
-import { ApiCall, ApiCallRes } from "@assets/utils/apiCalls"
+import { ApiCall } from "@assets/utils/apiCalls"
 import { BtnCancelar, BtnEditar, BtnRegistrar } from "./Botones"
 import { obtenerCopartes, obtenerUsuarios } from "@assets/utils/common"
-import { useAuth } from "@contexts/auth.context"
 import { useErrores } from "@hooks/useErrores"
 import { MensajeError } from "./Mensajes"
+import { useSesion } from "@hooks/useSesion"
 
 type ActionTypes = "CARGA_INICIAL" | "HANDLE_CHANGE" | "HANDLE_CHANGE_COPARTE"
 
@@ -59,9 +59,14 @@ const estadoInicialForma: Usuario = {
 }
 
 const FormaUsuario = () => {
-  const { user } = useAuth()
-  if (!user || user.id_rol == 3) return null
   const router = useRouter()
+  const { data: sesion, status } = useSesion()
+  if (status !== "authenticated") return null
+  const user = sesion.user as Usuario
+  if (user.id_rol == 3) {
+    router.push("/")
+    return null
+  }
   const idCoparte = Number(router.query.idC)
   const idUsuario = Number(router.query.id)
   const [estadoForma, dispatch] = useReducer(reducer, estadoInicialForma)

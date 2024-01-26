@@ -10,17 +10,20 @@ import {
   obtenerUsuarios,
 } from "@assets/utils/common"
 import { IdRolUsuario, QueriesUsuario, Usuario } from "@models/usuario.model"
-import {
-  CoparteMin,
-  QueriesCoparte,
-} from "@models/coparte.model"
-import { useAuth } from "@contexts/auth.context"
+import { CoparteMin, QueriesCoparte } from "@models/coparte.model"
 import { BtnAccion, BtnNeutro } from "@components/Botones"
+import { useSesion } from "@hooks/useSesion"
 
 const Usuarios = () => {
-  const { user } = useAuth()
-  if (!user || user.id_rol == 3) return null
   const router = useRouter()
+  const { data: sesion, status } = useSesion()
+  if (status !== "authenticated") return null
+  const user = sesion.user as Usuario
+  if (user.id_rol == 3) {
+    router.push("/")
+    return null
+  }
+
   const [copartesDB, setCopartesDB] = useState<CoparteMin[]>([])
   const [usuariosDB, setUsuariosDB] = useState<Usuario[]>([])
   const [usuarioAEliminar, setUsuarioAEliminar] = useState<number>(0)
