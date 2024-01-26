@@ -238,11 +238,10 @@ const Notas = ({ notas, dispatch, user }) => {
 }
 
 const FormaSolicitudPresupuesto = () => {
-  const router = useRouter()
-  const { data: sesion, status } = useSesion()
-  if (status !== "authenticated") return null
-  const user = sesion.user as Usuario
+  const { user, status } = useSesion()
+  if (status !== "authenticated" || !user) return null
 
+  const router = useRouter()
   const idProyecto = Number(router.query.id)
   const idSolicitud = Number(router.query.idS)
 

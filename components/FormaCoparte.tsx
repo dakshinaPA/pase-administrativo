@@ -2,7 +2,7 @@ import { useEffect, useState, useReducer, useRef } from "react"
 import { useRouter } from "next/router"
 import { ChangeEvent } from "@assets/models/formEvents.model"
 import { Coparte, NotaCoparte } from "@models/coparte.model"
-import { Usuario, UsuarioMin } from "@models/usuario.model"
+import { UsuarioMin } from "@models/usuario.model"
 import { Loader } from "@components/Loader"
 import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
 import { BtnBack } from "@components/BtnBack"
@@ -118,10 +118,10 @@ const estadoInicialForma: Coparte = {
 }
 
 const FormaCoparte = () => {
+  const { user, status } = useSesion()
+  if (status !== "authenticated" || !user) return null
+
   const router = useRouter()
-  const { data: sesion, status } = useSesion()
-  if (status !== "authenticated") return null
-  const user = sesion.user as Usuario
   if (user.id_rol == 3) {
     router.push("/")
     return null

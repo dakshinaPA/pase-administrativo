@@ -8,13 +8,12 @@ import { aMinuscula, obtenerCopartes } from "@assets/utils/common"
 import { Coparte, QueriesCoparte } from "@models/coparte.model"
 import { BtnAccion, BtnNeutro } from "@components/Botones"
 import { useSesion } from "@hooks/useSesion"
-import { Usuario } from "@models/usuario.model"
 
 const Financiadores = () => {
+  const { user, status } = useSesion()
+  if (status !== "authenticated" || !user) return null
+
   const router = useRouter()
-  const { data: sesion, status } = useSesion()
-  if (status !== "authenticated") return null
-  const user = sesion.user as Usuario
   if (user.id_rol == 3) {
     router.push("/")
     return null

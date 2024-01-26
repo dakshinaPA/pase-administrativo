@@ -2,10 +2,10 @@ import { MainContenedor } from "./MainContenedor"
 import { MainHeader } from "./MainHeader"
 import { useState } from "react"
 import { MenuCelular } from "./MenuCelular"
-import { useSession } from "next-auth/react"
+import { useSesion } from "@hooks/useSesion"
 
 const App = ({ children }) => {
-  const { data } = useSession()
+  const { user, status } = useSesion()
   const [showMenuCel, setShowMenuCel] = useState(false)
 
   const abrirMenu = () => setShowMenuCel(true)
@@ -14,7 +14,7 @@ const App = ({ children }) => {
   return (
     <>
       <MainHeader abrirMenu={abrirMenu} />
-      {data?.user ? (
+      {user ? (
         <>
           <MainContenedor>{children}</MainContenedor>
           {showMenuCel && <MenuCelular cerrarMenu={cerrarMenu} />}

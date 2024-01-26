@@ -11,7 +11,6 @@ import { BtnCancelar, BtnEditar, BtnRegistrar } from "./Botones"
 import { useErrores } from "@hooks/useErrores"
 import { MensajeError } from "./Mensajes"
 import { Toast, estadoInicialToast } from "./Toast"
-import { Usuario } from "@models/usuario.model"
 import { useSesion } from "@hooks/useSesion"
 
 type ActionTypes =
@@ -117,10 +116,10 @@ const estadoInicialForma: Financiador = {
 }
 
 const FormaFinanciador = () => {
+  const { user, status } = useSesion()
+  if (status !== "authenticated" || !user) return null
+
   const router = useRouter()
-  const { data: sesion, status } = useSesion()
-  if (status !== "authenticated") return null
-  const user = sesion.user as Usuario
   if (user.id_rol == 3) {
     router.push("/")
     return null

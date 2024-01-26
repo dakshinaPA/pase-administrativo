@@ -38,11 +38,10 @@ const estadoInicialFiltros: QueriesSolicitud = {
 }
 
 const SolicitudesPresupuesto = () => {
+  const { user, status } = useSesion()
+  if (status !== "authenticated" || !user) return null
+  
   const router = useRouter()
-  const { data: sesion, status } = useSesion()
-  if (status !== "authenticated") return null
-  const user = sesion.user as Usuario
-
   const [solicitudesFiltradas, setSolicitudesFiltradas] = useState<
     SolicitudPresupuestoVista[]
   >([])

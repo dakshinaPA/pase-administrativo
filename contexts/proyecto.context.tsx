@@ -13,7 +13,7 @@ import {
   Proyecto,
   RubroMinistracion,
 } from "@models/proyecto.model"
-import { Usuario, UsuarioLogin } from "@models/usuario.model"
+import { UsuarioLogin } from "@models/usuario.model"
 import { useSesion } from "@hooks/useSesion"
 
 interface ProyectoProvider {
@@ -109,10 +109,10 @@ const reducer = (state: Proyecto, action: ActionDispatch): Proyecto => {
 }
 
 const ProyectoProvider = ({ children }) => {
+  const { user, status } = useSesion()
+  if (status !== "authenticated" || !user) return null
+
   const router = useRouter()
-  const { data: sesion, status } = useSesion()
-  if (status !== "authenticated") return null
-  const user = sesion.user as Usuario
   const idCoparte = Number(router.query.idC)
   const idProyecto = Number(router.query.idP)
 
@@ -232,7 +232,7 @@ const ProyectoProvider = ({ children }) => {
     editarMinistracion,
     modoEditar,
     setModoEditar,
-    router
+    router,
   }
 
   return (

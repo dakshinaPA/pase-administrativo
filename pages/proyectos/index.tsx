@@ -12,14 +12,12 @@ import {
 import { Proyecto, QueriesProyecto } from "@models/proyecto.model"
 import { BtnAccion, BtnNeutro } from "@components/Botones"
 import { useSesion } from "@hooks/useSesion"
-import { Usuario } from "@models/usuario.model"
 
 const Financiadores = () => {
+  const { user, status } = useSesion()
+  if (status !== "authenticated" || !user) return null
+  
   const router = useRouter()
-  const { data: sesion, status } = useSesion()
-  if (status !== "authenticated") return null
-  const user = sesion.user as Usuario
-
   const [proyectosDB, setProyectosDB] = useState<Proyecto[]>([])
   const [idAEliminar, setIdAEliminar] = useState<number>(0)
   const [showModalEliminar, setShowModalEliminar] = useState<boolean>(false)

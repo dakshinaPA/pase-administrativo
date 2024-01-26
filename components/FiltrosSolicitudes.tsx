@@ -4,7 +4,7 @@ import { ProyectoMin, QueriesProyecto } from "@models/proyecto.model"
 import { QueriesSolicitud } from "@models/solicitud-presupuesto.model"
 import { useState, useEffect } from "react"
 import styles from "@components/styles/Filtros.module.css"
-import { Usuario } from "@models/usuario.model"
+import { UsuarioLogin } from "@models/usuario.model"
 
 interface FiltrosProps {
   filtros: QueriesSolicitud
@@ -13,7 +13,7 @@ interface FiltrosProps {
   setShow: (show: boolean) => void
   cargarSolicitudes: () => Promise<void>
   limpiarFiltros: () => void
-  user: Usuario
+  user: UsuarioLogin
 }
 
 const Filtros = ({

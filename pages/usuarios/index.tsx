@@ -15,10 +15,10 @@ import { BtnAccion, BtnNeutro } from "@components/Botones"
 import { useSesion } from "@hooks/useSesion"
 
 const Usuarios = () => {
+  const { user, status } = useSesion()
+  if (status !== "authenticated" || !user) return null
+  
   const router = useRouter()
-  const { data: sesion, status } = useSesion()
-  if (status !== "authenticated") return null
-  const user = sesion.user as Usuario
   if (user.id_rol == 3) {
     router.push("/")
     return null

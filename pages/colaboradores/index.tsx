@@ -12,14 +12,12 @@ import {
 import { ColaboradorProyecto, ProyectoMin } from "@models/proyecto.model"
 import { BtnAccion, BtnNeutro } from "@components/Botones"
 import { useSesion } from "@hooks/useSesion"
-import { Usuario } from "@models/usuario.model"
 
 const Colaboradores = () => {
-  const router = useRouter()
-  const { data: sesion, status } = useSesion()
-  if (status !== "authenticated") return null
-  const user = sesion.user as Usuario
+  const { user, status } = useSesion()
+  if (status !== "authenticated" || !user) return null
 
+  const router = useRouter()
   const [proyectosDB, setProyectosDB] = useState<ProyectoMin[]>([])
   const [colaboradoresDB, setColaboradoresDB] = useState<ColaboradorProyecto[]>(
     []

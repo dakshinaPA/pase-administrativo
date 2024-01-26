@@ -9,7 +9,6 @@ import { fechaActualInputDate } from "@assets/utils/common"
 const FormaMinistracion = () => {
   const {
     estadoForma,
-    idProyecto,
     dispatch,
     setShowFormaMinistracion,
     formaMinistracion,

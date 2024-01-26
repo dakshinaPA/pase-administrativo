@@ -1,11 +1,9 @@
-import { Usuario } from "@models/usuario.model"
-import { useSession } from "next-auth/react"
+import { useSesion } from "@hooks/useSesion"
 import Link from "next/link"
 
 const MenuPrincipal = ({ shrinkMenu }) => {
-  const { data, status } = useSession()
-  if (data === null) return null
-  const user = data?.user as Usuario
+  const { user, status } = useSesion()
+  if (status !== "authenticated" || !user) return null
 
   return (
     <div className="accordion accordion-flush">

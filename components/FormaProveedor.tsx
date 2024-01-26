@@ -15,7 +15,6 @@ import { obtenerProveedores, obtenerProyectos } from "@assets/utils/common"
 import { useErrores } from "@hooks/useErrores"
 import { MensajeError } from "./Mensajes"
 import { useSesion } from "@hooks/useSesion"
-import { Usuario } from "@models/usuario.model"
 
 type ActionTypes =
   | "CARGA_INICIAL"
@@ -84,9 +83,9 @@ const reducer = (
 }
 
 const FormaProveedor = () => {
-  const { data: sesion, status } = useSesion()
-  if (status !== "authenticated") return null
-  const user = sesion.user as Usuario
+  const { user, status } = useSesion()
+  if (status !== "authenticated" || !user) return null
+
   const router = useRouter()
   const idProyecto = Number(router.query.id)
   const idProveedor = Number(router.query.idP)

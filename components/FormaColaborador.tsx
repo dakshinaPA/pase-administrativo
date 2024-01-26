@@ -28,7 +28,6 @@ import {
 import { useErrores } from "@hooks/useErrores"
 import { MensajeError } from "./Mensajes"
 import { useSesion } from "@hooks/useSesion"
-import { Usuario } from "@models/usuario.model"
 
 type ActionTypes =
   | "CARGA_INICIAL"
@@ -90,10 +89,10 @@ const reducer = (
 }
 
 const FormaColaborador = () => {
+  const { user, status } = useSesion()
+  if (status !== "authenticated" || !user) return null
+
   const router = useRouter()
-  const { data: sesion, status } = useSesion()
-  if (status !== "authenticated") return null
-  const user = sesion.user as Usuario
   const idProyecto = Number(router.query.id)
   const idColaborador = Number(router.query.idC)
 

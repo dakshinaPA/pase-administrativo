@@ -11,14 +11,13 @@ import {
 } from "@assets/utils/common"
 import { ProveedorProyecto, ProyectoMin } from "@models/proyecto.model"
 import { BtnAccion, BtnNeutro } from "@components/Botones"
-import { Usuario } from "@models/usuario.model"
 import { useSesion } from "@hooks/useSesion"
 
 const Proveedores = () => {
-  const { data: sesion, status } = useSesion()
-  if (status !== "authenticated") return null
+  const { user, status } = useSesion()
+  if (status !== "authenticated" || !user) return null
+
   const router = useRouter()
-  const user = sesion.user as Usuario
   const [proyectosDB, setProyectosDB] = useState<ProyectoMin[]>([])
   const [proveedoresDB, setProveedoresDB] = useState<ProveedorProyecto[]>([])
   const [proveedorAeliminar, setProveedorAEliminar] = useState<number>(0)
