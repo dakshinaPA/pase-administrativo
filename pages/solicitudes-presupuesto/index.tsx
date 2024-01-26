@@ -18,7 +18,7 @@ import {
   QueriesSolicitud,
   SolicitudPresupuesto,
 } from "@models/solicitud-presupuesto.model"
-import { BtnAccion, BtnNeutro } from "@components/Botones"
+import { BtnAccion, BtnNeutro, LinkAccion } from "@components/Botones"
 import { Filtros } from "@components/FiltrosSolicitudes"
 import styles from "@components/styles/Filtros.module.css"
 import { Usuario } from "@models/usuario.model"
@@ -421,15 +421,10 @@ const SolicitudesPresupuesto = () => {
                         )}
                         <td>
                           <div className="d-flex">
-                            <BtnAccion
+                            <LinkAccion
                               margin={false}
                               icono="bi-eye-fill"
-                              onclick={() =>
-                                router.push(
-                                  `/proyectos/${id_proyecto}/solicitudes-presupuesto/${id}`
-                                )
-                              }
-                              title="ver detalle"
+                              ruta={`/proyectos/${id_proyecto}/solicitudes-presupuesto/${id}`}
                             />
                             {user.id_rol == 1 && (
                               <BtnAccion

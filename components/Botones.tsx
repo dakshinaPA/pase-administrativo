@@ -1,3 +1,5 @@
+import Link from "next/link"
+
 interface Btn {
   margin: "l" | "r" | boolean
 }
@@ -123,4 +125,38 @@ const BtnAccion = ({ margin, onclick, icono, title }: PropsBtnAccion) => {
   )
 }
 
-export { BtnEditar, BtnCancelar, BtnRegistrar, BtnNeutro, BtnAccion }
+interface PropsLinkAccion extends Btn {
+  icono: string
+  ruta: string
+}
+
+const LinkAccion = ({ margin, ruta, icono }: PropsLinkAccion) => {
+  const margen = () => {
+    switch (margin) {
+      case "l":
+        return "ms-1"
+      case "r":
+        return "me-1"
+      case false:
+        return ""
+    }
+  }
+
+  let clases = "btn btn-secondary btn-sm"
+  if (margin) clases += ` ${margen()}`
+
+  return (
+    <Link href={ruta} className={clases}>
+      <i className={`bi ${icono}`}></i>
+    </Link>
+  )
+}
+
+export {
+  BtnEditar,
+  BtnCancelar,
+  BtnRegistrar,
+  BtnNeutro,
+  BtnAccion,
+  LinkAccion,
+}
