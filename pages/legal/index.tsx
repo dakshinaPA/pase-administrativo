@@ -1,7 +1,12 @@
 import { RegistroContenedor } from "@components/Contenedores"
 import styles from "@components/styles/Formatos.module.css"
+import { useSesion } from "@hooks/useSesion"
+import { Usuario } from "@models/usuario.model"
 
 const Legal = () => {
+  const { status } = useSesion()
+  if (status !== "authenticated") return null
+
   return (
     <RegistroContenedor>
       <div className="row">

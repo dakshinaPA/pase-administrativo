@@ -6,18 +6,20 @@ import { TablaContenedor } from "@components/Contenedores"
 import { ModalEliminar } from "@components/ModalEliminar"
 import {
   aMinuscula,
-  inputDateAformato,
   obtenerColaboradores,
   obtenerProyectos,
 } from "@assets/utils/common"
-import { useAuth } from "@contexts/auth.context"
 import { ColaboradorProyecto, ProyectoMin } from "@models/proyecto.model"
 import { BtnAccion, BtnNeutro } from "@components/Botones"
+import { useSesion } from "@hooks/useSesion"
+import { Usuario } from "@models/usuario.model"
 
 const Colaboradores = () => {
-  const { user } = useAuth()
-  if (!user || user.id_rol != 3) return null
   const router = useRouter()
+  const { data: sesion, status } = useSesion()
+  if (status !== "authenticated") return null
+  const user = sesion.user as Usuario
+
   const [proyectosDB, setProyectosDB] = useState<ProyectoMin[]>([])
   const [colaboradoresDB, setColaboradoresDB] = useState<ColaboradorProyecto[]>(
     []
@@ -137,7 +139,9 @@ const Colaboradores = () => {
             }
             value={selectProyecto}
           >
-            <option value="0" disabled>Selecciona proyecto</option>
+            <option value="0" disabled>
+              Selecciona proyecto
+            </option>
             {proyectosDB.map(({ id, id_alt, nombre }) => (
               <option key={id} value={id}>
                 {nombre} - {id_alt}

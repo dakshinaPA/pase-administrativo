@@ -1,14 +1,10 @@
-import {
-  obtenerCopartes,
-  obtenerProyectos,
-  inputDateAEpoch,
-} from "@assets/utils/common"
-import { useAuth } from "@contexts/auth.context"
+import { obtenerCopartes, obtenerProyectos } from "@assets/utils/common"
 import { CoparteMin, QueriesCoparte } from "@models/coparte.model"
 import { ProyectoMin, QueriesProyecto } from "@models/proyecto.model"
 import { QueriesSolicitud } from "@models/solicitud-presupuesto.model"
 import { useState, useEffect } from "react"
 import styles from "@components/styles/Filtros.module.css"
+import { Usuario } from "@models/usuario.model"
 
 interface FiltrosProps {
   filtros: QueriesSolicitud
@@ -17,7 +13,7 @@ interface FiltrosProps {
   setShow: (show: boolean) => void
   cargarSolicitudes: () => Promise<void>
   limpiarFiltros: () => void
-
+  user: Usuario
 }
 
 const Filtros = ({
@@ -26,16 +22,11 @@ const Filtros = ({
   show,
   setShow,
   cargarSolicitudes,
-  limpiarFiltros
+  limpiarFiltros,
+  user,
 }: FiltrosProps) => {
-  const { user } = useAuth()
   const [copartesUsuario, setCopartesUsuario] = useState<CoparteMin[]>([])
   const [proyectosUsuario, setProyectosUsuario] = useState<ProyectoMin[]>([])
-
-  // useEffect(() => {
-  //   // setFiltros(estadoInicialForma)
-  //   // setProyectosUsuario([])
-  // }, [show])
 
   useEffect(() => {
     cargarDataUsuario()

@@ -1,4 +1,4 @@
-import React, { ChangeEvent, useEffect, useRef, useState } from "react"
+import React, { useEffect, useRef, useState } from "react"
 import { ApiCall } from "@assets/utils/apiCalls"
 import { useRouter } from "next/router"
 import { Loader } from "@components/Loader"
@@ -12,7 +12,6 @@ import {
   obtenerSolicitudes,
 } from "@assets/utils/common"
 import { crearExcel } from "@assets/utils/crearExcel"
-import { useAuth } from "@contexts/auth.context"
 import {
   EstatusSolicitud,
   PayloadCambioEstatus,
@@ -20,10 +19,10 @@ import {
   SolicitudPresupuesto,
 } from "@models/solicitud-presupuesto.model"
 import { BtnAccion, BtnNeutro } from "@components/Botones"
-import { TooltipInfo } from "@components/Tooltip"
 import { Filtros } from "@components/FiltrosSolicitudes"
-import { Toast } from "@components/Toast"
 import styles from "@components/styles/Filtros.module.css"
+import { Usuario } from "@models/usuario.model"
+import { useSesion } from "@hooks/useSesion"
 
 interface SolicitudPresupuestoVista extends SolicitudPresupuesto {
   checked: boolean
@@ -39,9 +38,10 @@ const estadoInicialFiltros: QueriesSolicitud = {
 }
 
 const SolicitudesPresupuesto = () => {
-  const { user } = useAuth()
-  if (!user) return null
   const router = useRouter()
+  const { data: sesion, status } = useSesion()
+  if (status !== "authenticated") return null
+  const user = sesion.user as Usuario
 
   const [solicitudesFiltradas, setSolicitudesFiltradas] = useState<
     SolicitudPresupuestoVista[]
@@ -58,7 +58,6 @@ const SolicitudesPresupuesto = () => {
   const aExcel = useRef(null)
 
   useEffect(() => {
-    // cargarData()
     cargarSolicitudes()
   }, [])
 
@@ -74,7 +73,6 @@ const SolicitudesPresupuesto = () => {
   const cargarSolicitudes = async () => {
     try {
       const queries: QueriesSolicitud = {}
-      // const queries: QueriesSolicitud = { limit: 1 }
 
       if (user.id_rol == 2) {
         queries.id_admin = user.id
@@ -93,9 +91,6 @@ const SolicitudesPresupuesto = () => {
         queries.dt_inicio = String(inputDateAEpoch(filtros.dt_inicio))
       if (filtros.dt_fin)
         queries.dt_fin = String(inputDateAEpoch(filtros.dt_fin))
-
-      // console.log(queries)
-      // return
 
       setIsLoading(true)
       const reSolicitudes = await obtenerSolicitudes(queries)
@@ -272,6 +267,7 @@ const SolicitudesPresupuesto = () => {
             setShow={setShowFiltros}
             cargarSolicitudes={cargarSolicitudes}
             limpiarFiltros={limpiarFiltros}
+            user={user}
           />
         </div>
         <div className="col d-none d-xl-block"></div>

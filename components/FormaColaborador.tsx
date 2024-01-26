@@ -8,7 +8,6 @@ import {
 } from "@models/proyecto.model"
 import { Loader } from "@components/Loader"
 import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
-import { BtnBack } from "@components/BtnBack"
 import { ApiCall } from "@assets/utils/apiCalls"
 import { useCatalogos } from "@contexts/catalogos.context"
 import {
@@ -18,7 +17,6 @@ import {
   BtnNeutro,
   BtnRegistrar,
 } from "./Botones"
-import { useAuth } from "@contexts/auth.context"
 import {
   fechaMasDiasFutuosString,
   fechaMasMesesFutuosString,
@@ -29,6 +27,8 @@ import {
 } from "@assets/utils/common"
 import { useErrores } from "@hooks/useErrores"
 import { MensajeError } from "./Mensajes"
+import { useSesion } from "@hooks/useSesion"
+import { Usuario } from "@models/usuario.model"
 
 type ActionTypes =
   | "CARGA_INICIAL"
@@ -90,9 +90,10 @@ const reducer = (
 }
 
 const FormaColaborador = () => {
-  const { user } = useAuth()
-  if (!user) return null
   const router = useRouter()
+  const { data: sesion, status } = useSesion()
+  if (status !== "authenticated") return null
+  const user = sesion.user as Usuario
   const idProyecto = Number(router.query.id)
   const idColaborador = Number(router.query.idC)
 
@@ -388,14 +389,13 @@ const FormaColaborador = () => {
       <div className="row mb-3">
         <div className="col-12 d-flex justify-content-between">
           <div>
-            {/* <BtnBack navLink="/colaboradores" /> */}
             {modalidad === "CREAR" && (
               <h2 className="color1 mb-0">Registrar Colaborador</h2>
             )}
           </div>
           {!modoEditar &&
             idColaborador &&
-            user.id === estadoForma.id_responsable && (
+            user.id == estadoForma.id_responsable && (
               <BtnEditar onClick={() => setModoEditar(true)} />
             )}
         </div>
@@ -736,7 +736,7 @@ const FormaColaborador = () => {
                     return (
                       <tr key={id || `periodo_${index}`}>
                         <td>{i_numero_ministracion}</td>
-                        <td>${montoALocaleString(f_monto)}</td>
+                        <td>{montoALocaleString(f_monto)}</td>
                         <td>{servicio}</td>
                         <td>{descripcion}</td>
                         <td>{cp}</td>

@@ -1,4 +1,4 @@
-import { useEffect, useState, useReducer, useRef, use } from "react"
+import { useEffect, useState, useReducer, useRef } from "react"
 import { useRouter } from "next/router"
 import { ChangeEvent } from "@assets/models/formEvents.model"
 import {
@@ -11,7 +11,6 @@ import {
 } from "@models/proyecto.model"
 import { Loader } from "@components/Loader"
 import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
-import { BtnBack } from "@components/BtnBack"
 import { ApiCall } from "@assets/utils/apiCalls"
 import { useCatalogos } from "@contexts/catalogos.context"
 import { BtnAccion, BtnCancelar, BtnEditar, BtnRegistrar } from "./Botones"
@@ -20,7 +19,6 @@ import {
   NotaSolicitud,
   SolicitudPresupuesto,
 } from "@models/solicitud-presupuesto.model"
-import { useAuth } from "@contexts/auth.context"
 import {
   epochAFecha,
   meses,
@@ -34,6 +32,8 @@ import { Toast } from "./Toast"
 import { useErrores } from "@hooks/useErrores"
 import { MensajeError } from "./Mensajes"
 import Link from "next/link"
+import { useSesion } from "@hooks/useSesion"
+import { Usuario } from "@models/usuario.model"
 
 type ActionTypes =
   | "CARGA_INICIAL"
@@ -149,10 +149,9 @@ const estadoInicialToast = {
   mensaje: "",
 }
 
-const Notas = ({ notas, dispatch }) => {
+const Notas = ({ notas, dispatch, user }) => {
   const router = useRouter()
   const idSolicitud = Number(router.query.idS)
-  const { user } = useAuth()
   const [mensajeNota, setMensajeNota] = useState<string>("")
   const inputNota = useRef(null)
 
@@ -239,9 +238,11 @@ const Notas = ({ notas, dispatch }) => {
 }
 
 const FormaSolicitudPresupuesto = () => {
-  const { user } = useAuth()
-  if (!user) return null
   const router = useRouter()
+  const { data: sesion, status } = useSesion()
+  if (status !== "authenticated") return null
+  const user = sesion.user as Usuario
+
   const idProyecto = Number(router.query.id)
   const idSolicitud = Number(router.query.idS)
 
@@ -1274,7 +1275,7 @@ const FormaSolicitudPresupuesto = () => {
             </div>
           )}
           {modalidad === "EDITAR" && (
-            <Notas notas={estadoForma.notas} dispatch={dispatch} />
+            <Notas notas={estadoForma.notas} dispatch={dispatch} user={user} />
           )}
         </FormaContenedor>
       </RegistroContenedor>

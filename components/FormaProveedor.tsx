@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useRef, useState } from "react"
+import { useEffect, useReducer, useState } from "react"
 import { useRouter } from "next/router"
 import { ChangeEvent } from "@assets/models/formEvents.model"
 import {
@@ -8,14 +8,14 @@ import {
 } from "@models/proyecto.model"
 import { Loader } from "@components/Loader"
 import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
-import { BtnBack } from "@components/BtnBack"
 import { ApiCall } from "@assets/utils/apiCalls"
 import { useCatalogos } from "@contexts/catalogos.context"
 import { BtnCancelar, BtnEditar, BtnRegistrar } from "./Botones"
-import { useAuth } from "@contexts/auth.context"
 import { obtenerProveedores, obtenerProyectos } from "@assets/utils/common"
 import { useErrores } from "@hooks/useErrores"
 import { MensajeError } from "./Mensajes"
+import { useSesion } from "@hooks/useSesion"
+import { Usuario } from "@models/usuario.model"
 
 type ActionTypes =
   | "CARGA_INICIAL"
@@ -60,8 +60,8 @@ const reducer = (
         rfc: "",
         direccion: {
           ...state.direccion,
-          id_estado: 0
-        }
+          id_estado: 0,
+        },
       }
     case "NO_EXTRANJERO":
       return {
@@ -75,8 +75,8 @@ const reducer = (
         direccion: {
           ...state.direccion,
           estado: "",
-          pais: ""
-        }
+          pais: "",
+        },
       }
     default:
       return state
@@ -84,8 +84,9 @@ const reducer = (
 }
 
 const FormaProveedor = () => {
-  const { user } = useAuth()
-  if (!user) return null
+  const { data: sesion, status } = useSesion()
+  if (status !== "authenticated") return null
+  const user = sesion.user as Usuario
   const router = useRouter()
   const idProyecto = Number(router.query.id)
   const idProveedor = Number(router.query.idP)
@@ -302,14 +303,13 @@ const FormaProveedor = () => {
       <div className="row mb-3">
         <div className="col-12 d-flex justify-content-between">
           <div className="d-flex align-items-center">
-            {/* <BtnBack navLink="/proveedores" /> */}
             {modalidad === "CREAR" && (
               <h2 className="color1 mb-0">Registrar Proveedor</h2>
             )}
           </div>
           {!modoEditar &&
             idProveedor &&
-            user.id === estadoForma.id_responsable && (
+            user.id == estadoForma.id_responsable && (
               <BtnEditar onClick={() => setModoEditar(true)} />
             )}
         </div>
@@ -677,7 +677,9 @@ const FormaProveedor = () => {
               value={estadoForma.direccion.id_estado}
               disabled={!modoEditar}
             >
-              <option value="0" disabled>Selecciona un estado</option>
+              <option value="0" disabled>
+                Selecciona un estado
+              </option>
               {estados.map(({ id, nombre }) => (
                 <option key={id} value={id}>
                   {nombre}
@@ -685,8 +687,8 @@ const FormaProveedor = () => {
               ))}
             </select>
             {error.campo == "id_estado" && (
-                <MensajeError mensaje={error.mensaje} />
-              )}
+              <MensajeError mensaje={error.mensaje} />
+            )}
           </div>
         )}
         {modoEditar && (
