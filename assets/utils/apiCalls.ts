@@ -6,7 +6,6 @@ export interface ApiCallRes {
 
 const customHeaders = {
   "Content-Type": "application/json",
-  "api-key": "true",
 }
 
 class ApiCall {
