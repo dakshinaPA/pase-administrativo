@@ -6,13 +6,20 @@ import { ModalEliminar } from "@components/ModalEliminar"
 import { TablaContenedor } from "@components/Contenedores"
 import { aMinuscula, obtenerCopartes } from "@assets/utils/common"
 import { Coparte, QueriesCoparte } from "@models/coparte.model"
-import { useAuth } from "@contexts/auth.context"
 import { BtnAccion, BtnNeutro } from "@components/Botones"
+import { useSesion } from "@hooks/useSesion"
+import { Usuario } from "@models/usuario.model"
 
 const Financiadores = () => {
-  const { user } = useAuth()
-  if (!user || user.id_rol == 3) return null
   const router = useRouter()
+  const { data: sesion, status } = useSesion()
+  if (status !== "authenticated") return null
+  const user = sesion.user as Usuario
+  if (user.id_rol == 3) {
+    router.push("/")
+    return null
+  }
+
   const [resultadosDB, setResultadosDB] = useState<Coparte[]>([])
   const [idAEliminar, setIdAEliminar] = useState<number>(0)
   const [showModalEliminar, setShowModalEliminar] = useState<boolean>(false)

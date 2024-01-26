@@ -7,14 +7,14 @@ import {
   useReducer,
   useState,
 } from "react"
-import { useRouter } from "next/router"
+import { NextRouter, useRouter } from "next/router"
 import {
   MinistracionProyecto,
   Proyecto,
   RubroMinistracion,
 } from "@models/proyecto.model"
-import { useAuth } from "./auth.context"
-import { UsuarioLogin } from "@models/usuario.model"
+import { Usuario, UsuarioLogin } from "@models/usuario.model"
+import { useSesion } from "@hooks/useSesion"
 
 interface ProyectoProvider {
   estadoForma: Proyecto
@@ -32,6 +32,7 @@ interface ProyectoProvider {
   editarMinistracion: (id_ministracion: number) => void
   modoEditar: boolean
   setModoEditar: Dispatch<SetStateAction<boolean>>
+  router: NextRouter
 }
 
 const ProyectoContext = createContext(null)
@@ -108,10 +109,10 @@ const reducer = (state: Proyecto, action: ActionDispatch): Proyecto => {
 }
 
 const ProyectoProvider = ({ children }) => {
-  const { user } = useAuth()
-  if (!user) return null
-
   const router = useRouter()
+  const { data: sesion, status } = useSesion()
+  if (status !== "authenticated") return null
+  const user = sesion.user as Usuario
   const idCoparte = Number(router.query.idC)
   const idProyecto = Number(router.query.idP)
 
@@ -172,7 +173,6 @@ const ProyectoProvider = ({ children }) => {
     }
   }, [estadoForma.i_tipo_financiamiento])
 
-
   const handleTipoCambioFinanciamineto = () => {
     dispatch({
       type: "CAMBIAR_TIPO_FINANCIAMIENTO",
@@ -232,6 +232,7 @@ const ProyectoProvider = ({ children }) => {
     editarMinistracion,
     modoEditar,
     setModoEditar,
+    router
   }
 
   return (

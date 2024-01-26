@@ -1,18 +1,11 @@
-import { useEffect, useReducer, useRef, useState } from "react"
-import { useRouter } from "next/router"
+import { useEffect, useRef, useState } from "react"
 import { ChangeEvent } from "@assets/models/formEvents.model"
-import {
-  MinistracionProyecto,
-  NotaProyecto,
-  Proyecto,
-  RubroMinistracion,
-} from "@models/proyecto.model"
+import { NotaProyecto, Proyecto } from "@models/proyecto.model"
 import { FinanciadorMin } from "@models/financiador.model"
 import { Loader } from "@components/Loader"
 import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
 import { BtnBack } from "@components/BtnBack"
-import { ApiCall, ApiCallRes } from "@assets/utils/apiCalls"
-import { useAuth } from "@contexts/auth.context"
+import { ApiCall } from "@assets/utils/apiCalls"
 import { CoparteMin, QueriesCoparte } from "@models/coparte.model"
 import { useCatalogos } from "@contexts/catalogos.context"
 import {
@@ -105,7 +98,6 @@ const TablaMinistraciones = () => {
                         {rubros_presupuestales.map(
                           ({ id_rubro, rubro, f_monto }) => {
                             // const nombre_corto = `${rubro.substring(0, 20)}...`
-
                             return (
                               <tr key={id_rubro}>
                                 <td>{rubro}</td>
@@ -201,8 +193,7 @@ const Saldos = () => {
 }
 
 const Colaboradores = () => {
-  const { estadoForma, idProyecto, user } = useProyecto()
-  const router = useRouter()
+  const { estadoForma, idProyecto, user, router } = useProyecto()
 
   return (
     <div className="row mb-5">
@@ -279,8 +270,7 @@ const Colaboradores = () => {
 }
 
 const Proveedores = () => {
-  const { estadoForma, idProyecto, user } = useProyecto()
-  const router = useRouter()
+  const { estadoForma, idProyecto, user, router } = useProyecto()
 
   return (
     <div className="row mb-5">
@@ -356,8 +346,7 @@ const Proveedores = () => {
 }
 
 const SolicitudesPresupuesto = () => {
-  const { estadoForma, idProyecto, user } = useProyecto()
-  const router = useRouter()
+  const { estadoForma, idProyecto, user, router } = useProyecto()
 
   return (
     <div className="row mb-5">
@@ -538,7 +527,6 @@ const FormaProyecto = () => {
     dispatch,
     idProyecto,
     idCoparte,
-    user,
     modalidad,
     showFormaMinistracion,
     setShowFormaMinistracion,
@@ -546,9 +534,10 @@ const FormaProyecto = () => {
     estaInicialFormaMinistracion,
     modoEditar,
     setModoEditar,
+    user,
+    router,
   } = useProyecto()
 
-  const router = useRouter()
   const { temas_sociales, estados } = useCatalogos()
   const [financiadoresDB, setFinanciadoresDB] = useState<FinanciadorMin[]>([])
   const [copartesDB, setCopartesDB] = useState<CoparteMin[]>([])
@@ -665,7 +654,7 @@ const FormaProyecto = () => {
   const handleChange = (ev: ChangeEvent, type: ActionTypes) => {
     let { name, value } = ev.target
 
-    if(name === "nombre") name = "nombre_proyecto"
+    if (name === "nombre") name = "nombre_proyecto"
 
     if (error.campo === ev.target.name) {
       validarCampos({ [name]: value })

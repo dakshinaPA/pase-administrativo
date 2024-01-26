@@ -1,4 +1,4 @@
-import React, { use, useEffect, useState } from "react"
+import React, { useEffect, useState } from "react"
 import { ApiCall } from "@assets/utils/apiCalls"
 import { useRouter } from "next/router"
 import { Loader } from "@components/Loader"
@@ -7,33 +7,28 @@ import { TablaContenedor } from "@components/Contenedores"
 import {
   aMinuscula,
   montoALocaleString,
-  obtenerCopartes,
   obtenerProyectos,
 } from "@assets/utils/common"
 import { Proyecto, QueriesProyecto } from "@models/proyecto.model"
-import { useAuth } from "@contexts/auth.context"
-import { CoparteMin, QueriesCoparte } from "@models/coparte.model"
 import { BtnAccion, BtnNeutro } from "@components/Botones"
+import { useSesion } from "@hooks/useSesion"
+import { Usuario } from "@models/usuario.model"
 
 const Financiadores = () => {
-  const { user } = useAuth()
-  if (!user) return null
   const router = useRouter()
+  const { data: sesion, status } = useSesion()
+  if (status !== "authenticated") return null
+  const user = sesion.user as Usuario
+
   const [proyectosDB, setProyectosDB] = useState<Proyecto[]>([])
-  const [copartesDB, setCopartesDB] = useState<CoparteMin[]>([])
   const [idAEliminar, setIdAEliminar] = useState<number>(0)
   const [showModalEliminar, setShowModalEliminar] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [inputBusqueda, setInputBusqueda] = useState<string>("")
-  const [selectCoparte, setSelectCoparte] = useState<number>(0)
 
   useEffect(() => {
     cargarData()
   }, [])
-
-  useEffect(() => {
-    cargarProyectosCoparte()
-  }, [selectCoparte])
 
   const abrirModalEliminar = (id: number) => {
     setIdAEliminar(id)
@@ -45,7 +40,6 @@ const Financiadores = () => {
 
     try {
       //setear copartes para filtrar si es admin o superu usuario
-
       let queries: QueriesProyecto = { min: false }
 
       if (user.id_rol == 2) {
@@ -59,30 +53,6 @@ const Financiadores = () => {
 
       const proyectos = reProyectos.data as Proyecto[]
       setProyectosDB(proyectos)
-
-      // if (user.id_rol != 3) {
-      //   const queryCopartes: QueriesCoparte =
-      //     user.id_rol == 2 ? { id_admin: user.id } : {}
-
-      //   const reCopartes = await obtenerCopartes(queryCopartes)
-      //   if (reCopartes.error) throw reCopartes.data
-
-      //   const copartesDB = reCopartes.data as CoparteMin[]
-
-      //   setCopartesDB(copartesDB)
-      //   if (copartesDB.length == 1) {
-      //     setSelectCoparte(copartesDB[0]?.id)
-      //   }
-      // } else {
-      //   //cargar proyecto de usuario coparte
-      //   const reProyectos = await obtenerProyectos({
-      //     id_responsable: user.id,
-      //     min: false,
-      //   })
-      //   if (reProyectos.error) throw reProyectos.data
-
-      //   setProyectosDB(reProyectos.data as Proyecto[])
-      // }
     } catch (error) {
       console.log(error)
     }
@@ -90,25 +60,7 @@ const Financiadores = () => {
     setIsLoading(false)
   }
 
-  const cargarProyectosCoparte = async () => {
-    if (!selectCoparte) return
-
-    setIsLoading(true)
-
-    const reProyectos = await obtenerProyectos({
-      id_coparte: selectCoparte,
-      min: false,
-    })
-    if (reProyectos.error) {
-      console.log(reProyectos.data)
-    } else {
-      setProyectosDB(reProyectos.data as Proyecto[])
-    }
-
-    setIsLoading(false)
-  }
-
-  const eliminarFinanciador = async () => {
+  const eliminarProyecto = async () => {
     setIdAEliminar(0)
     setShowModalEliminar(false)
     setIsLoading(true)
@@ -156,24 +108,6 @@ const Financiadores = () => {
             />
           </div>
         )}
-        {/* {user.id_rol != 3 && (
-          <div className="col-12 col-sm-6 col-lg-4 col-xl-3 mb-3">
-            <select
-              className="form-control"
-              value={selectCoparte}
-              onChange={({ target }) => setSelectCoparte(Number(target.value))}
-            >
-              <option value="0" disabled>
-                Selecciona coparte
-              </option>
-              {copartesDB.map(({ id, nombre }) => (
-                <option key={id} value={id}>
-                  {nombre}
-                </option>
-              ))}
-            </select>
-          </div>
-        )} */}
         <div className="d-none d-lg-block col mb-3"></div>
         <div className="col-12 col-sm-6 col-xl-4 mb-2">
           <div className="input-group">
@@ -327,7 +261,7 @@ const Financiadores = () => {
       )}
       <ModalEliminar
         show={showModalEliminar}
-        aceptar={eliminarFinanciador}
+        aceptar={eliminarProyecto}
         cancelar={cancelarEliminar}
       >
         <p className="mb-0">

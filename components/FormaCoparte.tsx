@@ -2,7 +2,7 @@ import { useEffect, useState, useReducer, useRef } from "react"
 import { useRouter } from "next/router"
 import { ChangeEvent } from "@assets/models/formEvents.model"
 import { Coparte, NotaCoparte } from "@models/coparte.model"
-import { UsuarioMin } from "@models/usuario.model"
+import { Usuario, UsuarioMin } from "@models/usuario.model"
 import { Loader } from "@components/Loader"
 import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
 import { BtnBack } from "@components/BtnBack"
@@ -15,15 +15,11 @@ import {
   BtnNeutro,
   BtnRegistrar,
 } from "./Botones"
-import { useAuth } from "@contexts/auth.context"
-import {
-  montoALocaleString,
-  obtenerCopartes,
-  obtenerUsuarios,
-} from "@assets/utils/common"
+import { obtenerCopartes, obtenerUsuarios } from "@assets/utils/common"
 import { TooltipInfo } from "./Tooltip"
 import { useErrores } from "@hooks/useErrores"
 import { MensajeError } from "./Mensajes"
+import { useSesion } from "@hooks/useSesion"
 
 type ActionTypes =
   | "CARGAR_DATA"
@@ -122,10 +118,16 @@ const estadoInicialForma: Coparte = {
 }
 
 const FormaCoparte = () => {
-  const { user } = useAuth()
-  if (!user || user.id_rol == 3) return null
-  const { estados } = useCatalogos()
   const router = useRouter()
+  const { data: sesion, status } = useSesion()
+  if (status !== "authenticated") return null
+  const user = sesion.user as Usuario
+  if (user.id_rol == 3) {
+    router.push("/")
+    return null
+  }
+
+  const { estados } = useCatalogos()
   const idCoparte = router.query.idC
   const [estadoForma, dispatch] = useReducer(reducer, estadoInicialForma)
   const [administardoresDB, setAdministardoresDB] = useState<UsuarioMin[]>([])
