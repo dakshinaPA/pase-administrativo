@@ -329,7 +329,7 @@ const FormaMinistracion = () => {
           {!formaMinistracion.id ? (
             <BtnNeutro
               margin={false}
-              texto="Agregar ministración"
+              texto="Agregar presupuesto"
               width={false}
               onclick={handleAgregar}
             />

@@ -1004,7 +1004,7 @@ const FormaProyecto = () => {
           )}
         </div>
         <div className="col-12 mb-3">
-          <label className="form-label me-1">Descricpción</label>
+          <label className="form-label me-1">Descripción</label>
           <textarea
             className="form-control"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
@@ -1025,7 +1025,7 @@ const FormaProyecto = () => {
           {showBtnNuevaMinistracion && (
             <BtnNeutro
               margin={false}
-              texto="Nueva ministración +"
+              texto="Nuevo presupuesto +"
               width={false}
               onclick={mostrarFormaMinistracion}
             />

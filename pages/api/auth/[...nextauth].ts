@@ -9,6 +9,7 @@ export const authOptions: NextAuthOptions = {
   debug: false,
   session: {
     strategy: "jwt",
+    // maxAge: 20
   },
   jwt: {},
   // forma en que queremos que se conecte para delegar auth

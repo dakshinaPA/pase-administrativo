@@ -835,7 +835,7 @@ const FormaSolicitudPresupuesto = () => {
   const showBtnEditar =
     !modoEditar &&
     idSolicitud &&
-    (user.id === estadoForma.id_responsable || [1, 2].includes(user.id_rol))
+    (user.id == estadoForma.id_responsable || [1, 2].includes(user.id_rol))
 
   const showRetenciones =
     user.id_rol != 3 &&
