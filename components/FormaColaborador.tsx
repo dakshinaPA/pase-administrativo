@@ -614,9 +614,9 @@ const FormaColaborador = () => {
                   <tr>
                     <th># Ministración</th>
                     <th>Monto</th>
-                    <th>Servicio</th>
-                    <th style={{ width: "300px" }}>Descricpión</th>
-                    <th>
+                    <th style={{ minWidth: "200px" }}>Servicio</th>
+                    <th style={{ minWidth: "300px" }}>Descricpión</th>
+                    <th style={{ minWidth: "100px" }}>
                       CP
                       <i
                         title="Código postal de la constancia situación fiscal"
