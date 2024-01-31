@@ -37,6 +37,7 @@ import { MensajeError } from "./Mensajes"
 import { Toast } from "./Toast"
 import { useToast } from "@hooks/useToasts"
 import { UsuarioMin } from "@models/usuario.model"
+import { PieChart } from "./PieChart"
 
 const TablaMinistraciones = () => {
   const {
@@ -149,6 +150,18 @@ const TablaMinistraciones = () => {
 const Saldos = () => {
   const { estadoForma } = useProyecto()
 
+  return (
+    <div className="row mb-5">
+      <div className="col-12 mb-3">
+        <h3 className="color1 mb-0">Saldo</h3>
+      </div>
+      <div className="col-12 col-md-6 border">hola</div>
+      <div className="col-12 col-md-6 text-center">
+        <h6 className="mb-3">Avance</h6>
+        <PieChart lado={150} porcentaje={estadoForma.saldo.p_avance} />
+      </div>
+    </div>
+  )
   return (
     <div className="row mb-5">
       <div className="col-12 mb-3">
