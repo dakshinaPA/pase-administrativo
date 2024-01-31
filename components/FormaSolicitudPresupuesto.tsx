@@ -1208,7 +1208,7 @@ const FormaSolicitudPresupuesto = () => {
                       <th>Régimen fiscal</th>
                       <th>Método de pago</th>
                       <th>Forma de pago</th>
-                      <th>Impuestos retenedios</th>
+                      <th>Impuestos retenidos</th>
                       <th>Total</th>
                       {modoEditar && (
                         <th>

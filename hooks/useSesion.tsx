@@ -11,8 +11,10 @@ export const useSesion = () => {
     },
   })
 
+  const usuario = (data?.user as UsuarioLogin) || null
+
   const sesion = {
-    user: (data?.user as UsuarioLogin) || null,
+    user: usuario ? { ...usuario, id: Number(usuario.id) } : null,
     status,
   }
 
