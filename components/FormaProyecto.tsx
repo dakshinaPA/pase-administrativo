@@ -37,6 +37,7 @@ import { MensajeError } from "./Mensajes"
 import { Toast } from "./Toast"
 import { useToast } from "@hooks/useToasts"
 import { UsuarioMin } from "@models/usuario.model"
+import { PieChart } from "./PieChart"
 
 const TablaMinistraciones = () => {
   const {
@@ -154,39 +155,60 @@ const Saldos = () => {
       <div className="col-12 mb-3">
         <h3 className="color1 mb-0">Saldo</h3>
       </div>
-      <div className="col-12 table-responsive">
-        <table className="table">
-          <thead className="table-light">
-            <tr>
-              <th>Monto total</th>
-              <th>Transferido</th>
-              <th>Solicitado</th>
-              <th>Comprobado</th>
-              <th>Por comprobar</th>
-              <th>ISR (35%)</th>
-              <th>Retenciones</th>
-              <th>PA</th>
-              <th>Total ejecutado</th>
-              <th>Remanente</th>
-              <th>Avance</th>
-            </tr>
-          </thead>
+      <div className="col-12 col-md-6 col-lg-4 mb-3">
+        <table className="table table-borderless">
           <tbody>
             <tr>
-              <td>{montoALocaleString(estadoForma.saldo.f_monto_total)}</td>
+              <td>Solicitado transferido</td>
               <td>{montoALocaleString(estadoForma.saldo.f_transferido)}</td>
-              <td>{montoALocaleString(estadoForma.saldo.f_solicitado)}</td>
-              <td>{montoALocaleString(estadoForma.saldo.f_comprobado)}</td>
-              <td>{montoALocaleString(estadoForma.saldo.f_por_comprobar)}</td>
-              <td>{montoALocaleString(estadoForma.saldo.f_isr)}</td>
+            </tr>
+            <tr>
+              <td>Impuestos</td>
               <td>{montoALocaleString(estadoForma.saldo.f_retenciones)}</td>
+            </tr>
+            <tr>
+              <td>35% ISR</td>
+              <td>{montoALocaleString(estadoForma.saldo.f_isr)}</td>
+            </tr>
+            <tr>
+              <td>Pase administrativo</td>
               <td>{montoALocaleString(estadoForma.saldo.f_pa)}</td>
-              <td>{montoALocaleString(estadoForma.saldo.f_ejecutado)}</td>
-              <td>{montoALocaleString(estadoForma.saldo.f_remanente)}</td>
-              <td>{estadoForma.saldo.p_avance}%</td>
+            </tr>
+            <tr>
+              <td colSpan={2}>
+                <hr className="my-0" />
+              </td>
+            </tr>
+            <tr>
+              <th>Total ejecutado</th>
+              <td className="fw-bold">
+                {montoALocaleString(estadoForma.saldo.f_ejecutado)}
+              </td>
             </tr>
           </tbody>
         </table>
+      </div>
+      <div className="col-12 col-md-6 col-lg-4 mb-3">
+        <table className="table table-borderless">
+          <tbody>
+            <tr>
+              <th>Financiamiento</th>
+              <td className="fw-bold">
+                {montoALocaleString(estadoForma.saldo.f_monto_total)}
+              </td>
+            </tr>
+            <tr>
+              <th>Disponible</th>
+              <td className="fw-bold color3">
+                {montoALocaleString(estadoForma.saldo.f_remanente)}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div className="col-12 col-lg-4 text-center">
+        <h6 className="mb-3 fw-bold">Avance</h6>
+        <PieChart lado={150} porcentaje={estadoForma.saldo.p_avance} />
       </div>
     </div>
   )
