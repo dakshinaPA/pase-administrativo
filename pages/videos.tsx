@@ -22,9 +22,9 @@ const PageVideos = () => {
         </div>
         <div className="col-12 col-lg-6">
           <h3 className="color1">Video 2</h3>
-          <h4 className="color1">Ingreso de colaboradores</h4>
+          <h4 className="color1">Ingreso de proveedores</h4>
           <video
-            src="https://dakshina-imagen.s3.us-east-2.amazonaws.com/ingreso-colaboradores.mp4"
+            src="https://dakshina-imagen.s3.us-east-2.amazonaws.com/ingreso-proveedores.mp4"
             width="100%"
             // height="240"
             controls
@@ -34,9 +34,9 @@ const PageVideos = () => {
         </div>
         <div className="col-12 col-lg-6">
           <h3 className="color1">Video 3</h3>
-          <h4 className="color1">Ingreso de proveedores</h4>
+          <h4 className="color1">Ingreso de colaboradores</h4>
           <video
-            src="https://dakshina-imagen.s3.us-east-2.amazonaws.com/ingreso-proveedores.mp4"
+            src="https://dakshina-imagen.s3.us-east-2.amazonaws.com/ingreso-colaboradores.mp4"
             width="100%"
             // height="240"
             controls
