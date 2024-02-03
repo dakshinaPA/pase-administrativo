@@ -1069,7 +1069,7 @@ const FormaSolicitudPresupuesto = () => {
             )}
           </div>
           <div className="col-12 col-md-6 col-lg-4 mb-3">
-            <label className="form-label">Descricpión del gasto</label>
+            <label className="form-label">Descripción del gasto</label>
             {[3, 4].includes(Number(estadoForma.i_tipo_gasto)) ? (
               <select
                 className="form-control"

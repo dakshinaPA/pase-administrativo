@@ -257,12 +257,17 @@ const MenuPrincipal = ({ shrinkMenu }) => {
         </>
       )}
       <div style={{ padding: "1rem 1.25rem" }}>
+        <Link href="/videos" className="text-white">
+          {shrinkMenu ? <i className="bi bi-film"></i> : "Videos"}
+        </Link>
+      </div>
+      <div style={{ padding: "1rem 1.25rem" }}>
         <Link href="/legal" className="text-white">
           {shrinkMenu ? <i className="bi bi-bank"></i> : "Legal"}
         </Link>
       </div>
       <div style={{ padding: "1rem 1.25rem" }}>
-        <Link href="/" className="text-white">
+        <Link href="/formatos" className="text-white">
           {shrinkMenu ? <i className="bi bi-code-square"></i> : "Formatos"}
         </Link>
       </div>
