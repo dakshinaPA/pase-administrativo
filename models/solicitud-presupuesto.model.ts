@@ -20,14 +20,17 @@ export interface ComprobanteSolicitud {
   folio_fiscal: string
   f_total: string
   f_retenciones: string
+  f_iva: string
+  f_isr: string
   i_metodo_pago: IMetodosPAgo // 1.PUE 2.PPD
   metodo_pago?: MetodosPAgo
   id_forma_pago: number
   clave_forma_pago?: string
   forma_pago?: string
-  id_regimen_fiscal: number
-  clave_regimen_fiscal?: string
-  regimen_fiscal?: string
+  rfc_emisor: string
+  id_regimen_fiscal_receptor: number
+  id_regimen_fiscal_emisor: number
+  uso_cfdi: string
   dt_registro?: string
   b_activo?: boolean
 }

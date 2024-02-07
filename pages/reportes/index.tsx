@@ -23,9 +23,11 @@ const Comprobantes = () => {
       "Titular",
       "Partida presupuestal",
       "Total",
-      "Retenciones",
+      "Retenciones ISR",
+      "Retenciones IVA",
+      "Retenciones totales",
       "Forma de pago",
-      "Régimen fiscal",
+      "Régimen fiscal emisor",
       "Fecha de registro",
     ]
 
@@ -37,6 +39,8 @@ const Comprobantes = () => {
         comprobante.titular_cuenta,
         comprobante.partida_presupuestal,
         comprobante.f_total,
+        comprobante.f_isr,
+        comprobante.f_iva,
         comprobante.f_retenciones,
         comprobante.forma_pago,
         comprobante.regimen_fiscal,

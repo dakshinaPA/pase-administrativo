@@ -7,4 +7,5 @@ export interface ComprobanteReportes extends ComprobanteSolicitud {
   id_partida_presupuesta: number
   partida_presupuestal: string
   titular_cuenta: string
+  regimen_fiscal: string
 }

@@ -595,6 +595,15 @@ const FormaSolicitudPresupuesto = () => {
     }
   }
 
+  const obtenerRegimenXId = (id: number) => {
+    const regimenMatch = regimenes_fiscales.find((rf) => rf.id == id)
+
+    return {
+      clave: regimenMatch?.clave || "",
+      nombre: regimenMatch?.nombre || ""
+    }
+  }
+
   const obtenerTotalComprobaciones = () => {
     const totalComprobaciones = estadoForma.comprobantes.reduce(
       (acum, actual) => acum + Number(actual.f_total),
@@ -627,8 +636,10 @@ const FormaSolicitudPresupuesto = () => {
       const [concepto] = xml.getElementsByTagName("cfdi:Concepto")
 
       const folio_fiscal = timbre?.getAttribute("UUID")
-      const RegFisReceptor = receptor.getAttribute("RegimenFiscalReceptor")
-      const UsoCFDI = receptor.getAttribute("UsoCFDI")
+      const claveRegimenFiscalReceptor = receptor.getAttribute(
+        "RegimenFiscalReceptor"
+      )
+      const usoCFDI = receptor.getAttribute("UsoCFDI")
       const f_total = comprobante?.getAttribute("Total")
       const f_claveProdServ = concepto?.getAttribute("ClaveProdServ")
       const clavesProdServCombustibles = ["15101514", "15101515", "15101505"]
@@ -637,18 +648,23 @@ const FormaSolicitudPresupuesto = () => {
         | "PPD"
       const clave_forma_pago = comprobante?.getAttribute("FormaPago")
       const formaPago = asignarIdFormaPAgo(clave_forma_pago)
-      const clave_regimen_fiscal = emisor?.getAttribute("RegimenFiscal")
-      const regimenFiscal = obtenerRegimenXClave(clave_regimen_fiscal)
+      const claveRegimenFiscalEmisor = emisor?.getAttribute("RegimenFiscal")
+      const rfcEmisor = emisor?.getAttribute("Rfc")
+      const regimenFiscalEmisor = obtenerRegimenXClave(claveRegimenFiscalEmisor)
+      const regimenFiscalReceptor = obtenerRegimenXClave(
+        claveRegimenFiscalReceptor
+      )
 
       try {
         if (!f_total) throw "Total de factura no identificado"
         if (!clave_forma_pago) throw "Forma de pago no identificado"
-        if (!clave_regimen_fiscal || !regimenFiscal.id)
-          throw "Regimen fiscal no identificado"
+        if (!claveRegimenFiscalEmisor || !regimenFiscalEmisor.id)
+          throw "Regimen fiscal de emisor no identificado"
         if (!folio_fiscal) throw "Folio fiscal no encontrado"
         if (!metodo_pago) throw "Método de pago no identificado"
-        if (RegFisReceptor !== "603") throw "Regimen Fiscal Receptor inválido"
-        if (UsoCFDI !== "G03") throw "Uso CFDI inválido"
+        if (claveRegimenFiscalReceptor !== "603" || !regimenFiscalReceptor.id)
+          throw "Regimen fiscal de receptor inválido"
+        if (usoCFDI !== "G03") throw "Uso CFDI inválido"
         if (clave_forma_pago === "01" && Number(f_total) >= 2000)
           throw "Pago en efectivo mayor o igual a 2000 no permitido"
         if (
@@ -689,20 +705,46 @@ const FormaSolicitudPresupuesto = () => {
       }
 
       let f_retenciones = ""
+      let f_iva = ""
+      let f_isr = ""
 
       //a veces impuestos es mas de un tag y hay que buscarlo
       for (const imp of impuestos) {
-        const retenciones = imp.getAttribute("TotalImpuestosRetenidos")
-        if (retenciones) {
-          f_retenciones = retenciones
+        const impuestos = imp.getAttribute("TotalImpuestosRetenidos")
+        if (impuestos) {
+          // dividir en IVA e ISR
+          const retenciones = imp.getElementsByTagName("cfdi:Retencion")
+
+          for (const ret of retenciones) {
+            const tipoImpuesto = ret.getAttribute("Impuesto")
+            const importe = ret.getAttribute("Importe")
+
+            if (tipoImpuesto === "001") {
+              f_isr = importe
+            } else if (tipoImpuesto === "002") {
+              f_iva = importe
+            }
+          }
+
+          f_retenciones = impuestos
         }
+      }
+
+      // si hay rteenciones pero iva o isr no se calcularon correctamente
+      if (f_retenciones && (!f_iva || !f_isr)) {
+        console.log({ f_retenciones, f_iva, f_isr })
+        setToastState({
+          show: true,
+          mensaje: "Los impuestos no se han calculado correctamente",
+        })
+        return
       }
 
       const dataComprobante: ComprobanteSolicitud = {
         folio_fiscal,
-        id_regimen_fiscal: regimenFiscal.id,
-        regimen_fiscal: regimenFiscal.nombre,
-        clave_regimen_fiscal,
+        rfc_emisor: rfcEmisor,
+        id_regimen_fiscal_emisor: regimenFiscalEmisor.id,
+        id_regimen_fiscal_receptor: regimenFiscalReceptor.id,
         i_metodo_pago: asignarIMetodoPago(metodo_pago),
         metodo_pago,
         id_forma_pago: formaPago.id,
@@ -710,7 +752,12 @@ const FormaSolicitudPresupuesto = () => {
         forma_pago: formaPago.nombre,
         f_total,
         f_retenciones: f_retenciones || "",
+        f_iva,
+        f_isr,
+        uso_cfdi: usoCFDI
       }
+
+      console.log(dataComprobante)
 
       dispatch({
         type: "AGREGAR_FACTURA",
@@ -771,7 +818,6 @@ const FormaSolicitudPresupuesto = () => {
       delete campos.f_retenciones_extranjeros
     }
 
-    // console.log(campos)
     return validarCampos(campos)
   }
 
@@ -1205,9 +1251,14 @@ const FormaSolicitudPresupuesto = () => {
                   <thead>
                     <tr>
                       <th>Folio fiscal</th>
-                      <th>Régimen fiscal</th>
+                      <th>RFC emisor</th>
+                      <th>Régimen fiscal emisor</th>
+                      <th>Régimen fiscal receptor</th>
                       <th>Método de pago</th>
                       <th>Forma de pago</th>
+                      <th>Uso de CFDI</th>
+                      <th>Retención ISR</th>
+                      <th>Retención IVA</th>
                       <th>Impuestos retenidos</th>
                       <th>Total</th>
                       {modoEditar && (
@@ -1221,24 +1272,45 @@ const FormaSolicitudPresupuesto = () => {
                     {estadoForma.comprobantes.map((comprobante) => {
                       const {
                         id,
-                        clave_regimen_fiscal,
-                        regimen_fiscal,
                         folio_fiscal,
                         metodo_pago,
                         clave_forma_pago,
                         forma_pago,
+                        uso_cfdi,
+                        rfc_emisor,
+                        id_regimen_fiscal_emisor,
+                        id_regimen_fiscal_receptor,
+                        f_iva,
+                        f_isr,
                         f_retenciones,
                         f_total,
                       } = comprobante
+
+                      const regimenFiscalEmisor = obtenerRegimenXId(id_regimen_fiscal_emisor)
+                      const regimenFiscalReceptor = obtenerRegimenXId(id_regimen_fiscal_receptor)
+
                       return (
                         <tr key={folio_fiscal}>
                           <td>{folio_fiscal}</td>
+                          <td>{rfc_emisor}</td>
                           <td>
-                            {clave_regimen_fiscal} - {regimen_fiscal}
+                            {regimenFiscalEmisor.clave} -{" "}
+                            {regimenFiscalEmisor.nombre}
+                          </td>
+                          <td>
+                            {regimenFiscalReceptor.clave} -{" "}
+                            {regimenFiscalReceptor.nombre}
                           </td>
                           <td>{metodo_pago}</td>
                           <td>
                             {clave_forma_pago} - {forma_pago}
+                          </td>
+                          <td>{uso_cfdi}</td>
+                          <td>
+                            {montoALocaleString(Number(f_isr) || 0)}
+                          </td>
+                          <td>
+                            {montoALocaleString(Number(f_iva) || 0)}
                           </td>
                           <td>
                             {montoALocaleString(Number(f_retenciones) || 0)}
@@ -1258,7 +1330,7 @@ const FormaSolicitudPresupuesto = () => {
                       )
                     })}
                     <tr>
-                      <td colSpan={5}></td>
+                      <td colSpan={10}></td>
                       <td>{montoALocaleString(total_comprobantes)}</td>
                       {modoEditar && <td></td>}
                     </tr>

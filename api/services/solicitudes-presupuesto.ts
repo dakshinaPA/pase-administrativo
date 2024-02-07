@@ -76,6 +76,8 @@ class SolicitudesPresupuestoServices {
     return {
       ...comprobanteRes,
       metodo_pago: obtenerMetodoPago(comprobanteRes.i_metodo_pago),
+      id_regimen_fiscal_receptor: 2,
+      uso_cfdi: "G03"
     }
   }
 

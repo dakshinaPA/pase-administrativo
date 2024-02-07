@@ -4,13 +4,11 @@ import {
   SolicitudPresupuesto,
   ComprobanteSolicitud,
   QueriesSolicitud,
-  EstatusSolicitud,
   PayloadCambioEstatus,
   NotaSolicitud,
 } from "@models/solicitud-presupuesto.model"
 import { RespuestaDB } from "@api/utils/response"
 import { fechaActualAEpoch } from "@assets/utils/common"
-import { Proyecto } from "@models/proyecto.model"
 import { ResSolicitudPresupuestoDB } from "@api/models/solicitudes-presupuesto.model"
 
 class SolicitudesPresupuestoDB {
@@ -77,12 +75,10 @@ class SolicitudesPresupuestoDB {
 
   static qReComprobantes = () => {
     return `
-      SELECT spc.id, spc.id_solicitud_presupuesto, spc.folio_fiscal, spc.f_total, spc.f_retenciones, spc.i_metodo_pago, spc.id_forma_pago, spc.id_regimen_fiscal, spc.dt_registro,
-      fp.nombre forma_pago, fp.clave clave_forma_pago,
-      rf.nombre regimen_fiscal, rf.clave clave_regimen_fiscal
+      SELECT spc.id, spc.id_solicitud_presupuesto, spc.folio_fiscal, spc.f_total, spc.f_retenciones, spc.f_isr, spc.f_iva, spc.i_metodo_pago, spc.id_forma_pago, spc.id_regimen_fiscal_emisor, spc.rfc_emisor, spc.dt_registro,
+      fp.nombre forma_pago, fp.clave clave_forma_pago
       FROM solicitud_presupuesto_comprobantes spc
       JOIN formas_pago fp ON spc.id_forma_pago = fp.id
-      JOIN regimenes_fiscales rf ON spc.id_regimen_fiscal = rf.id
       WHERE spc.id_solicitud_presupuesto=? AND spc.b_activo=1
     `
   }
@@ -98,7 +94,7 @@ class SolicitudesPresupuestoDB {
   static qCrComprobante = () => {
     return `
       INSERT INTO solicitud_presupuesto_comprobantes ( id_solicitud_presupuesto, folio_fiscal, f_total,
-      f_retenciones, i_metodo_pago, id_forma_pago, id_regimen_fiscal, dt_registro ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )
+      f_retenciones, f_isr, f_iva, i_metodo_pago, id_forma_pago, id_regimen_fiscal_emisor, rfc_emisor, dt_registro ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )
     `
   }
 
@@ -281,9 +277,12 @@ class SolicitudesPresupuestoDB {
                   comp.folio_fiscal,
                   comp.f_total,
                   comp.f_retenciones,
+                  comp.f_isr,
+                  comp.f_iva,
                   comp.i_metodo_pago,
                   comp.id_forma_pago,
-                  comp.id_regimen_fiscal,
+                  comp.id_regimen_fiscal_emisor,
+                  comp.rfc_emisor,
                   fechaActualAEpoch()
                 )
               }
@@ -387,9 +386,12 @@ class SolicitudesPresupuestoDB {
                     comp.folio_fiscal,
                     comp.f_total,
                     comp.f_retenciones,
+                    comp.f_isr,
+                    comp.f_iva,
                     comp.i_metodo_pago,
                     comp.id_forma_pago,
-                    comp.id_regimen_fiscal,
+                    comp.id_regimen_fiscal_emisor,
+                    comp.rfc_emisor,
                     fechaActualAEpoch()
                   )
                 }

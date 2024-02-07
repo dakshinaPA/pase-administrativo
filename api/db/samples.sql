@@ -745,3 +745,9 @@ ALTER TABLE proveedor_direccion ADD pais VARCHAR(30) NOT NULL DEFAULT '' AFTER e
 ALTER TABLE proveedores MODIFY telefono VARCHAR(20) NOT NULL DEFAULT ''
 ALTER TABLE proveedor_direccion MODIFY cp VARCHAR(10) NOT NULL DEFAULT ''
 INSERT INTO rubros_presupuestales (nombre) VALUES ('Ejecutado servicios anteriores')
+
+-- 6/02/24
+ALTER TABLE solicitud_presupuesto_comprobantes RENAME COLUMN id_regimen_fiscal TO id_regimen_fiscal_emisor;
+ALTER TABLE solicitud_presupuesto_comprobantes ADD COLUMN rfc_emisor VARCHAR(20) NOT NULL DEFAULT "" AFTER id_regimen_fiscal_emisor;
+ALTER TABLE solicitud_presupuesto_comprobantes ADD COLUMN f_iva VARCHAR(20) NOT NULL DEFAULT "0" AFTER f_retenciones;
+ALTER TABLE solicitud_presupuesto_comprobantes ADD COLUMN f_isr VARCHAR(20) NOT NULL DEFAULT "0" AFTER f_retenciones;

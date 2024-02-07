@@ -15,6 +15,8 @@ class ReportesServices {
           ...comprobante,
           f_total: Number(comprobante.f_total),
           f_retenciones: Number(comprobante.f_retenciones),
+          f_isr: Number(comprobante.f_isr),
+          f_iva: Number(comprobante.f_iva),
           dt_registro: epochAFecha(comprobante.dt_registro)
         }
       })
