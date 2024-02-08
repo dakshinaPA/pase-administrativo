@@ -196,7 +196,7 @@ const Proveedores = () => {
           <div className="col-12">
             <Banner
               tipo="warning"
-              mensaje="El proyecto seleccionado no cuneta con proveedores registrados"
+              mensaje="El proyecto seleccionado no cuenta con proveedores registrados"
             />
           </div>
         ) : (
