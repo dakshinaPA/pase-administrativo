@@ -3,15 +3,19 @@ import { useRouter } from "next/router"
 import { ChangeEvent } from "@assets/models/formEvents.model"
 import { Financiador, NotaFinanciador } from "@models/financiador.model"
 import { Loader } from "@components/Loader"
-import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
+import {
+  RegistroContenedor,
+  FormaContenedor,
+  Contenedor,
+} from "@components/Contenedores"
 import { BtnBack } from "@components/BtnBack"
 import { ApiCall } from "@assets/utils/apiCalls"
 import { useCatalogos } from "@contexts/catalogos.context"
 import { BtnCancelar, BtnEditar, BtnRegistrar } from "./Botones"
 import { useErrores } from "@hooks/useErrores"
 import { MensajeError } from "./Mensajes"
-import { Toast, estadoInicialToast } from "./Toast"
 import { useSesion } from "@hooks/useSesion"
+import { Banner, estadoInicialBanner } from "./Banner"
 
 type ActionTypes =
   | "CARGA_INICIAL"
@@ -128,10 +132,10 @@ const FormaFinanciador = () => {
   const { estados, paises } = useCatalogos()
   const idFinanciador = router.query.id
   const [estadoForma, dispatch] = useReducer(reducer, estadoInicialForma)
-  const [toastState, setToastState] = useState(estadoInicialToast)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [mensajeNota, setMensajeNota] = useState<string>("")
   const { error, validarCampos, formRef } = useErrores()
+  const [showBanner, setShowBanner] = useState(estadoInicialBanner)
   const [modoEditar, setModoEditar] = useState<boolean>(!idFinanciador)
   const modalidad = idFinanciador ? "EDITAR" : "CREAR"
   const inputNota = useRef(null)
@@ -152,10 +156,15 @@ const FormaFinanciador = () => {
   const cargarData = async () => {
     setIsLoading(true)
 
-    const { error, data } = await obtener()
+    const { error, data, mensaje } = await obtener()
 
     if (error) {
-      console.log(error)
+      console.log(data)
+      setShowBanner({
+        mensaje,
+        show: true,
+        tipo: "error",
+      })
     } else {
       const dataFinanciador = data[0] as Financiador
       dispatch({
@@ -236,21 +245,23 @@ const FormaFinanciador = () => {
     console.log(estadoForma)
 
     setIsLoading(true)
-    const res = modalidad === "EDITAR" ? await editar() : await registrar()
+    const { error, data, mensaje } =
+      modalidad === "EDITAR" ? await editar() : await registrar()
     setIsLoading(false)
 
-    if (res.error) {
-      console.log(res.data)
-      setToastState({
+    if (error) {
+      console.log(data)
+      setShowBanner({
+        mensaje,
         show: true,
-        mensaje: res.mensaje,
+        tipo: "error",
       })
     } else {
       if (modalidad === "EDITAR") {
         setModoEditar(false)
       } else {
         //@ts-ignore
-        router.push(`/financiadores/${res.data.idInsertado}`)
+        router.push(`/financiadores/${data.idInsertado}`)
       }
     }
   }
@@ -285,9 +296,20 @@ const FormaFinanciador = () => {
   }
 
   if (isLoading) {
-    return <Loader />
+    return (
+      <Contenedor>
+        <Loader />
+      </Contenedor>
+    )
   }
 
+  if (showBanner.show) {
+    return (
+      <Contenedor>
+        <Banner tipo={showBanner.tipo} mensaje={showBanner.mensaje} />
+      </Contenedor>
+    )
+  }
   return (
     <RegistroContenedor>
       <div className="row mb-3">
@@ -676,12 +698,6 @@ const FormaFinanciador = () => {
           </div>
         </div>
       )}
-      <Toast
-        estado={toastState}
-        cerrar={() =>
-          setToastState((prevState) => ({ ...prevState, show: false }))
-        }
-      />
     </RegistroContenedor>
   )
 }

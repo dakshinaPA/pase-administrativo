@@ -83,7 +83,9 @@ class FinanciadoresServices {
     } catch (error) {
       return RespuestaController.fallida(
         400,
-        "Error al obtener financiadores",
+        `Error al obtener ${
+          id_financiador ? "financiador" : "financiadores"
+        }, contactar a soporte`,
         error
       )
     }
@@ -99,7 +101,7 @@ class FinanciadoresServices {
     } catch (error) {
       return RespuestaController.fallida(
         400,
-        "Error al crear financiador",
+        "Error al crear financiador, contactar a soporte",
         error
       )
     }
@@ -117,7 +119,7 @@ class FinanciadoresServices {
     } catch (error) {
       return RespuestaController.fallida(
         400,
-        "Error al actualziar financiador",
+        "Error al actualziar financiador, contactar a soporte",
         error
       )
     }
@@ -129,8 +131,8 @@ class FinanciadoresServices {
     if (dl.error) {
       return RespuestaController.fallida(
         400,
-        "Error al borrar financiador",
-        null
+        "Error al borrar financiador, contactar a soporte",
+        dl.data
       )
     }
     return RespuestaController.exitosa(

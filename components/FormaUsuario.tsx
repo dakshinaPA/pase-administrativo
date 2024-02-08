@@ -4,7 +4,11 @@ import { ChangeEvent } from "@assets/models/formEvents.model"
 import { Usuario } from "@models/usuario.model"
 import { CoparteMin, QueriesCoparte } from "@models/coparte.model"
 import { Loader } from "@components/Loader"
-import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
+import {
+  RegistroContenedor,
+  FormaContenedor,
+  Contenedor,
+} from "@components/Contenedores"
 import { BtnBack } from "@components/BtnBack"
 import { ApiCall } from "@assets/utils/apiCalls"
 import { BtnCancelar, BtnEditar, BtnRegistrar } from "./Botones"
@@ -12,6 +16,7 @@ import { obtenerCopartes, obtenerUsuarios } from "@assets/utils/common"
 import { useErrores } from "@hooks/useErrores"
 import { MensajeError } from "./Mensajes"
 import { useSesion } from "@hooks/useSesion"
+import { Banner, estadoInicialBanner } from "./Banner"
 
 type ActionTypes = "CARGA_INICIAL" | "HANDLE_CHANGE" | "HANDLE_CHANGE_COPARTE"
 
@@ -73,6 +78,7 @@ const FormaUsuario = () => {
   const [copartesDB, setCopartesDB] = useState<CoparteMin[]>([])
   const { error, validarCampos, formRef } = useErrores()
   const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [showBanner, setShowBanner] = useState(estadoInicialBanner)
   const [modoEditar, setModoEditar] = useState<boolean>(!idUsuario)
   const modalidad = idUsuario ? "EDITAR" : "CREAR"
 
@@ -94,7 +100,7 @@ const FormaUsuario = () => {
         }
 
         const reCopartes = await obtenerCopartes(queries)
-        if (reCopartes.error) throw reCopartes.data
+        if (reCopartes.error) throw reCopartes
 
         const copartes = reCopartes.data as CoparteMin[]
         setCopartesDB(copartes)
@@ -107,7 +113,7 @@ const FormaUsuario = () => {
         })
       } else {
         const reUsuario = await obtenerUsuarios({ id: idUsuario })
-        if (reUsuario.error) throw reUsuario.data
+        if (reUsuario.error) throw reUsuario
 
         const usuario = reUsuario.data[0] as Usuario
         dispatch({
@@ -115,11 +121,16 @@ const FormaUsuario = () => {
           payload: usuario,
         })
       }
-    } catch (error) {
-      console.log(error)
+    } catch ({ data, mensaje }) {
+      console.log(data)
+      setShowBanner({
+        mensaje,
+        show: true,
+        tipo: "error",
+      })
+    } finally {
+      setIsLoading(false)
     }
-
-    setIsLoading(false)
   }
 
   const registrar = async () => {
@@ -178,6 +189,11 @@ const FormaUsuario = () => {
 
     if (error) {
       console.log(data)
+      setShowBanner({
+        mensaje,
+        show: true,
+        tipo: "error",
+      })
     } else {
       if (modalidad === "CREAR") {
         //@ts-ignore
@@ -189,9 +205,20 @@ const FormaUsuario = () => {
   }
 
   if (isLoading) {
-    return <Loader />
+    return (
+      <Contenedor>
+        <Loader />
+      </Contenedor>
+    )
   }
 
+  if (showBanner.show) {
+    return (
+      <Contenedor>
+        <Banner tipo={showBanner.tipo} mensaje={showBanner.mensaje} />
+      </Contenedor>
+    )
+  }
   return (
     <RegistroContenedor>
       <div className="row mb-3">

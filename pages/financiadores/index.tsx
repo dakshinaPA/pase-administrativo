@@ -47,7 +47,7 @@ const Financiadores = () => {
     if (error) {
       console.log(data)
       setShowBanner({
-        mensaje: mensajesBanner.fallaApi,
+        mensaje,
         show: true,
         tipo: "error",
       })
@@ -70,7 +70,7 @@ const Financiadores = () => {
     if (error) {
       console.log(data)
       setShowBanner({
-        mensaje: mensajesBanner.fallaApi,
+        mensaje,
         show: true,
         tipo: "error",
       })

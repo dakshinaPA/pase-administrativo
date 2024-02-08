@@ -2,8 +2,6 @@ import { RespuestaDB } from "@api/utils/response"
 import { queryDB, queryDBPlaceHolder } from "./query"
 import {
   Coparte,
-  DireccionCoparte,
-  CoparteUsuario,
   NotaCoparte,
   QueriesCoparte,
 } from "@models/coparte.model"

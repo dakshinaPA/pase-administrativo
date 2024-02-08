@@ -21,7 +21,7 @@ class CopartesServices {
     if (re.error) {
       return RespuestaController.fallida(
         400,
-        "Error al obtener copartes",
+        "Error al obtener copartes, contactar a soporte",
         re.data
       )
     }

@@ -43,7 +43,7 @@ class UsuarioDB {
 
     if (id) {
       query += " AND u.id=? LIMIT 1"
-    } else if ([1, 2].includes(Number(id_rol))) {
+    } else if (id_rol) {
       query += " AND u.id_rol=?"
     } else if (id_coparte) {
       query += " AND u.id_rol=3 AND cu.id_coparte=?"
@@ -60,7 +60,7 @@ class UsuarioDB {
 
     if (id) {
       phUsuario.push(id)
-    } else if ([1, 2].includes(Number(id_rol))) {
+    } else if (id_rol) {
       phUsuario.push(id_rol)
     } else if (id_coparte) {
       phUsuario.push(id_coparte)

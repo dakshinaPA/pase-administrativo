@@ -79,7 +79,9 @@ class UsuariosServices {
     } catch (error) {
       return RespuestaController.fallida(
         400,
-        "Error al obtener datos de usuario",
+        `Error al obtener ${
+          id_usuario ? "usuario" : "usuarios"
+        }, contactar a soporte`,
         error
       )
     }
@@ -93,7 +95,11 @@ class UsuariosServices {
         idInsertado: cr,
       })
     } catch (error) {
-      return RespuestaController.fallida(400, "Error al crear usuario", error)
+      return RespuestaController.fallida(
+        400,
+        "Error al crear usuario, contactar a soporte",
+        error
+      )
     }
   }
 
@@ -109,7 +115,7 @@ class UsuariosServices {
     } catch (error) {
       return RespuestaController.fallida(
         400,
-        "Error al actualziar usuario",
+        "Error al actualziar usuario, contactar a soporte",
         error
       )
     }
@@ -120,11 +126,11 @@ class UsuariosServices {
     if (res.error) {
       return RespuestaController.fallida(
         400,
-        "Error al borrar usuario",
+        "Error al borrar usuario, contactar a soporte",
         res.data
       )
     }
-    return RespuestaController.exitosa(200, "Usuairo borrado con éxito", null)
+    return RespuestaController.exitosa(200, "Usuario borrado con éxito", null)
   }
 }
 

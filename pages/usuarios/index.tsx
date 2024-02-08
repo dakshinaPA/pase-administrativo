@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react"
 import { ApiCall } from "@assets/utils/apiCalls"
 import { useRouter } from "next/router"
 import { Loader } from "@components/Loader"
-import { TablaContenedor } from "@components/Contenedores"
+import { Contenedor, TablaContenedor } from "@components/Contenedores"
 import { ModalEliminar } from "@components/ModalEliminar"
 import {
   aMinuscula,
@@ -13,11 +13,12 @@ import { IdRolUsuario, QueriesUsuario, Usuario } from "@models/usuario.model"
 import { CoparteMin, QueriesCoparte } from "@models/coparte.model"
 import { BtnAccion, BtnNeutro } from "@components/Botones"
 import { useSesion } from "@hooks/useSesion"
+import { Banner, estadoInicialBanner } from "@components/Banner"
 
 const Usuarios = () => {
   const { user, status } = useSesion()
   if (status !== "authenticated" || !user) return null
-  
+
   const router = useRouter()
   if (user.id_rol == 3) {
     router.push("/")
@@ -32,6 +33,7 @@ const Usuarios = () => {
   const [inputBusqueda, setInputBusqueda] = useState<string>("")
   const [rolUsuarioSelect, setRolUsuarioSelect] = useState<IdRolUsuario>(3)
   const [coparteSelect, setCoparteSelect] = useState<number>(0)
+  const [showBanner, setShowBanner] = useState(estadoInicialBanner)
 
   useEffect(() => {
     obtenerCopartesDB()
@@ -47,19 +49,25 @@ const Usuarios = () => {
   }
 
   const cargarUsuarios = async () => {
-    if (rolUsuarioSelect == 3 && !(coparteSelect > 0)) return
+    if (rolUsuarioSelect == 3 && coparteSelect == 0) return
     setIsLoading(true)
 
-    const queries: QueriesUsuario = [1, 2].includes(Number(rolUsuarioSelect))
-      ? { id_rol: rolUsuarioSelect }
-      : { id_coparte: coparteSelect }
+    const queries: QueriesUsuario =
+      [1, 2].includes(Number(rolUsuarioSelect)) || coparteSelect == -1
+        ? { id_rol: rolUsuarioSelect }
+        : { id_coparte: coparteSelect }
 
-    const reUsuarios = await obtenerUsuarios(queries)
+    const { data, error, mensaje } = await obtenerUsuarios(queries)
 
-    if (reUsuarios.error) {
-      console.log(reUsuarios.data)
+    if (error) {
+      console.log(data)
+      setShowBanner({
+        mensaje,
+        show: true,
+        tipo: "error",
+      })
     } else {
-      const usuarios = reUsuarios.data as Usuario[]
+      const usuarios = data as Usuario[]
       setUsuariosDB(usuarios)
     }
 
@@ -76,6 +84,11 @@ const Usuarios = () => {
 
     if (error) {
       console.log(data)
+      setShowBanner({
+        mensaje,
+        show: true,
+        tipo: "error",
+      })
     } else {
       const copartesDB = data as CoparteMin[]
       setCopartesDB(copartesDB)
@@ -97,7 +110,12 @@ const Usuarios = () => {
     )
 
     if (error) {
-      console.log(error)
+      console.log(data)
+      setShowBanner({
+        mensaje,
+        show: true,
+        tipo: "error",
+      })
     } else {
       await cargarUsuarios()
     }
@@ -138,6 +156,22 @@ const Usuarios = () => {
     return usuario ? `${usuario.nombre} ${usuario.apellido_paterno}` : ""
   }
 
+  if (isLoading) {
+    return (
+      <Contenedor>
+        <Loader />
+      </Contenedor>
+    )
+  }
+
+  if (showBanner.show) {
+    return (
+      <Contenedor>
+        <Banner tipo={showBanner.tipo} mensaje={showBanner.mensaje} />
+      </Contenedor>
+    )
+  }
+
   return (
     <TablaContenedor>
       <div className="row mb-2">
@@ -172,6 +206,7 @@ const Usuarios = () => {
               <option value="0" disabled>
                 Selecciona coparte
               </option>
+              {user.id_rol == 1 && <option value="-1">TODAS</option>}
               {copartesDB.map(({ id, nombre }) => (
                 <option key={id} value={id}>
                   {nombre}
@@ -197,85 +232,81 @@ const Usuarios = () => {
           </div>
         </div>
       </div>
-      {isLoading ? (
-        <Loader />
-      ) : (
-        <div className="row">
-          <div className="col-12 table-responsive">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>#id</th>
-                  <th>Nombre</th>
-                  <th>Email</th>
-                  <th>Telefono</th>
-                  {rolUsuarioSelect == 3 && (
-                    <>
-                      <th>Cargo</th>
-                      <th>Enlace</th>
-                    </>
-                  )}
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {usuariosFiltrados.map((usuario) => {
-                  const {
-                    id,
-                    nombre,
-                    apellido_paterno,
-                    apellido_materno,
-                    email,
-                    telefono,
-                    coparte,
-                  } = usuario
+      <div className="row">
+        <div className="col-12 table-responsive">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>#id</th>
+                <th>Nombre</th>
+                <th>Email</th>
+                <th>Telefono</th>
+                {rolUsuarioSelect == 3 && (
+                  <>
+                    <th>Cargo</th>
+                    <th>Enlace</th>
+                  </>
+                )}
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {usuariosFiltrados.map((usuario) => {
+                const {
+                  id,
+                  nombre,
+                  apellido_paterno,
+                  apellido_materno,
+                  email,
+                  telefono,
+                  coparte,
+                } = usuario
 
-                  return (
-                    <tr key={`coparte_${id}`}>
-                      <td>{id}</td>
-                      <td>
-                        {nombre} {apellido_paterno} {apellido_materno}
-                      </td>
-                      <td>{email}</td>
-                      <td>{telefono}</td>
-                      {rolUsuarioSelect == 3 && (
-                        <>
-                          <td>{coparte?.cargo}</td>
-                          <td className="icono-enlace">
-                            {coparte?.b_enlace ? (
-                              <i className="bi bi-check"></i>
-                            ) : (
-                              <i className="bi bi-x"></i>
-                            )}
-                          </td>
-                        </>
-                      )}
-                      <td>
-                        <div className="d-flex">
-                          <BtnAccion
-                            margin={false}
-                            icono="bi-eye-fill"
-                            onclick={() => router.push(`/usuarios/${id}`)}
-                            title="ver detalle"
-                          />
-                          {user.id_rol == 1 && (
-                            <BtnAccion
-                              margin="l"
-                              icono="bi-x-circle"
-                              onclick={() => abrirModalEliminarUsuario(id)}
-                              title="eliminar usuario"
-                            />
+                return (
+                  <tr key={`coparte_${id}`}>
+                    <td>{id}</td>
+                    <td>
+                      {nombre} {apellido_paterno} {apellido_materno}
+                    </td>
+                    <td>{email}</td>
+                    <td>{telefono}</td>
+                    {rolUsuarioSelect == 3 && (
+                      <>
+                        <td>{coparte?.cargo}</td>
+                        <td className="icono-enlace">
+                          {coparte?.b_enlace ? (
+                            <i className="bi bi-check"></i>
+                          ) : (
+                            <i className="bi bi-x"></i>
                           )}
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
+                        </td>
+                      </>
+                    )}
+                    <td>
+                      <div className="d-flex">
+                        <BtnAccion
+                          margin={false}
+                          icono="bi-eye-fill"
+                          onclick={() => router.push(`/usuarios/${id}`)}
+                          title="ver detalle"
+                        />
+                        {user.id_rol == 1 && (
+                          <BtnAccion
+                            margin="l"
+                            icono="bi-x-circle"
+                            onclick={() => abrirModalEliminarUsuario(id)}
+                            title="eliminar usuario"
+                          />
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
         </div>
-      )}
+      </div>
       <ModalEliminar
         show={showModalEliminar}
         aceptar={eliminarUsuario}
