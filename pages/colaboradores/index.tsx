@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react"
 import { ApiCall } from "@assets/utils/apiCalls"
 import { useRouter } from "next/router"
 import { Loader } from "@components/Loader"
-import { TablaContenedor } from "@components/Contenedores"
+import { Contenedor, TablaContenedor } from "@components/Contenedores"
 import { ModalEliminar } from "@components/ModalEliminar"
 import {
   aMinuscula,
@@ -12,6 +12,7 @@ import {
 import { ColaboradorProyecto, ProyectoMin } from "@models/proyecto.model"
 import { BtnAccion, BtnNeutro } from "@components/Botones"
 import { useSesion } from "@hooks/useSesion"
+import { Banner, estadoInicialBanner, mensajesBanner } from "@components/Banner"
 
 const Colaboradores = () => {
   const { user, status } = useSesion()
@@ -25,8 +26,9 @@ const Colaboradores = () => {
   const [colaboradorAeliminar, setColaboradorAEliminar] = useState<number>(0)
   const [selectProyecto, setSelectProyecto] = useState(0)
   const [showModalEliminar, setShowModalEliminar] = useState<boolean>(false)
-  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [isLoading, setIsLoading] = useState<boolean>(true)
   const [inputBusqueda, setInputBusqueda] = useState<string>("")
+  const [showBanner, setShowBanner] = useState(estadoInicialBanner)
 
   useEffect(() => {
     cargarProyectosUsuario()
@@ -37,15 +39,24 @@ const Colaboradores = () => {
   }, [selectProyecto])
 
   const cargarProyectosUsuario = async () => {
-    setIsLoading(true)
-
     const reProyectos = await obtenerProyectos({ id_responsable: user.id })
     if (reProyectos.error) {
       console.log(reProyectos.data)
+      setShowBanner({
+        mensaje: mensajesBanner.fallaApi,
+        show: true,
+        tipo: "error",
+      })
     } else {
       const proyectosDB = reProyectos.data as ProyectoMin[]
       setProyectosDB(proyectosDB)
-      if (proyectosDB.length == 1) {
+      if (!proyectosDB.length) {
+        setShowBanner({
+          mensaje: mensajesBanner.sinProyectos,
+          show: true,
+          tipo: "warning",
+        })
+      } else if (proyectosDB.length == 1) {
         setSelectProyecto(proyectosDB[0].id || 0)
       }
     }
@@ -61,6 +72,11 @@ const Colaboradores = () => {
     const reColaboradores = await obtenerColaboradores(selectProyecto)
     if (reColaboradores.error) {
       console.log(reColaboradores.data)
+      setShowBanner({
+        mensaje: mensajesBanner.fallaApi,
+        show: true,
+        tipo: "error",
+      })
     } else {
       const colaboradoresDB = reColaboradores.data as ColaboradorProyecto[]
       setColaboradoresDB(colaboradoresDB)
@@ -118,6 +134,22 @@ const Colaboradores = () => {
       : ""
   }
 
+  if (isLoading) {
+    return (
+      <Contenedor>
+        <Loader />
+      </Contenedor>
+    )
+  }
+
+  if (showBanner.show) {
+    return (
+      <Contenedor>
+        <Banner tipo={showBanner.tipo} mensaje={showBanner.mensaje} />
+      </Contenedor>
+    )
+  }
+
   return (
     <TablaContenedor>
       <div className="row mb-2">
@@ -164,10 +196,15 @@ const Colaboradores = () => {
           </div>
         </div>
       </div>
-      {isLoading ? (
-        <Loader />
-      ) : (
-        <div className="row">
+      <div className="row">
+        {!colaboradoresDB.length ? (
+          <div className="col-12">
+            <Banner
+              tipo="warning"
+              mensaje="El proyecto seleccionado no cuneta con colaboradores registrados"
+            />
+          </div>
+        ) : (
           <div className="col-12 table-responsive">
             <table className="table">
               <thead>
@@ -238,8 +275,8 @@ const Colaboradores = () => {
               </tbody>
             </table>
           </div>
-        </div>
-      )}
+        )}
+      </div>
       <ModalEliminar
         show={showModalEliminar}
         aceptar={eliminarColaborador}

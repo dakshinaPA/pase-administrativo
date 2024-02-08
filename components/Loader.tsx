@@ -1,5 +1,3 @@
-import { FondoNegro } from "@components/FondoNegro"
-// import { loaderContainer, spinner } from './styles/Loader.module.css'
 import styles from "./styles/Loader.module.css"
 
 const Loader = () => {

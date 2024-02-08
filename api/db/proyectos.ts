@@ -152,6 +152,13 @@ class ProyectoDB {
             }
 
             const proyectosDB = results as ResProyectoDB[]
+            if (!proyectosDB.length) {
+              connection.destroy()
+              return res({
+                proyectos: [],
+              })
+            }
+
             const idsProyectos = proyectosDB.map((proy) => proy.id)
 
             //queries saldos

@@ -8,7 +8,6 @@ import { aMinuscula } from "@assets/utils/common"
 import { Financiador } from "@models/financiador.model"
 import { BtnAccion, BtnNeutro } from "@components/Botones"
 import { useSesion } from "@hooks/useSesion"
-import { Usuario } from "@models/usuario.model"
 
 const Financiadores = () => {
   const { user, status } = useSesion()
@@ -142,7 +141,6 @@ const Financiadores = () => {
                   <th>Email</th>
                   <th>Teléfono</th>
                   <th>Página web</th>
-                  <th>Proyectos activos</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
@@ -170,12 +168,11 @@ const Financiadores = () => {
                       <td>{nombreEnlace}</td>
                       <td>{enlace.email}</td>
                       <td>{enlace.telefono}</td>
-                      <td>
+                      <td className="textOverflowTd">
                         <a href={`http://${pagina_web}`} target="_blank">
                           {pagina_web}
                         </a>
                       </td>
-                      <td>...</td>
                       <td>
                         <div className="d-flex">
                           <BtnAccion

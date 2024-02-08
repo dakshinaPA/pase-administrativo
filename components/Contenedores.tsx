@@ -6,6 +6,16 @@ const TablaContenedor = ({ children }) => {
   return <div className="container-fluid px-4 pt-4">{children}</div>
 }
 
+const Contenedor = ({ children }) => {
+  return (
+    <div className="container-fluid px-4 pt-4">
+      <div className="row">
+        <div className="col-12">{children}</div>
+      </div>
+    </div>
+  )
+}
+
 const FormaContenedor = ({ children, onSubmit, formaRef }) => {
   const handleSubmit = (ev: React.SyntheticEvent) => {
     // console.log('si', ev)
@@ -25,4 +35,4 @@ const FormaContenedor = ({ children, onSubmit, formaRef }) => {
   )
 }
 
-export { RegistroContenedor, TablaContenedor, FormaContenedor }
+export { RegistroContenedor, TablaContenedor, FormaContenedor, Contenedor }

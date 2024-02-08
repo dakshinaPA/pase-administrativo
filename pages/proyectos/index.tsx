@@ -3,7 +3,7 @@ import { ApiCall } from "@assets/utils/apiCalls"
 import { useRouter } from "next/router"
 import { Loader } from "@components/Loader"
 import { ModalEliminar } from "@components/ModalEliminar"
-import { TablaContenedor } from "@components/Contenedores"
+import { Contenedor, TablaContenedor } from "@components/Contenedores"
 import {
   aMinuscula,
   montoALocaleString,
@@ -11,18 +11,20 @@ import {
 } from "@assets/utils/common"
 import { Proyecto, QueriesProyecto } from "@models/proyecto.model"
 import { BtnAccion, BtnNeutro } from "@components/Botones"
+import { Banner, estadoInicialBanner, mensajesBanner } from "@components/Banner"
 import { useSesion } from "@hooks/useSesion"
 
 const Financiadores = () => {
   const { user, status } = useSesion()
   if (status !== "authenticated" || !user) return null
-  
+
   const router = useRouter()
   const [proyectosDB, setProyectosDB] = useState<Proyecto[]>([])
   const [idAEliminar, setIdAEliminar] = useState<number>(0)
   const [showModalEliminar, setShowModalEliminar] = useState<boolean>(false)
-  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [isLoading, setIsLoading] = useState<boolean>(true)
   const [inputBusqueda, setInputBusqueda] = useState<string>("")
+  const [showBanner, setShowBanner] = useState(estadoInicialBanner)
 
   useEffect(() => {
     cargarData()
@@ -51,11 +53,23 @@ const Financiadores = () => {
 
       const proyectos = reProyectos.data as Proyecto[]
       setProyectosDB(proyectos)
+      if (!proyectos.length) {
+        setShowBanner({
+          mensaje: mensajesBanner.sinProyectos,
+          show: true,
+          tipo: "warning",
+        })
+      }
     } catch (error) {
       console.log(error)
+      setShowBanner({
+        mensaje: mensajesBanner.fallaApi,
+        show: true,
+        tipo: "error",
+      })
+    } finally {
+      setIsLoading(false)
     }
-
-    setIsLoading(false)
   }
 
   const eliminarProyecto = async () => {
@@ -93,6 +107,22 @@ const Financiadores = () => {
     return proyecto ? `${proyecto.id_alt} - ${proyecto.nombre}` : ""
   }
 
+  if (isLoading) {
+    return (
+      <Contenedor>
+        <Loader />
+      </Contenedor>
+    )
+  }
+
+  if (showBanner.show) {
+    return (
+      <Contenedor>
+        <Banner tipo={showBanner.tipo} mensaje={showBanner.mensaje} />
+      </Contenedor>
+    )
+  }
+
   return (
     <TablaContenedor>
       <div className="row mb-2">
@@ -123,140 +153,136 @@ const Financiadores = () => {
           </div>
         </div>
       </div>
-      {isLoading ? (
-        <Loader />
-      ) : (
-        <div className="row">
-          <div className="col-12 table-responsive">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>#id</th>
-                  <th>Alt id</th>
-                  <th>Nombre</th>
-                  {user.id_rol != 3 && (
-                    <>
-                      <th>Responsable</th>
-                      <th>Coparte</th>
-                    </>
-                  )}
-                  <th>Tipo financiamiento</th>
-                  <th>Monto total</th>
-                  <th>Solicitado</th>
-                  <th>Transferido</th>
-                  <th>Comprobado</th>
-                  <th>Por comprobar</th>
-                  <th>ISR (35%)</th>
-                  <th>Retenciones</th>
-                  <th>PA</th>
-                  <th>Total ejecutado</th>
-                  <th>Remanente</th>
-                  <th>Avance</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {busquedaFiltrados.map((proyecto) => {
-                  const {
-                    id,
-                    id_alt,
-                    nombre,
-                    id_coparte,
-                    id_responsable,
-                    financiador,
-                    tipo_financiamiento,
-                    saldo,
-                    responsable,
-                    coparte,
-                  } = proyecto
+      <div className="row">
+        <div className="col-12 table-responsive">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>#id</th>
+                <th>Alt id</th>
+                <th>Nombre</th>
+                {user.id_rol != 3 && (
+                  <>
+                    <th>Responsable</th>
+                    <th>Coparte</th>
+                  </>
+                )}
+                <th>Tipo financiamiento</th>
+                <th>Monto total</th>
+                <th>Solicitado</th>
+                <th>Transferido</th>
+                <th>Comprobado</th>
+                <th>Por comprobar</th>
+                <th>ISR (35%)</th>
+                <th>Retenciones</th>
+                <th>PA</th>
+                <th>Total ejecutado</th>
+                <th>Remanente</th>
+                <th>Avance</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {busquedaFiltrados.map((proyecto) => {
+                const {
+                  id,
+                  id_alt,
+                  nombre,
+                  id_coparte,
+                  id_responsable,
+                  financiador,
+                  tipo_financiamiento,
+                  saldo,
+                  responsable,
+                  coparte,
+                } = proyecto
 
-                  return (
-                    <tr key={id}>
-                      <td>{id}</td>
-                      <td>{id_alt}</td>
-                      <td>{nombre}</td>
-                      {user.id_rol != 3 && (
-                        <>
-                          <td>{responsable}</td>
-                          <td>{coparte}</td>
-                        </>
-                      )}
-                      <td>{tipo_financiamiento}</td>
-                      <td>{montoALocaleString(saldo.f_monto_total)}</td>
-                      <td>{montoALocaleString(saldo.f_solicitado)}</td>
-                      <td>{montoALocaleString(saldo.f_transferido)}</td>
-                      <td>{montoALocaleString(saldo.f_comprobado)}</td>
-                      <td>{montoALocaleString(saldo.f_por_comprobar)}</td>
-                      <td>{montoALocaleString(saldo.f_isr)}</td>
-                      <td>{montoALocaleString(saldo.f_retenciones)}</td>
-                      <td>{montoALocaleString(saldo.f_pa)}</td>
-                      <td>{montoALocaleString(saldo.f_ejecutado)}</td>
-                      <td>{montoALocaleString(saldo.f_remanente)}</td>
-                      <td>{`${saldo.p_avance}%`}</td>
-                      <td>
-                        <div className="d-flex">
-                          <BtnAccion
-                            margin={false}
-                            icono="bi-eye-fill"
-                            onclick={() =>
-                              router.push(
-                                `/copartes/${id_coparte}/proyectos/${id}`
-                              )
-                            }
-                            title="ver detalle"
-                          />
-                          {user.id == id_responsable && (
-                            <>
-                              <BtnAccion
-                                margin="l"
-                                icono="bi-ui-checks"
-                                onclick={() =>
-                                  router.push(
-                                    `/proyectos/${id}/solicitudes-presupuesto/registro`
-                                  )
-                                }
-                                title="registrar solicitud"
-                              />
-                              <BtnAccion
-                                margin="l"
-                                icono="bi-person-plus"
-                                onclick={() =>
-                                  router.push(
-                                    `/proyectos/${id}/colaboradores/registro`
-                                  )
-                                }
-                                title="registrar colaborador"
-                              />
-                              <BtnAccion
-                                margin="l"
-                                icono="bi-person-plus-fill"
-                                onclick={() =>
-                                  router.push(
-                                    `/proyectos/${id}/proveedores/registro`
-                                  )
-                                }
-                                title="registrar proveedor"
-                              />
-                            </>
-                          )}
-                          {user.id_rol == 1 && (
+                return (
+                  <tr key={id}>
+                    <td>{id}</td>
+                    <td>{id_alt}</td>
+                    <td>{nombre}</td>
+                    {user.id_rol != 3 && (
+                      <>
+                        <td>{responsable}</td>
+                        <td>{coparte}</td>
+                      </>
+                    )}
+                    <td>{tipo_financiamiento}</td>
+                    <td>{montoALocaleString(saldo.f_monto_total)}</td>
+                    <td>{montoALocaleString(saldo.f_solicitado)}</td>
+                    <td>{montoALocaleString(saldo.f_transferido)}</td>
+                    <td>{montoALocaleString(saldo.f_comprobado)}</td>
+                    <td>{montoALocaleString(saldo.f_por_comprobar)}</td>
+                    <td>{montoALocaleString(saldo.f_isr)}</td>
+                    <td>{montoALocaleString(saldo.f_retenciones)}</td>
+                    <td>{montoALocaleString(saldo.f_pa)}</td>
+                    <td>{montoALocaleString(saldo.f_ejecutado)}</td>
+                    <td>{montoALocaleString(saldo.f_remanente)}</td>
+                    <td>{`${saldo.p_avance}%`}</td>
+                    <td>
+                      <div className="d-flex">
+                        <BtnAccion
+                          margin={false}
+                          icono="bi-eye-fill"
+                          onclick={() =>
+                            router.push(
+                              `/copartes/${id_coparte}/proyectos/${id}`
+                            )
+                          }
+                          title="ver detalle"
+                        />
+                        {user.id == id_responsable && (
+                          <>
                             <BtnAccion
                               margin="l"
-                              icono="bi-x-circle"
-                              onclick={() => abrirModalEliminar(id)}
-                              title="eliminar proyecto"
+                              icono="bi-ui-checks"
+                              onclick={() =>
+                                router.push(
+                                  `/proyectos/${id}/solicitudes-presupuesto/registro`
+                                )
+                              }
+                              title="registrar solicitud"
                             />
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
+                            <BtnAccion
+                              margin="l"
+                              icono="bi-person-plus"
+                              onclick={() =>
+                                router.push(
+                                  `/proyectos/${id}/colaboradores/registro`
+                                )
+                              }
+                              title="registrar colaborador"
+                            />
+                            <BtnAccion
+                              margin="l"
+                              icono="bi-person-plus-fill"
+                              onclick={() =>
+                                router.push(
+                                  `/proyectos/${id}/proveedores/registro`
+                                )
+                              }
+                              title="registrar proveedor"
+                            />
+                          </>
+                        )}
+                        {user.id_rol == 1 && (
+                          <BtnAccion
+                            margin="l"
+                            icono="bi-x-circle"
+                            onclick={() => abrirModalEliminar(id)}
+                            title="eliminar proyecto"
+                          />
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
         </div>
-      )}
+      </div>
       <ModalEliminar
         show={showModalEliminar}
         aceptar={eliminarProyecto}

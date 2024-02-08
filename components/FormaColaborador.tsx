@@ -7,7 +7,12 @@ import {
   QueriesProyecto,
 } from "@models/proyecto.model"
 import { Loader } from "@components/Loader"
-import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
+import {
+  RegistroContenedor,
+  FormaContenedor,
+  TablaContenedor,
+  Contenedor,
+} from "@components/Contenedores"
 import { ApiCall } from "@assets/utils/apiCalls"
 import { useCatalogos } from "@contexts/catalogos.context"
 import {
@@ -28,6 +33,7 @@ import {
 import { useErrores } from "@hooks/useErrores"
 import { MensajeError } from "./Mensajes"
 import { useSesion } from "@hooks/useSesion"
+import { Banner, estadoInicialBanner, mensajesBanner } from "./Banner"
 
 type ActionTypes =
   | "CARGA_INICIAL"
@@ -135,8 +141,9 @@ const FormaColaborador = () => {
   const [estadoForma, dispatch] = useReducer(reducer, estadoInicialForma)
   const [proyectosDB, setProyectosDB] = useState<ProyectoMin[]>([])
   const { error, validarCampos, formRef } = useErrores()
-  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [isLoading, setIsLoading] = useState<boolean>(true)
   const [modoEditar, setModoEditar] = useState<boolean>(!idColaborador)
+  const [showBanner, setShowBanner] = useState(estadoInicialBanner)
   const modalidad = idColaborador ? "EDITAR" : "CREAR"
   const estadoOriginalColaborador = useRef(null)
   const tBodyPeriodos = useRef(null)
@@ -173,23 +180,29 @@ const FormaColaborador = () => {
   }, [estadoForma.clabe])
 
   const cargarData = async () => {
-    setIsLoading(true)
-
+    // setIsLoading(true)
     try {
       if (modalidad === "CREAR") {
         const reProyectos = await obtenerProyectosDB()
         if (reProyectos.error) throw reProyectos.data
 
         const proyectosDB = reProyectos.data as ProyectoMin[]
-        setProyectosDB(proyectosDB)
-
-        dispatch({
-          type: "HANDLE_CHANGE",
-          payload: {
-            name: "id_proyecto",
-            value: proyectosDB[0]?.id || 0,
-          },
-        })
+        if (!proyectosDB.length) {
+          setShowBanner({
+            mensaje: mensajesBanner.sinProyectos,
+            show: true,
+            tipo: "warning",
+          })
+        } else {
+          setProyectosDB(proyectosDB)
+          dispatch({
+            type: "HANDLE_CHANGE",
+            payload: {
+              name: "id_proyecto",
+              value: proyectosDB[0]?.id || 0,
+            },
+          })
+        }
       } else {
         const reColaborador = await obtenerColaboradores(null, idColaborador)
         if (reColaborador.error) throw reColaborador.data
@@ -203,9 +216,14 @@ const FormaColaborador = () => {
       }
     } catch (error) {
       console.log(error)
+      setShowBanner({
+        mensaje: mensajesBanner.fallaApi,
+        show: true,
+        tipo: "error",
+      })
+    } finally {
+      setIsLoading(false)
     }
-
-    setIsLoading(false)
   }
 
   const obtenerProyectosDB = () => {
@@ -380,7 +398,19 @@ const FormaColaborador = () => {
   const showBtnEliminarPeriodo = estadoForma.periodos_servicio.length > 1
 
   if (isLoading) {
-    return <Loader />
+    return (
+      <Contenedor>
+        <Loader />
+      </Contenedor>
+    )
+  }
+
+  if (showBanner.show) {
+    return (
+      <Contenedor>
+        <Banner tipo={showBanner.tipo} mensaje={showBanner.mensaje} />
+      </Contenedor>
+    )
   }
 
   return (

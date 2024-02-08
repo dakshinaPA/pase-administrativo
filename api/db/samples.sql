@@ -702,7 +702,8 @@ DELETE FROM solicitud_presupuesto_comprobantes WHERE id_solicitud_presupuesto > 
 
 
 -- mysqldump -u root -p dakshina > dakshina.sql 
--- mysql  -h dakshina.cyt6walgkcp2.us-east-2.rds.amazonaws.com -u admin -p dakshina < dakshina.sql
+-- mysql -h dakshina.cyt6walgkcp2.us-east-2.rds.amazonaws.com -u admin -p dakshina < dakshina.sql
+-- mysqldump -h dakshina.cyt6walgkcp2.us-east-2.rds.amazonaws.com -u admin -p dakshina > dakshina.sql
 -- show status where `variable_name` = 'Threads_connected';
 -- show processlist;
 

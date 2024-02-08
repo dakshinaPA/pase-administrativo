@@ -5,10 +5,7 @@ import { RespuestaController } from "@api/utils/response"
 import {
   Proyecto,
   MinistracionProyecto,
-  ColaboradorProyecto,
-  ProveedorProyecto,
   QueriesProyecto,
-  RubroMinistracion,
   NotaProyecto,
   DataProyecto,
 } from "@models/proyecto.model"

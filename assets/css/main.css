@@ -112,6 +112,13 @@ a {
   color: red;
 }
 
+.textOverflowTd {
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* @media only screen and (max-width: 992px) {
 
   .main_contenedor > div:nth-child(1){

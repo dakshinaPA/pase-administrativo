@@ -10,7 +10,12 @@ import {
   RubroMinistracion,
 } from "@models/proyecto.model"
 import { Loader } from "@components/Loader"
-import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
+import {
+  RegistroContenedor,
+  FormaContenedor,
+  TablaContenedor,
+  Contenedor,
+} from "@components/Contenedores"
 import { ApiCall } from "@assets/utils/apiCalls"
 import { useCatalogos } from "@contexts/catalogos.context"
 import { BtnAccion, BtnCancelar, BtnEditar, BtnRegistrar } from "./Botones"
@@ -34,6 +39,7 @@ import { MensajeError } from "./Mensajes"
 import Link from "next/link"
 import { useSesion } from "@hooks/useSesion"
 import { Usuario } from "@models/usuario.model"
+import { Banner, estadoInicialBanner, mensajesBanner } from "./Banner"
 
 type ActionTypes =
   | "CARGA_INICIAL"
@@ -273,11 +279,11 @@ const FormaSolicitudPresupuesto = () => {
   const [aceptarTerminos, setAceptarTerminos] = useState(Boolean(idSolicitud))
   const { error, validarCampos, formRef } = useErrores()
   const [toastState, setToastState] = useState(estadoInicialToast)
-  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [isLoading, setIsLoading] = useState<boolean>(true)
   const [modoEditar, setModoEditar] = useState<boolean>(!idSolicitud)
+  const [showBanner, setShowBanner] = useState(estadoInicialBanner)
   const modalidad = idSolicitud ? "EDITAR" : "CREAR"
   const estatusCarga = useRef(null)
-
   const fileInput = useRef(null)
   const cbAceptaTerminos = useRef(null)
 
@@ -477,6 +483,13 @@ const FormaSolicitudPresupuesto = () => {
 
         const proyectosDB = reProyectos.data as ProyectoMin[]
         setProyectosDB(proyectosDB)
+        if (!proyectosDB.length) {
+          setShowBanner({
+            mensaje: mensajesBanner.sinProyectos,
+            show: true,
+            tipo: "warning",
+          })
+        }
 
         if (!idProyecto) {
           dispatch({
@@ -600,7 +613,7 @@ const FormaSolicitudPresupuesto = () => {
 
     return {
       clave: regimenMatch?.clave || "",
-      nombre: regimenMatch?.nombre || ""
+      nombre: regimenMatch?.nombre || "",
     }
   }
 
@@ -754,7 +767,7 @@ const FormaSolicitudPresupuesto = () => {
         f_retenciones: f_retenciones || "",
         f_iva,
         f_isr,
-        uso_cfdi: usoCFDI
+        uso_cfdi: usoCFDI,
       }
 
       console.log(dataComprobante)
@@ -897,7 +910,19 @@ const FormaSolicitudPresupuesto = () => {
     estadoForma.i_tipo_gasto != 3 && estadoForma.id_partida_presupuestal != 22
 
   if (isLoading) {
-    return <Loader />
+    return (
+      <Contenedor>
+        <Loader />
+      </Contenedor>
+    )
+  }
+
+  if (showBanner.show) {
+    return (
+      <Contenedor>
+        <Banner tipo={showBanner.tipo} mensaje={showBanner.mensaje} />
+      </Contenedor>
+    )
   }
 
   return (
@@ -1286,8 +1311,12 @@ const FormaSolicitudPresupuesto = () => {
                         f_total,
                       } = comprobante
 
-                      const regimenFiscalEmisor = obtenerRegimenXId(id_regimen_fiscal_emisor)
-                      const regimenFiscalReceptor = obtenerRegimenXId(id_regimen_fiscal_receptor)
+                      const regimenFiscalEmisor = obtenerRegimenXId(
+                        id_regimen_fiscal_emisor
+                      )
+                      const regimenFiscalReceptor = obtenerRegimenXId(
+                        id_regimen_fiscal_receptor
+                      )
 
                       return (
                         <tr key={folio_fiscal}>
@@ -1306,12 +1335,8 @@ const FormaSolicitudPresupuesto = () => {
                             {clave_forma_pago} - {forma_pago}
                           </td>
                           <td>{uso_cfdi}</td>
-                          <td>
-                            {montoALocaleString(Number(f_isr) || 0)}
-                          </td>
-                          <td>
-                            {montoALocaleString(Number(f_iva) || 0)}
-                          </td>
+                          <td>{montoALocaleString(Number(f_isr) || 0)}</td>
+                          <td>{montoALocaleString(Number(f_iva) || 0)}</td>
                           <td>
                             {montoALocaleString(Number(f_retenciones) || 0)}
                           </td>

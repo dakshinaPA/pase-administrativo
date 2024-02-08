@@ -1,18 +1,16 @@
 .loaderContainer {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
-    /* background-color: burlywood; */
-    /* border: 1px solid white; */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* height: 100%; */
 }
 
 .spinner {
-    font-size: 60px;
-    animation: giroInfinito 1s infinite linear;
+  font-size: 60px;
+  animation: giroInfinito 1s infinite linear;
 }
 
 @keyframes giroInfinito {
-    from {transform: rotate(0deg);}
-    to {transform: rotate(360deg);}
+  from {transform: rotate(0deg);}
+  to {transform: rotate(360deg);}
 }
