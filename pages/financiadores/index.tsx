@@ -3,16 +3,17 @@ import { ApiCall } from "@assets/utils/apiCalls"
 import { useRouter } from "next/router"
 import { Loader } from "@components/Loader"
 import { ModalEliminar } from "@components/ModalEliminar"
-import { TablaContenedor } from "@components/Contenedores"
+import { Contenedor, TablaContenedor } from "@components/Contenedores"
 import { aMinuscula } from "@assets/utils/common"
 import { Financiador } from "@models/financiador.model"
 import { BtnAccion, BtnNeutro } from "@components/Botones"
 import { useSesion } from "@hooks/useSesion"
+import { Banner, estadoInicialBanner, mensajesBanner } from "@components/Banner"
 
 const Financiadores = () => {
   const { user, status } = useSesion()
   if (status !== "authenticated" || !user) return null
-  
+
   const router = useRouter()
   if (user.id_rol == 3) {
     router.push("/")
@@ -25,8 +26,9 @@ const Financiadores = () => {
   )
   const [idAEliminar, setIdAEliminar] = useState<number>(0)
   const [showModalEliminar, setShowModalEliminar] = useState<boolean>(false)
-  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [isLoading, setIsLoading] = useState<boolean>(true)
   const [inputBusqueda, setInputBusqueda] = useState<string>("")
+  const [showBanner, setShowBanner] = useState(estadoInicialBanner)
 
   useEffect(() => {
     obtenerTodos()
@@ -38,14 +40,17 @@ const Financiadores = () => {
   }
 
   const obtenerTodos = async () => {
-    setIsLoading(true)
-
     let url = `/financiadores`
     const res = await ApiCall.get(url)
     const { error, data, mensaje } = res
 
     if (error) {
       console.log(data)
+      setShowBanner({
+        mensaje: mensajesBanner.fallaApi,
+        show: true,
+        tipo: "error",
+      })
     } else {
       setResultadosDB(data as Financiador[])
       setResultadosFiltrados(data as Financiador[])
@@ -64,6 +69,11 @@ const Financiadores = () => {
 
     if (error) {
       console.log(data)
+      setShowBanner({
+        mensaje: mensajesBanner.fallaApi,
+        show: true,
+        tipo: "error",
+      })
     } else {
       await obtenerTodos()
     }
@@ -88,6 +98,22 @@ const Financiadores = () => {
       (financiador) => financiador.id === idAEliminar
     )
     return financiador ? financiador.nombre : ""
+  }
+
+  if (isLoading) {
+    return (
+      <Contenedor>
+        <Loader />
+      </Contenedor>
+    )
+  }
+
+  if (showBanner.show) {
+    return (
+      <Contenedor>
+        <Banner tipo={showBanner.tipo} mensaje={showBanner.mensaje} />
+      </Contenedor>
+    )
   }
 
   return (
@@ -124,81 +150,77 @@ const Financiadores = () => {
           </div>
         </div>
       </div>
-      {isLoading ? (
-        <Loader />
-      ) : (
-        <div className="row">
-          <div className="col-12 table-responsive">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>#Id</th>
-                  <th>Id Alt</th>
-                  <th>Nombre</th>
-                  <th>Tipo</th>
-                  <th>País</th>
-                  <th>Enlace</th>
-                  <th>Email</th>
-                  <th>Teléfono</th>
-                  <th>Página web</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {busquedaFiltrados.map((financiador) => {
-                  const {
-                    id,
-                    id_alt,
-                    nombre,
-                    tipo,
-                    pagina_web,
-                    enlace,
-                    direccion,
-                  } = financiador
+      <div className="row">
+        <div className="col-12 table-responsive">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>#Id</th>
+                <th>Id Alt</th>
+                <th>Nombre</th>
+                <th>Tipo</th>
+                <th>País</th>
+                <th>Enlace</th>
+                <th>Email</th>
+                <th>Teléfono</th>
+                <th>Página web</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {busquedaFiltrados.map((financiador) => {
+                const {
+                  id,
+                  id_alt,
+                  nombre,
+                  tipo,
+                  pagina_web,
+                  enlace,
+                  direccion,
+                } = financiador
 
-                  const nombreEnlace = `${enlace.nombre} ${enlace.apellido_paterno} ${enlace.apellido_materno}`
+                const nombreEnlace = `${enlace.nombre} ${enlace.apellido_paterno} ${enlace.apellido_materno}`
 
-                  return (
-                    <tr key={id}>
-                      <td>{id}</td>
-                      <td>{id_alt}</td>
-                      <td>{nombre}</td>
-                      <td>{tipo}</td>
-                      <td>{direccion.pais}</td>
-                      <td>{nombreEnlace}</td>
-                      <td>{enlace.email}</td>
-                      <td>{enlace.telefono}</td>
-                      <td className="textOverflowTd">
-                        <a href={`http://${pagina_web}`} target="_blank">
-                          {pagina_web}
-                        </a>
-                      </td>
-                      <td>
-                        <div className="d-flex">
+                return (
+                  <tr key={id}>
+                    <td>{id}</td>
+                    <td>{id_alt}</td>
+                    <td>{nombre}</td>
+                    <td>{tipo}</td>
+                    <td>{direccion.pais}</td>
+                    <td>{nombreEnlace}</td>
+                    <td>{enlace.email}</td>
+                    <td>{enlace.telefono}</td>
+                    <td className="textOverflowTd">
+                      <a href={`http://${pagina_web}`} target="_blank">
+                        {pagina_web}
+                      </a>
+                    </td>
+                    <td>
+                      <div className="d-flex">
+                        <BtnAccion
+                          margin={false}
+                          icono="bi-eye-fill"
+                          onclick={() => router.push(`/financiadores/${id}`)}
+                          title="ver detalle"
+                        />
+                        {user.id_rol == 1 && (
                           <BtnAccion
-                            margin={false}
-                            icono="bi-eye-fill"
-                            onclick={() => router.push(`/financiadores/${id}`)}
-                            title="ver detalle"
+                            margin="l"
+                            icono="bi-x-circle"
+                            onclick={() => abrirModalEliminar(id)}
+                            title="eliminar financiador"
                           />
-                          {user.id_rol == 1 && (
-                            <BtnAccion
-                              margin="l"
-                              icono="bi-x-circle"
-                              onclick={() => abrirModalEliminar(id)}
-                              title="eliminar financiador"
-                            />
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
         </div>
-      )}
+      </div>
       <ModalEliminar
         show={showModalEliminar}
         aceptar={eliminarFinanciador}
