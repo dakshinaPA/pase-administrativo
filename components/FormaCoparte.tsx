@@ -4,7 +4,11 @@ import { ChangeEvent } from "@assets/models/formEvents.model"
 import { Coparte, NotaCoparte } from "@models/coparte.model"
 import { UsuarioMin } from "@models/usuario.model"
 import { Loader } from "@components/Loader"
-import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
+import {
+  RegistroContenedor,
+  FormaContenedor,
+  Contenedor,
+} from "@components/Contenedores"
 import { BtnBack } from "@components/BtnBack"
 import { ApiCall } from "@assets/utils/apiCalls"
 import { useCatalogos } from "@contexts/catalogos.context"
@@ -20,6 +24,8 @@ import { TooltipInfo } from "./Tooltip"
 import { useErrores } from "@hooks/useErrores"
 import { MensajeError } from "./Mensajes"
 import { useSesion } from "@hooks/useSesion"
+import Link from "next/link"
+import { Banner, estadoInicialBanner } from "./Banner"
 
 type ActionTypes =
   | "CARGAR_DATA"
@@ -133,7 +139,8 @@ const FormaCoparte = () => {
   const [administardoresDB, setAdministardoresDB] = useState<UsuarioMin[]>([])
   const [mensajeNota, setMensajeNota] = useState<string>("")
   const { error, validarCampos, formRef } = useErrores()
-  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [showBanner, setShowBanner] = useState(estadoInicialBanner)
   const [modoEditar, setModoEditar] = useState<boolean>(!idCoparte)
   const modalidad = idCoparte ? "EDITAR" : "CREAR"
   const inputNota = useRef(null)
@@ -150,10 +157,8 @@ const FormaCoparte = () => {
   }, [estadoForma.i_estatus_legal])
 
   const cargarData = async () => {
-    setIsLoading(true)
-
     try {
-      const promesas = [obtenerUsuarios({ id_rol: 2 })]
+      const promesas = [obtenerUsuarios({ id_rol: 2, min: true })]
       if (modalidad === "EDITAR") {
         promesas.push(obtenerCopartes({ id: Number(idCoparte), min: false }))
       }
@@ -161,7 +166,7 @@ const FormaCoparte = () => {
       const resCombinadas = await Promise.all(promesas)
 
       for (const rc of resCombinadas) {
-        if (rc.error) throw rc.data
+        if (rc.error) throw rc
       }
 
       const adminsDB = resCombinadas[0].data as UsuarioMin[]
@@ -180,11 +185,16 @@ const FormaCoparte = () => {
           payload: ["id_administrador", adminsDB[0]?.id || 0],
         })
       }
-    } catch (error) {
-      console.log(error)
+    } catch ({ data, mensaje }) {
+      console.log(data)
+      setShowBanner({
+        mensaje,
+        show: true,
+        tipo: "error",
+      })
+    } finally {
+      setIsLoading(false)
     }
-
-    setIsLoading(false)
   }
 
   const registrar = async () => {
@@ -288,15 +298,21 @@ const FormaCoparte = () => {
     console.log(estadoForma)
 
     setIsLoading(true)
-    const res = modalidad === "EDITAR" ? await editar() : await registrar()
+    const { error, data, mensaje } =
+      modalidad === "EDITAR" ? await editar() : await registrar()
     setIsLoading(false)
 
-    if (res.error) {
-      console.log(res.data)
+    if (error) {
+      console.log(data)
+      setShowBanner({
+        mensaje,
+        show: true,
+        tipo: "error",
+      })
     } else {
       if (modalidad === "CREAR") {
         //@ts-ignore
-        router.push(`/copartes/${res.data.idInsertado}`)
+        router.push(`/copartes/${data.idInsertado}`)
       } else {
         setModoEditar(false)
       }
@@ -304,7 +320,19 @@ const FormaCoparte = () => {
   }
 
   if (isLoading) {
-    return <Loader />
+    return (
+      <Contenedor>
+        <Loader />
+      </Contenedor>
+    )
+  }
+
+  if (showBanner.show) {
+    return (
+      <Contenedor>
+        <Banner tipo={showBanner.tipo} mensaje={showBanner.mensaje} />
+      </Contenedor>
+    )
   }
 
   return (
@@ -639,20 +667,18 @@ const FormaCoparte = () => {
               <h2 className="color1 mb-0">Usuarios</h2>
               {(estadoForma.id_administrador == user.id ||
                 user.id_rol == 1) && (
-                <BtnNeutro
-                  margin={false}
-                  texto="Registrar +"
-                  width={false}
-                  onclick={() =>
-                    router.push(`/copartes/${idCoparte}/usuarios/registro`)
-                  }
-                />
+                <Link
+                  href={`/copartes/${idCoparte}/usuarios/registro`}
+                  className="btn btn-outline-secondary"
+                >
+                  Registrar +
+                </Link>
               )}
             </div>
             <div className="col-12 table-responsive">
               <table className="table">
                 <thead className="table-light">
-                  <tr>
+                  <tr className="color1">
                     <th>Nombre</th>
                     <th>Cargo</th>
                     <th>Email</th>
@@ -705,21 +731,20 @@ const FormaCoparte = () => {
           <div className="row mb-5">
             <div className="col-12 mb-3 d-flex justify-content-between">
               <h2 className="color1 mb-0">Proyectos</h2>
-              {estadoForma.id_administrador == user.id && (
-                <BtnNeutro
-                  margin={false}
-                  texto="Registrar +"
-                  width={false}
-                  onclick={() =>
-                    router.push(`/copartes/${idCoparte}/proyectos/registro`)
-                  }
-                />
-              )}
+              {estadoForma.id_administrador == user.id ||
+                (user.id_rol == 1 && (
+                  <Link
+                    href={`/copartes/${idCoparte}/proyectos/registro`}
+                    className="btn btn-outline-secondary"
+                  >
+                    Registrar +
+                  </Link>
+                ))}
             </div>
             <div className="col-12 table-responsive">
               <table className="table" ref={TblProyectos}>
                 <thead className="table-light">
-                  <tr>
+                  <tr className="color1">
                     <th>Id Alt</th>
                     <th>Nombre</th>
                     <th>Financiador</th>
@@ -777,7 +802,7 @@ const FormaCoparte = () => {
             <div className="col-12 table-responsive mb-3">
               <table className="table">
                 <thead className="table-light">
-                  <tr>
+                  <tr className="color1">
                     <th>Usuario</th>
                     <th>Mensaje</th>
                     <th>Fecha</th>

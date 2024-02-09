@@ -3,13 +3,14 @@ import { ApiCall } from "@assets/utils/apiCalls"
 import { useRouter } from "next/router"
 import { Loader } from "@components/Loader"
 import { ModalEliminar } from "@components/ModalEliminar"
-import { TablaContenedor } from "@components/Contenedores"
+import { Contenedor, TablaContenedor } from "@components/Contenedores"
 import { aMinuscula, obtenerCopartes } from "@assets/utils/common"
 import { Coparte, QueriesCoparte } from "@models/coparte.model"
-import { BtnAccion, BtnNeutro } from "@components/Botones"
+import { BtnAccion, BtnNeutro, LinkAccion } from "@components/Botones"
 import { useSesion } from "@hooks/useSesion"
+import { Banner, estadoInicialBanner } from "@components/Banner"
 
-const Financiadores = () => {
+const Copartes = () => {
   const { user, status } = useSesion()
   if (status !== "authenticated" || !user) return null
 
@@ -22,8 +23,9 @@ const Financiadores = () => {
   const [resultadosDB, setResultadosDB] = useState<Coparte[]>([])
   const [idAEliminar, setIdAEliminar] = useState<number>(0)
   const [showModalEliminar, setShowModalEliminar] = useState<boolean>(false)
-  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [isLoading, setIsLoading] = useState<boolean>(true)
   const [inputBusqueda, setInputBusqueda] = useState<string>("")
+  const [showBanner, setShowBanner] = useState(estadoInicialBanner)
 
   useEffect(() => {
     obtenerTodos()
@@ -35,8 +37,6 @@ const Financiadores = () => {
   }
 
   const obtenerTodos = async () => {
-    setIsLoading(true)
-
     const queryCopartes: QueriesCoparte =
       user.id_rol == 2 ? { id_admin: user.id, min: false } : { min: false }
 
@@ -44,6 +44,11 @@ const Financiadores = () => {
 
     if (error) {
       console.log(data)
+      setShowBanner({
+        mensaje,
+        show: true,
+        tipo: "error",
+      })
     } else {
       setResultadosDB(data as Coparte[])
     }
@@ -61,6 +66,11 @@ const Financiadores = () => {
 
     if (error) {
       console.log(data)
+      setShowBanner({
+        mensaje,
+        show: true,
+        tipo: "error",
+      })
     } else {
       await obtenerTodos()
     }
@@ -87,6 +97,22 @@ const Financiadores = () => {
   const determinarNombreAEliminar = (): string => {
     const coparte = resultadosDB.find((coparte) => coparte.id === idAEliminar)
     return coparte ? coparte.nombre : ""
+  }
+
+  if (isLoading) {
+    return (
+      <Contenedor>
+        <Loader />
+      </Contenedor>
+    )
+  }
+
+  if (showBanner.show) {
+    return (
+      <Contenedor>
+        <Banner tipo={showBanner.tipo} mensaje={showBanner.mensaje} />
+      </Contenedor>
+    )
   }
 
   return (
@@ -117,99 +143,85 @@ const Financiadores = () => {
           </div>
         </div>
       </div>
-      {isLoading ? (
-        <Loader />
-      ) : (
-        <div className="row">
-          <div className="col-12 table-responsive">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>#id</th>
-                  <th>Alt id</th>
-                  <th>Nombre</th>
-                  <th>Nombre corto</th>
-                  <th>Estatus legal</th>
-                  <th>RFC</th>
-                  <th>Representante legal</th>
-                  <th>Administrador</th>
-                  {/* <th>Proyectos activos</th> */}
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {busquedaFiltrados.map((coparte) => {
-                  const {
-                    id,
-                    id_alt,
-                    nombre,
-                    nombre_corto,
-                    i_estatus_legal,
-                    estatus_legal,
-                    rfc,
-                    representante_legal,
-                    administrador,
-                  } = coparte
+      <div className="row">
+        <div className="col-12 table-responsive">
+          <table className="table">
+            <thead className="table-light">
+              <tr className="color1">
+                <th>#id</th>
+                <th>Alt id</th>
+                <th>Nombre</th>
+                <th>Nombre corto</th>
+                <th>Estatus legal</th>
+                <th>RFC</th>
+                <th>Representante legal</th>
+                <th>Administrador</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {busquedaFiltrados.map((coparte) => {
+                const {
+                  id,
+                  id_alt,
+                  nombre,
+                  nombre_corto,
+                  i_estatus_legal,
+                  estatus_legal,
+                  rfc,
+                  representante_legal,
+                  administrador,
+                } = coparte
 
-                  return (
-                    <tr key={id}>
-                      <td>{id}</td>
-                      <td>{id_alt}</td>
-                      <td>{nombre}</td>
-                      <td>{nombre_corto}</td>
-                      <td>{estatus_legal}</td>
-                      <td>{i_estatus_legal === 1 ? rfc : "NA"}</td>
-                      <td>
-                        {i_estatus_legal === 1 ? representante_legal : "NA"}
-                      </td>
-                      <td>{administrador}</td>
-                      {/* <td>...</td> */}
-                      <td>
-                        <div className="d-flex">
-                          <BtnAccion
-                            margin={false}
-                            icono="bi bi-eye-fill"
-                            onclick={() => router.push(`/copartes/${id}`)}
-                            title="ver detalle"
-                          />
+                return (
+                  <tr key={id}>
+                    <td>{id}</td>
+                    <td>{id_alt}</td>
+                    <td>{nombre}</td>
+                    <td>{nombre_corto}</td>
+                    <td>{estatus_legal}</td>
+                    <td>{i_estatus_legal === 1 ? rfc : "NA"}</td>
+                    <td>
+                      {i_estatus_legal === 1 ? representante_legal : "NA"}
+                    </td>
+                    <td>{administrador}</td>
+                    <td>
+                      <div className="d-flex">
+                        <LinkAccion
+                          margin={false}
+                          icono="bi-eye-fill"
+                          ruta={`/copartes/${id}`}
+                          title="ver detalle"
+                        />
+                        <LinkAccion
+                          margin="l"
+                          icono="bi bi-person-plus"
+                          ruta={`/copartes/${id}/usuarios/registro`}
+                          title="registrar usuario"
+                        />
+                        <LinkAccion
+                          margin="l"
+                          icono="bi bi-file-earmark-text"
+                          ruta={`/copartes/${id}/proyectos/registro`}
+                          title="registrar proyecto"
+                        />
+                        {user.id_rol == 1 && (
                           <BtnAccion
                             margin="l"
-                            icono="bi bi-person-plus"
-                            onclick={() =>
-                              router.push(`/copartes/${id}/usuarios/registro`)
-                            }
-                            title="registrar usuario"
+                            icono="bi bi-x-circle"
+                            onclick={() => abrirModalEliminar(id)}
+                            title="eliminar coparte"
                           />
-                          {user.id_rol == 2 && (
-                            <BtnAccion
-                              margin="l"
-                              icono="bi bi-file-earmark-text"
-                              onclick={() =>
-                                router.push(
-                                  `/copartes/${id}/proyectos/registro`
-                                )
-                              }
-                              title="registrar proyecto"
-                            />
-                          )}
-                          {user.id_rol == 1 && (
-                            <BtnAccion
-                              margin="l"
-                              icono="bi bi-x-circle"
-                              onclick={() => abrirModalEliminar(id)}
-                              title="eliminar usuario"
-                            />
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
         </div>
-      )}
+      </div>
       <ModalEliminar
         show={showModalEliminar}
         aceptar={eliminarFinanciador}
@@ -223,4 +235,4 @@ const Financiadores = () => {
   )
 }
 
-export default Financiadores
+export default Copartes

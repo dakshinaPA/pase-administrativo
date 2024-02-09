@@ -21,7 +21,7 @@ class CopartesServices {
     if (re.error) {
       return RespuestaController.fallida(
         400,
-        "Error al obtener copartes, contactar a soporte",
+        `Error al obtener coparte${id_coparte ? "" : "s"}, contactar a soporte`,
         re.data
       )
     }
@@ -78,7 +78,9 @@ class CopartesServices {
     } catch (error) {
       return RespuestaController.fallida(
         400,
-        "Error al obtener copartes",
+        `Error al obtener ${
+          id_coparte ? "coparte" : "copartes"
+        }, contactar a soporte`,
         error
       )
     }
@@ -92,7 +94,11 @@ class CopartesServices {
         idInsertado: idCoparte,
       })
     } catch (error) {
-      return RespuestaController.fallida(400, "Error al crear coparte", error)
+      return RespuestaController.fallida(
+        400,
+        "Error al crear coparte, contactar a soporte",
+        error
+      )
     }
   }
 
@@ -108,7 +114,7 @@ class CopartesServices {
     } catch (error) {
       return RespuestaController.fallida(
         400,
-        "Error al actualziar coparte",
+        "Error al actualizar coparte, contactar a soporte",
         error
       )
     }
@@ -120,7 +126,7 @@ class CopartesServices {
     if (res.error) {
       return RespuestaController.fallida(
         400,
-        "Error al borrar coparte",
+        "Error al borrar coparte, contactar a soporte",
         res.data
       )
     }

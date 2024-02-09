@@ -6,7 +6,7 @@ import { ModalEliminar } from "@components/ModalEliminar"
 import { Contenedor, TablaContenedor } from "@components/Contenedores"
 import { aMinuscula } from "@assets/utils/common"
 import { Financiador } from "@models/financiador.model"
-import { BtnAccion, BtnNeutro } from "@components/Botones"
+import { BtnAccion, BtnNeutro, LinkAccion } from "@components/Botones"
 import { useSesion } from "@hooks/useSesion"
 import { Banner, estadoInicialBanner, mensajesBanner } from "@components/Banner"
 
@@ -153,8 +153,8 @@ const Financiadores = () => {
       <div className="row">
         <div className="col-12 table-responsive">
           <table className="table">
-            <thead>
-              <tr>
+            <thead className="table-light">
+              <tr className="color1">
                 <th>#Id</th>
                 <th>Id Alt</th>
                 <th>Nombre</th>
@@ -198,10 +198,10 @@ const Financiadores = () => {
                     </td>
                     <td>
                       <div className="d-flex">
-                        <BtnAccion
+                        <LinkAccion
                           margin={false}
                           icono="bi-eye-fill"
-                          onclick={() => router.push(`/financiadores/${id}`)}
+                          ruta={`/financiadores/${id}`}
                           title="ver detalle"
                         />
                         {user.id_rol == 1 && (

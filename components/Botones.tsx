@@ -128,9 +128,10 @@ const BtnAccion = ({ margin, onclick, icono, title }: PropsBtnAccion) => {
 interface PropsLinkAccion extends Btn {
   icono: string
   ruta: string
+  title?: string
 }
 
-const LinkAccion = ({ margin, ruta, icono }: PropsLinkAccion) => {
+const LinkAccion = ({ margin, ruta, icono, title }: PropsLinkAccion) => {
   const margen = () => {
     switch (margin) {
       case "l":
@@ -146,7 +147,7 @@ const LinkAccion = ({ margin, ruta, icono }: PropsLinkAccion) => {
   if (margin) clases += ` ${margen()}`
 
   return (
-    <Link href={ruta} className={clases}>
+    <Link href={ruta} className={clases} title={title}>
       <i className={`bi ${icono}`}></i>
     </Link>
   )

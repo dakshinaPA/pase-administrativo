@@ -11,7 +11,7 @@ import {
 } from "@assets/utils/common"
 import { IdRolUsuario, QueriesUsuario, Usuario } from "@models/usuario.model"
 import { CoparteMin, QueriesCoparte } from "@models/coparte.model"
-import { BtnAccion, BtnNeutro } from "@components/Botones"
+import { BtnAccion, BtnNeutro, LinkAccion } from "@components/Botones"
 import { useSesion } from "@hooks/useSesion"
 import { Banner, estadoInicialBanner } from "@components/Banner"
 
@@ -235,8 +235,8 @@ const Usuarios = () => {
       <div className="row">
         <div className="col-12 table-responsive">
           <table className="table">
-            <thead>
-              <tr>
+            <thead className="table-light">
+              <tr className="color1">
                 <th>#id</th>
                 <th>Nombre</th>
                 <th>Email</th>
@@ -284,10 +284,10 @@ const Usuarios = () => {
                     )}
                     <td>
                       <div className="d-flex">
-                        <BtnAccion
+                        <LinkAccion
                           margin={false}
                           icono="bi-eye-fill"
-                          onclick={() => router.push(`/usuarios/${id}`)}
+                          ruta={`/usuarios/${id}`}
                           title="ver detalle"
                         />
                         {user.id_rol == 1 && (
