@@ -116,7 +116,7 @@ class ColaboradorServices {
     } catch (error) {
       return RespuestaController.fallida(
         400,
-        "Error al actualziar colaborador",
+        "Error al actualizar colaborador, contactar a soporte",
         error
       )
     }

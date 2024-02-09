@@ -9,12 +9,12 @@ const ModalEliminar = ({ children, show, cancelar, aceptar }) => {
   return (
     <FondoNegro>
       <div className={styles.modal}>
-        <div className="bg1 text-white p-2">
+        <div className="bg1 text-white p-3">
           <h5 className="m-0">Confirmarción eliminar</h5>
         </div>
-        <div className="px-2 py-3">{children}</div>
+        <div className="p-3">{children}</div>
         <hr className="m-0" />
-        <div className="p-2 text-end">
+        <div className="p-3 text-end">
           <button
             type="button"
             className="btn btn-outline-danger"

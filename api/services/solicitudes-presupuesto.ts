@@ -7,7 +7,6 @@ import {
 import {
   SolicitudPresupuesto,
   TipoGastoSolicitud,
-  EstatusSolicitud,
   ComprobanteSolicitud,
   QueriesSolicitud,
   PayloadCambioEstatus,
@@ -77,7 +76,7 @@ class SolicitudesPresupuestoServices {
       ...comprobanteRes,
       metodo_pago: obtenerMetodoPago(comprobanteRes.i_metodo_pago),
       id_regimen_fiscal_receptor: 2,
-      uso_cfdi: "G03"
+      uso_cfdi: "G03",
     }
   }
 
@@ -108,7 +107,7 @@ class SolicitudesPresupuestoServices {
     } catch (error) {
       return RespuestaController.fallida(
         400,
-        "Error al obtener solicitudes de presupuesto",
+        "Error al obtener solicitudes de presupuesto, contactar a soporte",
         error?.message || error
       )
     }
@@ -133,7 +132,7 @@ class SolicitudesPresupuestoServices {
     } catch (error) {
       return RespuestaController.fallida(
         400,
-        "Error al obtener solicitudes de presupuesto",
+        "Error al obtener solicitud de presupuesto, contactar a soporte",
         error?.message || error
       )
     }
@@ -151,7 +150,7 @@ class SolicitudesPresupuestoServices {
     } catch (error) {
       return RespuestaController.fallida(
         400,
-        "Error al crear solicitud de presupuesto",
+        "Error al crear solicitud de presupuesto, contactar a soporte",
         error
       )
     }
@@ -169,7 +168,7 @@ class SolicitudesPresupuestoServices {
     } catch (error) {
       return RespuestaController.fallida(
         400,
-        "Error al actualizar solicitud de presupuesto",
+        "Error al actualizar solicitud de presupuesto, contactar a soporte",
         error
       )
     }
@@ -180,7 +179,7 @@ class SolicitudesPresupuestoServices {
     if (dl.error) {
       return RespuestaController.fallida(
         400,
-        "Error al borrar solicitud de presupuesto",
+        "Error al borrar solicitud de presupuesto, contactar a soporte",
         dl.data
       )
     }
@@ -227,7 +226,7 @@ class SolicitudesPresupuestoServices {
     if (up.error) {
       return RespuestaController.fallida(
         400,
-        "Error al actualziar estatus de solicitudes de presupuesto",
+        "Error al actualizar estatus de solicitudes de presupuesto, contactar a soporte",
         up.data
       )
     }

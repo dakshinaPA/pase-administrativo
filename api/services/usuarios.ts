@@ -115,7 +115,7 @@ class UsuariosServices {
     } catch (error) {
       return RespuestaController.fallida(
         400,
-        "Error al actualziar usuario, contactar a soporte",
+        "Error al actualizar usuario, contactar a soporte",
         error
       )
     }

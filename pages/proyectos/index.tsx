@@ -10,7 +10,7 @@ import {
   obtenerProyectos,
 } from "@assets/utils/common"
 import { Proyecto, QueriesProyecto } from "@models/proyecto.model"
-import { BtnAccion, BtnNeutro } from "@components/Botones"
+import { BtnAccion, BtnNeutro, LinkAccion } from "@components/Botones"
 import { Banner, estadoInicialBanner, mensajesBanner } from "@components/Banner"
 import { useSesion } from "@hooks/useSesion"
 
@@ -36,8 +36,6 @@ const Financiadores = () => {
   }
 
   const cargarData = async () => {
-    setIsLoading(true)
-
     try {
       //setear copartes para filtrar si es admin o superu usuario
       let queries: QueriesProyecto = { min: false }
@@ -49,7 +47,7 @@ const Financiadores = () => {
       }
 
       const reProyectos = await obtenerProyectos(queries)
-      if (reProyectos.error) throw reProyectos.data
+      if (reProyectos.error) throw reProyectos
 
       const proyectos = reProyectos.data as Proyecto[]
       setProyectosDB(proyectos)
@@ -60,10 +58,10 @@ const Financiadores = () => {
           tipo: "warning",
         })
       }
-    } catch (error) {
+    } catch ({ error, mensaje }) {
       console.log(error)
       setShowBanner({
-        mensaje: mensajesBanner.fallaApi,
+        mensaje,
         show: true,
         tipo: "error",
       })
@@ -83,8 +81,13 @@ const Financiadores = () => {
 
     if (error) {
       console.log(data)
+      setShowBanner({
+        mensaje,
+        show: true,
+        tipo: "error",
+      })
     } else {
-      // await cargarData()
+      await cargarData()
     }
 
     setIsLoading(false)
@@ -156,8 +159,8 @@ const Financiadores = () => {
       <div className="row">
         <div className="col-12 table-responsive">
           <table className="table">
-            <thead>
-              <tr>
+            <thead className="table-light">
+              <tr className="color1">
                 <th>#id</th>
                 <th>Alt id</th>
                 <th>Nombre</th>
@@ -222,46 +225,30 @@ const Financiadores = () => {
                     <td>{`${saldo.p_avance}%`}</td>
                     <td>
                       <div className="d-flex">
-                        <BtnAccion
+                        <LinkAccion
                           margin={false}
                           icono="bi-eye-fill"
-                          onclick={() =>
-                            router.push(
-                              `/copartes/${id_coparte}/proyectos/${id}`
-                            )
-                          }
+                          ruta={`/copartes/${id_coparte}/proyectos/${id}`}
                           title="ver detalle"
                         />
                         {user.id == id_responsable && (
                           <>
-                            <BtnAccion
+                            <LinkAccion
                               margin="l"
                               icono="bi-ui-checks"
-                              onclick={() =>
-                                router.push(
-                                  `/proyectos/${id}/solicitudes-presupuesto/registro`
-                                )
-                              }
+                              ruta={`/proyectos/${id}/solicitudes-presupuesto/registro`}
                               title="registrar solicitud"
                             />
-                            <BtnAccion
+                            <LinkAccion
                               margin="l"
                               icono="bi-person-plus"
-                              onclick={() =>
-                                router.push(
-                                  `/proyectos/${id}/colaboradores/registro`
-                                )
-                              }
+                              ruta={`/proyectos/${id}/colaboradores/registro`}
                               title="registrar colaborador"
                             />
-                            <BtnAccion
+                            <LinkAccion
                               margin="l"
                               icono="bi-person-plus-fill"
-                              onclick={() =>
-                                router.push(
-                                  `/proyectos/${id}/proveedores/registro`
-                                )
-                              }
+                              ruta={`/proyectos/${id}/proveedores/registro`}
                               title="registrar proveedor"
                             />
                           </>

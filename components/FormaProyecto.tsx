@@ -3,7 +3,11 @@ import { ChangeEvent } from "@assets/models/formEvents.model"
 import { NotaProyecto, Proyecto } from "@models/proyecto.model"
 import { FinanciadorMin } from "@models/financiador.model"
 import { Loader } from "@components/Loader"
-import { RegistroContenedor, FormaContenedor } from "@components/Contenedores"
+import {
+  RegistroContenedor,
+  FormaContenedor,
+  Contenedor,
+} from "@components/Contenedores"
 import { BtnBack } from "@components/BtnBack"
 import { ApiCall } from "@assets/utils/apiCalls"
 import { CoparteMin, QueriesCoparte } from "@models/coparte.model"
@@ -24,6 +28,7 @@ import {
   BtnEditar,
   BtnNeutro,
   BtnRegistrar,
+  LinkAccion,
 } from "./Botones"
 import {
   ActionTypes,
@@ -38,6 +43,8 @@ import { Toast } from "./Toast"
 import { useToast } from "@hooks/useToasts"
 import { UsuarioMin } from "@models/usuario.model"
 import { PieChart } from "./PieChart"
+import { Banner, estadoInicialBanner } from "./Banner"
+import Link from "next/link"
 
 const TablaMinistraciones = () => {
   const {
@@ -65,7 +72,7 @@ const TablaMinistraciones = () => {
     <div className="col-12 col-md table-responsive mb-3">
       <table className="table">
         <thead className="table-light">
-          <tr>
+          <tr className="color1">
             <th>Número</th>
             <th>Grupo</th>
             <th>Fecha de recepción</th>
@@ -222,20 +229,18 @@ const Colaboradores = () => {
       <div className="col-12 mb-3 d-flex justify-content-between">
         <h3 className="color1 mb-0">Colaboradores</h3>
         {user.id == estadoForma.id_responsable && (
-          <BtnNeutro
-            texto="Registrar +"
-            onclick={() =>
-              router.push(`/proyectos/${idProyecto}/colaboradores/registro`)
-            }
-            margin={false}
-            width={false}
-          />
+          <Link
+            href={`/proyectos/${idProyecto}/colaboradores/registro`}
+            className="btn btn-outline-secondary"
+          >
+            Registrar +
+          </Link>
         )}
       </div>
       <div className="col-12 table-responsive">
         <table className="table">
           <thead className="table-light">
-            <tr>
+            <tr className="color1">
               <th>Id empleado</th>
               <th>Nombre</th>
               <th>Tipo</th>
@@ -270,14 +275,10 @@ const Colaboradores = () => {
                   <td>{banco}</td>
                   <td>{telefono}</td>
                   <td>
-                    <BtnAccion
+                    <LinkAccion
                       margin={false}
-                      icono="bi bi-eye-fill"
-                      onclick={() =>
-                        router.push(
-                          `/proyectos/${idProyecto}/colaboradores/${id}`
-                        )
-                      }
+                      icono="bi-eye-fill"
+                      ruta={`/proyectos/${idProyecto}/colaboradores/${id}`}
                       title="ver colaborador"
                     />
                   </td>
@@ -299,20 +300,18 @@ const Proveedores = () => {
       <div className="col-12 mb-3 d-flex justify-content-between">
         <h3 className="color1 mb-0">Proveedores</h3>
         {user.id == estadoForma.id_responsable && (
-          <BtnNeutro
-            texto="Registrar +"
-            onclick={() =>
-              router.push(`/proyectos/${idProyecto}/proveedores/registro`)
-            }
-            margin={false}
-            width={false}
-          />
+          <Link
+            href={`/proyectos/${idProyecto}/proveedores/registro`}
+            className="btn btn-outline-secondary"
+          >
+            Registrar +
+          </Link>
         )}
       </div>
       <div className="col-12 table-responsive">
         <table className="table">
           <thead className="table-light">
-            <tr>
+            <tr className="color1">
               <th>Nombre</th>
               <th>Tipo</th>
               <th>Servicio</th>
@@ -346,14 +345,10 @@ const Proveedores = () => {
                   <td>{clabe || account_number}</td>
                   <td>{banco || bank}</td>
                   <td>
-                    <BtnAccion
+                    <LinkAccion
                       margin={false}
-                      icono="bi bi-eye-fill"
-                      onclick={() =>
-                        router.push(
-                          `/proyectos/${idProyecto}/proveedores/${id}`
-                        )
-                      }
+                      icono="bi-eye-fill"
+                      ruta={`/proyectos/${idProyecto}/proveedores/${id}`}
                       title="ver proveedor"
                     />
                   </td>
@@ -375,16 +370,12 @@ const SolicitudesPresupuesto = () => {
       <div className="col-12 mb-3 d-flex justify-content-between">
         <h3 className="color1 mb-0">Solicitudes de presupuesto</h3>
         {user.id == estadoForma.id_responsable && (
-          <BtnNeutro
-            texto="Registrar +"
-            onclick={() =>
-              router.push(
-                `/proyectos/${idProyecto}/solicitudes-presupuesto/registro`
-              )
-            }
-            margin={false}
-            width={false}
-          />
+          <Link
+            href={`/proyectos/${idProyecto}/solicitudes-presupuesto/registro`}
+            className="btn btn-outline-secondary"
+          >
+            Registrar +
+          </Link>
         )}
       </div>
       <div
@@ -393,7 +384,7 @@ const SolicitudesPresupuesto = () => {
       >
         <table className="table">
           <thead className="table-light">
-            <tr>
+            <tr className="color1">
               <th>Tipo gasto</th>
               <th>Partida presupuestal</th>
               <th>Descripción gasto</th>
@@ -435,14 +426,10 @@ const SolicitudesPresupuesto = () => {
                     </span>
                   </td>
                   <td>
-                    <BtnAccion
+                    <LinkAccion
                       margin={false}
-                      icono="bi bi-eye-fill"
-                      onclick={() =>
-                        router.push(
-                          `/proyectos/${idProyecto}/solicitudes-presupuesto/${id}`
-                        )
-                      }
+                      icono="bi-eye-fill"
+                      ruta={`/proyectos/${idProyecto}/solicitudes-presupuesto/${id}`}
                       title="ver proveedor"
                     />
                   </td>
@@ -503,7 +490,7 @@ const Notas = () => {
       <div className="col-12 table-responsive mb-3">
         <table className="table">
           <thead className="table-light">
-            <tr>
+            <tr className="color1">
               <th>Usuario</th>
               <th>Mensaje</th>
               <th>Fecha</th>
@@ -565,8 +552,9 @@ const FormaProyecto = () => {
   const [copartesDB, setCopartesDB] = useState<CoparteMin[]>([])
   const [usuariosCoparteDB, setUsuariosCoparteDB] = useState<UsuarioMin[]>([])
   const { error, validarCampos, formRef } = useErrores()
-  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [isLoading, setIsLoading] = useState<boolean>(true)
   const { toastState, mostrarToast, cerrarToast } = useToast()
+  const [showBanner, setShowBanner] = useState(estadoInicialBanner)
 
   useEffect(() => {
     cargarData()
@@ -577,8 +565,6 @@ const FormaProyecto = () => {
   }, [estadoForma.id_coparte])
 
   const cargarData = async () => {
-    setIsLoading(true)
-
     try {
       if (modalidad == "CREAR") {
         const queryCopartes: QueriesCoparte = {}
@@ -596,7 +582,7 @@ const FormaProyecto = () => {
         const resCombinadas = await Promise.all(promesas)
 
         for (const rc of resCombinadas) {
-          if (rc.error) throw rc.data
+          if (rc.error) throw rc
         }
 
         const financiaodresDB = resCombinadas[0].data as FinanciadorMin[]
@@ -617,7 +603,7 @@ const FormaProyecto = () => {
           id: idProyecto,
           min: false,
         })
-        if (reProyecto.error) throw reProyecto.data
+        if (reProyecto.error) throw reProyecto
 
         const proyecto = reProyecto.data as Proyecto
         dispatch({
@@ -625,11 +611,16 @@ const FormaProyecto = () => {
           payload: proyecto,
         })
       }
-    } catch (error) {
-      console.log(error)
+    } catch ({ data, mensaje }) {
+      console.log(data)
+      setShowBanner({
+        mensaje,
+        show: true,
+        tipo: "error",
+      })
+    } finally {
+      setIsLoading(false)
     }
-
-    setIsLoading(false)
   }
 
   const cargarUsuariosCoparte = async () => {
@@ -638,12 +629,20 @@ const FormaProyecto = () => {
 
     setIsLoading(true)
 
-    const reUsCoDB = await obtenerUsuarios({ id_coparte: idCoparte, min: true })
+    const { error, data, mensaje } = await obtenerUsuarios({
+      id_coparte: idCoparte,
+      min: true,
+    })
 
-    if (reUsCoDB.error) {
-      console.log(reUsCoDB.data)
+    if (error) {
+      console.log(data)
+      setShowBanner({
+        mensaje,
+        show: true,
+        tipo: "error",
+      })
     } else {
-      const usuariosCoparte = reUsCoDB.data as UsuarioMin[]
+      const usuariosCoparte = data as UsuarioMin[]
       setUsuariosCoparteDB(usuariosCoparte)
 
       if (modalidad === "CREAR") {
@@ -746,12 +745,13 @@ const FormaProyecto = () => {
 
     if (error) {
       console.log(data)
+      setShowBanner({
+        mensaje,
+        show: true,
+        tipo: "error",
+      })
     } else {
       if (modalidad === "CREAR") {
-        // router.push(
-        //   //@ts-ignore
-        //   `/copartes/${estadoForma.id_coparte}/proyectos/${data.idInsertado}`
-        // )
         router.push("/proyectos")
       } else {
         const reProyectoActualizado = await obtenerProyectos({
@@ -787,9 +787,20 @@ const FormaProyecto = () => {
     (estadoForma.id_administrador == user.id || user.id_rol == 1)
 
   if (isLoading) {
-    return <Loader />
+    return (
+      <Contenedor>
+        <Loader />
+      </Contenedor>
+    )
   }
 
+  if (showBanner.show) {
+    return (
+      <Contenedor>
+        <Banner tipo={showBanner.tipo} mensaje={showBanner.mensaje} />
+      </Contenedor>
+    )
+  }
   return (
     <RegistroContenedor>
       <div className="row mb-3">

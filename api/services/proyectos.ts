@@ -11,7 +11,11 @@ import {
 } from "@models/proyecto.model"
 
 import { ResProyectos } from "@api/models/proyecto.model"
-import { epochAFecha, obtenerEstatusSolicitud, textoMayusculaSinAcentos } from "@assets/utils/common"
+import {
+  epochAFecha,
+  obtenerEstatusSolicitud,
+  textoMayusculaSinAcentos,
+} from "@assets/utils/common"
 import { SolicitudesPresupuestoServices } from "./solicitudes-presupuesto"
 
 class ProyectosServices {
@@ -24,7 +28,7 @@ class ProyectosServices {
     } catch (error) {
       return RespuestaController.fallida(
         400,
-        "Error al obtener financiadores",
+        "Error al obtener proyectos, contactar a soporte",
         error
       )
     }
@@ -73,7 +77,7 @@ class ProyectosServices {
           )
           const f_comprobado_excepciones = solicitudes.reduce(
             (acum, { i_tipo_gasto, f_importe, id_partida_presupuestal }) => {
-              if(i_tipo_gasto == 3 || id_partida_presupuestal == 22){
+              if (i_tipo_gasto == 3 || id_partida_presupuestal == 22) {
                 return acum + Number(f_importe)
               }
               return acum
@@ -84,7 +88,8 @@ class ProyectosServices {
             (acum, { f_total }) => acum + Number(f_total),
             0
           )
-          const f_comprobado = f_comprobado_excepciones + f_comprobado_comprobantes
+          const f_comprobado =
+            f_comprobado_excepciones + f_comprobado_comprobantes
           const f_transferido = solicitudes
             .filter((sol) => sol.i_estatus == 4)
             .reduce((acum, { f_importe }) => acum + Number(f_importe), 0)
@@ -98,7 +103,8 @@ class ProyectosServices {
             (acum, { f_retenciones }) => acum + Number(f_retenciones),
             0
           )
-          const f_retenciones = f_retenciones_solicitudes + f_retenciones_comprobantes
+          const f_retenciones =
+            f_retenciones_solicitudes + f_retenciones_comprobantes
 
           const f_por_comprobar = f_solicitado - f_comprobado
           const f_isr = f_por_comprobar * 0.35
@@ -138,7 +144,7 @@ class ProyectosServices {
     } catch (error) {
       return RespuestaController.fallida(
         400,
-        "Error al obtener proyectos",
+        "Error al obtener proyectos, contactar a soporte",
         error
       )
     }
@@ -174,7 +180,7 @@ class ProyectosServices {
       )
       const f_comprobado_excepciones = solicitudes.reduce(
         (acum, { i_tipo_gasto, f_importe, id_partida_presupuestal }) => {
-          if(i_tipo_gasto == 3 || id_partida_presupuestal == 22){
+          if (i_tipo_gasto == 3 || id_partida_presupuestal == 22) {
             return acum + Number(f_importe)
           }
           return acum
@@ -198,7 +204,8 @@ class ProyectosServices {
         (acum, { f_retenciones }) => acum + Number(f_retenciones),
         0
       )
-      const f_retenciones = f_retenciones_solicitudes + f_retenciones_comprobantes
+      const f_retenciones =
+        f_retenciones_solicitudes + f_retenciones_comprobantes
 
       const f_por_comprobar = f_solicitado - f_comprobado
       const f_isr = f_por_comprobar * 0.35
@@ -255,7 +262,7 @@ class ProyectosServices {
       const proveedoresHyd = proveedores.map((prov) => ({
         ...prov,
         tipo: ProveedorServices.obtenerTipo(prov.i_tipo),
-        nombre: textoMayusculaSinAcentos(prov.nombre)
+        nombre: textoMayusculaSinAcentos(prov.nombre),
       }))
 
       const solicitudesHyd = solicitudes.map((sol) => {
@@ -282,7 +289,7 @@ class ProyectosServices {
     } catch (error) {
       return RespuestaController.fallida(
         400,
-        "Error al obtener financiadores",
+        "Error al obtener proyecto, contactar a soporte",
         error
       )
     }
@@ -312,7 +319,7 @@ class ProyectosServices {
     } catch (error) {
       return RespuestaController.fallida(
         400,
-        "Error al obtener data del proyecto",
+        "Error al obtener datos del proyecto, contactar a soporte",
         error
       )
     }
@@ -326,7 +333,11 @@ class ProyectosServices {
         idInsertado: cr,
       })
     } catch (error) {
-      return RespuestaController.fallida(400, "Error al crear proyecto", error)
+      return RespuestaController.fallida(
+        400,
+        "Error al crear proyecto, contactar a soporte",
+        error
+      )
     }
   }
 
@@ -342,7 +353,7 @@ class ProyectosServices {
     } catch (error) {
       return RespuestaController.fallida(
         400,
-        "Error al actualziar proyecto",
+        "Error al actualizar proyecto, contactar a soporte",
         error
       )
     }
@@ -352,7 +363,11 @@ class ProyectosServices {
     const dl = await ProyectoDB.borrar(id)
 
     if (dl.error) {
-      return RespuestaController.fallida(400, "Error al borrar proyecto", null)
+      return RespuestaController.fallida(
+        400,
+        "Error al borrar proyecto, contactar a soporte",
+        null
+      )
     }
     return RespuestaController.exitosa(
       200,
@@ -367,7 +382,7 @@ class ProyectosServices {
     if (re.error) {
       return RespuestaController.fallida(
         400,
-        "Error al obtener notas del financiador",
+        "Error al obtener notas del proyecto",
         re.data
       )
     }

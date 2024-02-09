@@ -4,4 +4,6 @@
     margin: auto;
     background-color: white;
     margin-top: 8rem;
+    border-radius: 5px;
+    overflow: hidden;
 }

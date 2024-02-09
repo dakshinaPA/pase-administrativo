@@ -20,7 +20,7 @@ class FinanciadoresServices {
     if (re.error) {
       return RespuestaController.fallida(
         400,
-        "Error al obtener financiadores",
+        "Error al obtener financiadores, contactar a soporte",
         re.data
       )
     }
@@ -119,7 +119,7 @@ class FinanciadoresServices {
     } catch (error) {
       return RespuestaController.fallida(
         400,
-        "Error al actualziar financiador, contactar a soporte",
+        "Error al actualizar financiador, contactar a soporte",
         error
       )
     }

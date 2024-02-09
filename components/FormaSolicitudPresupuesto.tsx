@@ -203,7 +203,7 @@ const Notas = ({ notas, dispatch, user }) => {
       <div className="col-12 table-responsive mb-3">
         <table className="table">
           <thead className="table-light">
-            <tr>
+            <tr className="color1">
               <th>Usuario</th>
               <th>Mensaje</th>
               <th>Fecha</th>

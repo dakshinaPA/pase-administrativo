@@ -22,7 +22,7 @@ import { BtnAccion, BtnNeutro, LinkAccion } from "@components/Botones"
 import { Filtros } from "@components/FiltrosSolicitudes"
 import styles from "@components/styles/Filtros.module.css"
 import { useSesion } from "@hooks/useSesion"
-import { Banner, estadoInicialBanner, mensajesBanner } from "@components/Banner"
+import { Banner, estadoInicialBanner } from "@components/Banner"
 
 interface SolicitudPresupuestoVista extends SolicitudPresupuesto {
   checked: boolean
@@ -94,7 +94,7 @@ const SolicitudesPresupuesto = () => {
 
       setIsLoading(true)
       const reSolicitudes = await obtenerSolicitudes(queries)
-      if (reSolicitudes.error) throw reSolicitudes.data
+      if (reSolicitudes.error) throw reSolicitudes
 
       const solicitudesDB = reSolicitudes.data as SolicitudPresupuesto[]
       const solicitudesVista: SolicitudPresupuestoVista[] = solicitudesDB.map(
@@ -109,10 +109,10 @@ const SolicitudesPresupuesto = () => {
           tipo: "warning",
         })
       }
-    } catch (error) {
-      console.log(error)
+    } catch ({ data, mensaje }) {
+      console.log(data)
       setShowBanner({
-        mensaje: mensajesBanner.fallaApi,
+        mensaje,
         show: true,
         tipo: "error",
       })
@@ -136,12 +136,17 @@ const SolicitudesPresupuesto = () => {
       i_estatus,
       ids_solicitudes: idsSelecionados,
     }
-    const upEstatus = await ApiCall.put(
+    const { error, data, mensaje } = await ApiCall.put(
       "/solicitudes-presupuesto/cambio-estatus",
       payload
     )
-    if (upEstatus.error) {
-      console.log(upEstatus.data)
+    if (error) {
+      console.log(data)
+      setShowBanner({
+        mensaje,
+        show: true,
+        tipo: "error",
+      })
     } else {
       cargarSolicitudes()
     }
@@ -168,6 +173,11 @@ const SolicitudesPresupuesto = () => {
 
     if (error) {
       console.log(data)
+      setShowBanner({
+        mensaje,
+        show: true,
+        tipo: "error",
+      })
     } else {
       await cargarSolicitudes()
     }
@@ -342,7 +352,7 @@ const SolicitudesPresupuesto = () => {
           <div className="col-12 table-responsive">
             <table className="table">
               <thead className="table-light">
-                <tr>
+                <tr className="color1">
                   <th>#id</th>
                   <th>Proyecto</th>
                   {user.id_rol != 3 && <th>Coparte</th>}
