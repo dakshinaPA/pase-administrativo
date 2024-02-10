@@ -65,7 +65,9 @@ class ColaboradorServices {
     } catch (error) {
       return RespuestaController.fallida(
         400,
-        "Error al obtener colaboradores",
+        `Error al obtener colaborador${
+          id_colaborador ? "" : "es"
+        }, contactar a soporte`,
         error
       )
     }
@@ -88,7 +90,7 @@ class ColaboradorServices {
     } catch (error) {
       return RespuestaController.fallida(
         400,
-        "Error al crear colaborador",
+        "Error al crear colaborador, contactar a soporte",
         error
       )
     }
@@ -102,7 +104,10 @@ class ColaboradorServices {
         apellido_paterno: textoMayusculaSinAcentos(data.apellido_paterno),
         apellido_materno: textoMayusculaSinAcentos(data.apellido_materno),
       }
-      const up = await ColaboradorDB.actualizar(id_colaborador, dataTransformada)
+      const up = await ColaboradorDB.actualizar(
+        id_colaborador,
+        dataTransformada
+      )
       const reColaboradorUp = await this.obtener(null, id_colaborador)
       if (reColaboradorUp.error) throw reColaboradorUp.data
 
@@ -128,7 +133,7 @@ class ColaboradorServices {
     if (dl.error) {
       return RespuestaController.fallida(
         400,
-        "Error al borrar colaborador",
+        "Error al borrar colaborador, contactar a soporte",
         null
       )
     }

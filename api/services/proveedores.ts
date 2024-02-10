@@ -64,7 +64,9 @@ class ProveedorServices {
     } catch (error) {
       return RespuestaController.fallida(
         400,
-        "Error al obtener proveedores",
+        `Error al obtener proveedor${
+          id_proveedor ? "" : "es"
+        }, contactar a soporte`,
         error
       )
     }
@@ -83,7 +85,11 @@ class ProveedorServices {
         idInsertado: cr,
       })
     } catch (error) {
-      return RespuestaController.fallida(400, "Error al crear proveedor", error)
+      return RespuestaController.fallida(
+        400,
+        "Error al crear proveedor, contactar a soporte",
+        error
+      )
     }
   }
 
@@ -104,7 +110,7 @@ class ProveedorServices {
     } catch (error) {
       return RespuestaController.fallida(
         400,
-        "Error al actualizar proveedor",
+        "Error al actualizar proveedor, contactar a soporte",
         error
       )
     }
@@ -116,7 +122,7 @@ class ProveedorServices {
     if (dl.error) {
       return RespuestaController.fallida(
         400,
-        "Error al borrar proveedor",
+        "Error al borrar proveedor, contactar a soporte",
         dl.data
       )
     }

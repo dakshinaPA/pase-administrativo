@@ -166,7 +166,7 @@ const FormaProveedor = () => {
     try {
       if (modalidad === "CREAR") {
         const reProyectos = await obtenerProyectosDB()
-        if (reProyectos.error) throw reProyectos.data
+        if (reProyectos.error) throw reProyectos
 
         const proyectosDB = reProyectos.data as ProyectoMin[]
         if (!proyectosDB.length) {
@@ -187,7 +187,7 @@ const FormaProveedor = () => {
         }
       } else {
         const reProveedor = await obtenerProveedores(null, idProveedor)
-        if (reProveedor.error) throw reProveedor.data
+        if (reProveedor.error) throw reProveedor
 
         const proveedor = reProveedor.data[0] as ProveedorProyecto
         dispatch({
@@ -195,10 +195,10 @@ const FormaProveedor = () => {
           payload: proveedor,
         })
       }
-    } catch (error) {
-      console.log(error)
+    } catch ({ data, mensaje }) {
+      console.log(data)
       setShowBanner({
-        mensaje: mensajesBanner.fallaApi,
+        mensaje,
         show: true,
         tipo: "error",
       })
@@ -300,6 +300,11 @@ const FormaProveedor = () => {
 
     if (error) {
       console.log(data)
+      setShowBanner({
+        mensaje,
+        show: true,
+        tipo: "error",
+      })
     } else {
       if (modalidad === "CREAR") {
         //@ts-ignore
@@ -571,7 +576,7 @@ const FormaProveedor = () => {
         </div>
         <div className="col-12 mb-3">
           <label className="form-label">
-            Descricpión de la compra o servicio
+            Descripción de la compra o servicio
           </label>
           <input
             className="form-control"

@@ -10,7 +10,6 @@ import { Loader } from "@components/Loader"
 import {
   RegistroContenedor,
   FormaContenedor,
-  TablaContenedor,
   Contenedor,
 } from "@components/Contenedores"
 import { ApiCall } from "@assets/utils/apiCalls"
@@ -180,11 +179,10 @@ const FormaColaborador = () => {
   }, [estadoForma.clabe])
 
   const cargarData = async () => {
-    // setIsLoading(true)
     try {
       if (modalidad === "CREAR") {
         const reProyectos = await obtenerProyectosDB()
-        if (reProyectos.error) throw reProyectos.data
+        if (reProyectos.error) throw reProyectos
 
         const proyectosDB = reProyectos.data as ProyectoMin[]
         if (!proyectosDB.length) {
@@ -205,7 +203,7 @@ const FormaColaborador = () => {
         }
       } else {
         const reColaborador = await obtenerColaboradores(null, idColaborador)
-        if (reColaborador.error) throw reColaborador.data
+        if (reColaborador.error) throw reColaborador
 
         const colaborador = reColaborador.data[0] as ColaboradorProyecto
         estadoOriginalColaborador.current = colaborador
@@ -214,10 +212,10 @@ const FormaColaborador = () => {
           payload: colaborador,
         })
       }
-    } catch (error) {
-      console.log(error)
+    } catch ({ data, mensaje }) {
+      console.log(data)
       setShowBanner({
-        mensaje: mensajesBanner.fallaApi,
+        mensaje,
         show: true,
         tipo: "error",
       })
@@ -378,6 +376,11 @@ const FormaColaborador = () => {
 
     if (error) {
       console.log(data)
+      setShowBanner({
+        mensaje,
+        show: true,
+        tipo: "error",
+      })
     } else {
       if (modalidad === "CREAR") {
         router.push(
@@ -640,10 +643,10 @@ const FormaColaborador = () => {
             </div>
             <div className="col-12 table-responsive">
               <table className="table">
-                <thead>
-                  <tr>
+                <thead className="table-light">
+                  <tr className="color1">
                     <th># Ministración</th>
-                    <th>Monto</th>
+                    <th style={{ minWidth: "90px" }}>Monto</th>
                     <th style={{ minWidth: "200px" }}>Servicio</th>
                     <th style={{ minWidth: "300px" }}>Descricpión</th>
                     <th style={{ minWidth: "100px" }}>

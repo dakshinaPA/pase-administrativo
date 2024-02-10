@@ -10,7 +10,7 @@ import {
   obtenerProyectos,
 } from "@assets/utils/common"
 import { ColaboradorProyecto, ProyectoMin } from "@models/proyecto.model"
-import { BtnAccion, BtnNeutro } from "@components/Botones"
+import { BtnAccion, BtnNeutro, LinkAccion } from "@components/Botones"
 import { useSesion } from "@hooks/useSesion"
 import { Banner, estadoInicialBanner, mensajesBanner } from "@components/Banner"
 
@@ -39,16 +39,18 @@ const Colaboradores = () => {
   }, [selectProyecto])
 
   const cargarProyectosUsuario = async () => {
-    const reProyectos = await obtenerProyectos({ id_responsable: user.id })
-    if (reProyectos.error) {
-      console.log(reProyectos.data)
+    const { error, data, mensaje } = await obtenerProyectos({
+      id_responsable: user.id,
+    })
+    if (error) {
+      console.log(data)
       setShowBanner({
-        mensaje: mensajesBanner.fallaApi,
+        mensaje,
         show: true,
         tipo: "error",
       })
     } else {
-      const proyectosDB = reProyectos.data as ProyectoMin[]
+      const proyectosDB = data as ProyectoMin[]
       setProyectosDB(proyectosDB)
       if (!proyectosDB.length) {
         setShowBanner({
@@ -69,16 +71,16 @@ const Colaboradores = () => {
 
     setIsLoading(true)
 
-    const reColaboradores = await obtenerColaboradores(selectProyecto)
-    if (reColaboradores.error) {
-      console.log(reColaboradores.data)
+    const { error, data, mensaje } = await obtenerColaboradores(selectProyecto)
+    if (error) {
+      console.log(data)
       setShowBanner({
-        mensaje: mensajesBanner.fallaApi,
+        mensaje,
         show: true,
         tipo: "error",
       })
     } else {
-      const colaboradoresDB = reColaboradores.data as ColaboradorProyecto[]
+      const colaboradoresDB = data as ColaboradorProyecto[]
       setColaboradoresDB(colaboradoresDB)
     }
 
@@ -207,8 +209,8 @@ const Colaboradores = () => {
         ) : (
           <div className="col-12 table-responsive">
             <table className="table">
-              <thead>
-                <tr>
+              <thead className="table-light">
+                <tr className="color1">
                   <th>#id</th>
                   <th>Id empleado</th>
                   <th>Nombre</th>
@@ -249,14 +251,10 @@ const Colaboradores = () => {
                       <td>{telefono}</td>
                       <td>
                         <div className="d-flex">
-                          <BtnAccion
+                          <LinkAccion
                             margin={false}
                             icono="bi-eye-fill"
-                            onclick={() =>
-                              router.push(
-                                `/proyectos/${id_proyecto}/colaboradores/${id}`
-                              )
-                            }
+                            ruta={`/proyectos/${id_proyecto}/colaboradores/${id}`}
                             title="ver detalle"
                           />
                           {user.id_rol != 3 && (

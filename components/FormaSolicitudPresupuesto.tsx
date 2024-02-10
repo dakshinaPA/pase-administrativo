@@ -13,7 +13,6 @@ import { Loader } from "@components/Loader"
 import {
   RegistroContenedor,
   FormaContenedor,
-  TablaContenedor,
   Contenedor,
 } from "@components/Contenedores"
 import { ApiCall } from "@assets/utils/apiCalls"
@@ -38,7 +37,6 @@ import { useErrores } from "@hooks/useErrores"
 import { MensajeError } from "./Mensajes"
 import Link from "next/link"
 import { useSesion } from "@hooks/useSesion"
-import { Usuario } from "@models/usuario.model"
 import { Banner, estadoInicialBanner, mensajesBanner } from "./Banner"
 
 type ActionTypes =
@@ -479,7 +477,7 @@ const FormaSolicitudPresupuesto = () => {
 
       try {
         const reProyectos = await obtenerProyectosDB()
-        if (reProyectos.error) throw reProyectos.data
+        if (reProyectos.error) throw reProyectos
 
         const proyectosDB = reProyectos.data as ProyectoMin[]
         setProyectosDB(proyectosDB)
@@ -500,8 +498,13 @@ const FormaSolicitudPresupuesto = () => {
             },
           })
         }
-      } catch (error) {
-        console.log(error)
+      } catch ({ data, mensaje }) {
+        console.log(data)
+        setShowBanner({
+          mensaje,
+          show: true,
+          tipo: "error",
+        })
       } finally {
         setIsLoading(false)
       }
@@ -512,27 +515,39 @@ const FormaSolicitudPresupuesto = () => {
     const idProyecto = estadoForma.id_proyecto
     if (!idProyecto) return
 
-    const reDataProyecto = await obtenerProyectos({
+    const { error, data, mensaje } = await obtenerProyectos({
       id: idProyecto,
       registro_solicitud: true,
       min: false,
     })
 
-    if (reDataProyecto.error) {
-      console.log(reDataProyecto.data)
+    if (error) {
+      console.log(data)
+      setShowBanner({
+        mensaje,
+        show: true,
+        tipo: "error",
+      })
     } else {
-      const dataProyecto = reDataProyecto.data as DataProyecto
+      const dataProyecto = data as DataProyecto
       setDataProyecto(dataProyecto)
     }
   }
 
   const obtener = async () => {
     setIsLoading(true)
-    const re = await obtenerSolicitudes({ id: idSolicitud })
-    if (re.error) {
-      console.log(re.data)
+    const { error, data, mensaje } = await obtenerSolicitudes({
+      id: idSolicitud,
+    })
+    if (error) {
+      console.log(data)
+      setShowBanner({
+        mensaje,
+        show: true,
+        tipo: "error",
+      })
     } else {
-      const solicitud = re.data[0] as SolicitudPresupuesto
+      const solicitud = data[0] as SolicitudPresupuesto
       dispatch({
         type: "CARGA_INICIAL",
         payload: solicitud,
@@ -846,6 +861,11 @@ const FormaSolicitudPresupuesto = () => {
 
     if (error) {
       console.log(data)
+      setShowBanner({
+        mensaje,
+        show: true,
+        tipo: "error",
+      })
     } else {
       if (modalidad === "CREAR") {
         router.push(`/solicitudes-presupuesto`)
@@ -1273,8 +1293,8 @@ const FormaSolicitudPresupuesto = () => {
               </div>
               <div className="col-12 mb-3 table-responsive">
                 <table className="table">
-                  <thead>
-                    <tr>
+                  <thead className="table-light">
+                    <tr className="color1">
                       <th>Folio fiscal</th>
                       <th>RFC emisor</th>
                       <th>Régimen fiscal emisor</th>

@@ -10,7 +10,7 @@ import {
   obtenerProyectos,
 } from "@assets/utils/common"
 import { ProveedorProyecto, ProyectoMin } from "@models/proyecto.model"
-import { BtnAccion, BtnNeutro } from "@components/Botones"
+import { BtnAccion, BtnNeutro, LinkAccion } from "@components/Botones"
 import { useSesion } from "@hooks/useSesion"
 import { Banner, estadoInicialBanner, mensajesBanner } from "@components/Banner"
 
@@ -37,16 +37,18 @@ const Proveedores = () => {
   }, [selectProyecto])
 
   const cargarProyectosUsuario = async () => {
-    const reProyectos = await obtenerProyectos({ id_responsable: user.id })
-    if (reProyectos.error) {
-      console.log(reProyectos.data)
+    const { error, data, mensaje } = await obtenerProyectos({
+      id_responsable: user.id,
+    })
+    if (error) {
+      console.log(data)
       setShowBanner({
-        mensaje: mensajesBanner.fallaApi,
+        mensaje,
         show: true,
         tipo: "error",
       })
     } else {
-      const proyectosDB = reProyectos.data as ProyectoMin[]
+      const proyectosDB = data as ProyectoMin[]
       if (!proyectosDB.length) {
         setShowBanner({
           mensaje: mensajesBanner.sinProyectos,
@@ -69,16 +71,16 @@ const Proveedores = () => {
 
     setIsLoading(true)
 
-    const reProveedores = await obtenerProveedores(selectProyecto)
-    if (reProveedores.error) {
-      console.log(reProveedores.data)
+    const { error, data, mensaje } = await obtenerProveedores(selectProyecto)
+    if (error) {
+      console.log(data)
       setShowBanner({
-        mensaje: mensajesBanner.fallaApi,
+        mensaje,
         show: true,
         tipo: "error",
       })
     } else {
-      const proveedoresDB = reProveedores.data as ProveedorProyecto[]
+      const proveedoresDB = data as ProveedorProyecto[]
       setProveedoresDB(proveedoresDB)
     }
 
@@ -202,8 +204,8 @@ const Proveedores = () => {
         ) : (
           <div className="col-12 table-responsive">
             <table className="table">
-              <thead>
-                <tr>
+              <thead className="table-light">
+                <tr className="color1">
                   <th>#id</th>
                   <th>Nombre</th>
                   <th>Tipo</th>
@@ -235,14 +237,10 @@ const Proveedores = () => {
                       <td>{telefono}</td>
                       <td>
                         <div className="d-flex">
-                          <BtnAccion
+                          <LinkAccion
                             margin={false}
                             icono="bi-eye-fill"
-                            onclick={() =>
-                              router.push(
-                                `/proyectos/${id_proyecto}/proveedores/${id}`
-                              )
-                            }
+                            ruta={`/proyectos/${id_proyecto}/proveedores/${id}`}
                             title="ver detalle"
                           />
                           {user.id_rol != 3 && (
