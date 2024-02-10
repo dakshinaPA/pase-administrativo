@@ -139,6 +139,7 @@ const FormaFinanciador = () => {
   const [modoEditar, setModoEditar] = useState<boolean>(!idFinanciador)
   const modalidad = idFinanciador ? "EDITAR" : "CREAR"
   const inputNota = useRef(null)
+  const primeraCarga = useRef(null)
 
   useEffect(() => {
     if (modalidad === "EDITAR") {
@@ -167,6 +168,7 @@ const FormaFinanciador = () => {
       })
     } else {
       const dataFinanciador = data[0] as Financiador
+      primeraCarga.current = dataFinanciador
       dispatch({
         type: "CARGA_INICIAL",
         payload: dataFinanciador,
@@ -195,7 +197,15 @@ const FormaFinanciador = () => {
   }
 
   const cancelar = () => {
-    idFinanciador ? setModoEditar(false) : router.push("/financiadores")
+    if (modalidad === "EDITAR") {
+      dispatch({
+        type: "CARGA_INICIAL",
+        payload: primeraCarga.current,
+      })
+      setModoEditar(false)
+    } else {
+      router.push("/financiadores")
+    }
   }
 
   const handleChange = (ev: ChangeEvent, type: ActionTypes) => {

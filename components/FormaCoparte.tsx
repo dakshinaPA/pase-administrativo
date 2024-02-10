@@ -18,6 +18,7 @@ import {
   BtnEditar,
   BtnNeutro,
   BtnRegistrar,
+  LinkAccion,
 } from "./Botones"
 import { obtenerCopartes, obtenerUsuarios } from "@assets/utils/common"
 import { TooltipInfo } from "./Tooltip"
@@ -145,6 +146,7 @@ const FormaCoparte = () => {
   const modalidad = idCoparte ? "EDITAR" : "CREAR"
   const inputNota = useRef(null)
   const TblProyectos = useRef(null)
+  const primeraCarga = useRef(null)
 
   useEffect(() => {
     cargarData()
@@ -174,6 +176,7 @@ const FormaCoparte = () => {
 
       if (modalidad === "EDITAR") {
         const dataCoparte = resCombinadas[1].data[0] as Coparte
+        primeraCarga.current = dataCoparte
         dispatch({
           type: "CARGAR_DATA",
           payload: dataCoparte,
@@ -208,7 +211,15 @@ const FormaCoparte = () => {
   }
 
   const cancelar = () => {
-    idCoparte ? setModoEditar(false) : router.push("/copartes")
+    if (modalidad === "EDITAR") {
+      dispatch({
+        type: "CARGAR_DATA",
+        payload: primeraCarga.current,
+      })
+      setModoEditar(false)
+    } else {
+      router.push("/copartes")
+    }
   }
 
   const handleChange = (ev: ChangeEvent, type: ActionTypes) => {
@@ -713,10 +724,10 @@ const FormaCoparte = () => {
                           )}
                         </td>
                         <td>
-                          <BtnAccion
+                          <LinkAccion
                             margin={false}
-                            icono="bi bi-eye-fill"
-                            onclick={() => router.push(`/usuarios/${id}`)}
+                            icono="bi-eye-fill"
+                            ruta={`/usuarios/${id}`}
                             title="ver usuario"
                           />
                         </td>
@@ -776,14 +787,10 @@ const FormaCoparte = () => {
                         <td>{municipio}</td>
                         <td>{i_beneficiados}</td>
                         <td>
-                          <BtnAccion
+                          <LinkAccion
                             margin={false}
-                            icono="bi bi-eye-fill"
-                            onclick={() =>
-                              router.push(
-                                `/copartes/${idCoparte}/proyectos/${id}`
-                              )
-                            }
+                            icono="bi-eye-fill"
+                            ruta={`/copartes/${idCoparte}/proyectos/${id}`}
                             title="ver proyecto"
                           />
                         </td>

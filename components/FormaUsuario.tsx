@@ -1,4 +1,4 @@
-import { useEffect, useState, useReducer } from "react"
+import { useEffect, useState, useReducer, useRef } from "react"
 import { useRouter } from "next/router"
 import { ChangeEvent } from "@assets/models/formEvents.model"
 import { Usuario } from "@models/usuario.model"
@@ -81,6 +81,7 @@ const FormaUsuario = () => {
   const [showBanner, setShowBanner] = useState(estadoInicialBanner)
   const [modoEditar, setModoEditar] = useState<boolean>(!idUsuario)
   const modalidad = idUsuario ? "EDITAR" : "CREAR"
+  const primeraCarga = useRef(null)
 
   useEffect(() => {
     cargarData()
@@ -116,6 +117,7 @@ const FormaUsuario = () => {
         if (reUsuario.error) throw reUsuario
 
         const usuario = reUsuario.data[0] as Usuario
+        primeraCarga.current = usuario
         dispatch({
           type: "CARGA_INICIAL",
           payload: usuario,
@@ -142,7 +144,15 @@ const FormaUsuario = () => {
   }
 
   const cancelar = () => {
-    modalidad === "EDITAR" ? setModoEditar(false) : router.push("/usuarios")
+    if (modalidad === "EDITAR") {
+      dispatch({
+        type: "CARGA_INICIAL",
+        payload: primeraCarga.current,
+      })
+      setModoEditar(false)
+    } else {
+      router.push("/usuarios")
+    }
   }
 
   const handleChange = (ev: ChangeEvent, type: ActionTypes) => {

@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useState } from "react"
+import { useEffect, useReducer, useRef, useState } from "react"
 import { useRouter } from "next/router"
 import { ChangeEvent } from "@assets/models/formEvents.model"
 import {
@@ -133,6 +133,7 @@ const FormaProveedor = () => {
   const [modoEditar, setModoEditar] = useState<boolean>(!idProveedor)
   const [showBanner, setShowBanner] = useState(estadoInicialBanner)
   const modalidad = idProveedor ? "EDITAR" : "CREAR"
+  const primeraCarga = useRef(null)
 
   useEffect(() => {
     cargarData()
@@ -190,6 +191,7 @@ const FormaProveedor = () => {
         if (reProveedor.error) throw reProveedor
 
         const proveedor = reProveedor.data[0] as ProveedorProyecto
+        primeraCarga.current = proveedor
         dispatch({
           type: "CARGA_INICIAL",
           payload: proveedor,
@@ -224,7 +226,15 @@ const FormaProveedor = () => {
   }
 
   const cancelar = () => {
-    modalidad === "EDITAR" ? setModoEditar(false) : router.back()
+    if (modalidad === "EDITAR") {
+      dispatch({
+        type: "CARGA_INICIAL",
+        payload: primeraCarga.current,
+      })
+      setModoEditar(false)
+    } else {
+      router.back()
+    }
   }
 
   const handleChange = (ev: ChangeEvent, type: ActionTypes) => {

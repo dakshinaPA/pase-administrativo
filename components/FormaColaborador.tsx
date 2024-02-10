@@ -241,7 +241,6 @@ const FormaColaborador = () => {
   }
 
   const cancelar = () => {
-    // modalidad === "EDITAR" ? setModoEditar(false) : router.back()
     if (modalidad === "EDITAR") {
       dispatch({
         type: "CARGA_INICIAL",

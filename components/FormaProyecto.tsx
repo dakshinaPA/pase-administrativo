@@ -222,7 +222,7 @@ const Saldos = () => {
 }
 
 const Colaboradores = () => {
-  const { estadoForma, idProyecto, user, router } = useProyecto()
+  const { estadoForma, idProyecto, user } = useProyecto()
 
   return (
     <div className="row mb-5">
