@@ -90,9 +90,13 @@ class ProyectosServices {
           )
           const f_comprobado =
             f_comprobado_excepciones + f_comprobado_comprobantes
-          const f_transferido = solicitudes
-            .filter((sol) => sol.i_estatus == 4)
-            .reduce((acum, { f_importe }) => acum + Number(f_importe), 0)
+          const f_ejercicios_anteriores =
+            rubros.find((rb) => rb.id_rubro === 23)?.f_monto || 0
+          const f_transferido =
+            solicitudes
+              .filter((sol) => sol.i_estatus == 4)
+              .reduce((acum, { f_importe }) => acum + Number(f_importe), 0) +
+            Number(f_ejercicios_anteriores)
 
           // sumar las retenciones de solicitudes de asimilados que se teclean a mano
           const f_retenciones_solicitudes = solicitudes.reduce(
@@ -191,10 +195,15 @@ class ProyectosServices {
         (acum, { f_total }) => acum + Number(f_total),
         0
       )
+      //el rubro se ejercicios anteriores se suma al total transferido
+      const f_ejercicios_anteriores =
+        rubros_ministracion.find((rb) => rb.id_rubro === 23)?.f_monto || 0
       const f_comprobado = f_comprobado_excepciones + f_comprobado_comprobantes
-      const f_transferido = solicitudes
-        .filter((sol) => sol.i_estatus == 4)
-        .reduce((acum, { f_importe }) => acum + Number(f_importe), 0)
+      const f_transferido =
+        solicitudes
+          .filter((sol) => sol.i_estatus == 4)
+          .reduce((acum, { f_importe }) => acum + Number(f_importe), 0) +
+        Number(f_ejercicios_anteriores)
       // sumar retenciones de solicitudes de asimilados y comprobantes
       const f_retenciones_solicitudes = solicitudes.reduce(
         (acum, { f_retenciones }) => acum + Number(f_retenciones),
