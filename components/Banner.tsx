@@ -5,7 +5,7 @@ interface BannerProps {
   mensaje?: string
 }
 
-interface EstadoInicialBannerProps extends BannerProps {
+export interface EstadoInicialBannerProps extends BannerProps {
   show: boolean
 }
 

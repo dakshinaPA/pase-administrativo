@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useReducer } from "react"
 import { ApiCall } from "@assets/utils/apiCalls"
 import { useRouter } from "next/router"
 import { Loader } from "@components/Loader"
@@ -8,7 +8,108 @@ import { aMinuscula } from "@assets/utils/common"
 import { Financiador } from "@models/financiador.model"
 import { BtnAccion, BtnNeutro, LinkAccion } from "@components/Botones"
 import { useSesion } from "@hooks/useSesion"
-import { Banner, estadoInicialBanner, mensajesBanner } from "@components/Banner"
+import {
+  Banner,
+  EstadoInicialBannerProps,
+  estadoInicialBanner,
+} from "@components/Banner"
+import { ChangeEvent } from "@assets/models/formEvents.model"
+
+interface ModalEliminarProps {
+  show: boolean
+  id: number
+  nombre: string
+}
+
+interface EstadoProps {
+  financiadoresDB: Financiador[]
+  modalEliminar: ModalEliminarProps
+  isLoading: boolean
+  inputBusqueda: string
+  banner: EstadoInicialBannerProps
+}
+
+const estaInicialModalEliminar: ModalEliminarProps = {
+  show: false,
+  id: 0,
+  nombre: "",
+}
+
+const estadoInicial: EstadoProps = {
+  financiadoresDB: [],
+  modalEliminar: estaInicialModalEliminar,
+  isLoading: true,
+  inputBusqueda: "",
+  banner: estadoInicialBanner,
+}
+
+type ActionTypes =
+  | "ERROR_API"
+  | "CARGAR_DATA"
+  | "ELIMINAR"
+  | "CANCELAR_ELIMINAR"
+  | "BUSCAR"
+  | "ABRIR_MODAL_ELIMINAR"
+
+interface ActionProps {
+  type: ActionTypes
+  payload?: any
+}
+
+const reducer = (state: EstadoProps, action: ActionProps): EstadoProps => {
+  switch (action.type) {
+    case "ERROR_API":
+      return {
+        ...state,
+        banner: {
+          show: true,
+          mensaje: action.payload,
+          tipo: "error",
+        },
+        isLoading: false,
+      }
+    case "CARGAR_DATA":
+      return {
+        ...state,
+        financiadoresDB: action.payload,
+        isLoading: false,
+      }
+    case "ELIMINAR":
+      return {
+        ...state,
+        modalEliminar: {
+          ...state.modalEliminar,
+          show: false,
+        },
+        isLoading: true,
+      }
+    case "CANCELAR_ELIMINAR":
+      return {
+        ...state,
+        modalEliminar: estaInicialModalEliminar,
+      }
+    case "BUSCAR":
+      return {
+        ...state,
+        inputBusqueda: action.payload,
+      }
+    case "ABRIR_MODAL_ELIMINAR":
+      const id = action.payload
+      const match = state.financiadoresDB.find((fin) => fin.id === id)
+      const nombre = match?.nombre || ""
+
+      return {
+        ...state,
+        modalEliminar: {
+          show: true,
+          id,
+          nombre,
+        },
+      }
+    default:
+      return { ...state }
+  }
+}
 
 const Financiadores = () => {
   const { user, status } = useSesion()
@@ -20,87 +121,80 @@ const Financiadores = () => {
     return null
   }
 
-  const [resultadosDB, setResultadosDB] = useState<Financiador[]>([])
-  const [resultadosFiltrados, setResultadosFiltrados] = useState<Financiador[]>(
-    []
-  )
-  const [idAEliminar, setIdAEliminar] = useState<number>(0)
-  const [showModalEliminar, setShowModalEliminar] = useState<boolean>(false)
-  const [isLoading, setIsLoading] = useState<boolean>(true)
-  const [inputBusqueda, setInputBusqueda] = useState<string>("")
-  const [showBanner, setShowBanner] = useState(estadoInicialBanner)
+  const [estado, dispatch] = useReducer(reducer, estadoInicial)
 
   useEffect(() => {
     obtenerTodos()
   }, [])
 
-  const abrirModalEliminar = (id: number) => {
-    setIdAEliminar(id)
-    setShowModalEliminar(true)
-  }
-
   const obtenerTodos = async () => {
-    let url = `/financiadores`
-    const res = await ApiCall.get(url)
+    const res = await ApiCall.get("/financiadores")
     const { error, data, mensaje } = res
 
     if (error) {
       console.log(data)
-      setShowBanner({
-        mensaje,
-        show: true,
-        tipo: "error",
+      dispatch({
+        type: "ERROR_API",
+        payload: mensaje,
       })
     } else {
-      setResultadosDB(data as Financiador[])
-      setResultadosFiltrados(data as Financiador[])
+      dispatch({
+        type: "CARGAR_DATA",
+        payload: data as Financiador[],
+      })
     }
-    setIsLoading(false)
+  }
+
+  const abrirModalEliminar = (id: number) => {
+    dispatch({
+      type: "ABRIR_MODAL_ELIMINAR",
+      payload: id,
+    })
   }
 
   const eliminarFinanciador = async () => {
-    setIdAEliminar(0)
-    setShowModalEliminar(false)
-    setIsLoading(true)
+    dispatch({
+      type: "ELIMINAR",
+    })
 
     const { error, data, mensaje } = await ApiCall.delete(
-      `/financiadores/${idAEliminar}`
+      `/financiadores/${estado.modalEliminar.id}`
     )
 
     if (error) {
       console.log(data)
-      setShowBanner({
-        mensaje,
-        show: true,
-        tipo: "error",
+      dispatch({
+        type: "ERROR_API",
+        payload: mensaje,
       })
     } else {
       await obtenerTodos()
     }
-
-    setIsLoading(false)
   }
 
   const cancelarEliminar = () => {
-    setIdAEliminar(0)
-    setShowModalEliminar(false)
+    dispatch({
+      type: "CANCELAR_ELIMINAR",
+    })
   }
 
-  const busquedaFiltrados = resultadosFiltrados.filter(({ nombre, id_alt }) => {
-    const query = aMinuscula(inputBusqueda)
-    return (
-      aMinuscula(nombre).includes(query) || aMinuscula(id_alt).includes(query)
-    )
-  })
-
-  const determinarNombreAEliminar = (): string => {
-    const financiador = resultadosDB.find(
-      (financiador) => financiador.id === idAEliminar
-    )
-    return financiador ? financiador.nombre : ""
+  const onInputBusqueda = (ev: ChangeEvent) => {
+    dispatch({
+      type: "BUSCAR",
+      payload: ev.target.value,
+    })
   }
 
-  if (isLoading) {
+  const busquedaFiltrados = estado.financiadoresDB.filter(
+    ({ nombre, id_alt }) => {
+      const query = aMinuscula(estado.inputBusqueda)
+      return (
+        aMinuscula(nombre).includes(query) || aMinuscula(id_alt).includes(query)
+      )
+    }
+  )
+
+  if (estado.isLoading) {
     return (
       <Contenedor>
         <Loader />
@@ -108,10 +202,10 @@ const Financiadores = () => {
     )
   }
 
-  if (showBanner.show) {
+  if (estado.banner.show) {
     return (
       <Contenedor>
-        <Banner tipo={showBanner.tipo} mensaje={showBanner.mensaje} />
+        <Banner tipo={estado.banner.tipo} mensaje={estado.banner.mensaje} />
       </Contenedor>
     )
   }
@@ -141,8 +235,8 @@ const Financiadores = () => {
               name="busqueda"
               className="form-control"
               placeholder="Buscar registro"
-              value={inputBusqueda}
-              onChange={({ target: { value } }) => setInputBusqueda(value)}
+              value={estado.inputBusqueda}
+              onChange={onInputBusqueda}
             />
             <span className="input-group-text">
               <i className="bi bi-search"></i>
@@ -222,12 +316,12 @@ const Financiadores = () => {
         </div>
       </div>
       <ModalEliminar
-        show={showModalEliminar}
+        show={estado.modalEliminar.show}
         aceptar={eliminarFinanciador}
         cancelar={cancelarEliminar}
       >
         <p className="mb-0">
-          ¿Estás segur@ de eliminar al financiador {determinarNombreAEliminar()}
+          ¿Estás segur@ de eliminar al financiador {estado.modalEliminar.nombre}
           ?
         </p>
       </ModalEliminar>
