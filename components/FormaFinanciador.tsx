@@ -15,58 +15,114 @@ import { BtnCancelar, BtnEditar, BtnRegistrar } from "./Botones"
 import { useErrores } from "@hooks/useErrores"
 import { MensajeError } from "./Mensajes"
 import { useSesion } from "@hooks/useSesion"
-import { Banner, estadoInicialBanner } from "./Banner"
+import { Banner, EstadoInicialBannerProps, estadoInicialBanner } from "./Banner"
 
 type ActionTypes =
+  | "ERROR_API"
   | "CARGA_INICIAL"
+  | "CANCELAR_EDITAR"
   | "HANDLE_CHANGE"
   | "HANDLE_CHANGE_DIRECCION"
   | "HANDLE_CHANGE_ENLACE"
-  | "HANDLE_CHANGE_COPARTE"
-  | "RECARGAR_NOTAS"
   | "HANDLE_CHANGE_PAIS"
+  | "HANDLE_CHANGE_NOTA"
+  | "RECARGAR_NOTAS"
+  | "MODO_EDITAR_ON"
+  | "LOADING_ON"
+  | "EDITAR_SUCCESS"
 
-interface ActionDispatch {
+interface ActionProps {
   type: ActionTypes
-  payload: any
+  payload?: any
 }
 
-const reducer = (state: Financiador, action: ActionDispatch): Financiador => {
+interface EstadoProps {
+  cargaInicial: Financiador
+  forma: Financiador
+  isLoading: boolean
+  mensajeNota: string
+  banner: EstadoInicialBannerProps
+  modoEditar: boolean
+  modalidad: "CREAR" | "EDITAR"
+}
+
+const reducer = (state: EstadoProps, action: ActionProps): EstadoProps => {
   const { type, payload } = action
 
   switch (type) {
+    case "ERROR_API":
+      return {
+        ...state,
+        isLoading: false,
+        banner: {
+          show: true,
+          mensaje: payload,
+          tipo: "error",
+        },
+      }
     case "CARGA_INICIAL":
-      return payload
+      return {
+        ...state,
+        isLoading: false,
+        cargaInicial: payload,
+        forma: payload,
+      }
+    case "CANCELAR_EDITAR":
+      return {
+        ...state,
+        modoEditar: false,
+        forma: {
+          ...state.cargaInicial,
+        },
+      }
     case "HANDLE_CHANGE":
       let clave = payload.clave
       if (clave == "nombre_financiador") clave = "nombre"
       return {
         ...state,
-        [clave]: payload.valor,
+        forma: {
+          ...state.forma,
+          [clave]: payload.valor,
+        },
       }
     case "HANDLE_CHANGE_DIRECCION":
       return {
         ...state,
-        direccion: {
-          ...state.direccion,
-          [payload.clave]: payload.valor,
+        forma: {
+          ...state.forma,
+          direccion: {
+            ...state.forma.direccion,
+            [payload.clave]: payload.valor,
+          },
         },
       }
     case "HANDLE_CHANGE_ENLACE":
       return {
         ...state,
-        enlace: {
-          ...state.enlace,
-          [payload.clave]: payload.valor,
+        forma: {
+          ...state.forma,
+          enlace: {
+            ...state.forma.enlace,
+            [payload.clave]: payload.valor,
+          },
         },
+      }
+    case "HANDLE_CHANGE_NOTA":
+      return {
+        ...state,
+        mensajeNota: payload,
       }
     case "RECARGAR_NOTAS":
       return {
         ...state,
-        notas: payload,
+        forma: {
+          ...state.forma,
+          notas: payload,
+        },
+        mensajeNota: "",
       }
     case "HANDLE_CHANGE_PAIS":
-      let estado = state.direccion.estado
+      let estado = state.forma.direccion.estado
       let id_estado = 1
 
       if (payload == 1) {
@@ -77,46 +133,34 @@ const reducer = (state: Financiador, action: ActionDispatch): Financiador => {
 
       return {
         ...state,
-        direccion: {
-          ...state.direccion,
-          id_estado,
-          estado,
+        forma: {
+          ...state.forma,
+          direccion: {
+            ...state.forma.direccion,
+            id_estado,
+            estado,
+          },
         },
+      }
+    case "MODO_EDITAR_ON":
+      return {
+        ...state,
+        modoEditar: true,
+      }
+    case "LOADING_ON":
+      return {
+        ...state,
+        isLoading: true,
+      }
+    case "EDITAR_SUCCESS":
+      return {
+        ...state,
+        isLoading: false,
+        modoEditar: false,
       }
     default:
       return state
   }
-}
-
-const estadoInicialForma: Financiador = {
-  id_alt: "",
-  nombre: "",
-  rfc: "",
-  i_tipo: 1,
-  actividad: "",
-  representante_legal: "",
-  rfc_representante_legal: "",
-  pagina_web: "",
-  dt_constitucion: "",
-  enlace: {
-    nombre: "",
-    apellido_paterno: "",
-    apellido_materno: "",
-    email: "",
-    telefono: "",
-  },
-  direccion: {
-    calle: "",
-    numero_ext: "",
-    numero_int: "",
-    colonia: "",
-    municipio: "",
-    cp: "",
-    id_estado: 1,
-    estado: "",
-    id_pais: 1,
-  },
-  notas: [],
 }
 
 const FormaFinanciador = () => {
@@ -129,53 +173,84 @@ const FormaFinanciador = () => {
     return null
   }
 
+  const idFinanciador = Number(router.query.id)
+
+  const estadoInicialForma: Financiador = {
+    id: idFinanciador,
+    id_alt: "",
+    nombre: "",
+    rfc: "",
+    i_tipo: 1,
+    actividad: "",
+    representante_legal: "",
+    rfc_representante_legal: "",
+    pagina_web: "",
+    dt_constitucion: "",
+    enlace: {
+      nombre: "",
+      apellido_paterno: "",
+      apellido_materno: "",
+      email: "",
+      telefono: "",
+    },
+    direccion: {
+      calle: "",
+      numero_ext: "",
+      numero_int: "",
+      colonia: "",
+      municipio: "",
+      cp: "",
+      id_estado: 1,
+      estado: "",
+      id_pais: 1,
+    },
+    notas: [],
+  }
+
+  const estadoInicial: EstadoProps = {
+    cargaInicial: estadoInicialForma,
+    forma: estadoInicialForma,
+    isLoading: !!idFinanciador,
+    mensajeNota: "",
+    banner: estadoInicialBanner,
+    modoEditar: !idFinanciador,
+    modalidad: idFinanciador ? "EDITAR" : "CREAR",
+  }
+
   const { estados, paises } = useCatalogos()
-  const idFinanciador = router.query.id
-  const [estadoForma, dispatch] = useReducer(reducer, estadoInicialForma)
-  const [isLoading, setIsLoading] = useState<boolean>(false)
-  const [mensajeNota, setMensajeNota] = useState<string>("")
+  const [estado, dispatch] = useReducer(reducer, estadoInicial)
   const { error, validarCampos, formRef } = useErrores()
-  const [showBanner, setShowBanner] = useState(estadoInicialBanner)
-  const [modoEditar, setModoEditar] = useState<boolean>(!idFinanciador)
-  const modalidad = idFinanciador ? "EDITAR" : "CREAR"
   const inputNota = useRef(null)
-  const primeraCarga = useRef(null)
 
   useEffect(() => {
-    if (modalidad === "EDITAR") {
-      cargarData()
-    }
+    cargarData()
   }, [])
 
   useEffect(() => {
     dispatch({
       type: "HANDLE_CHANGE_PAIS",
-      payload: estadoForma.direccion.id_pais,
+      payload: estado.forma.direccion.id_pais,
     })
-  }, [estadoForma.direccion.id_pais])
+  }, [estado.forma.direccion.id_pais])
 
   const cargarData = async () => {
-    setIsLoading(true)
+    if (estado.modalidad === "CREAR") return
 
     const { error, data, mensaje } = await obtener()
 
     if (error) {
       console.log(data)
-      setShowBanner({
-        mensaje,
-        show: true,
-        tipo: "error",
+      dispatch({
+        type: "ERROR_API",
+        payload: mensaje,
       })
     } else {
       const dataFinanciador = data[0] as Financiador
-      primeraCarga.current = dataFinanciador
       dispatch({
         type: "CARGA_INICIAL",
         payload: dataFinanciador,
       })
     }
-
-    setIsLoading(false)
   }
 
   const obtener = async () => {
@@ -184,25 +259,23 @@ const FormaFinanciador = () => {
   }
 
   const registrar = async () => {
-    const res = await ApiCall.post("/financiadores", estadoForma)
+    const res = await ApiCall.post("/financiadores", estado.forma)
     return res
   }
 
   const editar = async () => {
     const res = await ApiCall.put(
       `/financiadores/${idFinanciador}`,
-      estadoForma
+      estado.forma
     )
     return res
   }
 
   const cancelar = () => {
-    if (modalidad === "EDITAR") {
+    if (estado.modalidad === "EDITAR") {
       dispatch({
-        type: "CARGA_INICIAL",
-        payload: primeraCarga.current,
+        type: "CANCELAR_EDITAR",
       })
-      setModoEditar(false)
     } else {
       router.push("/financiadores")
     }
@@ -221,29 +294,42 @@ const FormaFinanciador = () => {
     })
   }
 
+  const handleChangeNota = (ev: ChangeEvent) => {
+    dispatch({
+      type: "HANDLE_CHANGE_NOTA",
+      payload: ev.target.value,
+    })
+  }
+
+  const modoEditarOn = () => {
+    dispatch({
+      type: "MODO_EDITAR_ON",
+    })
+  }
+
   const validarForma = () => {
     const campos = {
-      id_alt: estadoForma.id_alt,
-      nombre_financiador: estadoForma.nombre,
-      // rfc: estadoForma.rfc,
-      actividad: estadoForma.actividad,
-      representante_legal: estadoForma.representante_legal,
-      rfc_representante_legal: estadoForma.rfc_representante_legal,
-      dt_constitucion: estadoForma.dt_constitucion,
-      calle: estadoForma.direccion.calle,
-      numero_ext: estadoForma.direccion.numero_ext,
-      colonia: estadoForma.direccion.colonia,
-      municipio: estadoForma.direccion.municipio,
-      cp: estadoForma.direccion.cp,
-      estado: estadoForma.direccion.estado,
-      nombre: estadoForma.enlace.nombre,
-      apellido_paterno: estadoForma.enlace.apellido_paterno,
-      apellido_materno: estadoForma.enlace.apellido_materno,
-      email: estadoForma.enlace.email,
-      telefono: estadoForma.enlace.telefono,
+      id_alt: estado.forma.id_alt,
+      nombre_financiador: estado.forma.nombre,
+      // rfc: estado.forma.rfc,
+      actividad: estado.forma.actividad,
+      representante_legal: estado.forma.representante_legal,
+      rfc_representante_legal: estado.forma.rfc_representante_legal,
+      dt_constitucion: estado.forma.dt_constitucion,
+      calle: estado.forma.direccion.calle,
+      numero_ext: estado.forma.direccion.numero_ext,
+      colonia: estado.forma.direccion.colonia,
+      municipio: estado.forma.direccion.municipio,
+      cp: estado.forma.direccion.cp,
+      estado: estado.forma.direccion.estado,
+      nombre: estado.forma.enlace.nombre,
+      apellido_paterno: estado.forma.enlace.apellido_paterno,
+      apellido_materno: estado.forma.enlace.apellido_materno,
+      email: estado.forma.enlace.email,
+      telefono: estado.forma.enlace.telefono,
     }
 
-    if (estadoForma.direccion.id_pais == 1) {
+    if (estado.forma.direccion.id_pais == 1) {
       delete campos.estado
     }
 
@@ -252,23 +338,26 @@ const FormaFinanciador = () => {
 
   const handleSubmit = async () => {
     if (!validarForma()) return
-    console.log(estadoForma)
+    console.log(estado.forma)
 
-    setIsLoading(true)
+    dispatch({
+      type: "LOADING_ON",
+    })
+
     const { error, data, mensaje } =
-      modalidad === "EDITAR" ? await editar() : await registrar()
-    setIsLoading(false)
+      estado.modalidad === "EDITAR" ? await editar() : await registrar()
 
     if (error) {
       console.log(data)
-      setShowBanner({
-        mensaje,
-        show: true,
-        tipo: "error",
+      dispatch({
+        type: "ERROR_API",
+        payload: mensaje,
       })
     } else {
-      if (modalidad === "EDITAR") {
-        setModoEditar(false)
+      if (estado.modalidad === "EDITAR") {
+        dispatch({
+          type: "EDITAR_SUCCESS",
+        })
       } else {
         //@ts-ignore
         router.push(`/financiadores/${data.idInsertado}`)
@@ -277,24 +366,29 @@ const FormaFinanciador = () => {
   }
 
   const agregarNota = async () => {
-    if (mensajeNota.length < 10) {
+    if (estado.mensajeNota.length < 10) {
       inputNota.current.focus()
       return
     }
 
     const cr = await ApiCall.post(`/financiadores/${idFinanciador}/notas`, {
       id_usuario: user.id,
-      mensaje: mensajeNota,
+      mensaje: estado.mensajeNota,
     })
     if (cr.error) {
       console.log(cr.data)
+      dispatch({
+        type: "ERROR_API",
+        payload: cr.mensaje,
+      })
     } else {
-      //limpiar el input
-      setMensajeNota("")
-
       const re = await ApiCall.get(`/financiadores/${idFinanciador}/notas`)
       if (re.error) {
         console.log(re.data)
+        dispatch({
+          type: "ERROR_API",
+          payload: re.mensaje,
+        })
       } else {
         const notasDB = re.data as NotaFinanciador[]
         dispatch({
@@ -305,7 +399,7 @@ const FormaFinanciador = () => {
     }
   }
 
-  if (isLoading) {
+  if (estado.isLoading) {
     return (
       <Contenedor>
         <Loader />
@@ -313,10 +407,10 @@ const FormaFinanciador = () => {
     )
   }
 
-  if (showBanner.show) {
+  if (estado.banner.show) {
     return (
       <Contenedor>
-        <Banner tipo={showBanner.tipo} mensaje={showBanner.mensaje} />
+        <Banner tipo={estado.banner.tipo} mensaje={estado.banner.mensaje} />
       </Contenedor>
     )
   }
@@ -330,8 +424,8 @@ const FormaFinanciador = () => {
               <h2 className="color1 mb-0">Registrar financiador</h2>
             )}
           </div>
-          {!modoEditar && idFinanciador && user.id_rol == 1 && (
-            <BtnEditar onClick={() => setModoEditar(true)} />
+          {!estado.modoEditar && idFinanciador && user.id_rol == 1 && (
+            <BtnEditar onClick={modoEditarOn} />
           )}
         </div>
       </div>
@@ -343,7 +437,7 @@ const FormaFinanciador = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="id_alt"
-            value={estadoForma.id_alt}
+            value={estado.forma.id_alt}
             disabled={Boolean(idFinanciador)}
           />
           {error.campo == "id_alt" && <MensajeError mensaje={error.mensaje} />}
@@ -355,8 +449,8 @@ const FormaFinanciador = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="nombre_financiador"
-            value={estadoForma.nombre}
-            disabled={!modoEditar}
+            value={estado.forma.nombre}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "nombre_financiador" && (
             <MensajeError mensaje={error.mensaje} />
@@ -369,8 +463,8 @@ const FormaFinanciador = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="rfc"
-            value={estadoForma.rfc}
-            disabled={!modoEditar}
+            value={estado.forma.rfc}
+            disabled={!estado.modoEditar}
           />
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
@@ -379,8 +473,8 @@ const FormaFinanciador = () => {
             className="form-control"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="i_tipo"
-            value={estadoForma.i_tipo}
-            disabled={!modoEditar}
+            value={estado.forma.i_tipo}
+            disabled={!estado.modoEditar}
           >
             <option value="1">Aliado</option>
             <option value="2">Independiente</option>
@@ -393,8 +487,8 @@ const FormaFinanciador = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="actividad"
-            value={estadoForma.actividad}
-            disabled={!modoEditar}
+            value={estado.forma.actividad}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "actividad" && (
             <MensajeError mensaje={error.mensaje} />
@@ -407,8 +501,8 @@ const FormaFinanciador = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="representante_legal"
-            value={estadoForma.representante_legal}
-            disabled={!modoEditar}
+            value={estado.forma.representante_legal}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "representante_legal" && (
             <MensajeError mensaje={error.mensaje} />
@@ -421,9 +515,9 @@ const FormaFinanciador = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="rfc_representante_legal"
-            value={estadoForma.rfc_representante_legal}
+            value={estado.forma.rfc_representante_legal}
             placeholder="del representante legal"
-            disabled={!modoEditar}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "rfc_representante_legal" && (
             <MensajeError mensaje={error.mensaje} />
@@ -436,8 +530,8 @@ const FormaFinanciador = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="pagina_web"
-            value={estadoForma.pagina_web}
-            disabled={!modoEditar}
+            value={estado.forma.pagina_web}
+            disabled={!estado.modoEditar}
           />
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
@@ -447,8 +541,8 @@ const FormaFinanciador = () => {
             type="date"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="dt_constitucion"
-            value={estadoForma.dt_constitucion}
-            disabled={!modoEditar}
+            value={estado.forma.dt_constitucion}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "dt_constitucion" && (
             <MensajeError mensaje={error.mensaje} />
@@ -467,8 +561,8 @@ const FormaFinanciador = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE_DIRECCION")}
             name="calle"
-            value={estadoForma.direccion.calle}
-            disabled={!modoEditar}
+            value={estado.forma.direccion.calle}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "calle" && <MensajeError mensaje={error.mensaje} />}
         </div>
@@ -479,8 +573,8 @@ const FormaFinanciador = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE_DIRECCION")}
             name="numero_ext"
-            value={estadoForma.direccion.numero_ext}
-            disabled={!modoEditar}
+            value={estado.forma.direccion.numero_ext}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "numero_ext" && (
             <MensajeError mensaje={error.mensaje} />
@@ -493,8 +587,8 @@ const FormaFinanciador = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE_DIRECCION")}
             name="numero_int"
-            value={estadoForma.direccion.numero_int}
-            disabled={!modoEditar}
+            value={estado.forma.direccion.numero_int}
+            disabled={!estado.modoEditar}
           />
         </div>
         <div className="col-12 col-lg-6 mb-3">
@@ -504,8 +598,8 @@ const FormaFinanciador = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE_DIRECCION")}
             name="colonia"
-            value={estadoForma.direccion.colonia}
-            disabled={!modoEditar}
+            value={estado.forma.direccion.colonia}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "colonia" && <MensajeError mensaje={error.mensaje} />}
         </div>
@@ -516,8 +610,8 @@ const FormaFinanciador = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE_DIRECCION")}
             name="municipio"
-            value={estadoForma.direccion.municipio}
-            disabled={!modoEditar}
+            value={estado.forma.direccion.municipio}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "municipio" && (
             <MensajeError mensaje={error.mensaje} />
@@ -530,20 +624,20 @@ const FormaFinanciador = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE_DIRECCION")}
             name="cp"
-            value={estadoForma.direccion.cp}
-            disabled={!modoEditar}
+            value={estado.forma.direccion.cp}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "cp" && <MensajeError mensaje={error.mensaje} />}
         </div>
-        {estadoForma.direccion.id_pais == 1 ? (
+        {estado.forma.direccion.id_pais == 1 ? (
           <div className="col-12 col-md-6 col-lg-3 mb-3">
             <label className="form-label">Estado</label>
             <select
               className="form-control"
               onChange={(e) => handleChange(e, "HANDLE_CHANGE_DIRECCION")}
               name="id_estado"
-              value={estadoForma.direccion.id_estado}
-              disabled={!modoEditar}
+              value={estado.forma.direccion.id_estado}
+              disabled={!estado.modoEditar}
             >
               {estados.map(({ id, nombre }) => (
                 <option key={id} value={id}>
@@ -560,8 +654,8 @@ const FormaFinanciador = () => {
               type="text"
               onChange={(e) => handleChange(e, "HANDLE_CHANGE_DIRECCION")}
               name="estado"
-              value={estadoForma.direccion.estado}
-              disabled={!modoEditar}
+              value={estado.forma.direccion.estado}
+              disabled={!estado.modoEditar}
             />
             {error.campo == "estado" && (
               <MensajeError mensaje={error.mensaje} />
@@ -574,8 +668,8 @@ const FormaFinanciador = () => {
             className="form-control"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE_DIRECCION")}
             name="id_pais"
-            value={estadoForma.direccion.id_pais}
-            disabled={!modoEditar}
+            value={estado.forma.direccion.id_pais}
+            disabled={!estado.modoEditar}
           >
             {paises.map(({ id, nombre }) => (
               <option key={id} value={id}>
@@ -597,8 +691,8 @@ const FormaFinanciador = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE_ENLACE")}
             name="nombre"
-            value={estadoForma.enlace.nombre}
-            disabled={!modoEditar}
+            value={estado.forma.enlace.nombre}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "nombre" && <MensajeError mensaje={error.mensaje} />}
         </div>
@@ -609,8 +703,8 @@ const FormaFinanciador = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE_ENLACE")}
             name="apellido_paterno"
-            value={estadoForma.enlace.apellido_paterno}
-            disabled={!modoEditar}
+            value={estado.forma.enlace.apellido_paterno}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "apellido_paterno" && (
             <MensajeError mensaje={error.mensaje} />
@@ -623,8 +717,8 @@ const FormaFinanciador = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE_ENLACE")}
             name="apellido_materno"
-            value={estadoForma.enlace.apellido_materno}
-            disabled={!modoEditar}
+            value={estado.forma.enlace.apellido_materno}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "apellido_materno" && (
             <MensajeError mensaje={error.mensaje} />
@@ -637,8 +731,8 @@ const FormaFinanciador = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE_ENLACE")}
             name="email"
-            value={estadoForma.enlace.email}
-            disabled={!modoEditar}
+            value={estado.forma.enlace.email}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "email" && <MensajeError mensaje={error.mensaje} />}
         </div>
@@ -649,21 +743,21 @@ const FormaFinanciador = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE_ENLACE")}
             name="telefono"
-            value={estadoForma.enlace.telefono}
-            disabled={!modoEditar}
+            value={estado.forma.enlace.telefono}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "telefono" && (
             <MensajeError mensaje={error.mensaje} />
           )}
         </div>
-        {modoEditar && (
+        {estado.modoEditar && (
           <div className="col-12 text-end">
             <BtnCancelar onclick={cancelar} margin={"r"} />
-            <BtnRegistrar modalidad={modalidad} margin={false} />
+            <BtnRegistrar modalidad={estado.modalidad} margin={false} />
           </div>
         )}
       </FormaContenedor>
-      {modalidad === "EDITAR" && (
+      {estado.modalidad === "EDITAR" && (
         <div className="row my-3">
           <div className="col-12 mb-3">
             <h2 className="color1 mb-0">Notas</h2>
@@ -678,7 +772,7 @@ const FormaFinanciador = () => {
                 </tr>
               </thead>
               <tbody>
-                {estadoForma.notas.map(
+                {estado.forma.notas.map(
                   ({ id, usuario, mensaje, dt_registro }) => (
                     <tr key={id}>
                       <td>{usuario}</td>
@@ -694,12 +788,11 @@ const FormaFinanciador = () => {
             <input
               type="text"
               className="form-control"
-              value={mensajeNota}
-              onChange={({ target }) => setMensajeNota(target.value)}
+              value={estado.mensajeNota}
+              onChange={handleChangeNota}
               placeholder="mensaje de la nota"
               ref={inputNota}
             ></input>
-            {/* <textarea className="form-control"></textarea> */}
           </div>
           <div className="col-12 col-md-3 mb-3 text-end">
             <button className="btn btn-secondary" onClick={agregarNota}>

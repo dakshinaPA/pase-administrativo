@@ -1,6 +1,18 @@
 import { FondoNegro } from "@components/FondoNegro"
 import styles from "./styles/Modal.module.css"
 
+export interface ModalEliminarProps {
+  show: boolean
+  id: number
+  nombre: string
+}
+
+const estaInicialModalEliminar: ModalEliminarProps = {
+  show: false,
+  id: 0,
+  nombre: "",
+}
+
 const ModalEliminar = ({ children, show, cancelar, aceptar }) => {
   if (!show) {
     return null
@@ -35,4 +47,4 @@ const ModalEliminar = ({ children, show, cancelar, aceptar }) => {
   )
 }
 
-export { ModalEliminar }
+export { ModalEliminar, estaInicialModalEliminar }

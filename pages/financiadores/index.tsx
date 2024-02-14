@@ -2,7 +2,11 @@ import React, { useEffect, useReducer } from "react"
 import { ApiCall } from "@assets/utils/apiCalls"
 import { useRouter } from "next/router"
 import { Loader } from "@components/Loader"
-import { ModalEliminar } from "@components/ModalEliminar"
+import {
+  ModalEliminar,
+  ModalEliminarProps,
+  estaInicialModalEliminar,
+} from "@components/ModalEliminar"
 import { Contenedor, TablaContenedor } from "@components/Contenedores"
 import { aMinuscula } from "@assets/utils/common"
 import { Financiador } from "@models/financiador.model"
@@ -15,24 +19,12 @@ import {
 } from "@components/Banner"
 import { ChangeEvent } from "@assets/models/formEvents.model"
 
-interface ModalEliminarProps {
-  show: boolean
-  id: number
-  nombre: string
-}
-
 interface EstadoProps {
   financiadoresDB: Financiador[]
   modalEliminar: ModalEliminarProps
   isLoading: boolean
   inputBusqueda: string
   banner: EstadoInicialBannerProps
-}
-
-const estaInicialModalEliminar: ModalEliminarProps = {
-  show: false,
-  id: 0,
-  nombre: "",
 }
 
 const estadoInicial: EstadoProps = {

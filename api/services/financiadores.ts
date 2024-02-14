@@ -44,7 +44,7 @@ class FinanciadoresServices {
           representante_legal: financiadorDB.representante_legal,
           rfc_representante_legal: financiadorDB.rfc_representante_legal,
           pagina_web: financiadorDB.pagina_web,
-          rfc: financiadorDB.pagina_web,
+          rfc: financiadorDB.rfc,
           actividad: financiadorDB.actividad,
           i_tipo: financiadorDB.i_tipo,
           tipo: this.obtenerTipo(financiadorDB.i_tipo),
@@ -148,7 +148,7 @@ class FinanciadoresServices {
     if (crearNota.error) {
       return RespuestaController.fallida(
         400,
-        "Error al crear nota de financiador",
+        "Error al crear nota de financiador, contactar a soporte",
         crearNota.data
       )
     }
@@ -169,7 +169,7 @@ class FinanciadoresServices {
     if (re.error) {
       return RespuestaController.fallida(
         400,
-        "Error al obtener notas del financiador",
+        "Error al obtener notas del financiador, contactar a soporte",
         re.data
       )
     }
