@@ -1,5 +1,4 @@
 import { createContext, useContext, useEffect, useState } from "react"
-// import { useRouter } from "next/router"
 import { ApiCall } from "@assets/utils/apiCalls"
 import {
   PaisDB,
@@ -9,7 +8,6 @@ import {
   BancosDB,
   FormasPagoDB,
   RegimenesFiscalesDB,
-  SectoresBeneficiadosDB,
 } from "@api/models/catalogos.model"
 
 const CatalogosContext = createContext(null)
