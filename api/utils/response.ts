@@ -28,15 +28,9 @@ class RespuestaController {
     }
   }
 
-  static async fallida(
-    status: number,
-    mensaje: string,
-    data: any
-  ): Promise<ResController> {
-    // enviar errores de sql
-    if(data.sql){
-      await enviarMail(JSON.stringify(data))
-    }
+  static fallida(status: number, mensaje: string, data: any): ResController {
+    enviarMail(JSON.stringify(data))
+
     return {
       status,
       mensaje,
