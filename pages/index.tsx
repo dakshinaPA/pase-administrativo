@@ -1,13 +1,11 @@
-import { useEffect } from "react"
 import { useSesion } from "@hooks/useSesion"
 import { useRouter } from "next/router"
 
 const Home = () => {
   const { user, status } = useSesion()
-  if (status !== "authenticated") return null
   const router = useRouter()
 
-  useEffect(() => {
+  if (status === "authenticated") {
     let route = ""
 
     switch (user.id_rol) {
@@ -26,7 +24,9 @@ const Home = () => {
     }
 
     router.push(route)
-  }, [])
+  } else if (status === "unauthenticated") {
+    router.push("/login")
+  }
 
   return null
 }

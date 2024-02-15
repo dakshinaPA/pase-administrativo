@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react"
 import { ApiCall } from "@assets/utils/apiCalls"
-import { useRouter } from "next/router"
 import { Loader } from "@components/Loader"
 import { Contenedor, TablaContenedor } from "@components/Contenedores"
 import { ModalEliminar } from "@components/ModalEliminar"
@@ -13,13 +12,19 @@ import { IdRolUsuario, QueriesUsuario, Usuario } from "@models/usuario.model"
 import { CoparteMin, QueriesCoparte } from "@models/coparte.model"
 import { BtnAccion, BtnNeutro, LinkAccion } from "@components/Botones"
 import { useSesion } from "@hooks/useSesion"
+import { useRouter } from "next/router"
 import { Banner, estadoInicialBanner } from "@components/Banner"
 
 const Usuarios = () => {
   const { user, status } = useSesion()
-  if (status !== "authenticated" || !user) return null
-
   const router = useRouter()
+  if (status !== "authenticated" || !user) {
+    if (status === "unauthenticated") {
+      router.push("/login")
+    }
+    return null
+  }
+
   if (user.id_rol == 3) {
     router.push("/")
     return null
