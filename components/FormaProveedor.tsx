@@ -240,9 +240,11 @@ const FormaProveedor = () => {
   const handleChange = (ev: ChangeEvent, type: ActionTypes) => {
     let { name, value } = ev.target
 
-    if (name == "rfc_organizacion") name = "rfc"
+    if (name === "rfc_organizacion") name = "rfc"
     if (error.campo === name) {
-      validarCampos({ [name]: value })
+      let campo = name
+      if (campo === "nombre") campo = "proveedor"
+      validarCampos({ [campo]: value })
     }
 
     dispatch({
@@ -399,7 +401,7 @@ const FormaProveedor = () => {
             value={estadoForma.nombre}
             disabled={!modoEditar}
           />
-          {error.campo == "proveedor" && (
+          {error.campo == "nombre" && (
             <MensajeError mensaje={error.mensaje} />
           )}
         </div>

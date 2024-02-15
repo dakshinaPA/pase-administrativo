@@ -39,8 +39,7 @@ const useErrores = () => {
           case "actividad":
           case "sector_beneficiado":
           case "bank_branch_address":
-            if (!/^.{5,}$/.test(campos[key]))
-              throw [key, "Mínimo 5 caracteres"]
+            if (!/^.{5,}$/.test(campos[key])) throw [key, "Mínimo 5 caracteres"]
             break
           case "bic_code":
             if (!/^.{8,11}$/.test(campos[key]))
@@ -78,19 +77,15 @@ const useErrores = () => {
           case "colonia":
           case "municipio":
           case "estado":
-          case "proveedor":
           case "bank":
           case "intermediary_bank":
-            if (!/^.{3,}$/.test(campos[key]))
-              throw [key, "Mínimo 3 caracteres"]
+            if (!/^.{3,}$/.test(campos[key])) throw [key, "Mínimo 3 caracteres"]
             break
           case "banco":
-            if (!/^.{1,}$/.test(campos[key]))
-              throw [key, "Campo requerido"]
+            if (!/^.{1,}$/.test(campos[key])) throw [key, "Campo requerido"]
             break
           case "nombre_corto":
-            if (!/^.{2,}$/.test(campos[key]))
-              throw [key, "Mínimo 2 caracteres"]
+            if (!/^.{2,}$/.test(campos[key])) throw [key, "Mínimo 2 caracteres"]
             break
           case "numero_ext":
             if (!/^[a-zA-Z0-9]{1,}$/.test(campos[key]))
@@ -110,8 +105,7 @@ const useErrores = () => {
               throw [key, "CLABE a 18 dígitos"]
             break
           case "clabe_account":
-            if (!/^[0-9]{1,}$/.test(campos[key]))
-              throw [key, "Campo requerido"]
+            if (!/^[0-9]{1,}$/.test(campos[key])) throw [key, "Campo requerido"]
             break
           case "curp":
             if (
@@ -134,14 +128,16 @@ const useErrores = () => {
           case "telefono":
           case "account_number":
           case "routing_number":
-            if (!/^[0-9]{1,}$/.test(campos[key]))
-              throw [key, "Sólo dígitos"]
+            if (!/^[0-9]{1,}$/.test(campos[key])) throw [key, "Sólo dígitos"]
             break
           case "f_retenciones_extranjeros":
             if (!Number(campos[key]) && campos[key] != 0)
               throw ["f_retenciones", "Sólo dígitos"]
           case "nombre_proyecto":
             if (!/^.{2,}$/.test(campos[key]))
+              throw ["nombre", "Nombre inválido"]
+          case "proveedor":
+            if (!/^[a-zA-Z0-9\u00C0-\u017F\s\-]{2,}$/.test(campos[key]))
               throw ["nombre", "Nombre inválido"]
             break
         }
@@ -151,7 +147,7 @@ const useErrores = () => {
       return true
     } catch (error) {
       const inputError = formRef.current.querySelector(
-        `input[name=${error[0]}], select[name=${error[0]}], textarea[name=${error[0]}] `
+        `input[name=${error[0]}], select[name=${error[0]}], textarea[name=${error[0]}]`
       )
       inputError?.focus()
 
