@@ -1,5 +1,6 @@
 import { ResController, ResDB } from "@api/models/respuestas.model"
 import { ResultsDB } from "@api/models/respuestas.model"
+import { enviarMail } from "./sendMails"
 
 class RespuestaDB {
   static exitosa(data: ResultsDB): ResDB {
@@ -18,11 +19,7 @@ class RespuestaDB {
 }
 
 class RespuestaController {
-  static exitosa(
-    status: number,
-    mensaje: string,
-    data: any
-  ): ResController {
+  static exitosa(status: number, mensaje: string, data: any): ResController {
     return {
       status,
       mensaje,
@@ -31,11 +28,15 @@ class RespuestaController {
     }
   }
 
-  static fallida(
+  static async fallida(
     status: number,
     mensaje: string,
     data: any
-  ): ResController {
+  ): Promise<ResController> {
+    // enviar errores de sql
+    if(data.sql){
+      await enviarMail(JSON.stringify(data))
+    }
     return {
       status,
       mensaje,
