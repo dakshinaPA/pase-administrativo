@@ -29,7 +29,7 @@ class RespuestaController {
   }
 
   static fallida(status: number, mensaje: string, data: any): ResController {
-    enviarMail(JSON.stringify(data))
+    enviarMail(JSON.stringify({ status, mensaje, data }))
 
     return {
       status,
