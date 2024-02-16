@@ -1,4 +1,3 @@
-// import { Colaborador } from "./colaborador.model"
 import { Direccion } from "./direccion.model"
 import { SolicitudPresupuesto } from "./solicitud-presupuesto.model"
 
@@ -75,11 +74,14 @@ export interface ProveedorProyecto {
   direccion: DireccionProveedor
 }
 
-export interface RubroMinistracion {
-  id?: number
-  id_ministracion?: number
+interface RubroMinistracionMin {
   id_rubro: number
   rubro?: string
+}
+
+export interface RubroMinistracion extends RubroMinistracionMin {
+  id?: number
+  id_ministracion?: number
   f_monto: number | string
   b_activo?: boolean
 }
@@ -152,8 +154,16 @@ export interface Proyecto extends ProyectoMin {
   notas?: NotaProyecto[]
 }
 
+interface TitularProyecto {
+  id: number
+  nombre: string
+  i_tipo: 1 | 2 | 3
+  i_tipo_titular: 1 | 2 //1.colaborador, 2.proveedor
+  clabe: string
+  id_banco: number
+}
+
 export interface DataProyecto {
-  colaboradores: ColaboradorProyecto[]
-  proveedores: ProveedorProyecto[]
+  titulares: TitularProyecto[]
   rubros_presupuestales: RubroMinistracion[]
 }
