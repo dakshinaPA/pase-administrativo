@@ -743,6 +743,14 @@ FROM ministracion_rubros_presupuestales rp
 JOIN proyecto_ministraciones pm ON pm.id = rp.id_ministracion
 WHERE rp.id_rubro=23
 
+SELECT * FROM solicitud_presupuesto_comprobantes WHERE id_solicitud_presupuesto IN (
+  SELECT id FROM solicitudes_presupuesto WHERE b_activo=0
+)
+
+UPDATE solicitud_presupuesto_comprobantes SET b_activo=0 WHERE id_solicitud_presupuesto IN (
+  SELECT id FROM solicitudes_presupuesto WHERE b_activo=0
+)
+
 -- alters
 
 ALTER TABLE solicitudes_presupuesto ADD f_retenciones VARCHAR(20) NOT NULL DEFAULT '0' AFTER f_importe
