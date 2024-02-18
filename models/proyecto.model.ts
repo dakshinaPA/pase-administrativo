@@ -1,4 +1,4 @@
-// import { Colaborador } from "./colaborador.model"
+import { Comprobante } from "@api/models/proyecto.model"
 import { Direccion } from "./direccion.model"
 import { SolicitudPresupuesto } from "./solicitud-presupuesto.model"
 
@@ -56,7 +56,7 @@ export interface ProveedorProyecto {
   proyecto?: string
   id_responsable?: number
   nombre: string
-  i_tipo: 1 | 2 | 3// 1.persona fisica, 2. persona moral, 3.extranjero
+  i_tipo: 1 | 2 | 3 // 1.persona fisica, 2. persona moral, 3.extranjero
   tipo?: string
   clabe: string
   id_banco: number
@@ -64,11 +64,11 @@ export interface ProveedorProyecto {
   telefono: string
   email: string
   rfc: string
-  bank: string	
-  bank_branch_address: string	
-  account_number: string	
-  bic_code: string	
-  intermediary_bank: string	
+  bank: string
+  bank_branch_address: string
+  account_number: string
+  bic_code: string
+  intermediary_bank: string
   routing_number: string
   descripcion_servicio: string
   dt_registro?: string
@@ -156,4 +156,10 @@ export interface DataProyecto {
   colaboradores: ColaboradorProyecto[]
   proveedores: ProveedorProyecto[]
   rubros_presupuestales: RubroMinistracion[]
+}
+
+export interface CalcularSaldo {
+  rubros: RubroMinistracion[]
+  solicitudes: SolicitudPresupuesto[]
+  comprobantes: Comprobante[]
 }

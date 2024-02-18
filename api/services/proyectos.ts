@@ -8,6 +8,7 @@ import {
   QueriesProyecto,
   NotaProyecto,
   DataProyecto,
+  CalcularSaldo,
 } from "@models/proyecto.model"
 
 import { ResProyectos } from "@api/models/proyecto.model"
@@ -47,6 +48,78 @@ class ProyectosServices {
     }
   }
 
+  static calcularSaldo(data: CalcularSaldo) {
+    const { rubros, solicitudes, comprobantes } = data
+
+    const f_monto_total = rubros.reduce(
+      (acum, { f_monto }) => acum + Number(f_monto),
+      0
+    )
+
+    const f_pa = rubros
+      .filter((rub) => rub.id_rubro == 1)
+      .reduce((acum, { f_monto }) => acum + Number(f_monto), 0)
+
+    const f_solicitado = solicitudes
+      // .filter((sol) => [1, 2, 5].includes(sol.i_estatus))
+      .reduce((acum, { f_importe }) => acum + Number(f_importe), 0)
+
+    const f_comprobado_excepciones = solicitudes.reduce(
+      (acum, { i_tipo_gasto, f_importe, id_partida_presupuestal }) => {
+        if (i_tipo_gasto == 3 || id_partida_presupuestal == 22) {
+          return acum + Number(f_importe)
+        }
+        return acum
+      },
+      0
+    )
+
+    const f_comprobado_comprobantes = comprobantes.reduce(
+      (acum, { f_total }) => acum + Number(f_total),
+      0
+    )
+
+    const f_ejercicios_anteriores =
+      rubros.find((rb) => rb.id_rubro === 23)?.f_monto || 0
+
+    // sumar las retenciones de solicitudes de asimilados que se teclean a mano
+    const f_retenciones_solicitudes = solicitudes.reduce(
+      (acum, { f_retenciones }) => acum + Number(f_retenciones),
+      0
+    )
+    const f_retenciones_comprobantes = comprobantes.reduce(
+      (acum, { f_retenciones }) => acum + Number(f_retenciones),
+      0
+    )
+
+    const f_comprobado = f_comprobado_excepciones + f_comprobado_comprobantes
+    const f_transferido =
+      solicitudes
+        .filter((sol) => sol.i_estatus == 4)
+        .reduce((acum, { f_importe }) => acum + Number(f_importe), 0) +
+      Number(f_ejercicios_anteriores)
+    const f_retenciones = f_retenciones_solicitudes + f_retenciones_comprobantes
+    const f_por_comprobar = f_solicitado - f_comprobado
+    const f_isr = f_por_comprobar * 0.35
+    const f_ejecutado = f_transferido + f_retenciones + f_isr + f_pa
+    const f_remanente = f_monto_total - f_ejecutado
+    const p_avance = Number(((f_ejecutado * 100) / f_monto_total).toFixed(2))
+
+    return {
+      f_monto_total,
+      f_pa,
+      f_solicitado,
+      f_transferido,
+      f_comprobado,
+      f_retenciones,
+      f_por_comprobar,
+      f_isr: f_isr < 0 ? 0 : f_isr, //evitar que isr de numero negativo
+      f_ejecutado,
+      f_remanente,
+      p_avance,
+    }
+  }
+
   static async obtener(queries: QueriesProyecto) {
     const { id, min } = queries
 
@@ -64,78 +137,21 @@ class ProyectosServices {
           const comprobantes = re.comprobantes.filter(
             (com) => com.id_proyecto == proyecto.id
           )
-          const f_monto_total = rubros.reduce(
-            (acum, { f_monto }) => acum + Number(f_monto),
-            0
-          )
-          const f_pa = rubros
-            .filter((rub) => rub.id_rubro == 1)
-            .reduce((acum, { f_monto }) => acum + Number(f_monto), 0)
-          const f_solicitado = solicitudes.reduce(
-            (acum, { f_importe }) => acum + Number(f_importe),
-            0
-          )
-          const f_comprobado_excepciones = solicitudes.reduce(
-            (acum, { i_tipo_gasto, f_importe, id_partida_presupuestal }) => {
-              if (i_tipo_gasto == 3 || id_partida_presupuestal == 22) {
-                return acum + Number(f_importe)
-              }
-              return acum
-            },
-            0
-          )
-          const f_comprobado_comprobantes = comprobantes.reduce(
-            (acum, { f_total }) => acum + Number(f_total),
-            0
-          )
-          const f_comprobado =
-            f_comprobado_excepciones + f_comprobado_comprobantes
-          const f_ejercicios_anteriores =
-            rubros.find((rb) => rb.id_rubro === 23)?.f_monto || 0
-          const f_transferido =
-            solicitudes
-              .filter((sol) => sol.i_estatus == 4)
-              .reduce((acum, { f_importe }) => acum + Number(f_importe), 0) +
-            Number(f_ejercicios_anteriores)
 
-          // sumar las retenciones de solicitudes de asimilados que se teclean a mano
-          const f_retenciones_solicitudes = solicitudes.reduce(
-            (acum, { f_retenciones }) => acum + Number(f_retenciones),
-            0
-          )
-          const f_retenciones_comprobantes = comprobantes.reduce(
-            (acum, { f_retenciones }) => acum + Number(f_retenciones),
-            0
-          )
-          const f_retenciones =
-            f_retenciones_solicitudes + f_retenciones_comprobantes
+          const calculoSaldo = {
+            rubros,
+            solicitudes,
+            comprobantes,
+          }
 
-          const f_por_comprobar = f_solicitado - f_comprobado
-          const f_isr = f_por_comprobar * 0.35
-          const f_ejecutado = f_transferido + f_retenciones + f_isr + f_pa
-          const f_remanente = f_monto_total - f_ejecutado
-          const p_avance = Number(
-            ((f_ejecutado * 100) / f_monto_total).toFixed(2)
-          )
+          const saldo = this.calcularSaldo(calculoSaldo)
 
           return {
             ...proyecto,
             tipo_financiamiento: this.obtenerTipoFinanciamiento(
               proyecto.i_tipo_financiamiento
             ),
-            saldo: {
-              f_monto_total,
-              f_pa,
-              f_solicitado,
-              f_transferido,
-              f_comprobado,
-              f_retenciones,
-              f_por_comprobar,
-              f_isr: f_isr < 0 ? 0 : f_isr, //evitar que isr de numero negativo
-              f_ejecutado,
-              f_remanente,
-              p_avance,
-            },
+            saldo,
           }
         }
       )
@@ -171,75 +187,20 @@ class ProyectosServices {
 
       const proyectoDB = proyectos[0]
 
-      const f_monto_total = rubros_ministracion.reduce(
-        (acum, { f_monto }) => acum + Number(f_monto),
-        0
-      )
-      const f_pa = rubros_ministracion
-        .filter((rub) => rub.id_rubro == 1)
-        .reduce((acum, { f_monto }) => acum + Number(f_monto), 0)
-      const f_solicitado = solicitudes.reduce(
-        (acum, { f_importe }) => acum + Number(f_importe),
-        0
-      )
-      const f_comprobado_excepciones = solicitudes.reduce(
-        (acum, { i_tipo_gasto, f_importe, id_partida_presupuestal }) => {
-          if (i_tipo_gasto == 3 || id_partida_presupuestal == 22) {
-            return acum + Number(f_importe)
-          }
-          return acum
-        },
-        0
-      )
-      const f_comprobado_comprobantes = comprobantes.reduce(
-        (acum, { f_total }) => acum + Number(f_total),
-        0
-      )
-      //el rubro se ejercicios anteriores se suma al total transferido
-      const f_ejercicios_anteriores =
-        rubros_ministracion.find((rb) => rb.id_rubro === 23)?.f_monto || 0
-      const f_comprobado = f_comprobado_excepciones + f_comprobado_comprobantes
-      const f_transferido =
-        solicitudes
-          .filter((sol) => sol.i_estatus == 4)
-          .reduce((acum, { f_importe }) => acum + Number(f_importe), 0) +
-        Number(f_ejercicios_anteriores)
-      // sumar retenciones de solicitudes de asimilados y comprobantes
-      const f_retenciones_solicitudes = solicitudes.reduce(
-        (acum, { f_retenciones }) => acum + Number(f_retenciones),
-        0
-      )
-      const f_retenciones_comprobantes = comprobantes.reduce(
-        (acum, { f_retenciones }) => acum + Number(f_retenciones),
-        0
-      )
-      const f_retenciones =
-        f_retenciones_solicitudes + f_retenciones_comprobantes
+      const proyectoSaldo = {
+        rubros: rubros_ministracion,
+        solicitudes,
+        comprobantes,
+      }
 
-      const f_por_comprobar = f_solicitado - f_comprobado
-      const f_isr = f_por_comprobar * 0.35
-      const f_ejecutado = f_transferido + f_retenciones + f_isr + f_pa
-      const f_remanente = f_monto_total - f_ejecutado
-      const p_avance = Number(((f_ejecutado * 100) / f_monto_total).toFixed(2))
+      const saldo = this.calcularSaldo(proyectoSaldo)
 
       const dataProyecto = {
         ...proyectoDB,
         tipo_financiamiento: this.obtenerTipoFinanciamiento(
           proyectoDB.i_tipo_financiamiento
         ),
-        saldo: {
-          f_monto_total,
-          f_pa,
-          f_solicitado,
-          f_transferido,
-          f_comprobado,
-          f_retenciones,
-          f_por_comprobar,
-          f_isr: f_isr < 0 ? 0 : f_isr, //evitar que isr de numero negativo
-          f_ejecutado,
-          f_remanente,
-          p_avance,
-        },
+        saldo,
       }
 
       const ministracionesConRubros: MinistracionProyecto[] =
@@ -308,23 +269,7 @@ class ProyectosServices {
     try {
       const reData = (await ProyectoDB.obtenerData(id_proyecto)) as DataProyecto
 
-      //quiatr rubros repetidos
-      const rubrosSinRepetir = []
-      for (const { id_rubro, rubro } of reData.rubros_presupuestales) {
-        const match = rubrosSinRepetir.find((rsr) => rsr.id_rubro == id_rubro)
-        if (!match) rubrosSinRepetir.push({ id_rubro, rubro })
-      }
-
-      const dataTransformada: DataProyecto = {
-        ...reData,
-        rubros_presupuestales: rubrosSinRepetir,
-      }
-
-      return RespuestaController.exitosa(
-        200,
-        "Consulta exitosa",
-        dataTransformada
-      )
+      return RespuestaController.exitosa(200, "Consulta exitosa", reData)
     } catch (error) {
       return RespuestaController.fallida(
         400,

@@ -568,7 +568,13 @@ class ProyectoDB {
   static async obtenerData(id_proyecto: number) {
     const qColaboradores = ColaboradorDB.queryRe(id_proyecto)
     const qProveedores = ProveedorDB.queryRe(id_proyecto)
-    const qRubrosProyecto = this.qReRubrosMinistracion()
+    const qRubrosProyecto = `
+      SELECT DISTINCT mrp.id_rubro, rp.nombre rubro
+      FROM ministracion_rubros_presupuestales mrp
+      JOIN rubros_presupuestales rp ON rp.id = mrp.id_rubro
+      JOIN proyecto_ministraciones pm ON pm.id = mrp.id_ministracion
+      WHERE pm.id_proyecto=? AND mrp.id_rubro NOT IN (1,23)
+    `
     const qCombinados = [qColaboradores, qProveedores, qRubrosProyecto].join(
       ";"
     )

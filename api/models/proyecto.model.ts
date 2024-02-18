@@ -25,19 +25,6 @@ export interface ResProyectoDB {
   dt_inicio: string
   dt_fin: string
   dt_registro: string
-  // id_proyecto_saldo: number
-  // f_monto_total: number
-  // f_solicitado: number
-  // f_transferido: number
-  // f_comprobado: number
-  // f_retenciones: number
-  // f_pa: number
-  // ministraciones?: MinistracionProyecto[]
-  // rubros_ministracion?: RubroMinistracion[]
-  // colaboradores?: ColaboradorProyecto[]
-  // proveedores?: ProveedorProyecto[]
-  // solicitudes?: ResSolicitudPresupuestoDB[]
-  // notas?: NotaProyecto[]
 }
 
 interface Rubro {
@@ -46,12 +33,7 @@ interface Rubro {
   id_rubro: number
 }
 
-// interface Solicitado {
-//   f_solicitado: number,
-//   id_proyecto: number
-// }
-
-interface Comprobante {
+export interface Comprobante {
   id_proyecto: number
   f_total: number
   f_retenciones: number
@@ -61,7 +43,6 @@ interface Comprobante {
 export interface ResProyectos {
   proyectos: ResProyectoDB[]
   rubros?: Rubro[]
-  // solicitado: Solicitado[]
   comprobantes: Comprobante[]
   ministraciones?: MinistracionProyecto[]
   rubros_ministracion?: RubroMinistracion[]
