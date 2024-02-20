@@ -566,6 +566,12 @@ const FormaProyecto = () => {
 
   const cargarData = async () => {
     try {
+      //obtener financiadores en registro o edicion
+      const reFinanciadores = await obtenerFinanciadores()
+      if (reFinanciadores.error) throw reFinanciadores
+      const financiadoresDB = reFinanciadores.data as FinanciadorMin[]
+      setFinanciadoresDB(financiadoresDB)
+
       if (modalidad == "CREAR") {
         const queryCopartes: QueriesCoparte = {}
         if (idCoparte) {
@@ -574,28 +580,16 @@ const FormaProyecto = () => {
           queryCopartes.id_admin = user.id
         }
 
-        const promesas = [
-          obtenerFinanciadores(),
-          obtenerCopartes(queryCopartes),
-        ]
+        const reCopartes = await obtenerCopartes(queryCopartes)
+        if (reCopartes.error) throw reCopartes
 
-        const resCombinadas = await Promise.all(promesas)
-
-        for (const rc of resCombinadas) {
-          if (rc.error) throw rc
-        }
-
-        const financiaodresDB = resCombinadas[0].data as FinanciadorMin[]
-        const copartesAdminDB = resCombinadas[1].data as CoparteMin[]
-
-        setFinanciadoresDB(financiaodresDB)
-        setCopartesDB(copartesAdminDB)
-
+        const copartesDB = reCopartes.data as CoparteMin[]
+        setCopartesDB(copartesDB)
         dispatch({
           type: "SET_IDS_DEPENDENCIAS",
           payload: {
-            id_coparte: copartesAdminDB[0]?.id ?? 0,
-            id_financiador: financiaodresDB[0]?.id ?? 0,
+            id_coparte: copartesDB[0]?.id ?? 0,
+            id_financiador: financiadoresDB[0]?.id ?? 0,
           },
         })
       } else {
@@ -603,12 +597,13 @@ const FormaProyecto = () => {
           id: idProyecto,
           min: false,
         })
-        if (reProyecto.error) throw reProyecto
 
-        const proyecto = reProyecto.data as Proyecto
+        if (reProyecto.error) throw reProyecto
+        const proyectoDB = reProyecto.data as Proyecto
+
         dispatch({
           type: "CARGA_INICIAL",
-          payload: proyecto,
+          payload: proyectoDB,
         })
       }
     } catch ({ data, mensaje }) {
@@ -786,6 +781,10 @@ const FormaProyecto = () => {
     !showFormaMinistracion &&
     (estadoForma.id_administrador == user.id || user.id_rol == 1)
 
+  const enableSlctFinanciadores =
+    modalidad === "CREAR" ||
+    (modalidad === "EDITAR" && modoEditar && user.id_rol == 1)
+
   if (isLoading) {
     return (
       <Contenedor>
@@ -843,28 +842,19 @@ const FormaProyecto = () => {
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Financiador</label>
-          {modalidad === "CREAR" ? (
-            <select
-              className="form-control"
-              onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-              name="id_financiador"
-              value={estadoForma.id_financiador}
-              disabled={Boolean(idProyecto)}
-            >
-              {financiadoresDB.map(({ id, nombre }) => (
-                <option key={id} value={id}>
-                  {nombre}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <input
-              className="form-control"
-              type="text"
-              value={estadoForma.financiador}
-              disabled
-            />
-          )}
+          <select
+            className="form-control"
+            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+            name="id_financiador"
+            value={estadoForma.id_financiador}
+            disabled={!enableSlctFinanciadores}
+          >
+            {financiadoresDB.map(({ id, nombre }) => (
+              <option key={id} value={id}>
+                {nombre}
+              </option>
+            ))}
+          </select>
           {error.campo == "id_financiador" && (
             <MensajeError mensaje={error.mensaje} />
           )}

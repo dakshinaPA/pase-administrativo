@@ -1,6 +1,7 @@
 import nodemailer from "nodemailer"
 
 export const enviarMail = async (mensaje: string) => {
+  if(process.env.ENV === "dev") return null
   try {
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",

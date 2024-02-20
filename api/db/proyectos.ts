@@ -280,7 +280,7 @@ class ProyectoDB {
     const qIdAlt = [
       "SELECT id_alt FROM financiadores WHERE id=? LIMIT 1",
       "SELECT id_alt FROM copartes WHERE id=? LIMIT 1",
-      "SELECT count(*) cantidad FROM proyectos WHERE id_financiador=? AND id_coparte=?",
+      "SELECT id_alt FROM proyectos WHERE id_financiador=? AND id_coparte=? ORDER BY dt_registro DESC LIMIT 1",
     ].join(";")
 
     const phIdALt = [
@@ -319,7 +319,8 @@ class ProyectoDB {
 
             const idAltFinanciador = results[0][0].id_alt
             const idAltCoparte = results[1][0].id_alt
-            const nextId = results[2][0].cantidad + 1
+            const lastAltId = results[2][0]?.id_alt || 0
+            const nextId = lastAltId ? Number(lastAltId.split("_")[2]) + 1 : 1
             const idAltConZeros = agregarCerosAId(String(nextId))
             const idAltProyecto = `${idAltFinanciador}_${idAltCoparte}_${idAltConZeros}`
             phProyecto.unshift(idAltProyecto)
@@ -411,9 +412,9 @@ class ProyectoDB {
   }
 
   static async actualizar(id_proyecto: number, data: Proyecto) {
-    const { ministraciones, saldo } = data
+    const { ministraciones } = data
 
-    const qProyecto = `UPDATE proyectos SET id_responsable=?, nombre=?, id_tema_social=?, sector_beneficiado=?,
+    const qProyecto = `UPDATE proyectos SET id_financiador=?, id_responsable=?, nombre=?, id_tema_social=?, sector_beneficiado=?,
       i_beneficiados=?, id_estado=?, municipio=?, descripcion=?, dt_inicio=?, dt_fin=? WHERE id=? LIMIT 1`
 
     const qUpMinistracion = `UPDATE proyecto_ministraciones SET i_grupo=?,
@@ -429,6 +430,7 @@ class ProyectoDB {
 
     const qCombinados = [qProyecto]
     const phCombinados = [
+      data.id_financiador,
       data.id_responsable,
       data.nombre,
       data.id_tema_social,
@@ -568,7 +570,13 @@ class ProyectoDB {
   static async obtenerData(id_proyecto: number) {
     const qColaboradores = ColaboradorDB.queryRe(id_proyecto)
     const qProveedores = ProveedorDB.queryRe(id_proyecto)
-    const qRubrosProyecto = this.qReRubrosMinistracion()
+    const qRubrosProyecto = `
+      SELECT DISTINCT mrp.id_rubro, rp.nombre rubro
+      FROM ministracion_rubros_presupuestales mrp
+      JOIN rubros_presupuestales rp ON rp.id = mrp.id_rubro
+      JOIN proyecto_ministraciones pm ON pm.id = mrp.id_ministracion
+      WHERE pm.id_proyecto=? AND mrp.id_rubro NOT IN (1,23)
+    `
     const qCombinados = [qColaboradores, qProveedores, qRubrosProyecto].join(
       ";"
     )

@@ -28,18 +28,18 @@ interface SolicitudPresupuestoVista extends SolicitudPresupuesto {
   checked: boolean
 }
 
-const estadoInicialFiltros: QueriesSolicitud = {
-  id_coparte: 0,
-  id_proyecto: 0,
-  i_estatus: 1,
-  titular: "",
-  dt_inicio: "",
-  dt_fin: "",
-}
-
 const SolicitudesPresupuesto = () => {
   const { user, status } = useSesion()
   if (status !== "authenticated" || !user) return null
+
+  const estadoInicialFiltros: QueriesSolicitud = {
+    id_coparte: 0,
+    id_proyecto: 0,
+    i_estatus: user.id_rol == 3 ? 0 : 1,
+    titular: "",
+    dt_inicio: "",
+    dt_fin: "",
+  }
 
   const router = useRouter()
   const [solicitudesFiltradas, setSolicitudesFiltradas] = useState<

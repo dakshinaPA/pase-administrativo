@@ -103,7 +103,10 @@ class SolicitudesPresupuestoDB {
   }
 
   static qReactivarComprobante = () => {
-    return `UPDATE solicitud_presupuesto_comprobantes SET b_activo=1 WHERE id=?`
+    return `
+      UPDATE solicitud_presupuesto_comprobantes SET id_solicitud_presupuesto=?, f_isr=?, f_iva=?,
+      rfc_emisor=?, b_activo=1 WHERE id=?
+    `
   }
 
   static qReNotas = () => {
@@ -329,7 +332,18 @@ class SolicitudesPresupuestoDB {
       email=?, proveedor=?, descripcion_gasto=?, f_importe=?, f_retenciones=?, i_estatus=? WHERE id=?`
 
     const qReComprobantes =
-      "SELECT id, id_solicitud_presupuesto, folio_fiscal, b_activo FROM solicitud_presupuesto_comprobantes WHERE id_solicitud_presupuesto=?"
+      "SELECT id, folio_fiscal, b_activo FROM solicitud_presupuesto_comprobantes WHERE id_solicitud_presupuesto=?"
+
+    const qReFolioExistente = `
+      SELECT id, folio_fiscal FROM solicitud_presupuesto_comprobantes WHERE folio_fiscal IN (?) AND id_solicitud_presupuesto!=? AND b_activo=0`
+
+    const idsFoliosComprobantes = !!comprobantes.length
+      ? comprobantes.map((com) => com.folio_fiscal)
+      : ""
+    const qComprobantesCombinados = [qReComprobantes, qReFolioExistente].join(
+      ";"
+    )
+    const phIniciales = [id, idsFoliosComprobantes, id]
 
     return new Promise((res, rej) => {
       connectionDB.getConnection((err, connection) => {
@@ -342,101 +356,123 @@ class SolicitudesPresupuestoDB {
           }
 
           //actualizar solicitud y traer comprobantes existentes
-          connection.query(qReComprobantes, id, (error, results, fields) => {
-            if (error) {
-              return connection.rollback(() => {
-                connection.destroy()
-                rej(error)
-              })
-            }
-
-            const comprobantesDB = results as ComprobanteSolicitud[]
-
-            const qCombinados = [qUpSolicitud]
-            const phCombinados = [
-              data.clabe,
-              data.banco,
-              data.titular_cuenta,
-              data.email,
-              data.proveedor,
-              data.descripcion_gasto,
-              data.f_importe,
-              data.f_retenciones,
-              data.i_estatus,
-              id,
-            ]
-
-            for (const comp of comprobantes) {
-              // agregar comprobantes nuevos
-              if (!comp.id) {
-                //buscar si esta en base de datos pero inactivo
-                const match = comprobantesDB.find(
-                  (comDB) => comDB.folio_fiscal == comp.folio_fiscal
-                )
-
-                if (match && match.id_solicitud_presupuesto == id) {
-                  //reactivar solicitud
-                  qCombinados.push(this.qReactivarComprobante())
-                  phCombinados.push(match.id)
-                } else {
-                  //registrar nueva
-                  qCombinados.push(this.qCrComprobante())
-                  phCombinados.push(
-                    id,
-                    comp.folio_fiscal,
-                    comp.f_total,
-                    comp.f_retenciones,
-                    comp.f_isr,
-                    comp.f_iva,
-                    comp.i_metodo_pago,
-                    comp.id_forma_pago,
-                    comp.id_regimen_fiscal_emisor,
-                    comp.rfc_emisor,
-                    fechaActualAEpoch()
-                  )
-                }
-              }
-            }
-
-            //revisar si se eliminaron comprobantes
-            for (const compDb of comprobantesDB) {
-              if (Boolean(compDb.b_activo)) {
-                const match = comprobantes.find((comp) => comp.id == compDb.id)
-                if (!match) {
-                  qCombinados.push(this.qDlComprobantes())
-                  phCombinados.push(compDb.id)
-                }
-              }
-            }
-
-            connection.query(
-              qCombinados.join(";"),
-              phCombinados,
-              (error, results, fields) => {
-                if (error) {
-                  return connection.rollback(() => {
-                    connection.destroy()
-                    rej(error)
-                  })
-                }
-
-                connection.commit((err) => {
-                  if (err) connection.rollback(() => rej(err))
+          connection.query(
+            qComprobantesCombinados,
+            phIniciales,
+            (error, results, fields) => {
+              if (error) {
+                return connection.rollback(() => {
                   connection.destroy()
-                  res(true)
+                  rej(error)
                 })
               }
-            )
-          })
+
+              const comprobantesDB = results[0] as ComprobanteSolicitud[]
+              const comprobantesOtraSolicitud =
+                (results[1] as ComprobanteSolicitud[])
+
+              const qCombinados = [qUpSolicitud]
+              const phCombinados = [
+                data.clabe,
+                data.banco,
+                data.titular_cuenta,
+                data.email,
+                data.proveedor,
+                data.descripcion_gasto,
+                data.f_importe,
+                data.f_retenciones,
+                data.i_estatus,
+                id,
+              ]
+
+              for (const comp of comprobantes) {
+                // agregar comprobantes nuevos
+                if (!comp.id) {
+                  //buscar si esta en base de datos pero inactivo
+                  const match =
+                    comprobantesDB.find(
+                      (comDB) => comDB.folio_fiscal == comp.folio_fiscal
+                    ) ||
+                    comprobantesOtraSolicitud.find(
+                      (comDB) => comDB.folio_fiscal == comp.folio_fiscal
+                    )
+
+                  if (match) {
+                    //reactivar comprobante
+                    qCombinados.push(this.qReactivarComprobante())
+                    phCombinados.push(
+                      id,
+                      comp.f_isr,
+                      comp.f_iva,
+                      comp.rfc_emisor,
+                      match.id
+                    )
+                  } else {
+                    //registrar nueva
+                    qCombinados.push(this.qCrComprobante())
+                    phCombinados.push(
+                      id,
+                      comp.folio_fiscal,
+                      comp.f_total,
+                      comp.f_retenciones,
+                      comp.f_isr,
+                      comp.f_iva,
+                      comp.i_metodo_pago,
+                      comp.id_forma_pago,
+                      comp.id_regimen_fiscal_emisor,
+                      comp.rfc_emisor,
+                      fechaActualAEpoch()
+                    )
+                  }
+                }
+              }
+
+              //revisar si se eliminaron comprobantes
+              for (const compDb of comprobantesDB) {
+                if (Boolean(compDb.b_activo)) {
+                  const match = comprobantes.find(
+                    (comp) => comp.id == compDb.id
+                  )
+                  if (!match) {
+                    qCombinados.push(this.qDlComprobantes())
+                    phCombinados.push(compDb.id)
+                  }
+                }
+              }
+
+              connection.query(
+                qCombinados.join(";"),
+                phCombinados,
+                (error, results, fields) => {
+                  if (error) {
+                    return connection.rollback(() => {
+                      connection.destroy()
+                      rej(error)
+                    })
+                  }
+
+                  connection.commit((err) => {
+                    if (err) connection.rollback(() => rej(err))
+                    connection.destroy()
+                    res(true)
+                  })
+                }
+              )
+            }
+          )
         })
       })
     })
   }
 
   static async borrar(id: number) {
-    const query = `UPDATE solicitudes_presupuesto SET b_activo=0 WHERE id=? LIMIT 1`
+    const qDl = `UPDATE solicitudes_presupuesto SET b_activo=0 WHERE id=? LIMIT 1`
+    const qDlComprobantes = `UPDATE solicitud_presupuesto_comprobantes SET b_activo=0 WHERE id_solicitud_presupuesto=?`
+    const qCombinados = [qDl, qDlComprobantes].join(";")
+    const phCombinados = [id, id]
+
     try {
-      const res = await queryDBPlaceHolder(query, [id])
+      const res = await queryDBPlaceHolder(qCombinados, phCombinados)
       return RespuestaDB.exitosa(res)
     } catch (error) {
       return RespuestaDB.fallida(error)

@@ -844,8 +844,9 @@ const FormaSolicitudPresupuesto = () => {
     }
 
     if (
-      user.id_rol == rolesUsuario.COPARTE ||
-      estado.forma.i_tipo_gasto != tiposGasto.ASIMILADOS
+      user.id_rol == 3 ||
+      estado.forma.i_tipo_gasto != 3 ||
+      [1, 3, 5].includes(Number(estado.forma.i_estatus))
     ) {
       delete campos.f_retenciones
     }

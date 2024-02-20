@@ -17,7 +17,6 @@ const useErrores = () => {
           case "apellido_paterno":
           case "apellido_materno":
           case "representante_legal":
-          case "titular_cuenta":
           case "pais":
             if (!/^[a-zA-Z\u00C0-\u017F\s]{2,}$/.test(campos[key]))
               throw [key, "Nombre inválido"]
@@ -85,6 +84,7 @@ const useErrores = () => {
             if (!/^.{1,}$/.test(campos[key])) throw [key, "Campo requerido"]
             break
           case "nombre_corto":
+          case "titular_cuenta":
             if (!/^.{2,}$/.test(campos[key])) throw [key, "Mínimo 2 caracteres"]
             break
           case "numero_ext":
