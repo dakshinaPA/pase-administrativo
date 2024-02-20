@@ -46,6 +46,8 @@ import {
 import {
   estatusSolicitud,
   rolesUsuario,
+  rubrosPresupuestales,
+  tiposColaborador,
   tiposGasto,
   tiposTitularesSolicitud,
 } from "@assets/utils/constantes"
@@ -189,9 +191,12 @@ const reducer = (state: EstadoProps, action: ActionProps): EstadoProps => {
     case "CAMBIO_TITULAR":
       return {
         ...state,
-        clabe: payload.clabe,
-        banco: payload.banco,
-        proveedor: payload.proveedor,
+        forma: {
+          ...state.forma,
+          clabe: payload.clabe,
+          banco: payload.banco,
+          proveedor: payload.proveedor,
+        },
       }
     case "CAMBIO_ESTATUS":
       return {
@@ -272,7 +277,7 @@ const FormaSolicitudPresupuesto = () => {
     toast: estadoInicialToast,
     isLoading: true,
     banner: estadoInicialBanner,
-    modoEditar: !idSolicitud,
+    modoEditar: modalidad === "CREAR",
   }
 
   const { formas_pago, regimenes_fiscales } = useCatalogos()
@@ -566,17 +571,17 @@ const FormaSolicitudPresupuesto = () => {
     // el status debe cambiar a revision nuevamente
     let payload = estado.forma
 
-    if (
-      user.id_rol == rolesUsuario.COPARTE &&
-      [estatusSolicitud.RECHAZADA, estatusSolicitud.DEVOLUCION].includes(
-        estado.forma.i_estatus
-      )
-    ) {
-      payload = {
-        ...payload,
-        i_estatus: estatusSolicitud.REVISION,
-      }
-    }
+    // if (
+    //   user.id_rol == rolesUsuario.COPARTE &&
+    //   [estatusSolicitud.RECHAZADA, estatusSolicitud.DEVOLUCION].includes(
+    //     estado.forma.i_estatus
+    //   )
+    // ) {
+    //   payload = {
+    //     ...payload,
+    //     i_estatus: estatusSolicitud.REVISION,
+    //   }
+    // }
     return ApiCall.put(`/solicitudes-presupuesto/${idSolicitud}`, payload)
   }
 
@@ -838,11 +843,17 @@ const FormaSolicitudPresupuesto = () => {
       delete campos.descripcion_gasto
     }
 
-    if (user.id_rol == rolesUsuario.COPARTE || estado.forma.i_tipo_gasto != tiposGasto.ASIMILADOS) {
+    if (
+      user.id_rol == rolesUsuario.COPARTE ||
+      estado.forma.i_tipo_gasto != tiposGasto.ASIMILADOS
+    ) {
       delete campos.f_retenciones
     }
 
-    if (user.id_rol == rolesUsuario.COPARTE || estado.forma.id_partida_presupuestal != 22) {
+    if (
+      user.id_rol == rolesUsuario.COPARTE ||
+      estado.forma.id_partida_presupuestal != 22
+    ) {
       delete campos.f_retenciones_extranjeros
     }
 
@@ -876,20 +887,24 @@ const FormaSolicitudPresupuesto = () => {
 
   const disableInputImporte =
     !estado.modoEditar ||
-    estado.forma.i_tipo_gasto == ti ||
-    user.id_rol != 3 ||
-    [2, 4].includes(estado.forma.i_estatus)
+    estado.forma.i_tipo_gasto == tiposGasto.REEMBOLSO ||
+    user.id_rol != rolesUsuario.COPARTE ||
+    [estatusSolicitud.AUTORIZADA, estatusSolicitud.PROCESADA].includes(
+      estado.forma.i_estatus
+    )
 
-  const esGastoAsimilados = estado.forma.i_tipo_gasto == 3
+  const esGastoAsimilados = estado.forma.i_tipo_gasto == tiposGasto.ASIMILADOS
   const noTipoGasto = !estado.forma.i_tipo_gasto
   const disableInputFile =
-    !estado.modoEditar || (esGastoAsimilados && user.id_rol == 3) || noTipoGasto
+    !estado.modoEditar ||
+    (esGastoAsimilados && user.id_rol == rolesUsuario.COPARTE) ||
+    noTipoGasto
 
   const disableInputProveedor =
     !estado.modoEditar ||
-    estado.forma.i_tipo_gasto != 1 ||
-    user.id_rol != 3 ||
-    estado.forma.i_estatus != 1
+    estado.forma.i_tipo_gasto != tiposGasto.REEMBOLSO ||
+    user.id_rol != rolesUsuario.COPARTE ||
+    estado.forma.i_estatus != estatusSolicitud.REVISION
 
   const disableSelectPartidaPresupuestal = [
     tiposGasto.ASIMILADOS,
@@ -897,29 +912,23 @@ const FormaSolicitudPresupuesto = () => {
   ].includes(Number(estado.forma.i_tipo_gasto))
 
   const disableInputXEstatus =
-    !estado.modoEditar || user.id_rol != 3 || estado.forma.i_estatus != 1
-
-  const showTipoGastoAsimilados =
-    estado.dataProyecto.rubros_presupuestales.some((rp) => rp.id_rubro == 2) &&
-    !!estado.dataProyecto.titulares.filter(
-      (tit) =>
-        tit.i_tipo_titular === tiposTitularesSolicitud["COLABORADOR"] &&
-        tit.i_tipo == 1
-    ).length
-
-  const showTipoGastoHonorarios =
-    dataProyecto.rubros_presupuestales.some((rp) => rp.id_rubro == 3) &&
-    !!dataProyecto.colaboradores.filter((col) => col.i_tipo == 2).length
+    !estado.modoEditar ||
+    user.id_rol != rolesUsuario.COPARTE ||
+    estado.forma.i_estatus != estatusSolicitud.REVISION
 
   const showBtnEditar =
     !estado.modoEditar &&
     idSolicitud &&
-    (user.id == estado.forma.id_responsable || [1, 2].includes(user.id_rol))
+    (user.id == estado.forma.id_responsable ||
+      [rolesUsuario.SUPER_USUARIO, rolesUsuario.ADMINISTRADOR].includes(
+        user.id_rol
+      ))
 
   const showRetenciones =
-    user.id_rol != 3 &&
-    (estado.forma.i_tipo_gasto == 3 ||
-      estado.forma.id_partida_presupuestal == 22)
+    user.id_rol != rolesUsuario.COPARTE &&
+    (estado.forma.i_tipo_gasto == tiposGasto.ASIMILADOS ||
+      estado.forma.id_partida_presupuestal ==
+        rubrosPresupuestales.PAGOS_EXTRANJERO)
   // estado.forma.i_estatus == 1
 
   const total_comprobantes = estado.forma.comprobantes.reduce(
@@ -928,9 +937,11 @@ const FormaSolicitudPresupuesto = () => {
   )
 
   const showComprobantesNecesarios =
-    estado.forma.i_tipo_gasto != 3 && estado.forma.id_partida_presupuestal != 22
+    estado.forma.i_tipo_gasto != tiposGasto.ASIMILADOS &&
+    estado.forma.id_partida_presupuestal !=
+      rubrosPresupuestales.PAGOS_EXTRANJERO
 
-  if (isLoading) {
+  if (estado.isLoading) {
     return (
       <Contenedor>
         <Loader />
@@ -938,11 +949,64 @@ const FormaSolicitudPresupuesto = () => {
     )
   }
 
-  if (showBanner.show) {
+  if (estado.banner.show) {
     return (
       <Contenedor>
-        <Banner tipo={showBanner.tipo} mensaje={showBanner.mensaje} />
+        <Banner tipo={estado.banner.tipo} mensaje={estado.banner.mensaje} />
       </Contenedor>
+    )
+  }
+
+  const OptionsTipoGasto = () => {
+    const showReembolso = estado.dataProyecto.titulares.some(
+      (tit) => tit.i_tipo_titular == tiposTitularesSolicitud.COLABORADOR
+    )
+
+    const showPagoProveedor = estado.dataProyecto.titulares.some(
+      (tit) => tit.i_tipo_titular == tiposTitularesSolicitud.PROVEEDOR
+    )
+
+    const showTipoGastoAsimilados =
+      estado.dataProyecto.rubros_presupuestales.some(
+        (rp) => rp.id_rubro == rubrosPresupuestales.ASIMILADOS
+      ) &&
+      estado.dataProyecto.titulares.some(
+        (tit) =>
+          tit.i_tipo_titular === tiposTitularesSolicitud.COLABORADOR &&
+          tit.i_tipo == tiposColaborador.ASIMILADOS
+      )
+
+    const showTipoGastoHonorarios =
+      estado.dataProyecto.rubros_presupuestales.some(
+        (rp) => rp.id_rubro == rubrosPresupuestales.HONORARIOS
+      ) &&
+      estado.dataProyecto.titulares.some(
+        (tit) =>
+          tit.i_tipo_titular == tiposTitularesSolicitud.COLABORADOR &&
+          tit.i_tipo == tiposColaborador.HONORARIOS
+      )
+
+    const showGastosXcomprobar = estado.dataProyecto.titulares.some(
+      (tit) => tit.i_tipo_titular == tiposTitularesSolicitud.COLABORADOR
+    )
+
+    return (
+      <>
+        <option value="0" disabled>
+          Selecciona una opción
+        </option>
+        {showReembolso && <option value="1">Reembolso</option>}
+        {showPagoProveedor && <option value="2">Pago a proveedor</option>}
+        {showTipoGastoAsimilados && (
+          <option value="3">Asimilados a salarios</option>
+        )}
+        {showTipoGastoHonorarios && (
+          <option value="4">Honorarios profesionales (colaboradores)</option>
+        )}
+        {showGastosXcomprobar && (
+          <option value="5">Gastos por comprobar</option>
+        )}
+      </>
     )
   }
 
@@ -959,11 +1023,12 @@ const FormaSolicitudPresupuesto = () => {
                 </h2>
               )}
             </div>
-            {showBtnEditar && <BtnEditar onClick={() => setModoEditar(true)} />}
+            {/* {showBtnEditar && <BtnEditar onClick={() => setModoEditar(true)} />} */}
+            {showBtnEditar && <BtnEditar onClick={() => {}} />}
           </div>
         </div>
         <FormaContenedor onSubmit={handleSubmit} formaRef={formRef}>
-          {modalidad === "EDITAR" && estatusCarga.current && (
+          {/* {modalidad === "EDITAR" && estatusCarga.current && (
             <div className="col-12 mb-3">
               <h5>
                 <span
@@ -975,7 +1040,7 @@ const FormaSolicitudPresupuesto = () => {
                 </span>
               </h5>
             </div>
-          )}
+          )} */}
           {modalidad === "CREAR" ? (
             <>
               <div className="col-12 col-md-6 col-lg-4 mb-3">
@@ -987,8 +1052,8 @@ const FormaSolicitudPresupuesto = () => {
                   value={estado.forma.id_proyecto}
                   disabled={Boolean(idProyecto)}
                 >
-                  {proyectosDB.length > 0 ? (
-                    proyectosDB.map(({ id, id_alt, nombre }) => (
+                  {estado.proyectosDB.length > 0 ? (
+                    estado.proyectosDB.map(({ id, id_alt, nombre }) => (
                       <option key={id} value={id}>
                         {nombre} - {id_alt}
                       </option>
@@ -1009,26 +1074,7 @@ const FormaSolicitudPresupuesto = () => {
                   name="i_tipo_gasto"
                   value={estado.forma.i_tipo_gasto}
                 >
-                  <option value="0" disabled>
-                    Selecciona una opción
-                  </option>
-                  {dataProyecto.colaboradores.length > 0 && (
-                    <option value="1">Reembolso</option>
-                  )}
-                  {dataProyecto.proveedores.length > 0 && (
-                    <option value="2">Pago a proveedor</option>
-                  )}
-                  {showTipoGastoAsimilados && (
-                    <option value="3">Asimilados a salarios</option>
-                  )}
-                  {showTipoGastoHonorarios && (
-                    <option value="4">
-                      Honorarios profesionales (colaboradores)
-                    </option>
-                  )}
-                  {dataProyecto.colaboradores.length > 0 && (
-                    <option value="5">Gastos por comprobar</option>
-                  )}
+                  <OptionsTipoGasto />
                 </select>
                 {error.campo == "i_tipo_gasto" && (
                   <MensajeError mensaje={error.mensaje} />
@@ -1046,13 +1092,13 @@ const FormaSolicitudPresupuesto = () => {
                   <option value="0" disabled>
                     Selecciona una opción
                   </option>
-                  {dataTipoGasto.partidas_presupuestales.map(
+                  {/* {dataTipoGasto.partidas_presupuestales.map(
                     ({ id_rubro, rubro }) => (
                       <option key={id_rubro} value={id_rubro}>
                         {rubro}
                       </option>
                     )
-                  )}
+                  )} */}
                 </select>
                 {error.campo == "id_partida_presupuestal" && (
                   <MensajeError mensaje={error.mensaje} />
@@ -1099,11 +1145,11 @@ const FormaSolicitudPresupuesto = () => {
               <option value="" disabled>
                 Selecciona titular
               </option>
-              {dataTipoGasto.titulares.map((titular_cuenta) => (
+              {/* {dataTipoGasto.titulares.map((titular_cuenta) => (
                 <option key={titular_cuenta.id} value={titular_cuenta.nombre}>
                   {titular_cuenta.nombre}
                 </option>
-              ))}
+              ))} */}
             </select>
             {error.campo == "titular_cuenta" && (
               <MensajeError mensaje={error.mensaje} />
@@ -1257,9 +1303,10 @@ const FormaSolicitudPresupuesto = () => {
                 <input
                   type="checkbox"
                   className="form-check-input"
-                  onChange={() => setAceptarTerminos(!aceptarTerminos)}
+                  // onChange={() => setAceptarTerminos(!aceptarTerminos)}
+                  onChange={() => {}}
                   ref={cbAceptaTerminos}
-                  checked={aceptarTerminos}
+                  checked={estado.aceptarTerminos}
                 />
                 <label className="form-check-label">
                   Acepto los
@@ -1396,12 +1443,12 @@ const FormaSolicitudPresupuesto = () => {
           )}
         </FormaContenedor>
       </RegistroContenedor>
-      <Toast
+      {/* <Toast
         estado={toastState}
         cerrar={() =>
           setToastState((prevState) => ({ ...prevState, show: false }))
         }
-      />
+      /> */}
     </>
   )
 }

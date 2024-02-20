@@ -1,7 +1,7 @@
 const rolesUsuario = {
   SUPER_USUARIO: 1,
   ADMINISTRADOR: 2,
-  COPARTE: 3
+  COPARTE: 3,
 }
 
 const tiposGasto = {
@@ -17,6 +17,12 @@ const tiposTitularesSolicitud = {
   PROVEEDOR: 2,
 }
 
+const tiposColaborador = {
+  ASIMILADOS: 1,
+  HONORARIOS: 2,
+  SIN_PAGO: 3
+}
+
 const estatusSolicitud = {
   REVISION: 1,
   AUTORIZADA: 2,
@@ -25,4 +31,17 @@ const estatusSolicitud = {
   DEVOLUCION: 5,
 }
 
-export { rolesUsuario, tiposGasto, tiposTitularesSolicitud, estatusSolicitud }
+const rubrosPresupuestales = {
+  ASIMILADOS: 2,
+  HONORARIOS: 3,
+  PAGOS_EXTRANJERO: 22
+}
+
+export {
+  rolesUsuario,
+  tiposGasto,
+  tiposTitularesSolicitud,
+  estatusSolicitud,
+  rubrosPresupuestales,
+  tiposColaborador
+}
