@@ -229,7 +229,15 @@ class SolicitudesPresupuestoDB {
     const qSolicitud = `INSERT INTO solicitudes_presupuesto (id_proyecto, i_tipo_gasto, clabe, banco, titular_cuenta, email, proveedor,
       descripcion_gasto, id_partida_presupuestal, f_importe, i_estatus, dt_registro ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
-    const phSolicitud = [
+    const qReFolioExistente = `
+      SELECT id, folio_fiscal FROM solicitud_presupuesto_comprobantes WHERE folio_fiscal IN (?) AND b_activo=0`
+
+    const idsFoliosComprobantes = !!comprobantes.length
+      ? comprobantes.map((com) => com.folio_fiscal)
+      : ""
+    const qIniciales = [qSolicitud, qReFolioExistente].join(";")
+
+    const phIniciales = [
       id_proyecto,
       data.i_tipo_gasto,
       data.clabe,
@@ -242,6 +250,7 @@ class SolicitudesPresupuestoDB {
       data.f_importe,
       1,
       fechaActualAEpoch(),
+      idsFoliosComprobantes,
     ]
 
     const qComprobantes = []
@@ -259,8 +268,8 @@ class SolicitudesPresupuestoDB {
 
           //crear solicitud
           connection.query(
-            qSolicitud,
-            phSolicitud,
+            qIniciales,
+            phIniciales,
             (error, results, fields) => {
               if (error) {
                 return connection.rollback(() => {
@@ -270,24 +279,43 @@ class SolicitudesPresupuestoDB {
               }
 
               // @ts-ignore
-              const idSolicitud = results.insertId
+              const idSolicitud = results[0].insertId
+              const comprobantesInactivos = results[1] as ComprobanteSolicitud[]
 
               for (const comp of comprobantes) {
-                qComprobantes.push(this.qCrComprobante())
-
-                phComprobantes.push(
-                  idSolicitud,
-                  comp.folio_fiscal,
-                  comp.f_total,
-                  comp.f_retenciones,
-                  comp.f_isr,
-                  comp.f_iva,
-                  comp.i_metodo_pago,
-                  comp.id_forma_pago,
-                  comp.id_regimen_fiscal_emisor,
-                  comp.rfc_emisor,
-                  fechaActualAEpoch()
+                //buscar si el folio ya existe pero esta inactivo en otra solicitud
+                const match = comprobantesInactivos.find(
+                  (comDB) => comDB.folio_fiscal == comp.folio_fiscal
                 )
+
+                if (match) {
+                  //reactivar comprobante
+                  qComprobantes.push(this.qReactivarComprobante())
+                  phComprobantes.push(
+                    idSolicitud,
+                    comp.f_isr,
+                    comp.f_iva,
+                    comp.rfc_emisor,
+                    match.id
+                  )
+                } else {
+                  //registrar uno nuevo
+                  qComprobantes.push(this.qCrComprobante())
+
+                  phComprobantes.push(
+                    idSolicitud,
+                    comp.folio_fiscal,
+                    comp.f_total,
+                    comp.f_retenciones,
+                    comp.f_isr,
+                    comp.f_iva,
+                    comp.i_metodo_pago,
+                    comp.id_forma_pago,
+                    comp.id_regimen_fiscal_emisor,
+                    comp.rfc_emisor,
+                    fechaActualAEpoch()
+                  )
+                }
               }
 
               if (qComprobantes.length > 0) {
@@ -369,7 +397,7 @@ class SolicitudesPresupuestoDB {
 
               const comprobantesDB = results[0] as ComprobanteSolicitud[]
               const comprobantesOtraSolicitud =
-                (results[1] as ComprobanteSolicitud[])
+                results[1] as ComprobanteSolicitud[]
 
               const qCombinados = [qUpSolicitud]
               const phCombinados = [
