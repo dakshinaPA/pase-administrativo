@@ -8,7 +8,7 @@ export interface QueriesProyecto {
   id_responsable?: number
   id_admin?: number
   min?: boolean
-  registro_solicitud?: boolean
+  // registro_solicitud?: boolean
   activo?: boolean
 }
 
@@ -155,7 +155,7 @@ export interface Proyecto extends ProyectoMin {
   notas?: NotaProyecto[]
 }
 
-interface TitularProyecto {
+export interface TitularProyecto {
   id: number
   nombre: string
   i_tipo: 1 | 2 | 3
@@ -166,6 +166,12 @@ interface TitularProyecto {
 
 export interface DataProyecto {
   titulares: TitularProyecto[]
+  rubros_presupuestales: RubroMinistracion[]
+}
+
+export interface DataProyectoResDB {
+  colaboradores: TitularProyecto[]
+  proveedores: TitularProyecto[]
   rubros_presupuestales: RubroMinistracion[]
 }
 

@@ -9,6 +9,8 @@ import {
   NotaProyecto,
   DataProyecto,
   CalcularSaldo,
+  DataProyectoResDB,
+  TitularProyecto,
 } from "@models/proyecto.model"
 
 import { ResProyectos } from "@api/models/proyecto.model"
@@ -267,9 +269,23 @@ class ProyectosServices {
 
   static async obtenerData(id_proyecto: number) {
     try {
-      const reData = (await ProyectoDB.obtenerData(id_proyecto)) as DataProyecto
+      const reData = (await ProyectoDB.obtenerData(
+        id_proyecto
+      )) as DataProyectoResDB
 
-      return RespuestaController.exitosa(200, "Consulta exitosa", reData)
+      const colaboradores: TitularProyecto[] = reData.colaboradores.map(
+        (col) => ({ ...col, i_tipo_titular: 1 })
+      )
+      const proveedores: TitularProyecto[] = reData.proveedores.map(
+        (col) => ({ ...col, i_tipo_titular: 2 })
+      )
+
+      const dataTranformada: DataProyecto = {
+        titulares: [...colaboradores, ...proveedores],
+        rubros_presupuestales: reData.rubros_presupuestales,
+      }
+
+      return RespuestaController.exitosa(200, "Consulta exitosa", dataTranformada)
     } catch (error) {
       return RespuestaController.fallida(
         400,

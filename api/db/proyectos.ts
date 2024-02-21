@@ -568,8 +568,14 @@ class ProyectoDB {
   }
 
   static async obtenerData(id_proyecto: number) {
-    const qColaboradores = ColaboradorDB.queryRe(id_proyecto)
-    const qProveedores = ProveedorDB.queryRe(id_proyecto)
+    const qColaboradores = `
+      SELECT id, CONCAT(nombre, ' ', apellido_paterno, ' ', apellido_materno) nombre, i_tipo, clabe, id_banco
+      FROM colaboradores WHERE id_proyecto=? AND b_activo=1
+    `
+    const qProveedores = `
+      SELECT id, nombre, i_tipo, clabe, id_banco
+      FROM proveedores WHERE id_proyecto=? AND b_activo=1
+    `
     const qRubrosProyecto = `
       SELECT DISTINCT mrp.id_rubro, rp.nombre rubro
       FROM ministracion_rubros_presupuestales mrp

@@ -72,9 +72,12 @@ export interface SolicitudPresupuesto {
   f_retenciones: number
   i_estatus?: EstatusSolicitud
   estatus?: string
-  titular_cuenta: string
+  id_titular_cuenta: number
+  titular_cuenta?: string
+  i_tipo_titular: 1 | 2
   clabe: string
-  banco: string
+  id_banco: number
+  banco?: string
   email: string
   saldo?: SaldoSolicitud
   dt_registro?: string

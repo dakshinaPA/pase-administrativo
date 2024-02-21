@@ -1,6 +1,6 @@
 import { useEffect, useState, useReducer, useRef } from "react"
 import { useRouter } from "next/router"
-import { ChangeEvent } from "@assets/models/formEvents.model"
+import { ChangeEvent, SelectEvent } from "@assets/models/formEvents.model"
 import {
   ColaboradorProyecto,
   DataProyecto,
@@ -8,6 +8,7 @@ import {
   ProyectoMin,
   QueriesProyecto,
   RubroMinistracion,
+  TitularProyecto,
 } from "@models/proyecto.model"
 import { Loader } from "@components/Loader"
 import {
@@ -93,6 +94,25 @@ interface EstadoProps {
 //   partidas_presupuestales: RubroMinistracion[]
 //   titulares: (ColaboradorProyecto | ProveedorProyecto)[]
 // }
+const estadoInicialFormaExterior: SolicitudPresupuesto = {
+  id_proyecto: 0,
+  i_tipo_gasto: 0,
+  id_titular_cuenta: 0,
+  i_tipo_titular: 1,
+  // titular_cuenta: "",
+  clabe: "",
+  id_banco: 0,
+  // banco: "",
+  email: "",
+  proveedor: "",
+  descripcion_gasto: "",
+  id_partida_presupuestal: 0,
+  f_importe: 0,
+  f_retenciones: 0,
+  i_estatus: 1,
+  comprobantes: [],
+  notas: [],
+}
 
 const reducer = (state: EstadoProps, action: ActionProps): EstadoProps => {
   const { type, payload } = action
@@ -113,9 +133,10 @@ const reducer = (state: EstadoProps, action: ActionProps): EstadoProps => {
         ...state,
         forma: {
           ...state.forma,
-          id_proyecto: payload[0].id,
+          id_proyecto: payload.proyectos[0].id,
         },
-        proyectosDB: payload,
+        proyectosDB: payload.proyectos,
+        dataProyecto: payload.dataProyecto,
         isLoading: false,
       }
     case "NO_PROYECTOS":
@@ -160,23 +181,38 @@ const reducer = (state: EstadoProps, action: ActionProps): EstadoProps => {
       return {
         ...state,
         forma: {
-          ...state.forma,
-          i_tipo_gasto: 0,
-          id_partida_presupuestal: 0,
-          titular_cuenta: "",
-          descripcion_gasto: "",
-          comprobantes: [],
+          ...estadoInicialFormaExterior,
+          id_proyecto: payload.idProyecto,
         },
+        dataProyecto: payload.dataProyecto,
       }
     case "CAMBIO_TIPO_GASTO":
+      const i_tipo_gasto = payload
+      let descripcion_gasto = ""
+      let id_partida_presupuestal = 0
+
+      switch (i_tipo_gasto) {
+        case tiposGasto.ASIMILADOS:
+          descripcion_gasto = "Enero"
+          id_partida_presupuestal = rubrosPresupuestales.ASIMILADOS
+          break
+        case tiposGasto.HONORARIOS:
+          descripcion_gasto = "Enero"
+          id_partida_presupuestal = rubrosPresupuestales.HONORARIOS
+          break
+        default:
+          descripcion_gasto = ""
+          id_partida_presupuestal = 0
+      }
+
       return {
         ...state,
         forma: {
-          ...state.forma,
-          id_partida_presupuestal: payload.id_partida_presupuestal,
-          titular_cuenta: "",
-          descripcion_gasto: payload.descripcion_gasto,
-          comprobantes: [],
+          ...estadoInicialFormaExterior,
+          id_proyecto: state.forma.id_proyecto,
+          i_tipo_gasto,
+          id_partida_presupuestal,
+          descripcion_gasto,
         },
       }
     case "CAMBIO_PARTIDA_PRESUPUESTAL":
@@ -184,7 +220,11 @@ const reducer = (state: EstadoProps, action: ActionProps): EstadoProps => {
         ...state,
         forma: {
           ...state.forma,
-          titular_cuenta: "",
+          id_partida_presupuestal: payload,
+          id_titular_cuenta: 0,
+          clabe: "",
+          id_banco: 0,
+          proveedor: "",
           comprobantes: [],
         },
       }
@@ -246,23 +286,8 @@ const FormaSolicitudPresupuesto = () => {
   const modalidad = idSolicitud ? "EDITAR" : "CREAR"
 
   const estadoInicialForma: SolicitudPresupuesto = {
+    ...estadoInicialFormaExterior,
     id_proyecto: idProyecto || 0,
-    proyecto: "",
-    i_tipo_gasto: 0,
-    // tipo_gasto: "",
-    titular_cuenta: "",
-    clabe: "",
-    banco: "",
-    email: "",
-    proveedor: "",
-    descripcion_gasto: "",
-    id_partida_presupuestal: 0,
-    // rubro: "",
-    f_importe: 0,
-    f_retenciones: 0,
-    i_estatus: 1,
-    comprobantes: [],
-    notas: [],
   }
 
   const estadoInicial: EstadoProps = {
@@ -280,7 +305,7 @@ const FormaSolicitudPresupuesto = () => {
     modoEditar: modalidad === "CREAR",
   }
 
-  const { formas_pago, regimenes_fiscales } = useCatalogos()
+  const { formas_pago, regimenes_fiscales, bancos } = useCatalogos()
   const [estado, dispatch] = useReducer(reducer, estadoInicial)
   const { error, validarCampos, formRef } = useErrores()
   // const [estado.forma, dispatch] = useReducer(reducer, estadoInicialForma)
@@ -299,124 +324,6 @@ const FormaSolicitudPresupuesto = () => {
   useEffect(() => {
     cargarData()
   }, [])
-
-  // useEffect(() => {
-  //   cargarDataProyecto()
-
-  //   if (modalidad === "CREAR") {
-  //     dispatch({
-  //       type: "CAMBIO_PROYECTO",
-  //       payload: null,
-  //     })
-  //   }
-  // }, [estadoForma.id_proyecto])
-
-  // useEffect(() => {
-  //   if (!estadoForma.i_tipo_gasto) return
-
-  //   let partidas_presupuestales = []
-  //   let titulares = []
-
-  //   const payload = {
-  //     id_partida_presupuestal: 0,
-  //     descripcion_gasto: "",
-  //   }
-
-  //   switch (Number(estadoForma.i_tipo_gasto)) {
-  //     case 1:
-  //     case 5:
-  //       partidas_presupuestales = dataProyecto.rubros_presupuestales.filter(
-  //         (rp) => ![1, 22].includes(rp.id_rubro)
-  //       )
-  //       break
-  //     case 2:
-  //       partidas_presupuestales = dataProyecto.rubros_presupuestales.filter(
-  //         (rp) => rp.id_rubro != 2
-  //       )
-  //       break
-  //     case 3:
-  //       partidas_presupuestales = dataProyecto.rubros_presupuestales.filter(
-  //         (rp) => rp.id_rubro == 2
-  //       )
-  //       payload.id_partida_presupuestal = 2
-  //       payload.descripcion_gasto = "Enero"
-  //       break
-  //     case 4:
-  //       partidas_presupuestales = dataProyecto.rubros_presupuestales.filter(
-  //         (rp) => rp.id_rubro == 3
-  //       )
-  //       payload.id_partida_presupuestal = 3
-  //       payload.descripcion_gasto = "Enero"
-  //       break
-  //     default:
-  //   }
-
-  //   setDataTipoGasto({
-  //     partidas_presupuestales,
-  //     titulares,
-  //   })
-
-  //   if (modalidad === "CREAR") {
-  //     dispatch({
-  //       type: "CAMBIO_TIPO_GASTO",
-  //       payload,
-  //     })
-  //   }
-  // }, [estadoForma.i_tipo_gasto])
-
-  // useEffect(() => {
-  //   if (!estadoForma.id_partida_presupuestal) return
-
-  //   let titulares = []
-
-  //   switch (Number(estadoForma.i_tipo_gasto)) {
-  //     case 1:
-  //     case 5:
-  //       //muestra todos colaboradores
-  //       titulares = dataProyecto.colaboradores.map((colaborador) => ({
-  //         ...colaborador,
-  //         nombre: `${colaborador.nombre} ${colaborador.apellido_paterno} ${colaborador.apellido_materno}`,
-  //       }))
-  //       break
-  //     case 2:
-  //       //muestra todos los proveedores
-  //       titulares = dataProyecto.proveedores.filter(({ i_tipo }) =>
-  //         estadoForma.id_partida_presupuestal == 22 ? i_tipo == 3 : i_tipo != 3
-  //       )
-  //       break
-  //     case 3:
-  //       //muestra solo colaboradores registrados como asimilados
-  //       titulares = dataProyecto.colaboradores
-  //         .filter((col) => col.i_tipo == 1)
-  //         .map((colaborador) => ({
-  //           ...colaborador,
-  //           nombre: `${colaborador.nombre} ${colaborador.apellido_paterno} ${colaborador.apellido_materno}`,
-  //         }))
-  //       break
-  //     case 4:
-  //       //muestra solo colaboradores registrados como honorarios
-  //       titulares = dataProyecto.colaboradores
-  //         .filter((col) => col.i_tipo == 2)
-  //         .map((colaborador) => ({
-  //           ...colaborador,
-  //           nombre: `${colaborador.nombre} ${colaborador.apellido_paterno} ${colaborador.apellido_materno}`,
-  //         }))
-  //       break
-  //     default:
-  //   }
-
-  //   setDataTipoGasto((prevState) => ({
-  //     ...prevState,
-  //     titulares,
-  //   }))
-
-  //   if (modalidad == "CREAR") {
-  //     dispatch({
-  //       type: "CAMBIO_PARTIDA_PRESUPUESTAL",
-  //       payload: null,
-  //     })
-  //   }
-  // }, [estadoForma.id_partida_presupuestal])
 
   // useEffect(() => {
   //   if (!estadoForma.titular_cuenta) {
@@ -490,29 +397,93 @@ const FormaSolicitudPresupuesto = () => {
     return obtenerProyectos(queryProyectos)
   }
 
+  const obtenerDataProyecto = (id: number) =>
+    ApiCall.get(`/proyectos/${id}/data`)
+
   const cargarData = async () => {
-    if (modalidad === "CREAR") {
-      const { error, data, mensaje } = await obtenerProyectosDB()
-      if (error) {
-        console.log(data)
-        dispatch({
-          type: "ERROR_API",
-          payload: mensaje,
-        })
-      } else {
-        const proyectosDB = data as ProyectoMin[]
+    try {
+      if (modalidad === "CREAR") {
+        const reProyectos = await obtenerProyectosDB()
+        if (reProyectos.error) throw reProyectos
+
+        const proyectosDB = reProyectos.data as ProyectoMin[]
         if (!proyectosDB.length) {
           dispatch({
             type: "NO_PROYECTOS",
           })
         } else {
+          //obtener data del primer proyecto y setearlo como default
+          const reDataProyecto = await obtenerDataProyecto(proyectosDB[0].id)
+          if (reDataProyecto.error) throw reDataProyecto
+
+          const dataProyecto = reDataProyecto.data as DataProyecto
+
           dispatch({
             type: "CARGAR_PROYECTOS",
-            payload: proyectosDB,
+            payload: {
+              proyectos: proyectosDB,
+              dataProyecto,
+            },
           })
         }
       }
+    } catch ({ data, mensaje }) {
+      console.log(data)
+      dispatch({
+        type: "ERROR_API",
+        payload: mensaje,
+      })
     }
+  }
+
+  const handleChangeProyecto = async (ev: ChangeEvent) => {
+    const idProyecto = Number(ev.target.value)
+    const { error, data, mensaje } = await obtenerDataProyecto(idProyecto)
+    if (error) {
+      dispatch({
+        type: "ERROR_API",
+        payload: mensaje,
+      })
+    } else {
+      const dataProyecto = data as DataProyecto
+
+      dispatch({
+        type: "CAMBIO_PROYECTO",
+        payload: {
+          idProyecto,
+          dataProyecto,
+        },
+      })
+    }
+  }
+
+  const handleChangeTipoGasto = async (ev: ChangeEvent) => {
+    const iTipoGasto = Number(ev.target.value)
+    dispatch({
+      type: "CAMBIO_TIPO_GASTO",
+      payload: iTipoGasto,
+    })
+  }
+
+  const handleChangePartidaPresupuestal = async (ev: ChangeEvent) => {
+    const idPartida = Number(ev.target.value)
+    dispatch({
+      type: "CAMBIO_PARTIDA_PRESUPUESTAL",
+      payload: idPartida,
+    })
+  }
+
+  const handleChangeTitular = async (ev: SelectEvent) => {
+    const slct = ev.target
+    const idTitular = Number(slct.value)
+    const selectedOption = slct.options[slct.selectedIndex]
+    const iTipoTitular = selectedOption.dataset.i_tipo_titular
+    // console.log(idTitular)
+    console.log(iTipoTitular)
+    // dispatch({
+    //   type: "CAMBIO_PARTIDA_PRESUPUESTAL",
+    //   payload: idPartida,
+    // })
   }
 
   // const cargarDataProyecto = async () => {
@@ -1011,6 +982,101 @@ const FormaSolicitudPresupuesto = () => {
     )
   }
 
+  const OptionsPartidaPresupuestal = () => {
+    let partidas: RubroMinistracion[] = []
+
+    switch (Number(estado.forma.i_tipo_gasto)) {
+      case tiposGasto.REEMBOLSO:
+      case tiposGasto.GASTOS_X_COMPROBAR:
+        partidas = estado.dataProyecto.rubros_presupuestales.filter(
+          (rp) => rp.id_rubro != rubrosPresupuestales.PAGOS_EXTRANJERO
+        )
+        break
+      case tiposGasto.PAGO_A_PROVEEDOR:
+        partidas = estado.dataProyecto.rubros_presupuestales.filter(
+          (rp) => rp.id_rubro != rubrosPresupuestales.ASIMILADOS
+        )
+        break
+      case tiposGasto.ASIMILADOS:
+        partidas = estado.dataProyecto.rubros_presupuestales.filter(
+          (rp) => rp.id_rubro == rubrosPresupuestales.ASIMILADOS
+        )
+        break
+      case tiposGasto.HONORARIOS:
+        partidas = estado.dataProyecto.rubros_presupuestales.filter(
+          (rp) => rp.id_rubro == rubrosPresupuestales.HONORARIOS
+        )
+        break
+    }
+
+    return (
+      <>
+        <option value="0" disabled>
+          Selecciona una opción
+        </option>
+        {partidas.map(({ id_rubro, rubro }) => (
+          <option key={id_rubro} value={id_rubro}>
+            {rubro}
+          </option>
+        ))}
+      </>
+    )
+  }
+
+  const OptionsTitularCuenta = () => {
+    let titualres: TitularProyecto[] = []
+
+    switch (Number(estado.forma.i_tipo_gasto)) {
+      case tiposGasto.REEMBOLSO:
+      case tiposGasto.GASTOS_X_COMPROBAR:
+        titualres = estado.dataProyecto.titulares.filter(
+          ({ i_tipo_titular }) =>
+            i_tipo_titular == tiposTitularesSolicitud.COLABORADOR
+        )
+        break
+      case tiposGasto.PAGO_A_PROVEEDOR:
+        titualres = estado.dataProyecto.titulares.filter(
+          ({ i_tipo_titular, i_tipo }) =>
+            i_tipo_titular == tiposTitularesSolicitud.PROVEEDOR &&
+            estado.forma.id_partida_presupuestal == 22
+              ? i_tipo == 3
+              : i_tipo != 3
+        )
+        break
+      case tiposGasto.ASIMILADOS:
+        titualres = estado.dataProyecto.titulares.filter(
+          ({ i_tipo_titular, i_tipo }) =>
+            i_tipo_titular == tiposTitularesSolicitud.COLABORADOR &&
+            i_tipo == tiposColaborador.ASIMILADOS
+        )
+        break
+      case tiposGasto.HONORARIOS:
+        titualres = estado.dataProyecto.titulares.filter(
+          ({ i_tipo_titular, i_tipo }) =>
+            i_tipo_titular == tiposTitularesSolicitud.COLABORADOR &&
+            i_tipo == tiposColaborador.HONORARIOS
+        )
+        break
+    }
+
+    return (
+      <>
+        <option value="0" disabled>
+          Selecciona una opción
+        </option>
+        {titualres.map(({ id, i_tipo_titular, nombre }) => (
+          <option
+            key={`${id}_${i_tipo_titular}`}
+            value={id}
+            data-i_tipo_titular={i_tipo_titular}
+          >
+            {nombre}
+          </option>
+        ))}
+      </>
+    )
+  }
+
   return (
     <>
       <RegistroContenedor>
@@ -1048,8 +1114,8 @@ const FormaSolicitudPresupuesto = () => {
                 <label className="form-label">Proyecto</label>
                 <select
                   className="form-control"
-                  onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-                  name="id_proyecto"
+                  onChange={handleChangeProyecto}
+                  // name="id_proyecto"
                   value={estado.forma.id_proyecto}
                   disabled={Boolean(idProyecto)}
                 >
@@ -1071,8 +1137,8 @@ const FormaSolicitudPresupuesto = () => {
                 <label className="form-label">Tipo de gasto</label>
                 <select
                   className="form-control"
-                  onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-                  name="i_tipo_gasto"
+                  onChange={handleChangeTipoGasto}
+                  // name="i_tipo_gasto"
                   value={estado.forma.i_tipo_gasto}
                 >
                   <OptionsTipoGasto />
@@ -1085,21 +1151,12 @@ const FormaSolicitudPresupuesto = () => {
                 <label className="form-label">Partida presupuestal</label>
                 <select
                   className="form-control"
-                  onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-                  name="id_partida_presupuestal"
+                  onChange={handleChangePartidaPresupuestal}
+                  // name="id_partida_presupuestal"
                   value={estado.forma.id_partida_presupuestal}
                   disabled={disableSelectPartidaPresupuestal}
                 >
-                  <option value="0" disabled>
-                    Selecciona una opción
-                  </option>
-                  {/* {dataTipoGasto.partidas_presupuestales.map(
-                    ({ id_rubro, rubro }) => (
-                      <option key={id_rubro} value={id_rubro}>
-                        {rubro}
-                      </option>
-                    )
-                  )} */}
+                  <OptionsPartidaPresupuestal />
                 </select>
                 {error.campo == "id_partida_presupuestal" && (
                   <MensajeError mensaje={error.mensaje} />
@@ -1138,19 +1195,12 @@ const FormaSolicitudPresupuesto = () => {
             <label className="form-label">Titular cuenta</label>
             <select
               className="form-control"
-              onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-              name="titular_cuenta"
-              value={estado.forma.titular_cuenta}
+              onChange={handleChangeTitular}
+              // name="titular_cuenta"
+              value={estado.forma.id_titular_cuenta}
               disabled={disableInputXEstatus}
             >
-              <option value="" disabled>
-                Selecciona titular
-              </option>
-              {/* {dataTipoGasto.titulares.map((titular_cuenta) => (
-                <option key={titular_cuenta.id} value={titular_cuenta.nombre}>
-                  {titular_cuenta.nombre}
-                </option>
-              ))} */}
+              <OptionsTitularCuenta />
             </select>
             {error.campo == "titular_cuenta" && (
               <MensajeError mensaje={error.mensaje} />
@@ -1171,13 +1221,23 @@ const FormaSolicitudPresupuesto = () => {
           </div>
           <div className="col-12 col-md-6 col-lg-4 mb-3">
             <label className="form-label">Banco</label>
-            <input
+            <select
+              className="form-control"
+              value={estado.forma.id_banco}
+              disabled
+            >
+              <option value="0"></option>
+              {bancos.map(({ id, nombre }) => (
+                <option key={id}>{nombre}</option>
+              ))}
+            </select>
+            {/* <input
               className="form-control"
               type="text"
               name="banco"
               value={estado.forma.banco}
               disabled
-            />
+            /> */}
             {error.campo == "banco" && <MensajeError mensaje={error.mensaje} />}
           </div>
           <div className="col-12 col-md-6 col-lg-4 mb-3">

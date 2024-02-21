@@ -1,1 +1,2 @@
 export type ChangeEvent = React.ChangeEvent<HTMLSelectElement> | React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLTextAreaElement>
+export type SelectEvent = React.ChangeEvent<HTMLSelectElement>
