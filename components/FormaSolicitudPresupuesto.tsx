@@ -69,10 +69,11 @@ type ActionTypes =
   | "CAMBIO_TITULAR"
   | "CAMBIO_ESTATUS"
   | "CAMBIO_PROYECTO"
-  | "NUEVO_REGISTRO"
   | "RECARGAR_NOTAS"
   | "CERRAR_TOAST"
   | "ACEPTAR_TERMINOS"
+  | "MODO_EDITAR_ON"
+  | "MODO_EDITAR_OFF"
 
 interface ActionProps {
   type: ActionTypes
@@ -99,7 +100,6 @@ const estadoInicialFormaExterior: SolicitudPresupuesto = {
   id_proyecto: 0,
   i_tipo_gasto: 0,
   id_titular_cuenta: 0,
-  // i_tipo_titular: 1,
   titular_cuenta: "",
   clabe: "",
   id_banco: 0,
@@ -151,8 +151,13 @@ const reducer = (state: EstadoProps, action: ActionProps): EstadoProps => {
         isLoading: false,
       }
     case "CARGA_INICIAL":
-    case "NUEVO_REGISTRO":
-      return payload
+      return {
+        ...state,
+        forma: payload.solicitudDB,
+        cargaInicial: payload.solicitudDB,
+        dataProyecto: payload.dataProyecto,
+        isLoading: false,
+      }
     case "HANDLE_CHANGE":
       return {
         ...state,
@@ -302,6 +307,17 @@ const reducer = (state: EstadoProps, action: ActionProps): EstadoProps => {
         ...state,
         aceptarTerminos: !state.aceptarTerminos,
       }
+    case "MODO_EDITAR_ON":
+      return {
+        ...state,
+        modoEditar: true,
+      }
+    case "MODO_EDITAR_OFF":
+      return {
+        ...state,
+        forma: { ...state.cargaInicial },
+        modoEditar: false,
+      }
     default:
       return state
   }
@@ -376,6 +392,13 @@ const FormaSolicitudPresupuesto = () => {
 
   const cargarData = async () => {
     try {
+      let dataProyecto = {}
+      if (idProyecto) {
+        const reDataProyecto = await obtenerDataProyecto(idProyecto)
+        if (reDataProyecto.error) throw reDataProyecto
+        dataProyecto = reDataProyecto.data as DataProyecto
+      }
+
       if (modalidad === "CREAR") {
         const reProyectos = await obtenerProyectosDB()
         if (reProyectos.error) throw reProyectos
@@ -386,11 +409,12 @@ const FormaSolicitudPresupuesto = () => {
             type: "NO_PROYECTOS",
           })
         } else {
-          //obtener data del primer proyecto y setearlo como default
-          const reDataProyecto = await obtenerDataProyecto(proyectosDB[0].id)
-          if (reDataProyecto.error) throw reDataProyecto
-
-          const dataProyecto = reDataProyecto.data as DataProyecto
+          if (!idProyecto) {
+            //obtener data del primer proyecto y setearlo como default
+            const reDataProyecto = await obtenerDataProyecto(proyectosDB[0].id)
+            if (reDataProyecto.error) throw reDataProyecto
+            dataProyecto = reDataProyecto.data as DataProyecto
+          }
 
           dispatch({
             type: "CARGAR_PROYECTOS",
@@ -400,6 +424,19 @@ const FormaSolicitudPresupuesto = () => {
             },
           })
         }
+      } else {
+        const reSolicitud = await obtenerSolicitudes({
+          id: idSolicitud,
+        })
+        if (reSolicitud.error) throw reSolicitud
+        const solicitudDB = reSolicitud.data[0] as SolicitudPresupuesto
+        dispatch({
+          type: "CARGA_INICIAL",
+          payload: {
+            solicitudDB,
+            dataProyecto,
+          },
+        })
       }
     } catch ({ data, mensaje }) {
       console.log(data)
@@ -444,28 +481,26 @@ const FormaSolicitudPresupuesto = () => {
     })
   }
 
-  // const obtener = async () => {
-  //   setIsLoading(true)
-  //   const { error, data, mensaje } = await obtenerSolicitudes({
+  // const obtener = () => {
+  //   return obtenerSolicitudes({
   //     id: idSolicitud,
   //   })
-  //   if (error) {
-  //     console.log(data)
-  //     setShowBanner({
-  //       mensaje,
-  //       show: true,
-  //       tipo: "error",
-  //     })
-  //   } else {
-  //     const solicitud = data[0] as SolicitudPresupuesto
-  //     dispatch({
-  //       type: "CARGA_INICIAL",
-  //       payload: solicitud,
-  //     })
-  //     // para que se mantenga el badge
-  //     estatusCarga.current = solicitud.i_estatus
-  //   }
-  //   setIsLoading(false)
+  //   // const { error, data, mensaje } = await obtenerSolicitudes({
+  //   //   id: idSolicitud,
+  //   // })
+  //   // if (error) {
+  //   //   console.log(data)
+  //   //   dispatch({
+  //   //     type: "ERROR_API",
+  //   //     payload: mensaje,
+  //   //   })
+  //   // } else {
+  //   //   const solicitud = data[0] as SolicitudPresupuesto
+  //   //   dispatch({
+  //   //     type: "CARGA_INICIAL",
+  //   //     payload: solicitud,
+  //   //   })
+  //   // }
   // }
 
   const registrar = async () => {
@@ -492,7 +527,9 @@ const FormaSolicitudPresupuesto = () => {
   }
 
   const cancelar = () => {
-    // modalidad === "EDITAR" ? setModoEditar(false) : router.back()
+    modalidad === "EDITAR"
+      ? dispatch({ type: "MODO_EDITAR_OFF" })
+      : router.push("/solicitudes-presupuesto")
   }
 
   const asignarIMetodoPago = (metodo_pago: "PUE" | "PPD") => {
@@ -987,24 +1024,25 @@ const FormaSolicitudPresupuesto = () => {
                 </h2>
               )}
             </div>
-            {/* {showBtnEditar && <BtnEditar onClick={() => setModoEditar(true)} />} */}
-            {showBtnEditar && <BtnEditar onClick={() => {}} />}
+            {showBtnEditar && (
+              <BtnEditar onClick={() => dispatch({ type: "MODO_EDITAR_ON" })} />
+            )}
           </div>
         </div>
         <FormaContenedor onSubmit={handleSubmit} formaRef={formRef}>
-          {/* {modalidad === "EDITAR" && estatusCarga.current && (
+          {modalidad === "EDITAR" && (
             <div className="col-12 mb-3">
               <h5>
                 <span
                   className={`badge bg-${obtenerBadgeStatusSolicitud(
-                    estatusCarga.current
+                    estado.cargaInicial.i_estatus
                   )}`}
                 >
-                  {obtenerEstatusSolicitud(estatusCarga.current)}
+                  {obtenerEstatusSolicitud(estado.cargaInicial.i_estatus)}
                 </span>
               </h5>
             </div>
-          )} */}
+          )}
           {modalidad === "CREAR" ? (
             <>
               <div className="col-12 col-md-6 col-lg-4 mb-3">

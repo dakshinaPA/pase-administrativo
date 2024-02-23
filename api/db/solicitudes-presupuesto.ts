@@ -26,7 +26,7 @@ class SolicitudesPresupuestoDB {
       limit,
     } = queries
 
-    let query = `SELECT sp.id, sp.id_proyecto, sp.i_tipo_gasto, sp.clabe, sp.banco, sp.titular_cuenta,
+    let query = `SELECT sp.id, sp.id_proyecto, sp.i_tipo_gasto, sp.clabe, sp.id_banco, sp.banco, sp.id_titular_cuenta, sp.titular_cuenta,
       sp.email, sp.proveedor, sp.descripcion_gasto, sp.id_partida_presupuestal, sp.f_importe, sp.f_retenciones, sp.i_estatus, sp.dt_registro,
       CONCAT(p.id_alt, ' - ', p.nombre) proyecto, p.id_responsable,
       r.nombre rubro,
