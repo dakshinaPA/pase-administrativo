@@ -110,7 +110,7 @@ const reducer = (state: Proyecto, action: ActionDispatch): Proyecto => {
 
 const ProyectoProvider = ({ children }) => {
   const { user, status } = useSesion()
-  if (status !== "authenticated" || !user || user.id_rol == 3) return null
+  if (status !== "authenticated" || !user) return null
 
   const router = useRouter()
   const idCoparte = Number(router.query.idC)
