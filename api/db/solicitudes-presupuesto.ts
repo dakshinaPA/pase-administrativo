@@ -226,14 +226,16 @@ class SolicitudesPresupuestoDB {
   static async crear(data: SolicitudPresupuesto) {
     const { comprobantes, id_proyecto } = data
 
-    const qSolicitud = `INSERT INTO solicitudes_presupuesto (id_proyecto, i_tipo_gasto, clabe, banco, titular_cuenta, email, proveedor,
-      descripcion_gasto, id_partida_presupuestal, f_importe, i_estatus, dt_registro ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    const qSolicitud = `INSERT INTO solicitudes_presupuesto (id_proyecto, i_tipo_gasto, clabe, id_banco, banco, id_titular_cuenta, titular_cuenta, email, proveedor,
+      descripcion_gasto, id_partida_presupuestal, f_importe, i_estatus, dt_registro ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
     const phSolicitud = [
       id_proyecto,
       data.i_tipo_gasto,
       data.clabe,
+      data.id_banco,
       data.banco,
+      data.id_titular_cuenta,
       data.titular_cuenta,
       data.email,
       data.proveedor,

@@ -569,12 +569,18 @@ class ProyectoDB {
 
   static async obtenerData(id_proyecto: number) {
     const qColaboradores = `
-      SELECT id, CONCAT(nombre, ' ', apellido_paterno, ' ', apellido_materno) nombre, i_tipo, clabe, id_banco
-      FROM colaboradores WHERE id_proyecto=? AND b_activo=1
+      SELECT c.id, CONCAT(TRIM(c.nombre), ' ', TRIM(c.apellido_paterno), ' ', TRIM(c.apellido_materno)) nombre, c.i_tipo, c.clabe, c.id_banco,
+      b.nombre banco
+      FROM colaboradores c
+      JOIN bancos b ON b.id = c.id_banco
+      WHERE c.id_proyecto=? AND c.b_activo=1
     `
     const qProveedores = `
-      SELECT id, nombre, i_tipo, clabe, id_banco
-      FROM proveedores WHERE id_proyecto=? AND b_activo=1
+      SELECT p.id, p.nombre, p.i_tipo, p.clabe, p.id_banco, p.bank, p.account_number,
+      b.nombre banco
+      FROM proveedores p
+      LEFT JOIN bancos b ON b.id = p.id_banco
+      WHERE p.id_proyecto=? AND p.b_activo=1
     `
     const qRubrosProyecto = `
       SELECT DISTINCT mrp.id_rubro, rp.nombre rubro

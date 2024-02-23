@@ -53,6 +53,7 @@ const useErrores = () => {
           case "i_tipo_gasto":
           case "id_partida_presupuestal":
           case "id_estado":
+          case "id_titular_cuenta":
             if (!(campos[key] > 0)) throw [key, "Campo requerido"]
             break
           case "i_beneficiados":
@@ -84,7 +85,6 @@ const useErrores = () => {
             if (!/^.{1,}$/.test(campos[key])) throw [key, "Campo requerido"]
             break
           case "nombre_corto":
-          case "titular_cuenta":
             if (!/^.{2,}$/.test(campos[key])) throw [key, "Mínimo 2 caracteres"]
             break
           case "numero_ext":

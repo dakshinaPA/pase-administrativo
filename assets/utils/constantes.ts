@@ -12,15 +12,16 @@ const tiposGasto = {
   GASTOS_X_COMPROBAR: 5,
 }
 
-const tiposTitularesSolicitud = {
-  COLABORADOR: 1,
-  PROVEEDOR: 2,
-}
-
 const tiposColaborador = {
   ASIMILADOS: 1,
   HONORARIOS: 2,
   SIN_PAGO: 3
+}
+
+const tiposProveedor = {
+  FISICA: 1,
+  MORAL: 2,
+  EXTRANJERO: 3
 }
 
 const estatusSolicitud = {
@@ -40,8 +41,8 @@ const rubrosPresupuestales = {
 export {
   rolesUsuario,
   tiposGasto,
-  tiposTitularesSolicitud,
   estatusSolicitud,
   rubrosPresupuestales,
-  tiposColaborador
+  tiposColaborador,
+  tiposProveedor
 }

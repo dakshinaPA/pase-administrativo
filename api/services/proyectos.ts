@@ -269,23 +269,9 @@ class ProyectosServices {
 
   static async obtenerData(id_proyecto: number) {
     try {
-      const reData = (await ProyectoDB.obtenerData(
-        id_proyecto
-      )) as DataProyectoResDB
+      const reData = await ProyectoDB.obtenerData(id_proyecto)
 
-      const colaboradores: TitularProyecto[] = reData.colaboradores.map(
-        (col) => ({ ...col, i_tipo_titular: 1 })
-      )
-      const proveedores: TitularProyecto[] = reData.proveedores.map(
-        (col) => ({ ...col, i_tipo_titular: 2 })
-      )
-
-      const dataTranformada: DataProyecto = {
-        titulares: [...colaboradores, ...proveedores],
-        rubros_presupuestales: reData.rubros_presupuestales,
-      }
-
-      return RespuestaController.exitosa(200, "Consulta exitosa", dataTranformada)
+      return RespuestaController.exitosa(200, "Consulta exitosa", reData)
     } catch (error) {
       return RespuestaController.fallida(
         400,

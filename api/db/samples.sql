@@ -581,7 +581,7 @@ CREATE TABLE `proyectos` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
     `id_proyecto` INT UNSIGNED NOT NULL,
     `nombre` VARCHAR(50) NOT NULL COMMENT 'nombre o razon social',
-    `i_tipo` TINYINT UNSIGNED NOT NULL COMMENT '1.persona fisica, 2.persona moral',
+    `i_tipo` TINYINT UNSIGNED NOT NULL COMMENT '1.persona fisica, 2.persona moral, 3.extranjero',
     `clabe` VARCHAR(18) NOT NULL,
     `id_banco` TINYINT UNSIGNED NOT NULL,
     `telefono` VARCHAR(10) NOT NULL,
@@ -766,3 +766,7 @@ ALTER TABLE solicitud_presupuesto_comprobantes RENAME COLUMN id_regimen_fiscal T
 ALTER TABLE solicitud_presupuesto_comprobantes ADD COLUMN rfc_emisor VARCHAR(20) NOT NULL DEFAULT "" AFTER id_regimen_fiscal_emisor;
 ALTER TABLE solicitud_presupuesto_comprobantes ADD COLUMN f_iva VARCHAR(20) NOT NULL DEFAULT "0" AFTER f_retenciones;
 ALTER TABLE solicitud_presupuesto_comprobantes ADD COLUMN f_isr VARCHAR(20) NOT NULL DEFAULT "0" AFTER f_retenciones;
+
+-- 22/02/24
+ALTER TABLE solicitudes_presupuesto ADD COLUMN id_banco INT UNSIGNED NOT NULL DEFAULT 0 AFTER clabe;
+ALTER TABLE solicitudes_presupuesto ADD COLUMN id_titular_cuenta INT UNSIGNED NOT NULL DEFAULT 0 AFTER banco;

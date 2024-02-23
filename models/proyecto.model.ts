@@ -75,7 +75,7 @@ export interface ProveedorProyecto {
   direccion: DireccionProveedor
 }
 
-interface RubroMinistracionMin {
+export interface RubroMinistracionMin {
   id_rubro: number
   rubro?: string
 }
@@ -159,20 +159,17 @@ export interface TitularProyecto {
   id: number
   nombre: string
   i_tipo: 1 | 2 | 3
-  i_tipo_titular: 1 | 2 //1.colaborador, 2.proveedor
   clabe: string
   id_banco: number
+  banco: string
+  bank?: string
+  account_number?: string
 }
 
 export interface DataProyecto {
-  titulares: TitularProyecto[]
-  rubros_presupuestales: RubroMinistracion[]
-}
-
-export interface DataProyectoResDB {
   colaboradores: TitularProyecto[]
   proveedores: TitularProyecto[]
-  rubros_presupuestales: RubroMinistracion[]
+  rubros_presupuestales: RubroMinistracionMin[]
 }
 
 export interface CalcularSaldo {
