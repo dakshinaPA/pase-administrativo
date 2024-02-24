@@ -1,7 +1,7 @@
 import { FormaSolicitudPresupuesto } from "@components/FormaSolicitudPresupuesto"
 
-const RegistroSolicitudPresupuestoProyecto = () => {
+const RegistroSolicitudPresupuesto = () => {
   return <FormaSolicitudPresupuesto />
 }
 
-export default RegistroSolicitudPresupuestoProyecto
+export default RegistroSolicitudPresupuesto

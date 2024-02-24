@@ -358,14 +358,14 @@ class SolicitudesPresupuestoDB {
   static async actualizar(id: number, data: SolicitudPresupuesto) {
     const { comprobantes } = data
 
-    const qUpSolicitud = `UPDATE solicitudes_presupuesto SET clabe=?, banco=?, titular_cuenta=?,
+    const qUpSolicitud = `UPDATE solicitudes_presupuesto SET clabe=?, id_banco=?, banco=?, id_titular_cuenta=?, titular_cuenta=?,
       email=?, proveedor=?, descripcion_gasto=?, f_importe=?, f_retenciones=?, i_estatus=? WHERE id=?`
 
     const qReComprobantes =
       "SELECT id, folio_fiscal, b_activo FROM solicitud_presupuesto_comprobantes WHERE id_solicitud_presupuesto=?"
 
     const qReFolioExistente = `
-      SELECT id, folio_fiscal FROM solicitud_presupuesto_comprobantes WHERE folio_fiscal IN (?) AND id_solicitud_presupuesto!=? AND b_activo=0`
+      SELECT id, folio_fiscal FROM solicitud_presupuesto_comprobantes WHERE folio_fiscal IN (?) AND b_activo=0`
 
     const idsFoliosComprobantes = !!comprobantes.length
       ? comprobantes.map((com) => com.folio_fiscal)
@@ -373,7 +373,7 @@ class SolicitudesPresupuestoDB {
     const qComprobantesCombinados = [qReComprobantes, qReFolioExistente].join(
       ";"
     )
-    const phIniciales = [id, idsFoliosComprobantes, id]
+    const phIniciales = [id, idsFoliosComprobantes]
 
     return new Promise((res, rej) => {
       connectionDB.getConnection((err, connection) => {
@@ -404,7 +404,9 @@ class SolicitudesPresupuestoDB {
               const qCombinados = [qUpSolicitud]
               const phCombinados = [
                 data.clabe,
+                data.id_banco,
                 data.banco,
+                data.id_titular_cuenta,
                 data.titular_cuenta,
                 data.email,
                 data.proveedor,

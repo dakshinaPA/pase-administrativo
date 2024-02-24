@@ -1,5 +1,3 @@
-// import { CoparteUsuario } from "@models/coparte.model"
-
 export interface QueriesUsuario {
   id?: number
   id_rol?: IdRolUsuario

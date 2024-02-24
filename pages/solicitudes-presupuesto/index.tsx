@@ -451,7 +451,7 @@ const SolicitudesPresupuesto = () => {
                             <LinkAccion
                               margin={false}
                               icono="bi-eye-fill"
-                              ruta={`/proyectos/${id_proyecto}/solicitudes-presupuesto/${id}`}
+                              ruta={`/solicitudes-presupuesto/${id}`}
                             />
                             {user.id_rol == 1 && (
                               <BtnAccion

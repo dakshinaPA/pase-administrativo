@@ -429,7 +429,7 @@ const SolicitudesPresupuesto = () => {
                     <LinkAccion
                       margin={false}
                       icono="bi-eye-fill"
-                      ruta={`/proyectos/${idProyecto}/solicitudes-presupuesto/${id}`}
+                      ruta={`/solicitudes-presupuesto/${id}`}
                       title="ver proveedor"
                     />
                   </td>

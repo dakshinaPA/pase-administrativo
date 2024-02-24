@@ -7,10 +7,7 @@ import {
   MinistracionProyecto,
   QueriesProyecto,
   NotaProyecto,
-  DataProyecto,
   CalcularSaldo,
-  DataProyectoResDB,
-  TitularProyecto,
 } from "@models/proyecto.model"
 
 import { ResProyectos } from "@api/models/proyecto.model"

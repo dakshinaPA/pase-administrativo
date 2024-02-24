@@ -1,6 +1,6 @@
 import { useEffect, useState, useReducer, useRef } from "react"
 import { useRouter } from "next/router"
-import { ChangeEvent, SelectEvent } from "@assets/models/formEvents.model"
+import { ChangeEvent } from "@assets/models/formEvents.model"
 import {
   ColaboradorProyecto,
   DataProyecto,
@@ -56,10 +56,12 @@ import {
 } from "@assets/utils/constantes"
 
 type ActionTypes =
+  | "LOADING_ON"
   | "ERROR_API"
   | "CARGAR_PROYECTOS"
   | "NO_PROYECTOS"
   | "CARGA_INICIAL"
+  | "RECARGAR"
   | "HANDLE_CHANGE"
   | "AGREGAR_FACTURA"
   | "QUITAR_FACTURA"
@@ -93,7 +95,6 @@ interface EstadoProps {
   isLoading: boolean
   banner: EstadoInicialBannerProps
   modoEditar: boolean
-  // mensajeNota: string
 }
 
 const estadoInicialFormaExterior: SolicitudPresupuesto = {
@@ -119,6 +120,11 @@ const reducer = (state: EstadoProps, action: ActionProps): EstadoProps => {
   const { type, payload } = action
 
   switch (type) {
+    case "LOADING_ON":
+      return {
+        ...state,
+        isLoading: true,
+      }
     case "ERROR_API":
       return {
         ...state,
@@ -157,6 +163,14 @@ const reducer = (state: EstadoProps, action: ActionProps): EstadoProps => {
         cargaInicial: payload.solicitudDB,
         dataProyecto: payload.dataProyecto,
         isLoading: false,
+      }
+    case "RECARGAR":
+      return {
+        ...state,
+        forma: payload,
+        cargaInicial: payload,
+        isLoading: false,
+        modoEditar: false,
       }
     case "HANDLE_CHANGE":
       return {
@@ -253,7 +267,6 @@ const reducer = (state: EstadoProps, action: ActionProps): EstadoProps => {
         iTipoGasto == tiposGasto.PAGO_A_PROVEEDOR
           ? "proveedores"
           : "colaboradores"
-      // const iTipoTiutlar = iTipoGasto == tiposGasto.PAGO_A_PROVEEDOR ? 2 : 1
       const match = state.dataProyecto[tipoTitular].find(
         (tit) => tit.id == idTitular
       )
@@ -269,7 +282,6 @@ const reducer = (state: EstadoProps, action: ActionProps): EstadoProps => {
         forma: {
           ...state.forma,
           id_titular_cuenta: match.id,
-          // i_tipo_titular: iTipoTiutlar,
           titular_cuenta: match.nombre,
           clabe: match.clabe || match.account_number,
           id_banco: match.id_banco,
@@ -392,13 +404,6 @@ const FormaSolicitudPresupuesto = () => {
 
   const cargarData = async () => {
     try {
-      let dataProyecto = {}
-      if (idProyecto) {
-        const reDataProyecto = await obtenerDataProyecto(idProyecto)
-        if (reDataProyecto.error) throw reDataProyecto
-        dataProyecto = reDataProyecto.data as DataProyecto
-      }
-
       if (modalidad === "CREAR") {
         const reProyectos = await obtenerProyectosDB()
         if (reProyectos.error) throw reProyectos
@@ -409,12 +414,10 @@ const FormaSolicitudPresupuesto = () => {
             type: "NO_PROYECTOS",
           })
         } else {
-          if (!idProyecto) {
-            //obtener data del primer proyecto y setearlo como default
-            const reDataProyecto = await obtenerDataProyecto(proyectosDB[0].id)
-            if (reDataProyecto.error) throw reDataProyecto
-            dataProyecto = reDataProyecto.data as DataProyecto
-          }
+          //obtener data del primer proyecto y setearlo como default
+          const reDataProyecto = await obtenerDataProyecto(proyectosDB[0].id)
+          if (reDataProyecto.error) throw reDataProyecto
+          const dataProyecto = reDataProyecto.data as DataProyecto
 
           dispatch({
             type: "CARGAR_PROYECTOS",
@@ -425,11 +428,12 @@ const FormaSolicitudPresupuesto = () => {
           })
         }
       } else {
-        const reSolicitud = await obtenerSolicitudes({
-          id: idSolicitud,
-        })
-        if (reSolicitud.error) throw reSolicitud
-        const solicitudDB = reSolicitud.data[0] as SolicitudPresupuesto
+        const solicitudDB = await obtener()
+        const reDataProyecto = await obtenerDataProyecto(
+          solicitudDB.id_proyecto
+        )
+        if (reDataProyecto.error) throw reDataProyecto
+        const dataProyecto = reDataProyecto.data as DataProyecto
         dispatch({
           type: "CARGA_INICIAL",
           payload: {
@@ -481,49 +485,20 @@ const FormaSolicitudPresupuesto = () => {
     })
   }
 
-  // const obtener = () => {
-  //   return obtenerSolicitudes({
-  //     id: idSolicitud,
-  //   })
-  //   // const { error, data, mensaje } = await obtenerSolicitudes({
-  //   //   id: idSolicitud,
-  //   // })
-  //   // if (error) {
-  //   //   console.log(data)
-  //   //   dispatch({
-  //   //     type: "ERROR_API",
-  //   //     payload: mensaje,
-  //   //   })
-  //   // } else {
-  //   //   const solicitud = data[0] as SolicitudPresupuesto
-  //   //   dispatch({
-  //   //     type: "CARGA_INICIAL",
-  //   //     payload: solicitud,
-  //   //   })
-  //   // }
-  // }
+  const obtener = async () => {
+    const reSolicitud = await obtenerSolicitudes({
+      id: idSolicitud,
+    })
+    if (reSolicitud.error) throw reSolicitud
+    return reSolicitud.data[0] as SolicitudPresupuesto
+  }
 
-  const registrar = async () => {
+  const registrar = () => {
     return ApiCall.post("/solicitudes-presupuesto", estado.forma)
   }
 
-  const editar = async () => {
-    // cuando rol coparte hace una modificacion y su estatus es rechazada o devolucion,
-    // el status debe cambiar a revision nuevamente
-    let payload = estado.forma
-
-    // if (
-    //   user.id_rol == rolesUsuario.COPARTE &&
-    //   [estatusSolicitud.RECHAZADA, estatusSolicitud.DEVOLUCION].includes(
-    //     estado.forma.i_estatus
-    //   )
-    // ) {
-    //   payload = {
-    //     ...payload,
-    //     i_estatus: estatusSolicitud.REVISION,
-    //   }
-    // }
-    return ApiCall.put(`/solicitudes-presupuesto/${idSolicitud}`, payload)
+  const editar = () => {
+    return ApiCall.put(`/solicitudes-presupuesto/${idSolicitud}`, estado.forma)
   }
 
   const cancelar = () => {
@@ -614,6 +589,23 @@ const FormaSolicitudPresupuesto = () => {
         claveRegimenFiscalReceptor
       )
 
+      // buscar si el folio que se quiere subir ya existe en base de datos
+      const reFactura = await ApiCall.get(
+        `/solicitudes-presupuesto/buscar-factura?folio=${folio_fiscal}`
+      )
+      if (reFactura.error) {
+        console.log(reFactura.data)
+        return
+      } else {
+        if (reFactura.data) {
+          dispatch({
+            type: "FACTURA_INVALIDA",
+            payload: reFactura.mensaje,
+          })
+          return
+        }
+      }
+
       try {
         if (!f_total) throw "Total de factura no identificado"
         if (!clave_forma_pago) throw "Forma de pago no identificado"
@@ -643,23 +635,6 @@ const FormaSolicitudPresupuesto = () => {
           payload: error,
         })
         return
-      }
-
-      // buscar si el folio que se quiere subir ya existe en base de datos
-      const reFactura = await ApiCall.get(
-        `/solicitudes-presupuesto/buscar-factura?folio=${folio_fiscal}`
-      )
-      if (reFactura.error) {
-        console.log(reFactura.data)
-        return
-      } else {
-        if (reFactura.data) {
-          dispatch({
-            type: "FACTURA_INVALIDA",
-            payload: reFactura.mensaje,
-          })
-          return
-        }
       }
 
       let f_retenciones = ""
@@ -775,14 +750,19 @@ const FormaSolicitudPresupuesto = () => {
     if (
       user.id_rol == rolesUsuario.COPARTE ||
       estado.forma.i_tipo_gasto != tiposGasto.ASIMILADOS ||
-      [1, 3, 5].includes(Number(estado.forma.i_estatus))
+      [
+        estatusSolicitud.REVISION,
+        estatusSolicitud.RECHAZADA,
+        estatusSolicitud.DEVOLUCION,
+      ].includes(Number(estado.forma.i_estatus))
     ) {
       delete campos.f_retenciones
     }
 
     if (
       user.id_rol == rolesUsuario.COPARTE ||
-      estado.forma.id_partida_presupuestal != 22
+      estado.forma.id_partida_presupuestal !=
+        rubrosPresupuestales.PAGOS_EXTRANJERO
     ) {
       delete campos.f_retenciones_extranjeros
     }
@@ -795,22 +775,30 @@ const FormaSolicitudPresupuesto = () => {
     if (!aceptaTerminos()) return
     console.log(estado.forma)
 
-    const { error, data, mensaje } =
-      modalidad === "EDITAR" ? await editar() : await registrar()
+    dispatch({
+      type: "LOADING_ON",
+    })
 
-    if (error) {
+    try {
+      const upSolicitud =
+        modalidad === "EDITAR" ? await editar() : await registrar()
+      if (upSolicitud.error) throw upSolicitud
+
+      if (modalidad === "CREAR") {
+        router.push(`/solicitudes-presupuesto`)
+      } else {
+        const solicitudDB = await obtener()
+        dispatch({
+          type: "RECARGAR",
+          payload: solicitudDB,
+        })
+      }
+    } catch ({ error, mensaje, data }) {
       console.log(data)
       dispatch({
         type: "ERROR_API",
         payload: mensaje,
       })
-    } else {
-      if (modalidad === "CREAR") {
-        router.push(`/solicitudes-presupuesto`)
-      } else {
-        // estatusCarga.current = estadoForma.i_estatus
-        // await obtener()
-      }
     }
   }
 

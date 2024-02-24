@@ -9,6 +9,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   if (!sesion) {
     return res.status(401).json({ mensaje: "Acceso no autorizado" })
   }
+  //@ts-ignore
+  const rolUsuario = sesion.user.id_rol
 
   switch (req.method) {
     case "GET":
@@ -20,7 +22,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     case "PUT":
       var { status, ...data } = await SolicitudesPresupuestoServices.actualizar(
         id_solicitud,
-        req.body
+        req.body,
+        rolUsuario
       )
       res.status(status).json(data)
       break

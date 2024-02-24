@@ -11,12 +11,15 @@ import {
   QueriesSolicitud,
   PayloadCambioEstatus,
   NotaSolicitud,
+  EstatusSolicitud,
 } from "@models/solicitud-presupuesto.model"
 import {
   epochAFecha,
   obtenerEstatusSolicitud,
   obtenerMetodoPago,
 } from "@assets/utils/common"
+import { IdRolUsuario, RolUsuario } from "@models/usuario.model"
+import { estatusSolicitud, rolesUsuario } from "@assets/utils/constantes"
 
 class SolicitudesPresupuestoServices {
   static obtenerTipoGasto(i_tipo_gasto: TipoGastoSolicitud) {
@@ -156,9 +159,27 @@ class SolicitudesPresupuestoServices {
     }
   }
 
-  static async actualizar(id: number, data: SolicitudPresupuesto) {
+  static async actualizar(
+    id: number,
+    data: SolicitudPresupuesto,
+    id_rol: IdRolUsuario
+  ) {
     try {
-      const up = await SolicitudesPresupuestoDB.actualizar(id, data)
+      let payload = data
+
+      if (
+        id_rol === rolesUsuario.COPARTE &&
+        [estatusSolicitud.RECHAZADA, estatusSolicitud.DEVOLUCION].includes(
+          data.i_estatus
+        )
+      ) {
+        payload = {
+          ...data,
+          i_estatus: estatusSolicitud.REVISION as EstatusSolicitud,
+        }
+      }
+
+      const up = await SolicitudesPresupuestoDB.actualizar(id, payload)
 
       return RespuestaController.exitosa(
         200,
