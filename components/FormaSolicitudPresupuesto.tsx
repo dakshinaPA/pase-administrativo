@@ -1282,7 +1282,7 @@ const FormaSolicitudPresupuesto = () => {
                 />
                 <label className="form-check-label">
                   Acepto los
-                  <Link href="/legal" className="color1 fw-bold">
+                  <Link href="/legal" target="_blank" className="color1 fw-bold">
                     {" "}
                     términos y condiciones
                   </Link>

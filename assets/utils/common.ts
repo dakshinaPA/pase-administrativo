@@ -299,7 +299,7 @@ const textoAmasyuscula = (texto: string) =>
 const textoMayusculaSinAcentos = (texto: string) => {
   const txtSinAcento = quitarAcentos(texto)
   const txtMayuscula = textoAmasyuscula(txtSinAcento)
-  return txtMayuscula
+  return txtMayuscula.trim()
 } 
 
 export {

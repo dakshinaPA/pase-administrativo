@@ -74,9 +74,25 @@ class ProveedorServices {
 
   static async crear(data: ProveedorProyecto) {
     try {
-      const dataTransformada = {
+      const dataTransformada: ProveedorProyecto = {
         ...data,
         nombre: textoMayusculaSinAcentos(data.nombre),
+        bank: textoMayusculaSinAcentos(data.bank),
+        bank_branch_address: data.bank_branch_address.trim(),
+        bic_code: data.bic_code.trim(),
+        intermediary_bank: textoMayusculaSinAcentos(data.intermediary_bank),
+        routing_number: data.routing_number.trim(),
+        descripcion_servicio: data.descripcion_servicio.trim(),
+        direccion: {
+          ...data.direccion,
+          calle: data.direccion.calle.trim(),
+          numero_int: data.direccion.numero_int.trim(),
+          colonia: data.direccion.colonia.trim(),
+          municipio: data.direccion.municipio.trim(),
+          cp: data.direccion.cp.trim(),
+          estado: textoMayusculaSinAcentos(data.direccion.estado),
+          pais: textoMayusculaSinAcentos(data.direccion.pais),
+        },
       }
 
       const cr = await ProveedorDB.crear(dataTransformada)

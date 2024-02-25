@@ -75,11 +75,19 @@ class ColaboradorServices {
 
   static async crear(data: ColaboradorProyecto) {
     try {
-      const dataTransformada = {
+      const dataTransformada: ColaboradorProyecto = {
         ...data,
         nombre: textoMayusculaSinAcentos(data.nombre),
         apellido_paterno: textoMayusculaSinAcentos(data.apellido_paterno),
         apellido_materno: textoMayusculaSinAcentos(data.apellido_materno),
+        direccion: {
+          ...data.direccion,
+          calle: data.direccion.calle.trim(),
+          numero_int: data.direccion.numero_int.trim(),
+          colonia: data.direccion.colonia.trim(),
+          municipio: data.direccion.municipio.trim(),
+          cp: data.direccion.cp.trim(),
+        }
       }
 
       const cr = await ColaboradorDB.crear(dataTransformada)
