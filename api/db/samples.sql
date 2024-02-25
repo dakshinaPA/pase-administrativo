@@ -768,5 +768,5 @@ ALTER TABLE solicitud_presupuesto_comprobantes ADD COLUMN f_iva VARCHAR(20) NOT 
 ALTER TABLE solicitud_presupuesto_comprobantes ADD COLUMN f_isr VARCHAR(20) NOT NULL DEFAULT "0" AFTER f_retenciones;
 
 -- 22/02/24
-ALTER TABLE solicitudes_presupuesto ADD COLUMN id_banco INT UNSIGNED NOT NULL DEFAULT 0 AFTER clabe;
-ALTER TABLE solicitudes_presupuesto ADD COLUMN id_titular_cuenta INT UNSIGNED NOT NULL DEFAULT 0 AFTER banco;
+ALTER TABLE solicitudes_presupuesto ADD COLUMN id_banco INT UNSIGNED NOT NULL DEFAULT 0 AFTER clabe, ADD INDEX (id_banco);
+ALTER TABLE solicitudes_presupuesto ADD COLUMN id_titular_cuenta INT UNSIGNED NOT NULL DEFAULT 0 AFTER banco, ADD INDEX (id_titular_cuenta);
