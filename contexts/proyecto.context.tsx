@@ -13,31 +13,44 @@ import {
   Proyecto,
   RubroMinistracion,
 } from "@models/proyecto.model"
-import { UsuarioLogin } from "@models/usuario.model"
+import { UsuarioLogin, UsuarioMin } from "@models/usuario.model"
 import { useSesion } from "@hooks/useSesion"
+import {
+  EstadoInicialBannerProps,
+  estadoInicialBanner,
+} from "@components/Banner"
+import { FinanciadorMin } from "@models/financiador.model"
+import { CoparteMin } from "@models/coparte.model"
+
+interface FormaMinistracionProps extends MinistracionProyecto {
+  id_rubro: number
+}
+
+interface EstadoProps {
+  cargaInicial: Proyecto
+  forma: Proyecto
+  financiadoresDB: FinanciadorMin[]
+  copartesDB: CoparteMin[]
+  usuariosCoparteDB: UsuarioMin[]
+  showFormaMinistracion: boolean
+  formaMinistracion: FormaMinistracionProps
+  modoEditar: boolean
+  isLoading: boolean
+  banner: EstadoInicialBannerProps
+}
 
 interface ProyectoProvider {
-  estadoForma: Proyecto
-  dispatch: Dispatch<ActionDispatch>
+  estado: EstadoProps
   idProyecto: number
   idCoparte: number
   user: UsuarioLogin
   modalidad: "EDITAR" | "CREAR"
-  showFormaMinistracion: boolean
-  setShowFormaMinistracion: Dispatch<SetStateAction<boolean>>
-  formaMinistracion: FormaMinistracion
-  estaInicialFormaMinistracion: MinistracionProyecto
-  setFormaMinistracion: Dispatch<SetStateAction<MinistracionProyecto>>
   quitarMinistracion: (i_numero: number) => void
   editarMinistracion: (id_ministracion: number) => void
-  modoEditar: boolean
-  setModoEditar: Dispatch<SetStateAction<boolean>>
   router: NextRouter
 }
 
-const ProyectoContext = createContext(null)
-
-export type ActionTypes =
+type ActionTypes =
   | "SET_IDS_DEPENDENCIAS"
   | "CARGA_INICIAL"
   | "HANDLE_CHANGE"
@@ -49,19 +62,12 @@ export type ActionTypes =
 
 interface ActionDispatch {
   type: ActionTypes
-  payload: any
+  payload?: any
 }
 
-interface FormaMinistracion {
-  id?: number
-  i_numero: number
-  i_grupo: string
-  dt_recepcion: string
-  id_rubro: number
-  rubros_presupuestales: RubroMinistracion[]
-}
+const ProyectoContext = createContext(null)
 
-const reducer = (state: Proyecto, action: ActionDispatch): Proyecto => {
+const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
   const { type, payload } = action
 
   switch (type) {
@@ -115,6 +121,7 @@ const ProyectoProvider = ({ children }) => {
   const router = useRouter()
   const idCoparte = Number(router.query.idC)
   const idProyecto = Number(router.query.idP)
+  const modalidad = idProyecto ? "EDITAR" : "CREAR"
 
   const estadoInicialForma: Proyecto = {
     id_coparte: 0,
@@ -151,7 +158,7 @@ const ProyectoProvider = ({ children }) => {
     notas: [],
   }
 
-  const estaInicialFormaMinistracion: FormaMinistracion = {
+  const estaInicialFormaMinistracion: FormaMinistracionProps = {
     i_numero: 1,
     i_grupo: "0",
     dt_recepcion: "",
@@ -159,80 +166,162 @@ const ProyectoProvider = ({ children }) => {
     rubros_presupuestales: [],
   }
 
-  const [estadoForma, dispatch] = useReducer(reducer, estadoInicialForma)
-  const [showFormaMinistracion, setShowFormaMinistracion] = useState(false)
-  const [formaMinistracion, setFormaMinistracion] = useState(
-    estaInicialFormaMinistracion
-  )
-  const [modoEditar, setModoEditar] = useState<boolean>(!idProyecto)
-  const modalidad = idProyecto ? "EDITAR" : "CREAR"
+  const estadoInicial: EstadoProps = {
+    cargaInicial: estadoInicialForma,
+    forma: estadoInicialForma,
+    financiadoresDB: [],
+    copartesDB: [],
+    usuariosCoparteDB: [],
+    formaMinistracion: estaInicialFormaMinistracion,
+    showFormaMinistracion: false,
+    isLoading: true,
+    banner: estadoInicialBanner,
+    modoEditar: modalidad === "CREAR",
+  }
+
+  // const [estadoForma, dispatch] = useReducer(reducer, estadoInicialForma)
+  const [estado, dispatch] = useReducer(reducer, estadoInicial)
+  // const [showFormaMinistracion, setShowFormaMinistracion] = useState(false)
+  // const [formaMinistracion, setFormaMinistracion] = useState(
+  //   estaInicialFormaMinistracion
+  // )
+  // const [modoEditar, setModoEditar] = useState<boolean>(!idProyecto)
 
   useEffect(() => {
-    if (modalidad === "CREAR") {
-      handleTipoCambioFinanciamineto()
-    }
-  }, [estadoForma.i_tipo_financiamiento])
+    cargarData()
+  }, [])
 
-  const handleTipoCambioFinanciamineto = () => {
-    dispatch({
-      type: "CAMBIAR_TIPO_FINANCIAMIENTO",
-      payload: null,
-    })
+  const cargarData = async () => {
+    try {
+      //obtener financiadores en registro o edicion
+      const reFinanciadores = await obtenerFinanciadores()
+      if (reFinanciadores.error) throw reFinanciadores
+      const financiadoresDB = reFinanciadores.data as FinanciadorMin[]
+      setFinanciadoresDB(financiadoresDB)
 
-    if (estadoForma.i_tipo_financiamiento <= 2) {
-      setFormaMinistracion((prevState) => ({
-        ...prevState,
-        i_numero: 1,
-      }))
+      if (modalidad == "CREAR") {
+        const queryCopartes: QueriesCoparte = {}
+        if (idCoparte) {
+          queryCopartes.id = idCoparte
+        } else if (user.id_rol == 2) {
+          queryCopartes.id_admin = user.id
+        }
+
+        const reCopartes = await obtenerCopartes(queryCopartes)
+        if (reCopartes.error) throw reCopartes
+
+        const copartesDB = reCopartes.data as CoparteMin[]
+        setCopartesDB(copartesDB)
+        dispatch({
+          type: "SET_IDS_DEPENDENCIAS",
+          payload: {
+            id_coparte: copartesDB[0]?.id ?? 0,
+            id_financiador: financiadoresDB[0]?.id ?? 0,
+          },
+        })
+      } else {
+        const reProyecto = await obtenerProyectos({
+          id: idProyecto,
+          min: false,
+        })
+
+        if (reProyecto.error) throw reProyecto
+        const proyectoDB = reProyecto.data as Proyecto
+
+        dispatch({
+          type: "CARGA_INICIAL",
+          payload: proyectoDB,
+        })
+      }
+    } catch ({ data, mensaje }) {
+      console.log(data)
+      setShowBanner({
+        mensaje,
+        show: true,
+        tipo: "error",
+      })
+    } finally {
+      setIsLoading(false)
     }
   }
 
+  // useEffect(() => {
+  //   if (modalidad === "CREAR") {
+  //     handleTipoCambioFinanciamineto()
+  //   }
+  // }, [estadoForma.i_tipo_financiamiento])
+
+  // const handleTipoCambioFinanciamineto = () => {
+  //   dispatch({
+  //     type: "CAMBIAR_TIPO_FINANCIAMIENTO",
+  //     payload: null,
+  //   })
+
+  //   if (estadoForma.i_tipo_financiamiento <= 2) {
+  //     setFormaMinistracion((prevState) => ({
+  //       ...prevState,
+  //       i_numero: 1,
+  //     }))
+  //   }
+  // }
+
   const quitarMinistracion = (i_numero: number) => {
-    const nuevaLista = estadoForma.ministraciones.filter(
-      (min) => min.i_numero != i_numero
-    )
+    // const nuevaLista = estado.forma.ministraciones.filter(
+    //   (min) => min.i_numero != i_numero
+    // )
 
     dispatch({
       type: "QUITAR_MINISTRACION",
-      payload: nuevaLista,
+      // payload: nuevaLista,
     })
   }
 
   const editarMinistracion = (id_ministracion: number) => {
-    const matchMinistracion = estadoForma.ministraciones.find(
-      (min) => min.id == id_ministracion
-    )
-    if (!matchMinistracion) {
-      console.log(matchMinistracion)
-      return
-    }
+    // const matchMinistracion = estadoForma.ministraciones.find(
+    //   (min) => min.id == id_ministracion
+    // )
+    // if (!matchMinistracion) {
+    //   console.log(matchMinistracion)
+    //   return
+    // }
 
-    const dataForma = {
-      ...matchMinistracion,
-      id_rubro: 0,
-    }
+    // const dataForma = {
+    //   ...matchMinistracion,
+    //   id_rubro: 0,
+    // }
 
-    setFormaMinistracion(dataForma)
-    setShowFormaMinistracion(true)
+    // setFormaMinistracion(dataForma)
+    // setShowFormaMinistracion(true)
   }
 
+  // const proyecto: ProyectoProvider = {
+  //   estado,
+  //   // estadoForma,
+  //   // dispatch,
+  //   idProyecto,
+  //   idCoparte,
+  //   user,
+  //   modalidad,
+  //   // showFormaMinistracion,
+  //   // setShowFormaMinistracion,
+  //   // formaMinistracion,
+  //   // setFormaMinistracion,
+  //   // estaInicialFormaMinistracion,
+  //   quitarMinistracion,
+  //   editarMinistracion,
+  //   // modoEditar,
+  //   // setModoEditar,
+  //   // router,
+  // }
   const proyecto: ProyectoProvider = {
-    estadoForma,
-    dispatch,
+    estado,
     idProyecto,
     idCoparte,
     user,
     modalidad,
-    showFormaMinistracion,
-    setShowFormaMinistracion,
-    formaMinistracion,
-    setFormaMinistracion,
-    estaInicialFormaMinistracion,
     quitarMinistracion,
     editarMinistracion,
-    modoEditar,
-    setModoEditar,
-    router,
+    router
   }
 
   return (

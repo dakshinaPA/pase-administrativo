@@ -2,12 +2,9 @@ import { useEffect, useState, useReducer, useRef } from "react"
 import { useRouter } from "next/router"
 import { ChangeEvent } from "@assets/models/formEvents.model"
 import {
-  ColaboradorProyecto,
   DataProyecto,
-  ProveedorProyecto,
   ProyectoMin,
   QueriesProyecto,
-  RubroMinistracion,
   RubroMinistracionMin,
   TitularProyecto,
 } from "@models/proyecto.model"

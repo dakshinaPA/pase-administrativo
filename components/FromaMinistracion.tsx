@@ -7,13 +7,13 @@ import { ChangeEvent } from "@assets/models/formEvents.model"
 import { fechaActualInputDate } from "@assets/utils/common"
 
 const FormaMinistracion = () => {
-  const {
-    estadoForma,
-    dispatch,
-    setShowFormaMinistracion,
-    formaMinistracion,
-    setFormaMinistracion,
-  } = useProyecto()
+  // const {
+  //   estadoForma,
+  //   dispatch,
+  //   setShowFormaMinistracion,
+  //   formaMinistracion,
+  //   setFormaMinistracion,
+  // } = useProyecto()
   const { rubros_presupuestales } = useCatalogos()
 
   const inputNumero = useRef(null)
