@@ -33,6 +33,7 @@ const estatusSolicitud = {
 }
 
 const rubrosPresupuestales = {
+  GESTION_FINANCIERA: 1,
   ASIMILADOS: 2,
   HONORARIOS: 3,
   PAGOS_EXTRANJERO: 22

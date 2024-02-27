@@ -1,10 +1,14 @@
-import { RubrosPresupuestalesDB } from "@api/models/catalogos.model"
-import { BtnAccion, BtnCancelar, BtnNeutro } from "./Botones"
-import { useProyecto } from "@contexts/proyecto.context"
+import { useContext, useEffect, useRef, useState } from "react"
 import { useCatalogos } from "@contexts/catalogos.context"
-import { useEffect, useRef } from "react"
+// import { RubrosPresupuestalesDB } from "@api/models/catalogos.model"
+import { BtnAccion, BtnCancelar, BtnNeutro } from "./Botones"
+// import { useProyecto } from "@contexts/proyecto.context"
 import { ChangeEvent } from "@assets/models/formEvents.model"
 import { fechaActualInputDate } from "@assets/utils/common"
+import { ProyectoContext } from "./FormaProyecto"
+import { useSesion } from "@hooks/useSesion"
+import { MinistracionProyecto } from "@models/proyecto.model"
+import { rubrosPresupuestales } from "@assets/utils/constantes"
 
 const FormaMinistracion = () => {
   // const {
@@ -15,121 +19,78 @@ const FormaMinistracion = () => {
   //   setFormaMinistracion,
   // } = useProyecto()
   const { rubros_presupuestales } = useCatalogos()
+  const { estado, despachar } = useContext(ProyectoContext)
+
+  // debugger
+  // return
 
   const inputNumero = useRef(null)
-  const inputGrupo = useRef(null)
+  // const inputGrupo = useRef(null)
   const inputDtRecepcion = useRef(null)
   const selectRubro = useRef(null)
   const formMinistracion = useRef(null)
   const tableRubros = useRef(null)
 
-  useEffect(() => {
-    formMinistracion.current.scrollIntoView({
-      behavior: "smooth",
-      block: "end",
-    })
-  }, [])
+  // useEffect(() => {
+  //   formMinistracion.current.scrollIntoView({
+  //     behavior: "smooth",
+  //     block: "end",
+  //   })
+  // }, [])
 
-  useEffect(() => {
-    agregarRubro()
-  }, [formaMinistracion.id_rubro])
+  // useEffect(() => {
+  //   agregarRubro()
+  // }, [estado.formaMinistracion.estado.id_rubro])
 
   const handleChangeMinistracion = (ev: ChangeEvent) => {
     const { name, value } = ev.target
-
-    setFormaMinistracion((prevState) => ({
-      ...prevState,
-      [name]: value,
-    }))
+    const payload = { name, value }
+    despachar("CHANGLE_FORMA_MINISTRACION", payload)
   }
 
-  const agregarRubro = () => {
-    const idRubro = formaMinistracion.id_rubro
-    const matchRubro = rubros_presupuestales.find((rp) => rp.id == idRubro)
-    if (!matchRubro) {
-      console.log(matchRubro)
-      return
-    }
-
-    setFormaMinistracion((prevState) => ({
-      ...prevState,
-      id_rubro: 0,
-      rubros_presupuestales: [
-        ...prevState.rubros_presupuestales,
-        {
-          id_rubro: matchRubro.id,
-          rubro: matchRubro.nombre,
-          f_monto: 0,
-        },
-      ],
-    }))
-
-    tableRubros.current.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    })
-  }
-
-  const actualizarMontoRubro = (monto: string, id_rubro: number) => {
-    const indexRubro = formaMinistracion.rubros_presupuestales.findIndex(
-      (rp) => rp.id_rubro == id_rubro
+  const agregarRubro = (ev: ChangeEvent) => {
+    const idRubroSeleccionado = Number(ev.target.value)
+    const match = rubros_presupuestales.find(
+      (rp) => rp.id === idRubroSeleccionado
     )
-    if (indexRubro < 0) {
-      console.log(indexRubro)
-      return
-    }
 
-    const nuevosRubros = [...formaMinistracion.rubros_presupuestales]
-    nuevosRubros[indexRubro] = {
-      ...nuevosRubros[indexRubro],
-      f_monto: monto,
-    }
+    despachar("AGREGAR_RUBRO_MINISTRACION", match)
 
-    setFormaMinistracion((prevState) => ({
-      ...prevState,
-      rubros_presupuestales: nuevosRubros,
-    }))
+    // tableRubros.current.scrollIntoView({
+    //   behavior: "smooth",
+    //   block: "start",
+    // })
+  }
+
+  const actualizarMontoRubro = (f_monto: string, id_rubro: number) => {
+    const payload = { f_monto, id_rubro }
+    despachar("ACTUALIZAR_MONTO_RUBRO_MINISTRACION", payload)
   }
 
   const quitarRubro = (id_rubro: number) => {
-    const listaFiltrada = formaMinistracion.rubros_presupuestales.filter(
-      (rubro) => rubro.id_rubro != id_rubro
-    )
-
-    setFormaMinistracion((prevstate) => ({
-      ...prevstate,
-      rubros_presupuestales: listaFiltrada,
-    }))
+    despachar("QUITAR_RUBRO_MINISTRACION", id_rubro)
   }
 
   const cerrarForma = () => {
-    setShowFormaMinistracion(false)
+    // setShowFormaMinistracion(false)
   }
 
   const validarForma = () => {
-    if (!Number(formaMinistracion.i_numero)) {
+    if (!Number(estado.formaMinistracion.estado.i_numero)) {
       inputNumero.current.focus()
       return false
     }
-
-    if (!Number(formaMinistracion.i_grupo)) {
-      inputGrupo.current.focus()
-      return false
-    }
-
-    if (!formaMinistracion.dt_recepcion) {
+    // if (!Number(formaMinistracion.i_grupo)) {
+    //   inputGrupo.current.focus()
+    //   return false
+    // }
+    if (!estado.formaMinistracion.estado.dt_recepcion) {
       inputDtRecepcion.current.focus()
       return false
     }
-
-    if (!formaMinistracion.rubros_presupuestales.length) {
-      selectRubro.current.focus()
-      return false
-    }
-
     try {
       //validar que haya cantidades validas en los inputs
-      formaMinistracion.rubros_presupuestales.forEach((rubro, index) => {
+      estado.formaMinistracion.estado.rubros_presupuestales.forEach((rubro, index) => {
         if (!Number(rubro.f_monto)) throw index
       })
     } catch (index) {
@@ -138,70 +99,56 @@ const FormaMinistracion = () => {
       input.focus()
       return false
     }
-
     return true
   }
 
   const handleAgregar = () => {
     if (!validarForma()) return
-
-    dispatch({
-      type: "AGREGAR_MINISTRACION",
-      payload: formaMinistracion,
-    })
-
-    cerrarForma()
+    despachar("AGREGAR_MINISTRACION")
   }
 
   const handleGuardar = async () => {
-    if (!validarForma()) return
+    // if (!validarForma()) return
 
-    const nuevaListaMinistraciones = estadoForma.ministraciones.map((min) => {
-      if (min.id == formaMinistracion.id) {
-        return formaMinistracion
-      }
-      return min
-    })
+    // const nuevaListaMinistraciones = estadoestado.formaMinistracion.estado.ministraciones.map((min) => {
+    //   if (min.id == formaMinistracion.id) {
+    //     return formaMinistracion
+    //   }
+    //   return min
+    // })
 
-    dispatch({
-      type: "ACTUALIZAR_MINISTRACIONES",
-      payload: nuevaListaMinistraciones,
-    })
+    // dispatch({
+    //   type: "ACTUALIZAR_MINISTRACIONES",
+    //   payload: nuevaListaMinistraciones,
+    // })
 
     cerrarForma()
   }
 
-  const rubrosNoSeleccionados = () => {
-    const rubros: RubrosPresupuestalesDB[] = []
-    const idsRubrosForma = formaMinistracion.rubros_presupuestales.map(
-      ({ id_rubro }) => Number(id_rubro)
-    )
-
-    for (const rp of rubros_presupuestales) {
-      if (!idsRubrosForma.includes(rp.id)) {
-        rubros.push(rp)
-      }
-    }
-
-    return rubros
-  }
-
   // obligar al usuario a seleccionar como primera opcion el rubro de gestion financiera
-  const RubroDefault = () => {
-    const rubroGestion = rubros_presupuestales.find((rubro) => rubro.id == 1)
-    if (!rubroGestion) return null
+  // const RubroDefault = () => {
+  //   const rubroGestion = rubros_presupuestales.find((rubro) => rubro.id == 1)
+  //   if (!rubroGestion) return null
 
-    return <option value={rubroGestion.id}>{rubroGestion.nombre}</option>
-  }
+  //   return <option value={rubroGestion.id}>{rubroGestion.nombre}</option>
+  // }
 
-  const sumaRubros = formaMinistracion.rubros_presupuestales.reduce(
-    (acum, rp) => acum + Number(rp.f_monto),
-    0
+  const rubrosNoSeleccionados = rubros_presupuestales.filter(
+    (rp) =>
+      !estado.formaMinistracion.estado.rubros_presupuestales
+        .map(({ id_rubro }) => id_rubro)
+        .includes(rp.id)
   )
 
+  const sumaRubros =
+    estado.formaMinistracion.estado.rubros_presupuestales.reduce(
+      (acum, rp) => acum + Number(rp.f_monto),
+      0
+    )
+
   const disabledInputNumero =
-    estadoForma.i_tipo_financiamiento <= 2 ||
-    estadoForma.ministraciones.length > 0
+    estado.forma.i_tipo_financiamiento <= 2 ||
+    estado.forma.ministraciones.length > 0
 
   return (
     <div className="col-12 mb-3" ref={formMinistracion}>
@@ -214,22 +161,22 @@ const FormaMinistracion = () => {
               type="text"
               onChange={handleChangeMinistracion}
               name="i_numero"
-              value={formaMinistracion.i_numero}
+              value={estado.formaMinistracion.estado.i_numero}
               ref={inputNumero}
               disabled={disabledInputNumero}
             />
           </div>
-          <div className="mb-3">
+          {/* <div className="mb-3">
             <label className="form-label">Grupo</label>
             <input
               className="form-control"
               type="text"
               onChange={handleChangeMinistracion}
               name="i_grupo"
-              value={formaMinistracion.i_grupo}
+              value={estado.formaMinistracion.estado.i_grupo}
               ref={inputGrupo}
             />
-          </div>
+          </div> */}
           <div className="mb-3">
             <label className="form-label">Fecha de rececpión</label>
             <input
@@ -237,7 +184,7 @@ const FormaMinistracion = () => {
               type="date"
               onChange={handleChangeMinistracion}
               name="dt_recepcion"
-              value={formaMinistracion.dt_recepcion}
+              value={estado.formaMinistracion.estado.dt_recepcion}
               max={fechaActualInputDate()}
               ref={inputDtRecepcion}
             />
@@ -247,22 +194,18 @@ const FormaMinistracion = () => {
             <select
               className="form-control"
               name="id_rubro"
-              value={formaMinistracion.id_rubro}
-              onChange={handleChangeMinistracion}
+              value={estado.formaMinistracion.estado.id_rubro}
+              onChange={agregarRubro}
               ref={selectRubro}
             >
               <option value="0" disabled>
                 Selecciona rubro
               </option>
-              {formaMinistracion.rubros_presupuestales.length > 0 ? (
-                rubrosNoSeleccionados().map(({ id, nombre }) => (
-                  <option key={id} value={id}>
-                    {nombre}
-                  </option>
-                ))
-              ) : (
-                <RubroDefault />
-              )}
+              {rubrosNoSeleccionados.map(({ id, nombre }) => (
+                <option key={id} value={id}>
+                  {nombre}
+                </option>
+              ))}
             </select>
           </div>
         </div>
@@ -279,7 +222,7 @@ const FormaMinistracion = () => {
               </tr>
             </thead>
             <tbody>
-              {formaMinistracion.rubros_presupuestales.map(
+              {estado.formaMinistracion.estado.rubros_presupuestales.map(
                 ({ id_rubro, rubro, f_monto }, index) => (
                   <tr key={id_rubro}>
                     <td>{rubro}</td>
@@ -294,7 +237,7 @@ const FormaMinistracion = () => {
                       />
                     </td>
                     <td>
-                      {id_rubro != 1 && (
+                      {id_rubro != rubrosPresupuestales.GESTION_FINANCIERA && (
                         <BtnAccion
                           margin={false}
                           icono="bi-x-circle"
@@ -326,7 +269,7 @@ const FormaMinistracion = () => {
         </div>
         <div className="col-12 d-flex justify-content-between">
           <BtnCancelar onclick={cerrarForma} margin={false} />
-          {!formaMinistracion.id ? (
+          {!estado.formaMinistracion.estado.id ? (
             <BtnNeutro
               margin={false}
               texto="Agregar presupuesto"

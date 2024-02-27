@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
 } from "react"
+import { useCatalogos } from "@contexts/catalogos.context"
 import { ChangeEvent } from "@assets/models/formEvents.model"
 import {
   MinistracionProyecto,
@@ -23,7 +24,6 @@ import {
 import { BtnBack } from "@components/BtnBack"
 import { ApiCall } from "@assets/utils/apiCalls"
 import { CoparteMin, QueriesCoparte } from "@models/coparte.model"
-import { useCatalogos } from "@contexts/catalogos.context"
 import {
   fechaMasDiasFutuosString,
   inputDateAformato,
@@ -60,9 +60,15 @@ import Link from "next/link"
 import { rolesUsuario } from "@assets/utils/constantes"
 import { useSesion } from "@hooks/useSesion"
 import { useRouter } from "next/router"
+import { RubrosPresupuestalesDB } from "@api/models/catalogos.model"
 
-interface FormMinistracion extends MinistracionProyecto {
+interface NuevaMinistracion extends MinistracionProyecto {
   id_rubro: number
+}
+
+interface FormMinistracion {
+  show: boolean
+  estado: NuevaMinistracion
 }
 
 interface EstadoProps {
@@ -71,7 +77,6 @@ interface EstadoProps {
   financiadoresDB: FinanciadorMin[]
   copartesDB: CoparteMin[]
   usuariosCoparteDB: UsuarioMin[]
-  showFormaMinistracion: boolean
   formaMinistracion: FormMinistracion
   modoEditar: boolean
   isLoading: boolean
@@ -85,8 +90,12 @@ type ActionTypes =
   | "CAMBIO_COPARTE"
   | "CARGA_INICIAL"
   | "HANDLE_CHANGE"
-  | "QUITAR_MINISTRACION"
+  | "CHANGLE_FORMA_MINISTRACION"
+  | "AGREGAR_RUBRO_MINISTRACION"
+  | "ACTUALIZAR_MONTO_RUBRO_MINISTRACION"
+  | "QUITAR_RUBRO_MINISTRACION"
   | "AGREGAR_MINISTRACION"
+  | "QUITAR_MINISTRACION"
   | "ACTUALIZAR_MINISTRACIONES"
   | "CAMBIAR_TIPO_FINANCIAMIENTO"
   | "RECARGAR_NOTAS"
@@ -100,7 +109,8 @@ interface ProyectoProvider {
   estado: EstadoProps
   idProyecto: number
   user: UsuarioLogin
-  despachar: () => void
+  despachar: (type: ActionTypes, payload?: any) => void
+  // rubros_presupuestales: RubrosPresupuestalesDB[]
 }
 
 const ProyectoContext: Context<ProyectoProvider> = createContext(null)
@@ -148,7 +158,78 @@ const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
     case "HANDLE_CHANGE":
       return {
         ...state,
-        [payload.name]: payload.value,
+        forma: {
+          ...state.forma,
+          [payload.name]: payload.value,
+        },
+      }
+    case "CHANGLE_FORMA_MINISTRACION":
+      return {
+        ...state,
+        formaMinistracion: {
+          ...state.formaMinistracion,
+          estado: {
+            ...state.formaMinistracion.estado,
+            [payload.name]: payload.value,
+          },
+        },
+      }
+    case "AGREGAR_RUBRO_MINISTRACION":
+      return {
+        ...state,
+        formaMinistracion: {
+          ...state.formaMinistracion,
+          estado: {
+            ...state.formaMinistracion.estado,
+            id_rubro: 0,
+            rubros_presupuestales: [
+              ...state.formaMinistracion.estado.rubros_presupuestales,
+              {
+                id_rubro: payload.id,
+                rubro: payload.nombre,
+                f_monto: 0,
+              },
+            ],
+          },
+        },
+      }
+    case "QUITAR_RUBRO_MINISTRACION":
+      const rubrosSinEliminar =
+        state.formaMinistracion.estado.rubros_presupuestales.filter(
+          ({ id_rubro }) => id_rubro != payload
+        )
+
+      return {
+        ...state,
+        formaMinistracion: {
+          ...state.formaMinistracion,
+          estado: {
+            ...state.formaMinistracion.estado,
+            rubros_presupuestales: rubrosSinEliminar,
+          },
+        },
+      }
+    case "ACTUALIZAR_MONTO_RUBRO_MINISTRACION":
+      const rubrosMontosActualizados =
+        state.formaMinistracion.estado.rubros_presupuestales.map((rp) => {
+          if (rp.id_rubro == payload.id_rubro) {
+            return {
+              ...rp,
+              f_monto: payload.f_monto,
+            }
+          }
+          return rp
+        })
+
+      return {
+        ...state,
+        formaMinistracion: {
+          ...state.formaMinistracion,
+          estado: {
+            ...state.formaMinistracion.estado,
+            rubros_presupuestales: rubrosMontosActualizados,
+          },
+        },
       }
     case "QUITAR_MINISTRACION":
       return {
@@ -158,7 +239,20 @@ const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
     case "AGREGAR_MINISTRACION":
       return {
         ...state,
-        // ministraciones: [...state.ministraciones, payload],
+        forma: {
+          ...state.forma,
+          ministraciones: [
+            ...state.forma.ministraciones,
+            {
+              i_numero: state.formaMinistracion.estado.i_numero,
+              i_grupo: state.formaMinistracion.estado.i_grupo,
+              dt_recepcion: state.formaMinistracion.estado.dt_recepcion,
+              rubros_presupuestales: [
+                ...state.formaMinistracion.estado.rubros_presupuestales,
+              ],
+            },
+          ],
+        },
       }
     case "ACTUALIZAR_MINISTRACIONES":
       return {
@@ -241,11 +335,20 @@ const FormaProyecto = () => {
   }
 
   const estaInicialFormaMinistracion: FormMinistracion = {
-    i_numero: 1,
-    i_grupo: "0",
-    dt_recepcion: "",
-    id_rubro: 0,
-    rubros_presupuestales: [],
+    show: true,
+    estado: {
+      i_numero: 1,
+      i_grupo: "0",
+      dt_recepcion: "",
+      id_rubro: 0,
+      rubros_presupuestales: [
+        {
+          id_rubro: 1,
+          rubro: "Gestión financiera",
+          f_monto: 0,
+        },
+      ],
+    },
   }
 
   const estadoInicial: EstadoProps = {
@@ -255,7 +358,6 @@ const FormaProyecto = () => {
     copartesDB: [],
     usuariosCoparteDB: [],
     formaMinistracion: estaInicialFormaMinistracion,
-    showFormaMinistracion: false,
     isLoading: true,
     banner: estadoInicialBanner,
     modoEditar: modalidad === "CREAR",
@@ -417,10 +519,10 @@ const FormaProyecto = () => {
       validarCampos({ [name]: value })
     }
 
-    // dispatch({
-    //   type,
-    //   payload: ev.target,
-    // })
+    dispatch({
+      type,
+      payload: ev.target,
+    })
   }
 
   const mostrarFormaMinistracion = () => {
@@ -509,11 +611,16 @@ const FormaProyecto = () => {
     // setIsLoading(false)
   }
 
-  const despachar = () => {}
+  const despachar = (type: ActionTypes, payload?: any) => {
+    dispatch({
+      type,
+      payload,
+    })
+  }
 
   const showBtnNuevaMinistracion =
     estado.modoEditar &&
-    !estado.showFormaMinistracion &&
+    !estado.formaMinistracion.show &&
     (estado.forma.i_tipo_financiamiento >= 3 ||
       (estado.forma.i_tipo_financiamiento <= 2 &&
         !(estado.forma.ministraciones.length > 0)))
@@ -521,7 +628,7 @@ const FormaProyecto = () => {
   const showBtnEditar =
     !estado.modoEditar &&
     idProyecto &&
-    !estado.showFormaMinistracion &&
+    !estado.formaMinistracion.show &&
     (estado.forma.id_administrador == user.id ||
       user.id_rol == rolesUsuario.SUPER_USUARIO)
 
@@ -573,8 +680,8 @@ const FormaProyecto = () => {
               <input
                 className="form-control"
                 type="text"
-                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-                name="id_alt"
+                // onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+                // name="id_alt"
                 value={estado.forma.id_alt}
                 disabled
               />
@@ -628,7 +735,7 @@ const FormaProyecto = () => {
               >
                 {estado.copartesDB.map(({ id, nombre }) => (
                   <option key={id} value={id}>
-                    {nombre}
+                    {`${nombre.substring(0, 50)}...`}
                   </option>
                 ))}
               </select>
@@ -691,7 +798,7 @@ const FormaProyecto = () => {
             >
               {temas_sociales.map(({ id, nombre }) => (
                 <option key={id} value={id}>
-                  {nombre}
+                  {`${nombre.substring(0, 50)}...`}
                 </option>
               ))}
             </select>
@@ -816,8 +923,8 @@ const FormaProyecto = () => {
             )}
           </div>
           <TablaMinistraciones />
-          {estado.showFormaMinistracion && <FormaMinistracion />}
-          {estado.modoEditar && !estado.showFormaMinistracion && (
+          {estado.formaMinistracion.show && <FormaMinistracion />}
+          {estado.modoEditar && !estado.formaMinistracion.show && (
             <div className="col-12 text-end">
               <BtnCancelar onclick={cancelar} margin={"r"} />
               <BtnRegistrar modalidad={modalidad} margin={false} />
@@ -831,7 +938,7 @@ const FormaProyecto = () => {
             <Colaboradores />
             <Proveedores />
             <SolicitudesPresupuesto />
-            {user.id_rol != 3 && <Notas />}
+            {user.id_rol != rolesUsuario.COPARTE && <Notas />}
           </>
         )}
       </ProyectoContext.Provider>
@@ -841,6 +948,7 @@ const FormaProyecto = () => {
 
 const TablaMinistraciones = () => {
   const { estado, user, despachar } = useContext(ProyectoContext)
+  // const { user } = useSesion()
 
   const showAcciones =
     (user.id == estado.forma.id_administrador ||
@@ -1312,7 +1420,6 @@ const Notas = () => {
           placeholder="mensaje de la nota"
           ref={inputNota}
         ></input>
-        {/* <textarea className="form-control"></textarea> */}
       </div>
       <div className="col-12 col-md-3 mb-3 text-end">
         <BtnNeutro
@@ -1334,4 +1441,4 @@ const Notas = () => {
 //   )
 // }
 
-export { FormaProyecto }
+export { FormaProyecto, ProyectoContext }
