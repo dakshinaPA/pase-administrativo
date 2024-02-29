@@ -57,7 +57,7 @@ import { UsuarioLogin, UsuarioMin } from "@models/usuario.model"
 import { PieChart } from "./PieChart"
 import { Banner, EstadoInicialBannerProps, estadoInicialBanner } from "./Banner"
 import Link from "next/link"
-import { rolesUsuario } from "@assets/utils/constantes"
+import { rolesUsuario, tiposFinanciamiento } from "@assets/utils/constantes"
 import { useSesion } from "@hooks/useSesion"
 import { useRouter } from "next/router"
 import { RubrosPresupuestalesDB } from "@api/models/catalogos.model"
@@ -96,6 +96,7 @@ type ActionTypes =
   | "QUITAR_RUBRO_MINISTRACION"
   | "AGREGAR_MINISTRACION"
   | "QUITAR_MINISTRACION"
+  | "RECALCULAR_NUMERO_MINISTRACION"
   | "ACTUALIZAR_MINISTRACIONES"
   | "CAMBIAR_TIPO_FINANCIAMIENTO"
   | "RECARGAR_NOTAS"
@@ -114,6 +115,23 @@ interface ProyectoProvider {
 }
 
 const ProyectoContext: Context<ProyectoProvider> = createContext(null)
+
+const estaInicialFormaMinistracion: FormMinistracion = {
+  show: true,
+  estado: {
+    i_numero: 1,
+    i_grupo: "0",
+    dt_recepcion: "",
+    id_rubro: 0,
+    rubros_presupuestales: [
+      {
+        id_rubro: 1,
+        rubro: "Gestión financiera",
+        f_monto: 0,
+      },
+    ],
+  },
+}
 
 const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
   const { type, payload } = action
@@ -164,13 +182,18 @@ const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
         },
       }
     case "CHANGLE_FORMA_MINISTRACION":
+      let value = payload.value
+      if (payload.name === "i_numero") {
+        value = Number(payload.value)
+      }
+
       return {
         ...state,
         formaMinistracion: {
           ...state.formaMinistracion,
           estado: {
             ...state.formaMinistracion.estado,
-            [payload.name]: payload.value,
+            [payload.name]: value,
           },
         },
       }
@@ -236,6 +259,28 @@ const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
         ...state,
         // ministraciones: payload,
       }
+    case "RECALCULAR_NUMERO_MINISTRACION":
+      // ordenar por i numero
+      const ministracionesOrdenadasXNumero =
+        [...state.forma.ministraciones].sort((a, b) => a.i_numero + b.i_numero)
+      // const ministracionesOrdenadasXNumero = [...state.forma.ministraciones]
+
+      const ultimoNumero =
+      {...ministracionesOrdenadasXNumero[0]}?.i_numero || 0
+
+      // console.log(ultimoNumero)
+      debugger
+
+      return {
+        ...state,
+        formaMinistracion: {
+          ...state.formaMinistracion,
+          estado: {
+            ...state.formaMinistracion.estado,
+            i_numero: ultimoNumero + 1,
+          },
+        },
+      }
     case "AGREGAR_MINISTRACION":
       return {
         ...state,
@@ -252,6 +297,13 @@ const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
               ],
             },
           ],
+        },
+        formaMinistracion: {
+          ...state.formaMinistracion,
+          estado: {
+            ...estaInicialFormaMinistracion.estado,
+            i_numero: 2,
+          },
         },
       }
     case "ACTUALIZAR_MINISTRACIONES":
@@ -334,23 +386,6 @@ const FormaProyecto = () => {
     notas: [],
   }
 
-  const estaInicialFormaMinistracion: FormMinistracion = {
-    show: true,
-    estado: {
-      i_numero: 1,
-      i_grupo: "0",
-      dt_recepcion: "",
-      id_rubro: 0,
-      rubros_presupuestales: [
-        {
-          id_rubro: 1,
-          rubro: "Gestión financiera",
-          f_monto: 0,
-        },
-      ],
-    },
-  }
-
   const estadoInicial: EstadoProps = {
     cargaInicial: estadoInicialForma,
     forma: estadoInicialForma,
@@ -371,6 +406,10 @@ const FormaProyecto = () => {
   useEffect(() => {
     cargarData()
   }, [])
+
+  useEffect(() => {
+    dispatch({ type: "RECALCULAR_NUMERO_MINISTRACION" })
+  }, [estado.forma.ministraciones.length])
 
   // useEffect(() => {
   //   cargarUsuariosCoparte()
@@ -637,6 +676,17 @@ const FormaProyecto = () => {
     (modalidad === "EDITAR" &&
       estado.modoEditar &&
       user.id_rol == rolesUsuario.SUPER_USUARIO)
+
+  const showFormaMinistracion =
+    [
+      tiposFinanciamiento.VARIAS_MINISTRACIONES,
+      tiposFinanciamiento.MULTI_ANUAL,
+    ].includes(Number(estado.forma.i_tipo_financiamiento)) ||
+    ([
+      tiposFinanciamiento.ESTIPENDIO,
+      tiposFinanciamiento.UNICA_MINISTRACION,
+    ].includes(Number(estado.forma.i_tipo_financiamiento)) &&
+      !estado.forma.ministraciones.length)
 
   if (estado.isLoading) {
     return (
@@ -923,7 +973,8 @@ const FormaProyecto = () => {
             )}
           </div>
           <TablaMinistraciones />
-          {estado.formaMinistracion.show && <FormaMinistracion />}
+          {/* {estado.formaMinistracion.show && <FormaMinistracion />} */}
+          {showFormaMinistracion && <FormaMinistracion />}
           {estado.modoEditar && !estado.formaMinistracion.show && (
             <div className="col-12 text-end">
               <BtnCancelar onclick={cancelar} margin={"r"} />
