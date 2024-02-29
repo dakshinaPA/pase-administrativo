@@ -664,14 +664,14 @@ const FormaSolicitudPresupuesto = () => {
       }
 
       // si hay rteenciones pero iva o isr no se calcularon correctamente
-      if (f_retenciones && (!f_iva || !f_isr)) {
-        console.log({ f_retenciones, f_iva, f_isr })
-        dispatch({
-          type: "FACTURA_INVALIDA",
-          payload: "Los impuestos no se han calculado correctamente",
-        })
-        return
-      }
+      // if (f_retenciones && (!f_iva || !f_isr)) {
+      //   console.log({ f_retenciones, f_iva, f_isr })
+      //   dispatch({
+      //     type: "FACTURA_INVALIDA",
+      //     payload: "Los impuestos no se han calculado correctamente",
+      //   })
+      //   return
+      // }
 
       const dataComprobante: ComprobanteSolicitud = {
         folio_fiscal,
