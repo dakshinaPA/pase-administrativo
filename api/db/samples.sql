@@ -760,6 +760,7 @@ ALTER TABLE proveedor_direccion ADD pais VARCHAR(30) NOT NULL DEFAULT '' AFTER e
 ALTER TABLE proveedores MODIFY telefono VARCHAR(20) NOT NULL DEFAULT ''
 ALTER TABLE proveedor_direccion MODIFY cp VARCHAR(10) NOT NULL DEFAULT ''
 INSERT INTO rubros_presupuestales (nombre) VALUES ('Ejecutado servicios anteriores')
+INSERT INTO bancos (nombre, clave) VALUES ('MERCADO PAGO', '722');
 
 -- 6/02/24
 ALTER TABLE solicitud_presupuesto_comprobantes RENAME COLUMN id_regimen_fiscal TO id_regimen_fiscal_emisor;

@@ -61,6 +61,7 @@ import { rolesUsuario, tiposFinanciamiento } from "@assets/utils/constantes"
 import { useSesion } from "@hooks/useSesion"
 import { useRouter } from "next/router"
 import { RubrosPresupuestalesDB } from "@api/models/catalogos.model"
+import { stat } from "fs"
 
 interface NuevaMinistracion extends MinistracionProyecto {
   id_rubro: number
@@ -87,6 +88,8 @@ type ActionTypes =
   // | "SET_IDS_DEPENDENCIAS"
   | "ERROR_API"
   | "REGISTRO"
+  | "MODO_EDITAR_ON"
+  | "CANCELAR_EDICION"
   | "CAMBIO_COPARTE"
   | "CARGA_INICIAL"
   | "HANDLE_CHANGE"
@@ -96,9 +99,10 @@ type ActionTypes =
   | "QUITAR_RUBRO_MINISTRACION"
   | "AGREGAR_MINISTRACION"
   | "QUITAR_MINISTRACION"
+  | "EDITAR_MINISTRACION"
+  | "ACTUALIZAR_MINISTRACION"
   | "RECALCULAR_NUMERO_MINISTRACION"
-  | "ACTUALIZAR_MINISTRACIONES"
-  | "CAMBIAR_TIPO_FINANCIAMIENTO"
+  | "CAMBIO_TIPO_FINANCIAMIENTO"
   | "RECARGAR_NOTAS"
 
 interface ActionDispatch {
@@ -111,6 +115,7 @@ interface ProyectoProvider {
   idProyecto: number
   user: UsuarioLogin
   despachar: (type: ActionTypes, payload?: any) => void
+  modalidad: "CREAR" | "EDITAR"
   // rubros_presupuestales: RubrosPresupuestalesDB[]
 }
 
@@ -136,6 +141,20 @@ const estaInicialFormaMinistracion: FormMinistracion = {
 const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
   const { type, payload } = action
 
+  const obtenerInumeroUltimaMinistracion = () => {
+    // ordenar por i numero
+    const ministracionesOrdenadasXNumero = [...state.forma.ministraciones].sort(
+      (a, b) => a.i_numero - b.i_numero
+    )
+
+    const ultimaPosicion =
+      ministracionesOrdenadasXNumero[ministracionesOrdenadasXNumero.length - 1]
+
+    const iNumero = ultimaPosicion?.i_numero || 0
+
+    return iNumero
+  }
+
   switch (type) {
     case "ERROR_API":
       return {
@@ -146,6 +165,17 @@ const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
           mensaje: payload,
           tipo: "error",
         },
+      }
+    case "MODO_EDITAR_ON":
+      return {
+        ...state,
+        modoEditar: true,
+      }
+    case "CANCELAR_EDICION":
+      return {
+        ...state,
+        forma: { ...state.cargaInicial },
+        modoEditar: false,
       }
     case "REGISTRO":
       return {
@@ -172,7 +202,14 @@ const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
         usuariosCoparteDB: payload.usuariosCoparteDB,
       }
     case "CARGA_INICIAL":
-      return payload
+      return {
+        ...state,
+        forma: payload.proyectoDB,
+        cargaInicial: payload.proyectoDB,
+        financiadoresDB: payload.financiadoresDB,
+        usuariosCoparteDB: payload.usuariosCoparteDB,
+        isLoading: false,
+      }
     case "HANDLE_CHANGE":
       return {
         ...state,
@@ -255,29 +292,25 @@ const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
         },
       }
     case "QUITAR_MINISTRACION":
+      const minNoRemovidas = state.forma.ministraciones.filter(
+        ({ i_numero }) => i_numero != payload
+      )
+
       return {
         ...state,
-        // ministraciones: payload,
+        forma: {
+          ...state.forma,
+          ministraciones: minNoRemovidas,
+        },
       }
     case "RECALCULAR_NUMERO_MINISTRACION":
-      // ordenar por i numero
-      const ministracionesOrdenadasXNumero =
-        [...state.forma.ministraciones].sort((a, b) => a.i_numero + b.i_numero)
-      // const ministracionesOrdenadasXNumero = [...state.forma.ministraciones]
-
-      const ultimoNumero =
-      {...ministracionesOrdenadasXNumero[0]}?.i_numero || 0
-
-      // console.log(ultimoNumero)
-      debugger
-
       return {
         ...state,
         formaMinistracion: {
           ...state.formaMinistracion,
           estado: {
-            ...state.formaMinistracion.estado,
-            i_numero: ultimoNumero + 1,
+            ...estaInicialFormaMinistracion.estado,
+            i_numero: obtenerInumeroUltimaMinistracion() + 1,
           },
         },
       }
@@ -298,23 +331,51 @@ const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
             },
           ],
         },
+      }
+    case "EDITAR_MINISTRACION":
+      const minAEditar = state.forma.ministraciones.find(
+        ({ id }) => id === payload
+      )
+
+      return {
+        ...state,
         formaMinistracion: {
           ...state.formaMinistracion,
           estado: {
-            ...estaInicialFormaMinistracion.estado,
-            i_numero: 2,
+            ...minAEditar,
+            id_rubro: 0,
           },
         },
       }
-    case "ACTUALIZAR_MINISTRACIONES":
+    case "ACTUALIZAR_MINISTRACION":
+      const minActualizadas = state.forma.ministraciones.map((min) => {
+        if (min.id === state.formaMinistracion.estado.id) {
+          return {
+            ...min,
+            dt_recepcion: state.formaMinistracion.estado.dt_recepcion,
+            rubros_presupuestales:
+              state.formaMinistracion.estado.rubros_presupuestales,
+          }
+        }
+        return min
+      })
+
       return {
         ...state,
-        // ministraciones: payload,
+        formaMinistracion: estaInicialFormaMinistracion,
+        forma: {
+          ...state.forma,
+          ministraciones: minActualizadas,
+        },
       }
-    case "CAMBIAR_TIPO_FINANCIAMIENTO":
+    case "CAMBIO_TIPO_FINANCIAMIENTO":
       return {
         ...state,
-        // ministraciones: [],
+        forma: {
+          ...state.forma,
+          i_tipo_financiamiento: payload,
+          ministraciones: [],
+        },
       }
     case "RECARGAR_NOTAS":
       return {
@@ -409,7 +470,8 @@ const FormaProyecto = () => {
 
   useEffect(() => {
     dispatch({ type: "RECALCULAR_NUMERO_MINISTRACION" })
-  }, [estado.forma.ministraciones.length])
+    console.log("jilo")
+  }, [estado.forma.ministraciones])
 
   // useEffect(() => {
   //   cargarUsuariosCoparte()
@@ -457,10 +519,17 @@ const FormaProyecto = () => {
 
         if (reProyecto.error) throw reProyecto
         const proyectoDB = reProyecto.data as Proyecto
+        const usuariosCoparteDB = await obtenerUsuariosCoparte(
+          proyectoDB.id_coparte
+        )
 
         dispatch({
           type: "CARGA_INICIAL",
-          payload: proyectoDB,
+          payload: {
+            proyectoDB,
+            financiadoresDB,
+            usuariosCoparteDB,
+          },
         })
       }
     } catch ({ data, mensaje }) {
@@ -546,7 +615,9 @@ const FormaProyecto = () => {
   }
 
   const cancelar = () => {
-    // modalidad === "EDITAR" ? setModoEditar(false) : router.push("/proyectos")
+    modalidad === "EDITAR"
+      ? despachar("CANCELAR_EDICION")
+      : router.push("/proyectos")
   }
 
   const handleChange = (ev: ChangeEvent, type: ActionTypes) => {
@@ -657,17 +728,17 @@ const FormaProyecto = () => {
     })
   }
 
-  const showBtnNuevaMinistracion =
-    estado.modoEditar &&
-    !estado.formaMinistracion.show &&
-    (estado.forma.i_tipo_financiamiento >= 3 ||
-      (estado.forma.i_tipo_financiamiento <= 2 &&
-        !(estado.forma.ministraciones.length > 0)))
+  // const showBtnNuevaMinistracion =
+  //   estado.modoEditar &&
+  //   // !estado.formaMinistracion.show &&
+  //   (estado.forma.i_tipo_financiamiento >= 3 ||
+  //     (estado.forma.i_tipo_financiamiento <= 2 &&
+  //       !(estado.forma.ministraciones.length > 0)))
 
   const showBtnEditar =
     !estado.modoEditar &&
     idProyecto &&
-    !estado.formaMinistracion.show &&
+    // !estado.formaMinistracion.show &&
     (estado.forma.id_administrador == user.id ||
       user.id_rol == rolesUsuario.SUPER_USUARIO)
 
@@ -678,10 +749,11 @@ const FormaProyecto = () => {
       user.id_rol == rolesUsuario.SUPER_USUARIO)
 
   const showFormaMinistracion =
-    [
-      tiposFinanciamiento.VARIAS_MINISTRACIONES,
-      tiposFinanciamiento.MULTI_ANUAL,
-    ].includes(Number(estado.forma.i_tipo_financiamiento)) ||
+    (estado.modoEditar &&
+      [
+        tiposFinanciamiento.VARIAS_MINISTRACIONES,
+        tiposFinanciamiento.MULTI_ANUAL,
+      ].includes(Number(estado.forma.i_tipo_financiamiento))) ||
     ([
       tiposFinanciamiento.ESTIPENDIO,
       tiposFinanciamiento.UNICA_MINISTRACION,
@@ -709,6 +781,7 @@ const FormaProyecto = () => {
     user,
     despachar,
     idProyecto,
+    modalidad,
   }
 
   return (
@@ -719,7 +792,9 @@ const FormaProyecto = () => {
             <BtnBack navLink="/proyectos" />
             {!idProyecto && <h2 className="color1 mb-0">Registrar proyecto</h2>}
           </div>
-          {/* {showBtnEditar && <BtnEditar onClick={() => setModoEditar(true)} />} */}
+          {showBtnEditar && (
+            <BtnEditar onClick={() => despachar("MODO_EDITAR_ON")} />
+          )}
         </div>
       </div>
       <ProyectoContext.Provider value={value}>
@@ -826,10 +901,12 @@ const FormaProyecto = () => {
             <label className="form-label">Tipo de financiamiento</label>
             <select
               className="form-control"
-              onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+              onChange={(e) =>
+                despachar("CAMBIO_TIPO_FINANCIAMIENTO", e.target.value)
+              }
               name="i_tipo_financiamiento"
               value={estado.forma.i_tipo_financiamiento}
-              disabled={Boolean(idProyecto)}
+              disabled={modalidad === "EDITAR"}
             >
               <option value="1">Estipendio</option>
               <option value="2">Única ministración</option>
@@ -961,21 +1038,20 @@ const FormaProyecto = () => {
             <hr />
           </div>
           {/* Seccion Ministraciones */}
-          <div className="col-12 mb-3 d-flex justify-content-between">
+          <div className="col-12 mb-3">
             <h4 className="color1 mb-0">Ministraciones</h4>
-            {showBtnNuevaMinistracion && (
+            {/* {showBtnNuevaMinistracion && (
               <BtnNeutro
                 margin={false}
                 texto="Nuevo presupuesto +"
                 width={false}
                 onclick={mostrarFormaMinistracion}
               />
-            )}
+            )} */}
           </div>
           <TablaMinistraciones />
-          {/* {estado.formaMinistracion.show && <FormaMinistracion />} */}
           {showFormaMinistracion && <FormaMinistracion />}
-          {estado.modoEditar && !estado.formaMinistracion.show && (
+          {estado.modoEditar && (
             <div className="col-12 text-end">
               <BtnCancelar onclick={cancelar} margin={"r"} />
               <BtnRegistrar modalidad={modalidad} margin={false} />
@@ -999,7 +1075,6 @@ const FormaProyecto = () => {
 
 const TablaMinistraciones = () => {
   const { estado, user, despachar } = useContext(ProyectoContext)
-  // const { user } = useSesion()
 
   const showAcciones =
     (user.id == estado.forma.id_administrador ||
@@ -1016,13 +1091,21 @@ const TablaMinistraciones = () => {
     0
   )
 
+  const editarMinistracion = (id: number) => {
+    despachar("EDITAR_MINISTRACION", id)
+  }
+
+  const quitarMinistracion = (i_numero: number) => {
+    despachar("QUITAR_MINISTRACION", i_numero)
+  }
+
   return (
     <div className="col-12 col-md table-responsive mb-3">
       <table className="table">
         <thead className="table-light">
           <tr className="color1">
             <th>Número</th>
-            <th>Grupo</th>
+            {/* <th>Grupo</th> */}
             <th>Fecha de recepción</th>
             <th>Rubros</th>
             <th>Monto</th>
@@ -1046,7 +1129,7 @@ const TablaMinistraciones = () => {
               return (
                 <tr key={i_numero}>
                   <td>{i_numero}</td>
-                  <td>{i_grupo}</td>
+                  {/* <td>{i_grupo}</td> */}
                   <td>{inputDateAformato(dt_recepcion)}</td>
                   <td>
                     <table className="table table-bordered mb-0">
@@ -1074,16 +1157,14 @@ const TablaMinistraciones = () => {
                         <BtnAccion
                           margin={false}
                           icono="bi-pencil"
-                          // onclick={() => editarMinistracion(id)}
-                          onclick={() => {}}
+                          onclick={() => editarMinistracion(id)}
                           title="editar ministración"
                         />
                       ) : (
                         <BtnAccion
                           margin={false}
                           icono="bi-x-circle"
-                          // onclick={() => quitarMinistracion(i_numero)}
-                          onclick={() => {}}
+                          onclick={() => quitarMinistracion(i_numero)}
                           title="editar ministración"
                         />
                       )}
@@ -1094,7 +1175,7 @@ const TablaMinistraciones = () => {
             }
           )}
           <tr>
-            <td colSpan={4}></td>
+            <td colSpan={3}></td>
             <td>{montoALocaleString(sumaRubros)}</td>
             {showAcciones && <td></td>}
           </tr>

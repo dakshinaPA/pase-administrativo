@@ -8,7 +8,10 @@ import { fechaActualInputDate } from "@assets/utils/common"
 import { ProyectoContext } from "./FormaProyecto"
 import { useSesion } from "@hooks/useSesion"
 import { MinistracionProyecto } from "@models/proyecto.model"
-import { rubrosPresupuestales } from "@assets/utils/constantes"
+import {
+  rubrosPresupuestales,
+  tiposFinanciamiento,
+} from "@assets/utils/constantes"
 
 const FormaMinistracion = () => {
   // const {
@@ -19,7 +22,7 @@ const FormaMinistracion = () => {
   //   setFormaMinistracion,
   // } = useProyecto()
   const { rubros_presupuestales } = useCatalogos()
-  const { estado, despachar } = useContext(ProyectoContext)
+  const { estado, modalidad, despachar } = useContext(ProyectoContext)
 
   // debugger
   // return
@@ -71,8 +74,8 @@ const FormaMinistracion = () => {
     despachar("QUITAR_RUBRO_MINISTRACION", id_rubro)
   }
 
-  const cerrarForma = () => {
-    // setShowFormaMinistracion(false)
+  const limpiarForma = () => {
+    despachar("RECALCULAR_NUMERO_MINISTRACION")
   }
 
   const validarForma = () => {
@@ -90,9 +93,11 @@ const FormaMinistracion = () => {
     }
     try {
       //validar que haya cantidades validas en los inputs
-      estado.formaMinistracion.estado.rubros_presupuestales.forEach((rubro, index) => {
-        if (!Number(rubro.f_monto)) throw index
-      })
+      estado.formaMinistracion.estado.rubros_presupuestales.forEach(
+        (rubro, index) => {
+          if (!Number(rubro.f_monto)) throw index
+        }
+      )
     } catch (index) {
       const input =
         tableRubros.current.querySelectorAll("input[type=text]")[index]
@@ -108,21 +113,11 @@ const FormaMinistracion = () => {
   }
 
   const handleGuardar = async () => {
-    // if (!validarForma()) return
+    if (!validarForma()) return
 
-    // const nuevaListaMinistraciones = estadoestado.formaMinistracion.estado.ministraciones.map((min) => {
-    //   if (min.id == formaMinistracion.id) {
-    //     return formaMinistracion
-    //   }
-    //   return min
-    // })
+    despachar("ACTUALIZAR_MINISTRACION")
 
-    // dispatch({
-    //   type: "ACTUALIZAR_MINISTRACIONES",
-    //   payload: nuevaListaMinistraciones,
-    // })
-
-    cerrarForma()
+    // limpiarForma()
   }
 
   // obligar al usuario a seleccionar como primera opcion el rubro de gestion financiera
@@ -147,7 +142,8 @@ const FormaMinistracion = () => {
     )
 
   const disabledInputNumero =
-    estado.forma.i_tipo_financiamiento <= 2 ||
+    estado.forma.i_tipo_financiamiento <=
+      tiposFinanciamiento.UNICA_MINISTRACION ||
     estado.forma.ministraciones.length > 0
 
   return (
@@ -267,25 +263,27 @@ const FormaMinistracion = () => {
             <tbody></tbody>
           </table>
         </div>
-        <div className="col-12 d-flex justify-content-between">
-          <BtnCancelar onclick={cerrarForma} margin={false} />
-          {!estado.formaMinistracion.estado.id ? (
+        {!estado.formaMinistracion.estado.id ? (
+          <div className="col-12 text-end">
             <BtnNeutro
               margin={false}
               texto="Agregar presupuesto"
               width={false}
               onclick={handleAgregar}
             />
-          ) : (
+          </div>
+        ) : (
+          <div className="col-12 d-flex justify-content-between">
+            <BtnCancelar onclick={limpiarForma} margin={false} />
             <button
               type="button"
               className="btn btn-outline-success"
               onClick={handleGuardar}
             >
-              Aceptar
+              Actualizar presupuesto
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   )
