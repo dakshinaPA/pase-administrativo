@@ -15,13 +15,13 @@ const tiposGasto = {
 const tiposColaborador = {
   ASIMILADOS: 1,
   HONORARIOS: 2,
-  SIN_PAGO: 3
+  SIN_PAGO: 3,
 }
 
 const tiposProveedor = {
   FISICA: 1,
   MORAL: 2,
-  EXTRANJERO: 3
+  EXTRANJERO: 3,
 }
 
 const estatusSolicitud = {
@@ -33,9 +33,17 @@ const estatusSolicitud = {
 }
 
 const rubrosPresupuestales = {
+  GESTION_FINANCIERA: 1,
   ASIMILADOS: 2,
   HONORARIOS: 3,
-  PAGOS_EXTRANJERO: 22
+  PAGOS_EXTRANJERO: 22,
+}
+
+const tiposFinanciamiento = {
+  ESTIPENDIO: 1,
+  UNICA_MINISTRACION: 2,
+  VARIAS_MINISTRACIONES: 3,
+  MULTI_ANUAL: 4,
 }
 
 export {
@@ -44,5 +52,6 @@ export {
   estatusSolicitud,
   rubrosPresupuestales,
   tiposColaborador,
-  tiposProveedor
+  tiposProveedor,
+  tiposFinanciamiento,
 }
