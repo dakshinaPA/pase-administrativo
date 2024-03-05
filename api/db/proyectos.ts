@@ -5,6 +5,7 @@ import {
   RubroMinistracion,
   NotaProyecto,
   QueriesProyecto,
+  MinistracionProyecto,
 } from "@models/proyecto.model"
 import { fechaActualAEpoch } from "@assets/utils/common"
 import { connectionDB } from "./connectionPool"
@@ -344,12 +345,12 @@ class ProyectoDB {
                 const phMinistracion = []
 
                 for (const min of ministraciones) {
-                  const { i_numero, i_grupo, dt_recepcion } = min
+                  const { i_numero, dt_recepcion } = min
                   qMinistraciones.push(this.qCrMinistracion())
                   phMinistracion.push(
                     idProyecto,
                     i_numero,
-                    i_grupo,
+                    0,
                     dt_recepcion,
                     fechaActualAEpoch()
                   )
@@ -417,8 +418,7 @@ class ProyectoDB {
     const qProyecto = `UPDATE proyectos SET id_financiador=?, id_responsable=?, nombre=?, id_tema_social=?, sector_beneficiado=?,
       i_beneficiados=?, id_estado=?, municipio=?, descripcion=?, dt_inicio=?, dt_fin=? WHERE id=? LIMIT 1`
 
-    const qUpMinistracion = `UPDATE proyecto_ministraciones SET i_grupo=?,
-      dt_recepcion=? WHERE id=? LIMIT 1`
+    const qUpMinistracion = `UPDATE proyecto_ministraciones SET dt_recepcion=? WHERE id=? LIMIT 1`
 
     const qUpRubroMinistracion = `UPDATE ministracion_rubros_presupuestales SET
       f_monto=? WHERE id=? LIMIT 1`
@@ -470,67 +470,57 @@ class ProyectoDB {
               }
 
               const rubrosDB = results as RubroMinistracion[]
-              let rubrosVista: RubroMinistracion[] = []
+              const minAregistrar: MinistracionProyecto[] = []
 
               for (const min of ministraciones) {
-                const {
-                  id,
-                  i_numero,
-                  i_grupo,
-                  dt_recepcion,
-                  rubros_presupuestales,
-                } = min
-                // para comparar los de db vs vista
-                rubrosVista = [...rubrosVista, ...rubros_presupuestales]
+                const { id, dt_recepcion, rubros_presupuestales } = min
 
                 if (id) {
                   qCombinados.push(qUpMinistracion)
-                  phCombinados.push(i_grupo, dt_recepcion, id)
-                } else {
-                  qCombinados.push(this.qCrMinistracion())
-                  phCombinados.push(
-                    id_proyecto,
-                    i_numero,
-                    i_grupo,
-                    dt_recepcion,
-                    fechaActualAEpoch()
-                  )
-                }
+                  phCombinados.push(dt_recepcion, id)
 
-                for (const rp of rubros_presupuestales) {
-                  const { id, f_monto, id_rubro } = rp
+                  for (const rp of rubros_presupuestales) {
+                    const { id, f_monto, id_rubro } = rp
 
-                  if (id) {
-                    qCombinados.push(qUpRubroMinistracion)
-                    phCombinados.push(f_monto, id)
-                  } else {
-                    const esRegistrado = rubrosDB.find(
-                      (rDB) =>
-                        rDB.id_rubro == id_rubro &&
-                        rDB.id_ministracion == min.id
-                    )
-                    if (esRegistrado) {
-                      qCombinados.push(qReAcRubro)
-                      phCombinados.push(f_monto, esRegistrado.id)
+                    if (id) {
+                      qCombinados.push(qUpRubroMinistracion)
+                      phCombinados.push(f_monto, id)
                     } else {
-                      qCombinados.push(this.qCrRubrosMinistracion())
-                      phCombinados.push(min.id, id_rubro, f_monto)
+                      const esRegistrado = rubrosDB.find(
+                        (rDB) =>
+                          rDB.id_rubro == id_rubro &&
+                          rDB.id_ministracion == min.id &&
+                          !rDB.b_activo
+                      )
+                      if (esRegistrado) {
+                        qCombinados.push(qReAcRubro)
+                        phCombinados.push(f_monto, esRegistrado.id)
+                      } else {
+                        qCombinados.push(this.qCrRubrosMinistracion())
+                        phCombinados.push(min.id, id_rubro, f_monto)
+                      }
                     }
                   }
+                  //revisar si algun rubro fue eliminado
+                  const rubrosActivosMin = rubrosDB.filter(
+                    ({ id_ministracion, b_activo }) =>
+                      id_ministracion == id && !!b_activo
+                  )
+                  for (const rdb of rubrosActivosMin) {
+                    const matchVista = rubros_presupuestales.find(
+                      (rp) => rp.id == rdb.id
+                    )
+                    if (!matchVista) {
+                      qCombinados.push(qDlRubro)
+                      phCombinados.push(rdb.id)
+                    }
+                  }
+                } else {
+                  minAregistrar.push(min)
                 }
               }
 
-              //revisar si algun rubro fue eliminado
-              const rubrosActivosDb = rubrosDB.filter((rp) => !!rp.b_activo)
-              for (const rdb of rubrosActivosDb) {
-                const matchDBvista = rubrosVista.find((rv) => rv.id == rdb.id)
-                if (!matchDBvista) {
-                  qCombinados.push(qDlRubro)
-                  phCombinados.push(rdb.id)
-                }
-              }
-
-              //actualizar todo
+              //actualizar proyecto y ministraciones
               connection.query(
                 qCombinados.join(";"),
                 phCombinados,
@@ -540,6 +530,77 @@ class ProyectoDB {
                       connection.destroy()
                       rej(error)
                     })
+                  }
+
+                  const qMinistraciones = []
+                  const phMinistracion = []
+
+                  for (const min of minAregistrar) {
+                    const { i_numero, dt_recepcion } = min
+                    qMinistraciones.push(this.qCrMinistracion())
+                    phMinistracion.push(
+                      id_proyecto,
+                      i_numero,
+                      0,
+                      dt_recepcion,
+                      fechaActualAEpoch()
+                    )
+                  }
+
+                  //crear ministraciones
+                  if (qMinistraciones.length > 0) {
+                    connection.query(
+                      qMinistraciones.join(";"),
+                      phMinistracion,
+                      (error, results, fields) => {
+                        if (error) {
+                          return connection.rollback(() => {
+                            connection.destroy()
+                            rej(error)
+                          })
+                        }
+
+                        // @ts-ignore
+                        const idsMinistracion = Array.isArray(results)
+                          ? results.map((res) => res.insertId)
+                          : [results.insertId]
+
+                        const qRubros = []
+                        const phRubros = []
+
+                        minAregistrar.forEach((min, index) => {
+                          for (const rp of min.rubros_presupuestales) {
+                            const { id_rubro, f_monto } = rp
+                            qRubros.push(this.qCrRubrosMinistracion())
+                            phRubros.push(
+                              idsMinistracion[index],
+                              id_rubro,
+                              f_monto
+                            )
+                          }
+                        })
+
+                        //crear rubros de ministracion
+                        connection.query(
+                          qRubros.join(";"),
+                          phRubros,
+                          (error, results, fields) => {
+                            if (error) {
+                              return connection.rollback(() => {
+                                connection.destroy()
+                                rej(error)
+                              })
+                            }
+                            connection.commit((err) => {
+                              if (err) connection.rollback(() => rej(err))
+                              connection.destroy()
+                              res(true)
+                            })
+                          }
+                        )
+                      }
+                    )
+                    return
                   }
 
                   connection.commit((err) => {

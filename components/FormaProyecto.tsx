@@ -1,5 +1,6 @@
 import {
   Context,
+  MutableRefObject,
   createContext,
   useContext,
   useEffect,
@@ -42,11 +43,6 @@ import {
   BtnRegistrar,
   LinkAccion,
 } from "./Botones"
-// import {
-//   ActionTypes,
-//   ProyectoProvider,
-//   useProyecto,
-// } from "@contexts/proyecto.context"
 import { FormaMinistracion } from "./FromaMinistracion"
 import { TooltipInfo } from "./Tooltip"
 import { useErrores } from "@hooks/useErrores"
@@ -60,16 +56,9 @@ import Link from "next/link"
 import { rolesUsuario, tiposFinanciamiento } from "@assets/utils/constantes"
 import { useSesion } from "@hooks/useSesion"
 import { useRouter } from "next/router"
-import { RubrosPresupuestalesDB } from "@api/models/catalogos.model"
-import { stat } from "fs"
 
 interface NuevaMinistracion extends MinistracionProyecto {
   id_rubro: number
-}
-
-interface FormMinistracion {
-  show: boolean
-  estado: NuevaMinistracion
 }
 
 interface EstadoProps {
@@ -78,15 +67,15 @@ interface EstadoProps {
   financiadoresDB: FinanciadorMin[]
   copartesDB: CoparteMin[]
   usuariosCoparteDB: UsuarioMin[]
-  formaMinistracion: FormMinistracion
+  formaMinistracion: NuevaMinistracion
   modoEditar: boolean
   isLoading: boolean
   banner: EstadoInicialBannerProps
 }
 
 type ActionTypes =
-  // | "SET_IDS_DEPENDENCIAS"
   | "ERROR_API"
+  | "LOADING_ON"
   | "REGISTRO"
   | "MODO_EDITAR_ON"
   | "CANCELAR_EDICION"
@@ -103,6 +92,7 @@ type ActionTypes =
   | "ACTUALIZAR_MINISTRACION"
   | "RECALCULAR_NUMERO_MINISTRACION"
   | "CAMBIO_TIPO_FINANCIAMIENTO"
+  | "RELOAD_PROYECTO"
   | "RECARGAR_NOTAS"
 
 interface ActionDispatch {
@@ -115,27 +105,23 @@ interface ProyectoProvider {
   idProyecto: number
   user: UsuarioLogin
   despachar: (type: ActionTypes, payload?: any) => void
-  modalidad: "CREAR" | "EDITAR"
-  // rubros_presupuestales: RubrosPresupuestalesDB[]
+  formMinistracion: MutableRefObject<any>
 }
 
 const ProyectoContext: Context<ProyectoProvider> = createContext(null)
 
-const estaInicialFormaMinistracion: FormMinistracion = {
-  show: true,
-  estado: {
-    i_numero: 1,
-    i_grupo: "0",
-    dt_recepcion: "",
-    id_rubro: 0,
-    rubros_presupuestales: [
-      {
-        id_rubro: 1,
-        rubro: "Gestión financiera",
-        f_monto: 0,
-      },
-    ],
-  },
+const estaInicialFormaMinistracion: NuevaMinistracion = {
+  i_numero: 1,
+  i_grupo: "0",
+  dt_recepcion: "",
+  id_rubro: 0,
+  rubros_presupuestales: [
+    {
+      id_rubro: 1,
+      rubro: "Gestión financiera",
+      f_monto: 0,
+    },
+  ],
 }
 
 const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
@@ -165,6 +151,11 @@ const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
           mensaje: payload,
           tipo: "error",
         },
+      }
+    case "LOADING_ON":
+      return {
+        ...state,
+        isLoading: true,
       }
     case "MODO_EDITAR_ON":
       return {
@@ -210,6 +201,14 @@ const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
         usuariosCoparteDB: payload.usuariosCoparteDB,
         isLoading: false,
       }
+    case "RELOAD_PROYECTO":
+      return {
+        ...state,
+        forma: payload,
+        cargaInicial: payload,
+        isLoading: false,
+        modoEditar: false,
+      }
     case "HANDLE_CHANGE":
       return {
         ...state,
@@ -228,10 +227,7 @@ const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
         ...state,
         formaMinistracion: {
           ...state.formaMinistracion,
-          estado: {
-            ...state.formaMinistracion.estado,
-            [payload.name]: value,
-          },
+          [payload.name]: value,
         },
       }
     case "AGREGAR_RUBRO_MINISTRACION":
@@ -239,23 +235,20 @@ const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
         ...state,
         formaMinistracion: {
           ...state.formaMinistracion,
-          estado: {
-            ...state.formaMinistracion.estado,
-            id_rubro: 0,
-            rubros_presupuestales: [
-              ...state.formaMinistracion.estado.rubros_presupuestales,
-              {
-                id_rubro: payload.id,
-                rubro: payload.nombre,
-                f_monto: 0,
-              },
-            ],
-          },
+          id_rubro: 0,
+          rubros_presupuestales: [
+            ...state.formaMinistracion.rubros_presupuestales,
+            {
+              id_rubro: payload.id,
+              rubro: payload.nombre,
+              f_monto: 0,
+            },
+          ],
         },
       }
     case "QUITAR_RUBRO_MINISTRACION":
       const rubrosSinEliminar =
-        state.formaMinistracion.estado.rubros_presupuestales.filter(
+        state.formaMinistracion.rubros_presupuestales.filter(
           ({ id_rubro }) => id_rubro != payload
         )
 
@@ -263,15 +256,12 @@ const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
         ...state,
         formaMinistracion: {
           ...state.formaMinistracion,
-          estado: {
-            ...state.formaMinistracion.estado,
-            rubros_presupuestales: rubrosSinEliminar,
-          },
+          rubros_presupuestales: rubrosSinEliminar,
         },
       }
     case "ACTUALIZAR_MONTO_RUBRO_MINISTRACION":
       const rubrosMontosActualizados =
-        state.formaMinistracion.estado.rubros_presupuestales.map((rp) => {
+        state.formaMinistracion.rubros_presupuestales.map((rp) => {
           if (rp.id_rubro == payload.id_rubro) {
             return {
               ...rp,
@@ -285,10 +275,7 @@ const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
         ...state,
         formaMinistracion: {
           ...state.formaMinistracion,
-          estado: {
-            ...state.formaMinistracion.estado,
-            rubros_presupuestales: rubrosMontosActualizados,
-          },
+          rubros_presupuestales: rubrosMontosActualizados,
         },
       }
     case "QUITAR_MINISTRACION":
@@ -307,11 +294,8 @@ const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
       return {
         ...state,
         formaMinistracion: {
-          ...state.formaMinistracion,
-          estado: {
-            ...estaInicialFormaMinistracion.estado,
-            i_numero: obtenerInumeroUltimaMinistracion() + 1,
-          },
+          ...estaInicialFormaMinistracion,
+          i_numero: obtenerInumeroUltimaMinistracion() + 1,
         },
       }
     case "AGREGAR_MINISTRACION":
@@ -322,11 +306,11 @@ const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
           ministraciones: [
             ...state.forma.ministraciones,
             {
-              i_numero: state.formaMinistracion.estado.i_numero,
-              i_grupo: state.formaMinistracion.estado.i_grupo,
-              dt_recepcion: state.formaMinistracion.estado.dt_recepcion,
+              i_numero: state.formaMinistracion.i_numero,
+              i_grupo: state.formaMinistracion.i_grupo,
+              dt_recepcion: state.formaMinistracion.dt_recepcion,
               rubros_presupuestales: [
-                ...state.formaMinistracion.estado.rubros_presupuestales,
+                ...state.formaMinistracion.rubros_presupuestales,
               ],
             },
           ],
@@ -340,21 +324,18 @@ const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
       return {
         ...state,
         formaMinistracion: {
-          ...state.formaMinistracion,
-          estado: {
-            ...minAEditar,
-            id_rubro: 0,
-          },
+          ...minAEditar,
+          id_rubro: 0,
         },
       }
     case "ACTUALIZAR_MINISTRACION":
       const minActualizadas = state.forma.ministraciones.map((min) => {
-        if (min.id === state.formaMinistracion.estado.id) {
+        if (min.id === state.formaMinistracion.id) {
           return {
             ...min,
-            dt_recepcion: state.formaMinistracion.estado.dt_recepcion,
+            dt_recepcion: state.formaMinistracion.dt_recepcion,
             rubros_presupuestales:
-              state.formaMinistracion.estado.rubros_presupuestales,
+              state.formaMinistracion.rubros_presupuestales,
           }
         }
         return min
@@ -362,7 +343,6 @@ const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
 
       return {
         ...state,
-        formaMinistracion: estaInicialFormaMinistracion,
         forma: {
           ...state.forma,
           ministraciones: minActualizadas,
@@ -380,7 +360,10 @@ const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
     case "RECARGAR_NOTAS":
       return {
         ...state,
-        // notas: payload,
+        forma: {
+          ...state.forma,
+          notas: payload,
+        },
       }
     default:
       return state
@@ -388,22 +371,6 @@ const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
 }
 
 const FormaProyecto = () => {
-  // const {
-  //   estado,
-  //   // estadoForma,
-  //   // dispatch,
-  //   idProyecto,
-  //   idCoparte,
-  //   modalidad,
-  //   // showFormaMinistracion,
-  //   // setShowFormaMinistracion,
-  //   // setFormaMinistracion,
-  //   // estaInicialFormaMinistracion,
-  //   // modoEditar,
-  //   // setModoEditar,
-  //   user,
-  //   router,
-  // } = useProyecto()
   const { user, status } = useSesion()
   if (status !== "authenticated" || !user) return null
 
@@ -463,6 +430,7 @@ const FormaProyecto = () => {
   const [estado, dispatch] = useReducer(reducer, estadoInicial)
   const { error, validarCampos, formRef } = useErrores()
   const { toastState, mostrarToast, cerrarToast } = useToast()
+  const formMinistracion = useRef(null)
 
   useEffect(() => {
     cargarData()
@@ -470,12 +438,7 @@ const FormaProyecto = () => {
 
   useEffect(() => {
     dispatch({ type: "RECALCULAR_NUMERO_MINISTRACION" })
-    console.log("jilo")
   }, [estado.forma.ministraciones])
-
-  // useEffect(() => {
-  //   cargarUsuariosCoparte()
-  // }, [estadoForma.id_coparte])
 
   const cargarData = async () => {
     try {
@@ -569,43 +532,6 @@ const FormaProyecto = () => {
     }
   }
 
-  // const cargarUsuariosCoparte = async () => {
-  //   const idCoparte = estadoForma.id_coparte
-  //   if (!idCoparte) return
-
-  //   setIsLoading(true)
-
-  //   const { error, data, mensaje } = await obtenerUsuarios({
-  //     id_coparte: idCoparte,
-  //     min: true,
-  //   })
-
-  //   if (error) {
-  //     console.log(data)
-  //     setShowBanner({
-  //       mensaje,
-  //       show: true,
-  //       tipo: "error",
-  //     })
-  //   } else {
-  //     const usuariosCoparte = data as UsuarioMin[]
-  //     setUsuariosCoparteDB(usuariosCoparte)
-
-  //     if (modalidad === "CREAR") {
-  //       //setear al primer usuario de la lista
-  //       dispatch({
-  //         type: "HANDLE_CHANGE",
-  //         payload: {
-  //           name: "id_responsable",
-  //           value: usuariosCoparte[0].id,
-  //         },
-  //       })
-  //     }
-  //   }
-
-  //   setIsLoading(false)
-  // }
-
   const registrar = () => {
     return ApiCall.post("/proyectos", estado.forma)
   }
@@ -633,20 +559,6 @@ const FormaProyecto = () => {
       type,
       payload: ev.target,
     })
-  }
-
-  const mostrarFormaMinistracion = () => {
-    //cuando se vaya a agregar una nueva ministracion hay que limpiar la forma
-    //hay que calcular el numero automaticamente
-    // setFormaMinistracion((prevState) => ({
-    //   ...estaInicialFormaMinistracion,
-    //   i_numero:
-    //     Number(
-    //       estadoForma.ministraciones[estadoForma.ministraciones.length - 1]
-    //         ?.i_numero || 0
-    //     ) + 1,
-    // }))
-    // setShowFormaMinistracion(true)
   }
 
   const calcularDtMinFin = () => {
@@ -682,23 +594,18 @@ const FormaProyecto = () => {
     return false
   }
 
-  const handleSubmit = async (ev: React.SyntheticEvent) => {
+  const handleSubmit = async (ev: ChangeEvent) => {
     if (!validarForma()) return
     if (!validarMinistraciones()) return
     console.log(estado.forma)
 
-    // setIsLoading(true)
-    const { error, data, mensaje } =
-      modalidad === "EDITAR" ? await editar() : await registrar()
+    dispatch({ type: "LOADING_ON" })
 
-    if (error) {
-      console.log(data)
-      // setShowBanner({
-      //   mensaje,
-      //   show: true,
-      //   tipo: "error",
-      // })
-    } else {
+    try {
+      const re = modalidad === "EDITAR" ? await editar() : await registrar()
+
+      if (re.error) throw re
+
       if (modalidad === "CREAR") {
         router.push("/proyectos")
       } else {
@@ -706,19 +613,21 @@ const FormaProyecto = () => {
           id: idProyecto,
           min: false,
         })
-        if (reProyectoActualizado.error) {
-          console.log(reProyectoActualizado.data)
-        } else {
-          const proyectoActualizado = reProyectoActualizado.data as Proyecto
-          // dispatch({
-          //   type: "CARGA_INICIAL",
-          //   payload: proyectoActualizado,
-          // })
-          // setModoEditar(false)
-        }
+        if (reProyectoActualizado.error) throw reProyectoActualizado
+
+        const proyectoActualizado = reProyectoActualizado.data as Proyecto
+        dispatch({
+          type: "RELOAD_PROYECTO",
+          payload: proyectoActualizado,
+        })
       }
+    } catch ({ data, mensaje }) {
+      console.log(data)
+      dispatch({
+        type: "ERROR_API",
+        payload: mensaje,
+      })
     }
-    // setIsLoading(false)
   }
 
   const despachar = (type: ActionTypes, payload?: any) => {
@@ -728,17 +637,9 @@ const FormaProyecto = () => {
     })
   }
 
-  // const showBtnNuevaMinistracion =
-  //   estado.modoEditar &&
-  //   // !estado.formaMinistracion.show &&
-  //   (estado.forma.i_tipo_financiamiento >= 3 ||
-  //     (estado.forma.i_tipo_financiamiento <= 2 &&
-  //       !(estado.forma.ministraciones.length > 0)))
-
   const showBtnEditar =
     !estado.modoEditar &&
     idProyecto &&
-    // !estado.formaMinistracion.show &&
     (estado.forma.id_administrador == user.id ||
       user.id_rol == rolesUsuario.SUPER_USUARIO)
 
@@ -781,7 +682,7 @@ const FormaProyecto = () => {
     user,
     despachar,
     idProyecto,
-    modalidad,
+    formMinistracion,
   }
 
   return (
@@ -805,8 +706,6 @@ const FormaProyecto = () => {
               <input
                 className="form-control"
                 type="text"
-                // onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-                // name="id_alt"
                 value={estado.forma.id_alt}
                 disabled
               />
@@ -860,7 +759,7 @@ const FormaProyecto = () => {
               >
                 {estado.copartesDB.map(({ id, nombre }) => (
                   <option key={id} value={id}>
-                    {`${nombre.substring(0, 50)}...`}
+                    {nombre}
                   </option>
                 ))}
               </select>
@@ -925,7 +824,9 @@ const FormaProyecto = () => {
             >
               {temas_sociales.map(({ id, nombre }) => (
                 <option key={id} value={id}>
-                  {`${nombre.substring(0, 50)}...`}
+                  {nombre.length > 50
+                    ? `${nombre.substring(0, 50)}...`
+                    : nombre}
                 </option>
               ))}
             </select>
@@ -1040,14 +941,6 @@ const FormaProyecto = () => {
           {/* Seccion Ministraciones */}
           <div className="col-12 mb-3">
             <h4 className="color1 mb-0">Ministraciones</h4>
-            {/* {showBtnNuevaMinistracion && (
-              <BtnNeutro
-                margin={false}
-                texto="Nuevo presupuesto +"
-                width={false}
-                onclick={mostrarFormaMinistracion}
-              />
-            )} */}
           </div>
           <TablaMinistraciones />
           {showFormaMinistracion && <FormaMinistracion />}
@@ -1074,7 +967,8 @@ const FormaProyecto = () => {
 }
 
 const TablaMinistraciones = () => {
-  const { estado, user, despachar } = useContext(ProyectoContext)
+  const { estado, user, despachar, formMinistracion } =
+    useContext(ProyectoContext)
 
   const showAcciones =
     (user.id == estado.forma.id_administrador ||
@@ -1092,6 +986,10 @@ const TablaMinistraciones = () => {
   )
 
   const editarMinistracion = (id: number) => {
+    formMinistracion.current.scrollIntoView({
+      behavior: "smooth",
+      block: "end",
+    })
     despachar("EDITAR_MINISTRACION", id)
   }
 
@@ -1136,7 +1034,6 @@ const TablaMinistraciones = () => {
                       <tbody>
                         {rubros_presupuestales.map(
                           ({ id_rubro, rubro, f_monto }) => {
-                            // const nombre_corto = `${rubro.substring(0, 20)}...`
                             return (
                               <tr key={id_rubro}>
                                 <td>{rubro}</td>
@@ -1253,8 +1150,7 @@ const Saldos = () => {
 }
 
 const Colaboradores = () => {
-  // const { estado, idProyecto, user } = useProyecto()
-  const { estado, user, despachar, idProyecto } = useContext(ProyectoContext)
+  const { estado, user, idProyecto } = useContext(ProyectoContext)
 
   return (
     <div className="row mb-5">
@@ -1325,8 +1221,7 @@ const Colaboradores = () => {
 }
 
 const Proveedores = () => {
-  // const { estado, idProyecto, user } = useProyecto()
-  const { estado, user, despachar, idProyecto } = useContext(ProyectoContext)
+  const { estado, user, idProyecto } = useContext(ProyectoContext)
 
   return (
     <div className="row mb-5">
@@ -1396,7 +1291,6 @@ const Proveedores = () => {
 }
 
 const SolicitudesPresupuesto = () => {
-  // const { estado, idProyecto, user } = useProyecto()
   const { estado, user, idProyecto } = useContext(ProyectoContext)
 
   return (
@@ -1478,8 +1372,7 @@ const SolicitudesPresupuesto = () => {
 }
 
 const Notas = () => {
-  // const { estado, idProyecto, user } = useProyecto()
-  const { estado, user, idProyecto } = useContext(ProyectoContext)
+  const { estado, user, idProyecto, despachar } = useContext(ProyectoContext)
 
   const [mensajeNota, setMensajeNota] = useState<string>("")
   const inputNota = useRef(null)
@@ -1511,10 +1404,7 @@ const Notas = () => {
       console.log(re.data)
     } else {
       const notasDB = re.data as NotaProyecto[]
-      // dispatch({
-      //   type: "RECARGAR_NOTAS",
-      //   payload: notasDB,
-      // })
+      despachar("RECARGAR_NOTAS", notasDB)
     }
   }
 
@@ -1564,13 +1454,5 @@ const Notas = () => {
     </div>
   )
 }
-
-// const RegistroProyecto = () => {
-//   return (
-//     <ProyectoProvider>
-//       <FormaProyecto />
-//     </ProyectoProvider>
-//   )
-// }
 
 export { FormaProyecto, ProyectoContext }

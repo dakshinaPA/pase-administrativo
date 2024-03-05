@@ -1,49 +1,23 @@
-import { useContext, useEffect, useRef, useState } from "react"
+import { useContext, useRef } from "react"
 import { useCatalogos } from "@contexts/catalogos.context"
-// import { RubrosPresupuestalesDB } from "@api/models/catalogos.model"
 import { BtnAccion, BtnCancelar, BtnNeutro } from "./Botones"
-// import { useProyecto } from "@contexts/proyecto.context"
 import { ChangeEvent } from "@assets/models/formEvents.model"
 import { fechaActualInputDate } from "@assets/utils/common"
 import { ProyectoContext } from "./FormaProyecto"
-import { useSesion } from "@hooks/useSesion"
-import { MinistracionProyecto } from "@models/proyecto.model"
 import {
   rubrosPresupuestales,
   tiposFinanciamiento,
 } from "@assets/utils/constantes"
 
 const FormaMinistracion = () => {
-  // const {
-  //   estadoForma,
-  //   dispatch,
-  //   setShowFormaMinistracion,
-  //   formaMinistracion,
-  //   setFormaMinistracion,
-  // } = useProyecto()
   const { rubros_presupuestales } = useCatalogos()
-  const { estado, modalidad, despachar } = useContext(ProyectoContext)
-
-  // debugger
-  // return
+  const { estado, despachar, formMinistracion } = useContext(ProyectoContext)
 
   const inputNumero = useRef(null)
   // const inputGrupo = useRef(null)
   const inputDtRecepcion = useRef(null)
   const selectRubro = useRef(null)
-  const formMinistracion = useRef(null)
   const tableRubros = useRef(null)
-
-  // useEffect(() => {
-  //   formMinistracion.current.scrollIntoView({
-  //     behavior: "smooth",
-  //     block: "end",
-  //   })
-  // }, [])
-
-  // useEffect(() => {
-  //   agregarRubro()
-  // }, [estado.formaMinistracion.estado.id_rubro])
 
   const handleChangeMinistracion = (ev: ChangeEvent) => {
     const { name, value } = ev.target
@@ -79,7 +53,7 @@ const FormaMinistracion = () => {
   }
 
   const validarForma = () => {
-    if (!Number(estado.formaMinistracion.estado.i_numero)) {
+    if (!Number(estado.formaMinistracion.i_numero)) {
       inputNumero.current.focus()
       return false
     }
@@ -87,17 +61,15 @@ const FormaMinistracion = () => {
     //   inputGrupo.current.focus()
     //   return false
     // }
-    if (!estado.formaMinistracion.estado.dt_recepcion) {
+    if (!estado.formaMinistracion.dt_recepcion) {
       inputDtRecepcion.current.focus()
       return false
     }
     try {
       //validar que haya cantidades validas en los inputs
-      estado.formaMinistracion.estado.rubros_presupuestales.forEach(
-        (rubro, index) => {
-          if (!Number(rubro.f_monto)) throw index
-        }
-      )
+      estado.formaMinistracion.rubros_presupuestales.forEach((rubro, index) => {
+        if (!Number(rubro.f_monto)) throw index
+      })
     } catch (index) {
       const input =
         tableRubros.current.querySelectorAll("input[type=text]")[index]
@@ -116,30 +88,19 @@ const FormaMinistracion = () => {
     if (!validarForma()) return
 
     despachar("ACTUALIZAR_MINISTRACION")
-
-    // limpiarForma()
   }
-
-  // obligar al usuario a seleccionar como primera opcion el rubro de gestion financiera
-  // const RubroDefault = () => {
-  //   const rubroGestion = rubros_presupuestales.find((rubro) => rubro.id == 1)
-  //   if (!rubroGestion) return null
-
-  //   return <option value={rubroGestion.id}>{rubroGestion.nombre}</option>
-  // }
 
   const rubrosNoSeleccionados = rubros_presupuestales.filter(
     (rp) =>
-      !estado.formaMinistracion.estado.rubros_presupuestales
+      !estado.formaMinistracion.rubros_presupuestales
         .map(({ id_rubro }) => id_rubro)
         .includes(rp.id)
   )
 
-  const sumaRubros =
-    estado.formaMinistracion.estado.rubros_presupuestales.reduce(
-      (acum, rp) => acum + Number(rp.f_monto),
-      0
-    )
+  const sumaRubros = estado.formaMinistracion.rubros_presupuestales.reduce(
+    (acum, rp) => acum + Number(rp.f_monto),
+    0
+  )
 
   const disabledInputNumero =
     estado.forma.i_tipo_financiamiento <=
@@ -157,7 +118,7 @@ const FormaMinistracion = () => {
               type="text"
               onChange={handleChangeMinistracion}
               name="i_numero"
-              value={estado.formaMinistracion.estado.i_numero}
+              value={estado.formaMinistracion.i_numero}
               ref={inputNumero}
               disabled={disabledInputNumero}
             />
@@ -180,7 +141,7 @@ const FormaMinistracion = () => {
               type="date"
               onChange={handleChangeMinistracion}
               name="dt_recepcion"
-              value={estado.formaMinistracion.estado.dt_recepcion}
+              value={estado.formaMinistracion.dt_recepcion}
               max={fechaActualInputDate()}
               ref={inputDtRecepcion}
             />
@@ -190,7 +151,7 @@ const FormaMinistracion = () => {
             <select
               className="form-control"
               name="id_rubro"
-              value={estado.formaMinistracion.estado.id_rubro}
+              value={estado.formaMinistracion.id_rubro}
               onChange={agregarRubro}
               ref={selectRubro}
             >
@@ -218,7 +179,7 @@ const FormaMinistracion = () => {
               </tr>
             </thead>
             <tbody>
-              {estado.formaMinistracion.estado.rubros_presupuestales.map(
+              {estado.formaMinistracion.rubros_presupuestales.map(
                 ({ id_rubro, rubro, f_monto }, index) => (
                   <tr key={id_rubro}>
                     <td>{rubro}</td>
@@ -263,7 +224,7 @@ const FormaMinistracion = () => {
             <tbody></tbody>
           </table>
         </div>
-        {!estado.formaMinistracion.estado.id ? (
+        {!estado.formaMinistracion.id ? (
           <div className="col-12 text-end">
             <BtnNeutro
               margin={false}
