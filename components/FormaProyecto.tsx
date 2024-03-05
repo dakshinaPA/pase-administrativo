@@ -649,17 +649,7 @@ const FormaProyecto = () => {
       estado.modoEditar &&
       user.id_rol == rolesUsuario.SUPER_USUARIO)
 
-  const showFormaMinistracion =
-    (estado.modoEditar &&
-      [
-        tiposFinanciamiento.VARIAS_MINISTRACIONES,
-        tiposFinanciamiento.MULTI_ANUAL,
-      ].includes(Number(estado.forma.i_tipo_financiamiento))) ||
-    ([
-      tiposFinanciamiento.ESTIPENDIO,
-      tiposFinanciamiento.UNICA_MINISTRACION,
-    ].includes(Number(estado.forma.i_tipo_financiamiento)) &&
-      !estado.forma.ministraciones.length)
+  const showFormaMinistracion = estado.modoEditar
 
   if (estado.isLoading) {
     return (

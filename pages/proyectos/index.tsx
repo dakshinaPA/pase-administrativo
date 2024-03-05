@@ -171,8 +171,8 @@ const Financiadores = () => {
                   </>
                 )}
                 <th>Tipo financiamiento</th>
-                <th>Monto total</th>
-                <th>Solicitado</th>
+                <th>Financiamiento</th>
+                {/* <th>Solicitado</th> */}
                 <th>Transferido</th>
                 <th>Comprobado</th>
                 <th>Por comprobar</th>
@@ -213,7 +213,7 @@ const Financiadores = () => {
                     )}
                     <td>{tipo_financiamiento}</td>
                     <td>{montoALocaleString(saldo.f_monto_total)}</td>
-                    <td>{montoALocaleString(saldo.f_solicitado)}</td>
+                    {/* <td>{montoALocaleString(saldo.f_solicitado)}</td> */}
                     <td>{montoALocaleString(saldo.f_transferido)}</td>
                     <td>{montoALocaleString(saldo.f_comprobado)}</td>
                     <td>{montoALocaleString(saldo.f_por_comprobar)}</td>

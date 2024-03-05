@@ -107,6 +107,11 @@ const FormaMinistracion = () => {
       tiposFinanciamiento.UNICA_MINISTRACION ||
     estado.forma.ministraciones.length > 0
 
+  const disableAgregarPresupuesto =
+    estado.forma.i_tipo_financiamiento <=
+      tiposFinanciamiento.UNICA_MINISTRACION &&
+    estado.forma.ministraciones.length >= 1
+
   return (
     <div className="col-12 mb-3" ref={formMinistracion}>
       <div className="row py-3 rounded" style={{ backgroundColor: "#f6f6f6" }}>
@@ -226,12 +231,14 @@ const FormaMinistracion = () => {
         </div>
         {!estado.formaMinistracion.id ? (
           <div className="col-12 text-end">
-            <BtnNeutro
-              margin={false}
-              texto="Agregar presupuesto"
-              width={false}
-              onclick={handleAgregar}
-            />
+            <button
+              className="btn btn-outline-secondary"
+              type="button"
+              onClick={handleAgregar}
+              disabled={disableAgregarPresupuesto}
+            >
+              Agregar presupuesto
+            </button>
           </div>
         ) : (
           <div className="col-12 d-flex justify-content-between">

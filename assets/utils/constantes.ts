@@ -37,6 +37,7 @@ const rubrosPresupuestales = {
   ASIMILADOS: 2,
   HONORARIOS: 3,
   PAGOS_EXTRANJERO: 22,
+  EJECUTADO_EJERCICIOS_ANTERIORES: 23,
 }
 
 const tiposFinanciamiento = {
