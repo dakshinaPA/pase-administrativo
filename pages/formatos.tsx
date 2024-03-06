@@ -55,6 +55,11 @@ const Formatos = () => {
           titulo="Formulario orden de compra"
           formato="word"
         />
+        <FormatoFile
+          link="https://dakshina-imagen.s3.us-east-2.amazonaws.com/reporte_de_comision_y_desglose_de_viaticos.xlsm"
+          titulo="Reporte de comisión y desglose de viáticos"
+          formato="excel"
+        />
       </div>
     </RegistroContenedor>
   )
