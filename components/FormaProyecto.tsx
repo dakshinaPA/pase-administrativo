@@ -643,11 +643,12 @@ const FormaProyecto = () => {
     (estado.forma.id_administrador == user.id ||
       user.id_rol == rolesUsuario.SUPER_USUARIO)
 
-  const enableSlctFinanciadores =
-    modalidad === "CREAR" ||
-    (modalidad === "EDITAR" &&
-      estado.modoEditar &&
-      user.id_rol == rolesUsuario.SUPER_USUARIO)
+  const enableSlctFinanciadores = modalidad === "CREAR"
+    // modalidad === "CREAR" ||
+    // (modalidad === "EDITAR" &&
+    //   estado.modoEditar &&
+    //   user.id_rol == rolesUsuario.SUPER_USUARIO)
+
 
   const showFormaMinistracion = estado.modoEditar
 
