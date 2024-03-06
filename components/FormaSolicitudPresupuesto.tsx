@@ -854,6 +854,10 @@ const FormaSolicitudPresupuesto = () => {
     estado.forma.id_partida_presupuestal !=
       rubrosPresupuestales.PAGOS_EXTRANJERO
 
+  const showInputDtPago =
+    user.id_rol == rolesUsuario.SUPER_USUARIO &&
+    estado.forma.i_estatus == estatusSolicitud.PROCESADA
+
   if (estado.isLoading) {
     return (
       <Contenedor>
@@ -1262,9 +1266,24 @@ const FormaSolicitudPresupuesto = () => {
                 <option value="1">En revisión</option>
                 <option value="2">Autorizada</option>
                 <option value="3">Rechazada</option>
-                <option value="4">Procesada</option>
+                {user.id_rol == rolesUsuario.SUPER_USUARIO && (
+                  <option value="4">Procesada</option>
+                )}
                 <option value="5">Devolución</option>
               </select>
+            </div>
+          )}
+          {showInputDtPago && (
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label">Fecha de pago</label>
+              <input
+                className="form-control"
+                type="date"
+                // onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+                name="dt_inicio"
+                // value={estado.forma.dt_inicio}
+                // disabled={!estado.modoEditar}
+              />
             </div>
           )}
           {modalidad === "CREAR" && (
@@ -1279,7 +1298,11 @@ const FormaSolicitudPresupuesto = () => {
                 />
                 <label className="form-check-label">
                   Acepto los
-                  <Link href="/legal" target="_blank" className="color1 fw-bold">
+                  <Link
+                    href="/legal"
+                    target="_blank"
+                    className="color1 fw-bold"
+                  >
                     {" "}
                     términos y condiciones
                   </Link>

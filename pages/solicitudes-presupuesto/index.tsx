@@ -23,6 +23,7 @@ import { Filtros } from "@components/FiltrosSolicitudes"
 import styles from "@components/styles/Filtros.module.css"
 import { useSesion } from "@hooks/useSesion"
 import { Banner, estadoInicialBanner } from "@components/Banner"
+import { rolesUsuario } from "@assets/utils/constantes"
 
 interface SolicitudPresupuestoVista extends SolicitudPresupuesto {
   checked: boolean
@@ -324,7 +325,9 @@ const SolicitudesPresupuesto = () => {
               <option value="1">Revisión</option>
               <option value="2">Autorizada</option>
               <option value="3">Rechazada</option>
-              <option value="4">Procesada</option>
+              {user.id_rol == rolesUsuario.SUPER_USUARIO && (
+                <option value="4">Procesada</option>
+              )}
               <option value="5">Devolución</option>
             </select>
           </div>
