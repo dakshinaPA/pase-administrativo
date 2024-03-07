@@ -23,6 +23,7 @@ import { Filtros } from "@components/FiltrosSolicitudes"
 import styles from "@components/styles/Filtros.module.css"
 import { useSesion } from "@hooks/useSesion"
 import { Banner, estadoInicialBanner } from "@components/Banner"
+import { rolesUsuario } from "@assets/utils/constantes"
 
 interface SolicitudPresupuestoVista extends SolicitudPresupuesto {
   checked: boolean
@@ -198,6 +199,7 @@ const SolicitudesPresupuesto = () => {
     const encabezado = [
       "Id proyecto",
       "Fecha registro",
+      "Fecha de pago",
       "Coparte",
       "Proveedor",
       "ClABE/Cuenta",
@@ -215,9 +217,12 @@ const SolicitudesPresupuesto = () => {
     ]
 
     const solicituesAArray = solicitudesFiltradas.map((solicitud) => {
+      const dtPago = solicitud.dt_pago ? epochAFecha(solicitud.dt_pago) : ""
+
       return [
         solicitud.proyecto.split(" ")[0],
         epochAFecha(solicitud.dt_registro),
+        dtPago,
         solicitud.coparte,
         solicitud.proveedor,
         solicitud.clabe,
@@ -324,7 +329,9 @@ const SolicitudesPresupuesto = () => {
               <option value="1">Revisión</option>
               <option value="2">Autorizada</option>
               <option value="3">Rechazada</option>
-              <option value="4">Procesada</option>
+              {user.id_rol == rolesUsuario.SUPER_USUARIO && (
+                <option value="4">Procesada</option>
+              )}
               <option value="5">Devolución</option>
             </select>
           </div>
@@ -367,6 +374,7 @@ const SolicitudesPresupuesto = () => {
                     <th>Total</th>
                     <th>Estatus</th>
                     <th>Fecha registro</th>
+                    <th>Fecha pago</th>
                     {showCbStatus && (
                       <th>
                         <input
@@ -399,6 +407,7 @@ const SolicitudesPresupuesto = () => {
                       i_estatus,
                       estatus,
                       dt_registro,
+                      dt_pago,
                       checked,
                     } = solicitud
 
@@ -431,6 +440,7 @@ const SolicitudesPresupuesto = () => {
                           </span>
                         </td>
                         <td>{epochAFecha(dt_registro)}</td>
+                        <td>{dt_pago ? epochAFecha(dt_pago) : "-"}</td>
                         {showCbStatus && (
                           <td>
                             <input

@@ -15,10 +15,11 @@ import {
 } from "@models/solicitud-presupuesto.model"
 import {
   epochAFecha,
+  epochAInputDate,
   obtenerEstatusSolicitud,
   obtenerMetodoPago,
 } from "@assets/utils/common"
-import { IdRolUsuario, RolUsuario } from "@models/usuario.model"
+import { IdRolUsuario } from "@models/usuario.model"
 import { estatusSolicitud, rolesUsuario } from "@assets/utils/constantes"
 
 class SolicitudesPresupuestoServices {
@@ -46,6 +47,7 @@ class SolicitudesPresupuestoServices {
       f_importe,
       f_retenciones,
       i_estatus,
+      dt_pago,
       comprobantes,
     } = solicitudRes
 

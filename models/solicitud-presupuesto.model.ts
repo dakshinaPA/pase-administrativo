@@ -79,6 +79,7 @@ export interface SolicitudPresupuesto {
   banco?: string
   email: string
   saldo?: SaldoSolicitud
+  dt_pago?: string
   dt_registro?: string
   comprobantes?: ComprobanteSolicitud[]
   notas?: NotaSolicitud[]

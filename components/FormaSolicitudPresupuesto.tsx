@@ -25,6 +25,7 @@ import {
 } from "@models/solicitud-presupuesto.model"
 import {
   epochAFecha,
+  epochAInputDate,
   meses,
   montoALocaleString,
   obtenerBadgeStatusSolicitud,
@@ -482,12 +483,16 @@ const FormaSolicitudPresupuesto = () => {
     })
   }
 
-  const obtener = async () => {
+  const obtener = async (): Promise<SolicitudPresupuesto> => {
     const reSolicitud = await obtenerSolicitudes({
       id: idSolicitud,
     })
     if (reSolicitud.error) throw reSolicitud
-    return reSolicitud.data[0] as SolicitudPresupuesto
+    const solicitudDB = reSolicitud.data[0] as SolicitudPresupuesto
+    return {
+      ...solicitudDB,
+      dt_pago: solicitudDB.dt_pago ? epochAInputDate(solicitudDB.dt_pago) : "",
+    }
   }
 
   const registrar = () => {
@@ -772,9 +777,7 @@ const FormaSolicitudPresupuesto = () => {
     if (!aceptaTerminos()) return
     console.log(estado.forma)
 
-    dispatch({
-      type: "LOADING_ON",
-    })
+    dispatch({ type: "LOADING_ON" })
 
     try {
       const upSolicitud =
@@ -853,6 +856,10 @@ const FormaSolicitudPresupuesto = () => {
     estado.forma.i_tipo_gasto != tiposGasto.ASIMILADOS &&
     estado.forma.id_partida_presupuestal !=
       rubrosPresupuestales.PAGOS_EXTRANJERO
+
+  const showInputDtPago =
+    user.id_rol == rolesUsuario.SUPER_USUARIO &&
+    estado.forma.i_estatus == estatusSolicitud.PROCESADA
 
   if (estado.isLoading) {
     return (
@@ -1262,9 +1269,24 @@ const FormaSolicitudPresupuesto = () => {
                 <option value="1">En revisión</option>
                 <option value="2">Autorizada</option>
                 <option value="3">Rechazada</option>
-                <option value="4">Procesada</option>
+                {user.id_rol == rolesUsuario.SUPER_USUARIO && (
+                  <option value="4">Procesada</option>
+                )}
                 <option value="5">Devolución</option>
               </select>
+            </div>
+          )}
+          {showInputDtPago && (
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label">Fecha de pago</label>
+              <input
+                className="form-control"
+                type="date"
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+                name="dt_pago"
+                value={estado.forma.dt_pago}
+                disabled={!estado.modoEditar}
+              />
             </div>
           )}
           {modalidad === "CREAR" && (
@@ -1279,7 +1301,11 @@ const FormaSolicitudPresupuesto = () => {
                 />
                 <label className="form-check-label">
                   Acepto los
-                  <Link href="/legal" target="_blank" className="color1 fw-bold">
+                  <Link
+                    href="/legal"
+                    target="_blank"
+                    className="color1 fw-bold"
+                  >
                     {" "}
                     términos y condiciones
                   </Link>
