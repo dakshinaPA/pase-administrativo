@@ -403,7 +403,7 @@ class SolicitudesPresupuestoDB {
                 results[1] as ComprobanteSolicitud[]
 
               const dtPago =
-                data.i_estatus == estatusSolicitud.PROCESADA
+                data.i_estatus == estatusSolicitud.PROCESADA && data.dt_pago
                   ? inputDateAEpoch(data.dt_pago)
                   : ""
 
