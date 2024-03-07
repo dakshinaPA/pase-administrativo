@@ -34,8 +34,11 @@ const inputDateAformato = (fecha: string): string => {
 }
 
 const inputDateAEpoch = (InputDate: string): number => {
-  const InputDateAFecha = new Date(InputDate).valueOf() / 1000
-  return InputDateAFecha
+  const InputDateAFecha = new Date(InputDate)
+  const timeZoneOffsetSegundos = InputDateAFecha.getTimezoneOffset() * 60
+  const dtAEpochDiezDigitos = InputDateAFecha.valueOf() / 1000
+  const sumaOffset = dtAEpochDiezDigitos + timeZoneOffsetSegundos
+  return sumaOffset
 }
 
 const fechaActualAEpoch = () => {
@@ -47,6 +50,19 @@ const fechaActualAEpoch = () => {
 const fechaActualInputDate = () => {
   //regresa la fecha actual para input date
   const dt = new Date()
+  const dtFormatoMX = dt.toLocaleDateString("es-MX", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  })
+  const [dia, mes, anio] = dtFormatoMX.split("/")
+  const dtAformatoInput = `${anio}-${mes}-${dia}`
+  return dtAformatoInput
+}
+
+const epochAInputDate = (epoch: string) => {
+  //regresa epoch actual para input date
+  const dt = new Date(Number(epoch) * 1000)
   const dtFormatoMX = dt.toLocaleDateString("es-MX", {
     day: "2-digit",
     month: "2-digit",
@@ -131,13 +147,7 @@ const obtenerFinanciadores = (min = true) => {
 }
 
 const obtenerProyectos = (queries: QueriesProyecto) => {
-  const {
-    id,
-    id_coparte,
-    id_responsable,
-    id_admin,
-    min = true,
-  } = queries
+  const { id, id_coparte, id_responsable, id_admin, min = true } = queries
   let url = `/proyectos`
 
   if (id) {
@@ -293,20 +303,20 @@ const obtenerMetodoPago = (i_metodo_pago: IMetodosPAgo): MetodosPAgo => {
 const quitarAcentos = (texto: string) =>
   texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
 
-const textoAmasyuscula = (texto: string) =>
-  texto.toUpperCase()
+const textoAmasyuscula = (texto: string) => texto.toUpperCase()
 
 const textoMayusculaSinAcentos = (texto: string) => {
   const txtSinAcento = quitarAcentos(texto)
   const txtMayuscula = textoAmasyuscula(txtSinAcento)
   return txtMayuscula.trim()
-} 
+}
 
 export {
   meses,
   aMinuscula,
   epochAFecha,
   fechaActualAEpoch,
+  epochAInputDate,
   inputDateAformato,
   obtenerUsuarios,
   obtenerFinanciadores,
@@ -324,5 +334,5 @@ export {
   fechaMasDiasFutuosString,
   fechaMasMesesFutuosString,
   obtenerMetodoPago,
-  textoMayusculaSinAcentos
+  textoMayusculaSinAcentos,
 }

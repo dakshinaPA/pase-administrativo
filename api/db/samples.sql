@@ -771,3 +771,6 @@ ALTER TABLE solicitud_presupuesto_comprobantes ADD COLUMN f_isr VARCHAR(20) NOT 
 -- 22/02/24
 ALTER TABLE solicitudes_presupuesto ADD COLUMN id_banco INT UNSIGNED NOT NULL DEFAULT 0 AFTER clabe, ADD INDEX (id_banco);
 ALTER TABLE solicitudes_presupuesto ADD COLUMN id_titular_cuenta INT UNSIGNED NOT NULL DEFAULT 0 AFTER banco, ADD INDEX (id_titular_cuenta);
+
+-- 02/03/24
+ALTER TABLE solicitudes_presupuesto ADD COLUMN dt_pago VARCHAR(10) NOT NULL DEFAULT "" AFTER i_estatus;

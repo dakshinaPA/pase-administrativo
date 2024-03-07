@@ -25,6 +25,7 @@ import {
 } from "@models/solicitud-presupuesto.model"
 import {
   epochAFecha,
+  epochAInputDate,
   meses,
   montoALocaleString,
   obtenerBadgeStatusSolicitud,
@@ -482,12 +483,16 @@ const FormaSolicitudPresupuesto = () => {
     })
   }
 
-  const obtener = async () => {
+  const obtener = async (): Promise<SolicitudPresupuesto> => {
     const reSolicitud = await obtenerSolicitudes({
       id: idSolicitud,
     })
     if (reSolicitud.error) throw reSolicitud
-    return reSolicitud.data[0] as SolicitudPresupuesto
+    const solicitudDB = reSolicitud.data[0] as SolicitudPresupuesto
+    return {
+      ...solicitudDB,
+      dt_pago: solicitudDB.dt_pago ? epochAInputDate(solicitudDB.dt_pago) : "",
+    }
   }
 
   const registrar = () => {
@@ -772,9 +777,7 @@ const FormaSolicitudPresupuesto = () => {
     if (!aceptaTerminos()) return
     console.log(estado.forma)
 
-    dispatch({
-      type: "LOADING_ON",
-    })
+    dispatch({ type: "LOADING_ON" })
 
     try {
       const upSolicitud =
@@ -1279,10 +1282,10 @@ const FormaSolicitudPresupuesto = () => {
               <input
                 className="form-control"
                 type="date"
-                // onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-                name="dt_inicio"
-                // value={estado.forma.dt_inicio}
-                // disabled={!estado.modoEditar}
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+                name="dt_pago"
+                value={estado.forma.dt_pago}
+                disabled={!estado.modoEditar}
               />
             </div>
           )}

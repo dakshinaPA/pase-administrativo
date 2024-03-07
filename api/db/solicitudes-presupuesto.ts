@@ -8,8 +8,9 @@ import {
   NotaSolicitud,
 } from "@models/solicitud-presupuesto.model"
 import { RespuestaDB } from "@api/utils/response"
-import { fechaActualAEpoch } from "@assets/utils/common"
+import { fechaActualAEpoch, inputDateAEpoch } from "@assets/utils/common"
 import { ResSolicitudPresupuestoDB } from "@api/models/solicitudes-presupuesto.model"
+import { estatusSolicitud } from "@assets/utils/constantes"
 
 class SolicitudesPresupuestoDB {
   static queryRe = (queries: QueriesSolicitud) => {
@@ -27,7 +28,7 @@ class SolicitudesPresupuestoDB {
     } = queries
 
     let query = `SELECT sp.id, sp.id_proyecto, sp.i_tipo_gasto, sp.clabe, sp.id_banco, sp.banco, sp.id_titular_cuenta, sp.titular_cuenta,
-      sp.email, sp.proveedor, sp.descripcion_gasto, sp.id_partida_presupuestal, sp.f_importe, sp.f_retenciones, sp.i_estatus, sp.dt_registro,
+      sp.email, sp.proveedor, sp.descripcion_gasto, sp.id_partida_presupuestal, sp.f_importe, sp.f_retenciones, sp.i_estatus, sp.dt_pago, sp.dt_registro,
       CONCAT(p.id_alt, ' - ', p.nombre) proyecto, p.id_responsable,
       r.nombre rubro,
       c.id id_coparte, c.nombre_corto coparte
@@ -359,7 +360,7 @@ class SolicitudesPresupuestoDB {
     const { comprobantes } = data
 
     const qUpSolicitud = `UPDATE solicitudes_presupuesto SET clabe=?, id_banco=?, banco=?, id_titular_cuenta=?, titular_cuenta=?,
-      email=?, proveedor=?, descripcion_gasto=?, f_importe=?, f_retenciones=?, i_estatus=? WHERE id=?`
+      email=?, proveedor=?, descripcion_gasto=?, f_importe=?, f_retenciones=?, i_estatus=?, dt_pago=? WHERE id=?`
 
     const qReComprobantes =
       "SELECT id, folio_fiscal, b_activo FROM solicitud_presupuesto_comprobantes WHERE id_solicitud_presupuesto=?"
@@ -401,6 +402,11 @@ class SolicitudesPresupuestoDB {
               const comprobantesOtraSolicitud =
                 results[1] as ComprobanteSolicitud[]
 
+              const dtPago =
+                data.i_estatus == estatusSolicitud.PROCESADA
+                  ? inputDateAEpoch(data.dt_pago)
+                  : ""
+
               const qCombinados = [qUpSolicitud]
               const phCombinados = [
                 data.clabe,
@@ -414,6 +420,7 @@ class SolicitudesPresupuestoDB {
                 data.f_importe,
                 data.f_retenciones,
                 data.i_estatus,
+                dtPago,
                 id,
               ]
 
