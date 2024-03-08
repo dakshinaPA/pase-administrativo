@@ -26,6 +26,8 @@ import {
 import {
   epochAFecha,
   epochAInputDate,
+  fechaTimbradoCortado,
+  inputDateAformato,
   meses,
   montoALocaleString,
   obtenerBadgeStatusSolicitud,
@@ -572,6 +574,7 @@ const FormaSolicitudPresupuesto = () => {
       const [concepto] = xml.getElementsByTagName("cfdi:Concepto")
 
       const folio_fiscal = timbre?.getAttribute("UUID")
+      const dt_timbrado = timbre?.getAttribute("FechaTimbrado")
       const claveRegimenFiscalReceptor = receptor.getAttribute(
         "RegimenFiscalReceptor"
       )
@@ -690,6 +693,7 @@ const FormaSolicitudPresupuesto = () => {
         f_iva,
         f_isr,
         uso_cfdi: usoCFDI,
+        dt_timbrado: dt_timbrado ? fechaTimbradoCortado(dt_timbrado) : "",
       }
 
       console.log(dataComprobante)
@@ -1345,6 +1349,7 @@ const FormaSolicitudPresupuesto = () => {
                       <th>Método de pago</th>
                       <th>Forma de pago</th>
                       <th>Uso de CFDI</th>
+                      <th>Fecha de timbrado</th>
                       <th>Retención ISR</th>
                       <th>Retención IVA</th>
                       <th>Impuestos retenidos</th>
@@ -1372,6 +1377,7 @@ const FormaSolicitudPresupuesto = () => {
                         f_isr,
                         f_retenciones,
                         f_total,
+                        dt_timbrado,
                       } = comprobante
 
                       const regimenFiscalEmisor = obtenerRegimenXId(
@@ -1398,6 +1404,9 @@ const FormaSolicitudPresupuesto = () => {
                             {clave_forma_pago} - {forma_pago}
                           </td>
                           <td>{uso_cfdi}</td>
+                          <td>
+                            {dt_timbrado ? inputDateAformato(dt_timbrado) : "-"}
+                          </td>
                           <td>{montoALocaleString(Number(f_isr) || 0)}</td>
                           <td>{montoALocaleString(Number(f_iva) || 0)}</td>
                           <td>

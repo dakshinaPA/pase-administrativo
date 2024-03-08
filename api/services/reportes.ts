@@ -17,7 +17,10 @@ class ReportesServices {
           f_retenciones: Number(comprobante.f_retenciones),
           f_isr: Number(comprobante.f_isr),
           f_iva: Number(comprobante.f_iva),
-          dt_registro: epochAFecha(comprobante.dt_registro)
+          dt_registro: epochAFecha(comprobante.dt_registro),
+          dt_timbrado: comprobante.dt_timbrado
+            ? epochAFecha(comprobante.dt_timbrado)
+            : "",
         }
       })
 

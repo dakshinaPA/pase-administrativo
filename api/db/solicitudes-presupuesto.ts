@@ -76,7 +76,7 @@ class SolicitudesPresupuestoDB {
 
   static qReComprobantes = () => {
     return `
-      SELECT spc.id, spc.id_solicitud_presupuesto, spc.folio_fiscal, spc.f_total, spc.f_retenciones, spc.f_isr, spc.f_iva, spc.i_metodo_pago, spc.id_forma_pago, spc.id_regimen_fiscal_emisor, spc.rfc_emisor, spc.dt_registro,
+      SELECT spc.id, spc.id_solicitud_presupuesto, spc.folio_fiscal, spc.f_total, spc.f_retenciones, spc.f_isr, spc.f_iva, spc.i_metodo_pago, spc.id_forma_pago, spc.id_regimen_fiscal_emisor, spc.rfc_emisor, spc.dt_timbrado, spc.dt_registro,
       fp.nombre forma_pago, fp.clave clave_forma_pago
       FROM solicitud_presupuesto_comprobantes spc
       JOIN formas_pago fp ON spc.id_forma_pago = fp.id
@@ -94,8 +94,8 @@ class SolicitudesPresupuestoDB {
 
   static qCrComprobante = () => {
     return `
-      INSERT INTO solicitud_presupuesto_comprobantes ( id_solicitud_presupuesto, folio_fiscal, f_total,
-      f_retenciones, f_isr, f_iva, i_metodo_pago, id_forma_pago, id_regimen_fiscal_emisor, rfc_emisor, dt_registro ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )
+      INSERT INTO solicitud_presupuesto_comprobantes ( id_solicitud_presupuesto, folio_fiscal, f_total, f_retenciones, f_isr, f_iva, i_metodo_pago,
+      id_forma_pago, id_regimen_fiscal_emisor, rfc_emisor, dt_timbrado, dt_registro ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )
     `
   }
 
@@ -106,7 +106,7 @@ class SolicitudesPresupuestoDB {
   static qReactivarComprobante = () => {
     return `
       UPDATE solicitud_presupuesto_comprobantes SET id_solicitud_presupuesto=?, f_isr=?, f_iva=?,
-      rfc_emisor=?, b_activo=1 WHERE id=?
+      rfc_emisor=?, dt_timbrado=?, b_activo=1 WHERE id=?
     `
   }
 
@@ -299,6 +299,7 @@ class SolicitudesPresupuestoDB {
                     comp.f_isr,
                     comp.f_iva,
                     comp.rfc_emisor,
+                    comp.dt_timbrado,
                     match.id
                   )
                 } else {
@@ -316,6 +317,7 @@ class SolicitudesPresupuestoDB {
                     comp.id_forma_pago,
                     comp.id_regimen_fiscal_emisor,
                     comp.rfc_emisor,
+                    comp.dt_timbrado,
                     fechaActualAEpoch()
                   )
                 }
@@ -399,8 +401,7 @@ class SolicitudesPresupuestoDB {
               }
 
               const comprobantesDB = results[0] as ComprobanteSolicitud[]
-              const comprobantesOtraSolicitud =
-                results[1] as ComprobanteSolicitud[]
+              const comprobantesInactivos = results[1] as ComprobanteSolicitud[]
 
               const dtPago =
                 data.i_estatus == estatusSolicitud.PROCESADA && data.dt_pago
@@ -428,13 +429,9 @@ class SolicitudesPresupuestoDB {
                 // agregar comprobantes nuevos
                 if (!comp.id) {
                   //buscar si esta en base de datos pero inactivo
-                  const match =
-                    comprobantesDB.find(
-                      (comDB) => comDB.folio_fiscal == comp.folio_fiscal
-                    ) ||
-                    comprobantesOtraSolicitud.find(
-                      (comDB) => comDB.folio_fiscal == comp.folio_fiscal
-                    )
+                  const match = comprobantesInactivos.find(
+                    (comDB) => comDB.folio_fiscal == comp.folio_fiscal
+                  )
 
                   if (match) {
                     //reactivar comprobante
@@ -444,6 +441,7 @@ class SolicitudesPresupuestoDB {
                       comp.f_isr,
                       comp.f_iva,
                       comp.rfc_emisor,
+                      comp.dt_timbrado,
                       match.id
                     )
                   } else {
@@ -460,6 +458,7 @@ class SolicitudesPresupuestoDB {
                       comp.id_forma_pago,
                       comp.id_regimen_fiscal_emisor,
                       comp.rfc_emisor,
+                      comp.dt_timbrado,
                       fechaActualAEpoch()
                     )
                   }

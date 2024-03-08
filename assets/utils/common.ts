@@ -101,6 +101,11 @@ const fechaMasMesesFutuosString = (dt_inicio: string, meses: number) => {
   return dtAFormatoInput
 }
 
+const fechaTimbradoCortado = (fecha: string) => {
+  const [dtSinTiempo] = fecha.split("T")
+  return dtSinTiempo
+}
+
 const obtenerUsuarios = (queries: QueriesUsuario) => {
   const { id, id_rol, id_coparte, min = false } = queries
 
@@ -318,6 +323,7 @@ export {
   fechaActualAEpoch,
   epochAInputDate,
   inputDateAformato,
+  fechaTimbradoCortado,
   obtenerUsuarios,
   obtenerFinanciadores,
   obtenerCopartes,

@@ -29,7 +29,9 @@ const Comprobantes = () => {
       "Forma de pago",
       "Régimen fiscal emisor",
       "Fecha de registro",
+      "Fecha de timbrado",
     ]
+
 
     const comprobantesAArray = comprobantes.map((comprobante) => {
       return [
@@ -45,6 +47,7 @@ const Comprobantes = () => {
         comprobante.forma_pago,
         comprobante.regimen_fiscal,
         comprobante.dt_registro,
+        comprobante.dt_timbrado,
       ]
     })
 
