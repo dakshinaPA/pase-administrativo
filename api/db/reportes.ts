@@ -4,7 +4,7 @@ import { queryDB } from "./query"
 class ReportesDB {
   static async obtenerComprobantes() {
     const query = `
-      SELECT spc.id, spc.id_solicitud_presupuesto, spc.folio_fiscal, spc.f_total, spc.f_retenciones, spc.f_isr, spc.f_iva, spc.i_metodo_pago, spc.id_forma_pago, spc.id_regimen_fiscal_emisor, spc.dt_registro,
+      SELECT spc.id, spc.id_solicitud_presupuesto, spc.folio_fiscal, spc.f_total, spc.f_retenciones, spc.f_isr, spc.f_iva, spc.i_metodo_pago, spc.id_forma_pago, spc.id_regimen_fiscal_emisor, spc.dt_timbrado, spc.dt_registro,
       fp.nombre forma_pago, fp.clave clave_forma_pago,
       rf.nombre regimen_fiscal, rf.clave clave_regimen_fiscal,
       sp.id_proyecto, sp.id_partida_presupuestal, sp.titular_cuenta,
