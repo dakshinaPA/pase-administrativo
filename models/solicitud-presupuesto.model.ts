@@ -31,6 +31,7 @@ export interface ComprobanteSolicitud {
   id_regimen_fiscal_receptor: number
   id_regimen_fiscal_emisor: number
   uso_cfdi: string
+  dt_timbrado: string
   dt_registro?: string
   b_activo?: boolean
 }

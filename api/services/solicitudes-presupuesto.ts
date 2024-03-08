@@ -16,6 +16,7 @@ import {
 import {
   epochAFecha,
   epochAInputDate,
+  inputDateAEpoch,
   obtenerEstatusSolicitud,
   obtenerMetodoPago,
 } from "@assets/utils/common"
@@ -77,11 +78,13 @@ class SolicitudesPresupuestoServices {
   static tranformDataComprobantes(
     comprobanteRes: ComprobanteSolicitud
   ): ComprobanteSolicitud {
+    const { i_metodo_pago, dt_timbrado } = comprobanteRes
     return {
       ...comprobanteRes,
-      metodo_pago: obtenerMetodoPago(comprobanteRes.i_metodo_pago),
+      metodo_pago: obtenerMetodoPago(i_metodo_pago),
       id_regimen_fiscal_receptor: 2,
       uso_cfdi: "G03",
+      dt_timbrado: dt_timbrado ? epochAInputDate(dt_timbrado) : "",
     }
   }
 
@@ -145,7 +148,17 @@ class SolicitudesPresupuestoServices {
 
   static async crear(data: SolicitudPresupuesto) {
     try {
-      const cr = await SolicitudesPresupuestoDB.crear(data)
+      const payload: SolicitudPresupuesto = {
+        ...data,
+        comprobantes: data.comprobantes.map((com) => ({
+          ...com,
+          dt_timbrado: com.dt_timbrado
+            ? String(inputDateAEpoch(com.dt_timbrado))
+            : "",
+        })),
+      }
+
+      const cr = await SolicitudesPresupuestoDB.crear(payload)
 
       return RespuestaController.exitosa(
         201,
@@ -167,18 +180,21 @@ class SolicitudesPresupuestoServices {
     id_rol: IdRolUsuario
   ) {
     try {
-      let payload = data
-
-      if (
-        id_rol === rolesUsuario.COPARTE &&
-        [estatusSolicitud.RECHAZADA, estatusSolicitud.DEVOLUCION].includes(
-          data.i_estatus
-        )
-      ) {
-        payload = {
-          ...data,
-          i_estatus: estatusSolicitud.REVISION as EstatusSolicitud,
-        }
+      const payload: SolicitudPresupuesto = {
+        ...data,
+        i_estatus:
+          id_rol === rolesUsuario.COPARTE &&
+          [estatusSolicitud.RECHAZADA, estatusSolicitud.DEVOLUCION].includes(
+            data.i_estatus
+          )
+            ? (estatusSolicitud.REVISION as EstatusSolicitud)
+            : data.i_estatus,
+        comprobantes: data.comprobantes.map((com) => ({
+          ...com,
+          dt_timbrado: com.dt_timbrado
+            ? String(inputDateAEpoch(com.dt_timbrado))
+            : "",
+        })),
       }
 
       const up = await SolicitudesPresupuestoDB.actualizar(id, payload)

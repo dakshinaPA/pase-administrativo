@@ -774,3 +774,4 @@ ALTER TABLE solicitudes_presupuesto ADD COLUMN id_titular_cuenta INT UNSIGNED NO
 
 -- 02/03/24
 ALTER TABLE solicitudes_presupuesto ADD COLUMN dt_pago VARCHAR(10) NOT NULL DEFAULT "" AFTER i_estatus;
+ALTER TABLE solicitud_presupuesto_comprobantes ADD COLUMN dt_timbrado VARCHAR(10) NOT NULL DEFAULT "" AFTER rfc_emisor;
