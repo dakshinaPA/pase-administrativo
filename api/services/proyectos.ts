@@ -52,6 +52,23 @@ class ProyectosServices {
     }
   }
 
+  static trimPayload(data: Proyecto): Proyecto {
+    return {
+      ...data,
+      nombre: data.nombre.trim(),
+      sector_beneficiado: data.sector_beneficiado.trim(),
+      municipio: data.municipio.trim(),
+      descripcion: data.descripcion.trim(),
+      ministraciones: data.ministraciones.map((min) => ({
+        ...min,
+        rubros_presupuestales: min.rubros_presupuestales.map((rp) => ({
+          ...rp,
+          f_monto: String(rp.f_monto).trim(),
+        })),
+      })),
+    }
+  }
+
   static calcularSaldo(data: CalcularSaldo) {
     const { rubros, solicitudes, comprobantes } = data
 
@@ -296,7 +313,8 @@ class ProyectosServices {
 
   static async crear(data: Proyecto) {
     try {
-      const cr = await ProyectoDB.crear(data)
+      const payload = this.trimPayload(data)
+      const cr = await ProyectoDB.crear(payload)
 
       return RespuestaController.exitosa(201, "Proyecto creado con éxito", {
         idInsertado: cr,
@@ -312,7 +330,8 @@ class ProyectosServices {
 
   static async actualizar(id_proyecto: number, data: Proyecto) {
     try {
-      const up = await ProyectoDB.actualizar(id_proyecto, data)
+      const payload = this.trimPayload(data)
+      const up = await ProyectoDB.actualizar(id_proyecto, payload)
 
       return RespuestaController.exitosa(
         200,

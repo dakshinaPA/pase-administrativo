@@ -190,7 +190,13 @@ class UsuarioDB {
 
     const qCoparteUsuario = `UPDATE coparte_usuarios SET cargo=? WHERE id=? LIMIT 1`
 
-    const phCoparteUsuario = [coparte?.cargo, coparte?.id]
+    const qCombinados = [qUsuario]
+    let phCombinados = [...phUsuario]
+
+    if (data.id_rol == rolesUsuario.COPARTE) {
+      qCombinados.push(qCoparteUsuario)
+      phCombinados = [...phCombinados, coparte.cargo, coparte.id]
+    }
 
     return new Promise((res, rej) => {
       connectionDB.getConnection((err, connection) => {
@@ -203,42 +209,24 @@ class UsuarioDB {
           }
 
           //actualizar usuario
-          connection.query(qUsuario, phUsuario, (error, results, fields) => {
-            if (error) {
-              return connection.rollback(() => {
+          connection.query(
+            qCombinados.join(";"),
+            phCombinados,
+            (error, results, fields) => {
+              if (error) {
+                return connection.rollback(() => {
+                  connection.destroy()
+                  rej(error)
+                })
+              }
+
+              connection.commit((err) => {
+                if (err) connection.rollback(() => rej(error))
                 connection.destroy()
-                rej(error)
+                res(true)
               })
             }
-
-            if (data.id_rol == rolesUsuario.COPARTE) {
-              //actualizar coparte - usuario
-              connection.query(
-                qCoparteUsuario,
-                phCoparteUsuario,
-                (error, results, fields) => {
-                  if (error) {
-                    return connection.rollback(() => {
-                      connection.destroy()
-                      rej(error)
-                    })
-                  }
-
-                  connection.commit((err) => {
-                    if (err) connection.rollback(() => rej(err))
-                    connection.destroy()
-                    res(true)
-                  })
-                }
-              )
-              return
-            }
-            connection.commit((err) => {
-              if (err) connection.rollback(() => rej(error))
-              connection.destroy()
-              res(true)
-            })
-          })
+          )
         })
       })
     })

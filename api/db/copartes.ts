@@ -1,10 +1,6 @@
 import { RespuestaDB } from "@api/utils/response"
 import { queryDB, queryDBPlaceHolder } from "./query"
-import {
-  Coparte,
-  NotaCoparte,
-  QueriesCoparte,
-} from "@models/coparte.model"
+import { Coparte, NotaCoparte, QueriesCoparte } from "@models/coparte.model"
 import { fechaActualAEpoch } from "@assets/utils/common"
 import { connectionDB } from "./connectionPool"
 import { UsuarioDB } from "./usuarios"
@@ -262,6 +258,9 @@ class CoparteDB {
       direccion.id,
     ]
 
+    const qCombinados = [qCoparte, qDireccion].join(";")
+    const phCombinados = [...phCoparte, ...phDireccion]
+
     return new Promise((res, rej) => {
       connectionDB.getConnection((err, connection) => {
         if (err) return rej(err)
@@ -272,35 +271,24 @@ class CoparteDB {
             return rej(err)
           }
 
-          //actualizar coparte
-          connection.query(qCoparte, phCoparte, (error, results, fields) => {
-            if (error) {
-              return connection.rollback(() => {
-                connection.destroy()
-                rej(error)
-              })
-            }
-
-            //actualizar direccion
-            connection.query(
-              qDireccion,
-              phDireccion,
-              (error, results, fields) => {
-                if (error) {
-                  return connection.rollback(() => {
-                    connection.destroy()
-                    rej(error)
-                  })
-                }
-
-                connection.commit((err) => {
-                  if (err) connection.rollback(() => rej(err))
+          connection.query(
+            qCombinados,
+            phCombinados,
+            (error, results, fields) => {
+              if (error) {
+                return connection.rollback(() => {
                   connection.destroy()
-                  res(true)
+                  rej(error)
                 })
               }
-            )
-          })
+
+              connection.commit((err) => {
+                if (err) connection.rollback(() => rej(err))
+                connection.destroy()
+                res(true)
+              })
+            }
+          )
         })
       })
     })
