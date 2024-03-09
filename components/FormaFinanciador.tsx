@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useReducer } from "react"
+import { useEffect, useRef, useReducer } from "react"
 import { useRouter } from "next/router"
 import { ChangeEvent } from "@assets/models/formEvents.model"
 import { Financiador, NotaFinanciador } from "@models/financiador.model"
@@ -16,6 +16,7 @@ import { useErrores } from "@hooks/useErrores"
 import { MensajeError } from "./Mensajes"
 import { useSesion } from "@hooks/useSesion"
 import { Banner, EstadoInicialBannerProps, estadoInicialBanner } from "./Banner"
+import { rolesUsuario } from "@assets/utils/constantes"
 
 type ActionTypes =
   | "ERROR_API"
@@ -168,7 +169,7 @@ const FormaFinanciador = () => {
   if (status !== "authenticated" || !user) return null
 
   const router = useRouter()
-  if (user.id_rol == 3) {
+  if (user.id_rol == rolesUsuario.COPARTE) {
     router.push("/")
     return null
   }
@@ -302,9 +303,7 @@ const FormaFinanciador = () => {
   }
 
   const modoEditarOn = () => {
-    dispatch({
-      type: "MODO_EDITAR_ON",
-    })
+    dispatch({ type: "MODO_EDITAR_ON" })
   }
 
   const validarForma = () => {
@@ -340,9 +339,7 @@ const FormaFinanciador = () => {
     if (!validarForma()) return
     console.log(estado.forma)
 
-    dispatch({
-      type: "LOADING_ON",
-    })
+    dispatch({ type: "LOADING_ON" })
 
     const { error, data, mensaje } =
       estado.modalidad === "EDITAR" ? await editar() : await registrar()
@@ -355,9 +352,7 @@ const FormaFinanciador = () => {
       })
     } else {
       if (estado.modalidad === "EDITAR") {
-        dispatch({
-          type: "EDITAR_SUCCESS",
-        })
+        dispatch({ type: "EDITAR_SUCCESS" })
       } else {
         //@ts-ignore
         router.push(`/financiadores/${data.idInsertado}`)

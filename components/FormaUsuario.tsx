@@ -148,7 +148,7 @@ const FormaUsuario = () => {
   if (status !== "authenticated" || !user) return null
 
   const router = useRouter()
-  if (user.id_rol == 3) {
+  if (user.id_rol == rolesUsuario.COPARTE) {
     router.push("/")
     return null
   }

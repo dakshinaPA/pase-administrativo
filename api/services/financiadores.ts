@@ -14,6 +14,36 @@ class FinanciadoresServices {
     }
   }
 
+  static trimPayload(data: Financiador): Financiador {
+    return {
+      ...data,
+      id_alt: data.id_alt.trim(),
+      nombre: data.nombre.trim(),
+      rfc: data.rfc.trim(),
+      actividad: data.actividad.trim(),
+      representante_legal: data.representante_legal.trim(),
+      rfc_representante_legal: data.rfc_representante_legal.trim(),
+      pagina_web: data.pagina_web.trim(),
+      enlace: {
+        nombre: data.enlace.nombre.trim(),
+        apellido_paterno: data.enlace.apellido_paterno.trim(),
+        apellido_materno: data.enlace.apellido_materno.trim(),
+        email: data.enlace.email.trim(),
+        telefono: data.enlace.telefono.trim(),
+      },
+      direccion: {
+        ...data.direccion,
+        calle: data.direccion.calle.trim(),
+        numero_ext: data.direccion.numero_ext.trim(),
+        numero_int: data.direccion.numero_int.trim(),
+        colonia: data.direccion.colonia.trim(),
+        municipio: data.direccion.municipio.trim(),
+        cp: data.direccion.cp.trim(),
+        estado: data.direccion.estado.trim(),
+      },
+    }
+  }
+
   static async obtebnerVmin() {
     const re = await FinanciadorDB.obtenerVminimalista()
 
@@ -93,7 +123,8 @@ class FinanciadoresServices {
 
   static async crear(data: Financiador) {
     try {
-      const cr = await FinanciadorDB.crear(data)
+      const payload = this.trimPayload(data)
+      const cr = await FinanciadorDB.crear(payload)
 
       return RespuestaController.exitosa(201, "Financiador creado con éxito", {
         idInsertado: cr,
@@ -109,7 +140,8 @@ class FinanciadoresServices {
 
   static async actualizar(id: number, data: Financiador) {
     try {
-      const upFianciador = await FinanciadorDB.actualizar(id, data)
+      const payload = this.trimPayload(data)
+      const upFianciador = await FinanciadorDB.actualizar(id, payload)
 
       return RespuestaController.exitosa(
         200,
