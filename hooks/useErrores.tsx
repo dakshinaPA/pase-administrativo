@@ -88,7 +88,7 @@ const useErrores = () => {
             if (!/^.{2,}$/.test(campos[key])) throw [key, "Mínimo 2 caracteres"]
             break
           case "numero_ext":
-            if (!/^[a-zA-Z0-9]{1,}$/.test(campos[key]))
+            if (!/^.{1,}$/.test(campos[key]))
               throw [key, "Mínimo 1 caracter"]
             break
           case "rfc":

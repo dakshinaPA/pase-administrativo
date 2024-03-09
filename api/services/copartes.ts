@@ -15,6 +15,40 @@ class CopartesServices {
     }
   }
 
+  static trimPayload(data: Coparte, crear = true): Coparte {
+    const payload = {
+      ...data,
+      nombre: data.nombre.trim(),
+      nombre_corto: data.nombre_corto.trim(),
+      id_alt: data.id_alt.trim(),
+      representante_legal: data.representante_legal.trim(),
+      rfc: data.rfc.trim(),
+      direccion: {
+        ...data.direccion,
+        calle: data.direccion.calle.trim(),
+        numero_ext: data.direccion.numero_ext.trim(),
+        numero_int: data.direccion.numero_int.trim(),
+        colonia: data.direccion.colonia.trim(),
+        municipio: data.direccion.municipio.trim(),
+        cp: data.direccion.cp.trim(),
+      },
+    }
+
+    if (crear) {
+      payload.enlace = {
+        nombre: data.enlace.nombre.trim(),
+        apellido_paterno: data.enlace.apellido_paterno.trim(),
+        apellido_materno: data.enlace.apellido_materno.trim(),
+        email: data.enlace.email.trim(),
+        telefono: data.enlace.telefono.trim(),
+        password: data.enlace.password.trim(),
+        cargo: data.enlace.cargo.trim(),
+      }
+    }
+
+    return payload
+  }
+
   static async obtenerVmin(id_coparte: number, id_admin: number) {
     const re = await CoparteDB.obtenerVmin(id_coparte, id_admin)
 
@@ -70,7 +104,11 @@ class CopartesServices {
           },
           usuarios: usuarios || [],
           proyectos: coparte.proyectos || [],
-          notas: coparte.notas || [],
+          notas:
+            coparte.notas?.map((nota) => ({
+              ...nota,
+              dt_registro: epochAFecha(nota.dt_registro),
+            })) || [],
         }
       })
 
@@ -88,7 +126,8 @@ class CopartesServices {
 
   static async crear(data: Coparte) {
     try {
-      const idCoparte = await CoparteDB.crear(data)
+      const payload = this.trimPayload(data)
+      const idCoparte = await CoparteDB.crear(payload)
 
       return RespuestaController.exitosa(201, "Coparte creada con éxito", {
         idInsertado: idCoparte,
@@ -104,7 +143,8 @@ class CopartesServices {
 
   static async actualizar(id_coparte: number, data: Coparte) {
     try {
-      const up = await CoparteDB.actualizar(id_coparte, data)
+      const payload = this.trimPayload(data, false)
+      const up = await CoparteDB.actualizar(id_coparte, payload)
 
       return RespuestaController.exitosa(
         200,

@@ -1,4 +1,4 @@
-import { useEffect, useState, useReducer, useRef } from "react"
+import { useEffect, useReducer, useRef } from "react"
 import { useRouter } from "next/router"
 import { ChangeEvent } from "@assets/models/formEvents.model"
 import { Coparte, NotaCoparte } from "@models/coparte.model"
@@ -26,13 +26,32 @@ import { useErrores } from "@hooks/useErrores"
 import { MensajeError } from "./Mensajes"
 import { useSesion } from "@hooks/useSesion"
 import Link from "next/link"
-import { Banner, estadoInicialBanner } from "./Banner"
+import { Banner, EstadoInicialBannerProps, estadoInicialBanner } from "./Banner"
+import { rolesUsuario } from "@assets/utils/constantes"
+
+interface EstadoProps {
+  cargaInicial: Coparte
+  forma: Coparte
+  administradoresDB: UsuarioMin[]
+  isLoading: boolean
+  mensajeNota: string
+  banner: EstadoInicialBannerProps
+  modoEditar: boolean
+  modalidad: "CREAR" | "EDITAR"
+}
 
 type ActionTypes =
-  | "CARGAR_DATA"
+  | "LOADING_ON"
+  | "MODO_EDITAR_ON"
+  | "ERROR_API"
+  | "CARGAR_ADMINISTRADORES"
+  | "CARGA_INICIAL"
+  | "RELOAD"
+  | "CANCELAR_EDITAR"
   | "HANDLE_CHANGE"
   | "DIRECCION"
   | "ENLACE"
+  | "SET_MENSAJE_NOTA"
   | "RECARGAR_NOTAS"
   | "CAMBIO_ESTATUS_LEGAL"
 
@@ -41,12 +60,64 @@ interface ActionDispatch {
   payload?: any
 }
 
-const reducer = (state: Coparte, action: ActionDispatch): Coparte => {
+const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
   const { type, payload } = action
 
   switch (type) {
-    case "CARGAR_DATA":
-      return payload
+    case "LOADING_ON":
+      return {
+        ...state,
+        isLoading: true,
+      }
+    case "MODO_EDITAR_ON":
+      return {
+        ...state,
+        modoEditar: true,
+      }
+    case "ERROR_API":
+      return {
+        ...state,
+        isLoading: false,
+        banner: {
+          show: true,
+          mensaje: payload,
+          tipo: "error",
+        },
+      }
+    case "CARGAR_ADMINISTRADORES":
+      const administradoresDB = payload
+
+      return {
+        ...state,
+        forma: {
+          ...state.forma,
+          id_administrador: administradoresDB[0]?.id || 0,
+        },
+        administradoresDB,
+        isLoading: false,
+      }
+    case "CARGA_INICIAL":
+      return {
+        ...state,
+        forma: payload.coparteDB,
+        cargaInicial: payload.coparteDB,
+        administradoresDB: payload.administradoresDB,
+        isLoading: false,
+      }
+    case "RELOAD":
+      return {
+        ...state,
+        forma: payload,
+        cargaInicial: payload,
+        isLoading: false,
+        modoEditar: false,
+      }
+    case "CANCELAR_EDITAR":
+      return {
+        ...state,
+        forma: { ...state.cargaInicial },
+        modoEditar: false,
+      }
     case "HANDLE_CHANGE":
       let clave = payload[0]
       let valor = payload[1]
@@ -56,40 +127,60 @@ const reducer = (state: Coparte, action: ActionDispatch): Coparte => {
 
       return {
         ...state,
-        [clave]: valor,
+        forma: {
+          ...state.forma,
+          [clave]: valor,
+        },
       }
     case "DIRECCION":
       return {
         ...state,
-        direccion: {
-          ...state.direccion,
-          [payload[0]]: payload[1],
+        forma: {
+          ...state.forma,
+          direccion: {
+            ...state.forma.direccion,
+            [payload[0]]: payload[1],
+          },
         },
       }
     case "ENLACE":
       return {
         ...state,
-        enlace: {
-          ...state.enlace,
-          [payload[0]]: payload[1],
+        forma: {
+          ...state.forma,
+          enlace: {
+            ...state.forma.enlace,
+            [payload[0]]: payload[1],
+          },
         },
+      }
+    case "SET_MENSAJE_NOTA":
+      return {
+        ...state,
+        mensajeNota: payload,
       }
     case "RECARGAR_NOTAS":
       return {
         ...state,
-        notas: payload,
+        forma: {
+          ...state.forma,
+          notas: payload,
+        },
+        mensajeNota: "",
       }
     case "CAMBIO_ESTATUS_LEGAL":
-      if (state.i_estatus_legal == 2) {
-        return {
-          ...state,
+      const i_estatus_legal = payload
+      return {
+        ...state,
+        forma: {
+          ...state.forma,
+          i_estatus_legal,
           representante_legal: "",
           rfc: "",
-        }
+        },
       }
-      return state
     default:
-      return state
+      return { ...state }
   }
 }
 
@@ -129,94 +220,82 @@ const FormaCoparte = () => {
   if (status !== "authenticated" || !user) return null
 
   const router = useRouter()
-  if (user.id_rol == 3) {
+  if (user.id_rol == rolesUsuario.COPARTE) {
     router.push("/")
     return null
   }
 
+  const idCoparte = Number(router.query.idC)
+
+  const estadoInicial: EstadoProps = {
+    cargaInicial: estadoInicialForma,
+    forma: estadoInicialForma,
+    administradoresDB: [],
+    isLoading: true,
+    mensajeNota: "",
+    banner: estadoInicialBanner,
+    modoEditar: !idCoparte,
+    modalidad: idCoparte ? "EDITAR" : "CREAR",
+  }
+
   const { estados } = useCatalogos()
-  const idCoparte = router.query.idC
-  const [estadoForma, dispatch] = useReducer(reducer, estadoInicialForma)
-  const [administardoresDB, setAdministardoresDB] = useState<UsuarioMin[]>([])
-  const [mensajeNota, setMensajeNota] = useState<string>("")
+  const [estado, dispatch] = useReducer(reducer, estadoInicial)
   const { error, validarCampos, formRef } = useErrores()
-  const [isLoading, setIsLoading] = useState<boolean>(true)
-  const [showBanner, setShowBanner] = useState(estadoInicialBanner)
-  const [modoEditar, setModoEditar] = useState<boolean>(!idCoparte)
   const modalidad = idCoparte ? "EDITAR" : "CREAR"
   const inputNota = useRef(null)
   const TblProyectos = useRef(null)
-  const primeraCarga = useRef(null)
 
   useEffect(() => {
     cargarData()
   }, [])
 
-  useEffect(() => {
-    dispatch({
-      type: "CAMBIO_ESTATUS_LEGAL",
-    })
-  }, [estadoForma.i_estatus_legal])
-
   const cargarData = async () => {
     try {
-      const promesas = [obtenerUsuarios({ id_rol: 2, min: true })]
-      if (modalidad === "EDITAR") {
-        promesas.push(obtenerCopartes({ id: Number(idCoparte), min: false }))
-      }
+      const reUsuarios = await obtenerUsuarios({ id_rol: 2, min: true })
+      if (reUsuarios.error) throw reUsuarios
 
-      const resCombinadas = await Promise.all(promesas)
+      const administradoresDB = reUsuarios.data
 
-      for (const rc of resCombinadas) {
-        if (rc.error) throw rc
-      }
-
-      const adminsDB = resCombinadas[0].data as UsuarioMin[]
-      setAdministardoresDB(adminsDB)
-
-      if (modalidad === "EDITAR") {
-        const dataCoparte = resCombinadas[1].data[0] as Coparte
-        primeraCarga.current = dataCoparte
+      if (modalidad === "CREAR") {
         dispatch({
-          type: "CARGAR_DATA",
-          payload: dataCoparte,
+          type: "CARGAR_ADMINISTRADORES",
+          payload: administradoresDB,
         })
       } else {
-        //setear en el select a primer admin en la lista
+        const coparteDB = await obtener()
         dispatch({
-          type: "HANDLE_CHANGE",
-          payload: ["id_administrador", adminsDB[0]?.id || 0],
+          type: "CARGA_INICIAL",
+          payload: { coparteDB, administradoresDB },
         })
       }
     } catch ({ data, mensaje }) {
       console.log(data)
-      setShowBanner({
-        mensaje,
-        show: true,
-        tipo: "error",
+      dispatch({
+        type: "ERROR_API",
+        payload: mensaje,
       })
-    } finally {
-      setIsLoading(false)
     }
   }
 
+  const obtener = async () => {
+    const reCoparte = await obtenerCopartes({ id: idCoparte, min: false })
+    if (reCoparte.error) throw reCoparte
+    return reCoparte.data[0] as Coparte
+  }
+
   const registrar = async () => {
-    const res = await ApiCall.post("/copartes", estadoForma)
+    const res = await ApiCall.post("/copartes", estado.forma)
     return res
   }
 
   const editar = async () => {
-    const res = await ApiCall.put(`/copartes/${idCoparte}`, estadoForma)
+    const res = await ApiCall.put(`/copartes/${idCoparte}`, estado.forma)
     return res
   }
 
   const cancelar = () => {
     if (modalidad === "EDITAR") {
-      dispatch({
-        type: "CARGAR_DATA",
-        payload: primeraCarga.current,
-      })
-      setModoEditar(false)
+      dispatch({ type: "CANCELAR_EDITAR" })
     } else {
       router.push("/copartes")
     }
@@ -235,58 +314,74 @@ const FormaCoparte = () => {
     })
   }
 
+  const handleChangeEstatusLegal = (ev: ChangeEvent) => {
+    const i_estatus = Number(ev.target.value)
+    dispatch({
+      type: "CAMBIO_ESTATUS_LEGAL",
+      payload: i_estatus,
+    })
+  }
+
+  const setMensajeNota = (ev: ChangeEvent) => {
+    dispatch({
+      type: "SET_MENSAJE_NOTA",
+      payload: ev.target.value,
+    })
+  }
+
   const agregarNota = async () => {
-    if (mensajeNota.length < 10) {
+    if (estado.mensajeNota.length < 10) {
       inputNota.current.focus()
       return
     }
 
-    const cr = await ApiCall.post(`/copartes/${idCoparte}/notas`, {
-      id_usuario: user.id,
-      mensaje: mensajeNota,
-    })
-    if (cr.error) {
-      console.log(cr.data)
-    } else {
-      //limpiar el input
-      setMensajeNota("")
+    try {
+      const cr = await ApiCall.post(`/copartes/${idCoparte}/notas`, {
+        id_usuario: user.id,
+        mensaje: estado.mensajeNota,
+      })
+      if (cr.error) throw cr
 
       const re = await ApiCall.get(`/copartes/${idCoparte}/notas`)
-      if (re.error) {
-        console.log(re.data)
-      } else {
-        const notasDB = re.data as NotaCoparte[]
-        dispatch({
-          type: "RECARGAR_NOTAS",
-          payload: notasDB,
-        })
-      }
+      if (re.error) throw re
+
+      const notasDB = re.data as NotaCoparte[]
+      dispatch({
+        type: "RECARGAR_NOTAS",
+        payload: notasDB,
+      })
+    } catch ({ data, mensaje }) {
+      console.log(data)
+      dispatch({
+        type: "ERROR_API",
+        payload: mensaje,
+      })
     }
   }
 
   const validarForma = () => {
     const campos = {
-      id_alt: estadoForma.id_alt,
-      nombre_coparte: estadoForma.nombre,
-      nombre_corto: estadoForma.nombre_corto,
-      representante_legal: estadoForma.representante_legal,
-      rfc_organizacion: estadoForma.rfc,
-      id_administrador: estadoForma.id_administrador,
-      calle: estadoForma.direccion.calle,
-      numero_ext: estadoForma.direccion.numero_ext,
-      colonia: estadoForma.direccion.colonia,
-      municipio: estadoForma.direccion.municipio,
-      cp: estadoForma.direccion.cp,
-      nombre: estadoForma.enlace?.nombre,
-      apellido_paterno: estadoForma.enlace?.apellido_paterno,
-      apellido_materno: estadoForma.enlace?.apellido_materno,
-      email: estadoForma.enlace?.email,
-      telefono: estadoForma.enlace?.telefono,
-      password: estadoForma.enlace?.password,
-      cargo: estadoForma.enlace?.cargo,
+      id_alt: estado.forma.id_alt,
+      nombre_coparte: estado.forma.nombre,
+      nombre_corto: estado.forma.nombre_corto,
+      representante_legal: estado.forma.representante_legal,
+      rfc_organizacion: estado.forma.rfc,
+      id_administrador: estado.forma.id_administrador,
+      calle: estado.forma.direccion.calle,
+      numero_ext: estado.forma.direccion.numero_ext,
+      colonia: estado.forma.direccion.colonia,
+      municipio: estado.forma.direccion.municipio,
+      cp: estado.forma.direccion.cp,
+      nombre: estado.forma.enlace?.nombre,
+      apellido_paterno: estado.forma.enlace?.apellido_paterno,
+      apellido_materno: estado.forma.enlace?.apellido_materno,
+      email: estado.forma.enlace?.email,
+      telefono: estado.forma.enlace?.telefono,
+      password: estado.forma.enlace?.password,
+      cargo: estado.forma.enlace?.cargo,
     }
 
-    if (estadoForma.i_estatus_legal == 2) {
+    if (estado.forma.i_estatus_legal == 2) {
       delete campos.representante_legal
       delete campos.rfc_organizacion
     }
@@ -306,31 +401,34 @@ const FormaCoparte = () => {
 
   const handleSubmit = async (ev: React.SyntheticEvent) => {
     if (!validarForma()) return
-    console.log(estadoForma)
+    console.log(estado.forma)
 
-    setIsLoading(true)
-    const { error, data, mensaje } =
-      modalidad === "EDITAR" ? await editar() : await registrar()
-    setIsLoading(false)
+    dispatch({ type: "LOADING_ON" })
 
-    if (error) {
-      console.log(data)
-      setShowBanner({
-        mensaje,
-        show: true,
-        tipo: "error",
-      })
-    } else {
+    try {
+      const action = modalidad === "EDITAR" ? await editar() : await registrar()
+      if (action.error) throw action
+
       if (modalidad === "CREAR") {
         //@ts-ignore
-        router.push(`/copartes/${data.idInsertado}`)
+        router.push(`/copartes/${action.data.idInsertado}`)
       } else {
-        setModoEditar(false)
+        const coparteDB = await obtener()
+        dispatch({
+          type: "RELOAD",
+          payload: coparteDB,
+        })
       }
+    } catch ({ data, mensaje }) {
+      console.log(data)
+      dispatch({
+        type: "ERROR_API",
+        payload: mensaje,
+      })
     }
   }
 
-  if (isLoading) {
+  if (estado.isLoading) {
     return (
       <Contenedor>
         <Loader />
@@ -338,10 +436,10 @@ const FormaCoparte = () => {
     )
   }
 
-  if (showBanner.show) {
+  if (estado.banner.show) {
     return (
       <Contenedor>
-        <Banner tipo={showBanner.tipo} mensaje={showBanner.mensaje} />
+        <Banner tipo={estado.banner.tipo} mensaje={estado.banner.mensaje} />
       </Contenedor>
     )
   }
@@ -354,10 +452,11 @@ const FormaCoparte = () => {
             <BtnBack navLink="/copartes" />
             {!idCoparte && <h2 className="color1 mb-0">Registrar coparte</h2>}
           </div>
-          {!modoEditar &&
-            idCoparte &&
-            (estadoForma.id_administrador == user.id || user.id_rol == 1) && (
-              <BtnEditar onClick={() => setModoEditar(true)} />
+          {modalidad === "EDITAR" &&
+            !estado.modoEditar &&
+            (estado.forma.id_administrador == user.id ||
+              user.id_rol == rolesUsuario.SUPER_USUARIO) && (
+              <BtnEditar onClick={() => dispatch({ type: "MODO_EDITAR_ON" })} />
             )}
         </div>
       </div>
@@ -369,7 +468,7 @@ const FormaCoparte = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="id_alt"
-            value={estadoForma.id_alt}
+            value={estado.forma.id_alt}
             disabled={Boolean(idCoparte)}
           />
           {error.campo == "id_alt" && <MensajeError mensaje={error.mensaje} />}
@@ -381,8 +480,8 @@ const FormaCoparte = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="nombre_coparte"
-            value={estadoForma.nombre}
-            disabled={!modoEditar}
+            value={estado.forma.nombre}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "nombre_coparte" && (
             <MensajeError mensaje={error.mensaje} />
@@ -395,8 +494,8 @@ const FormaCoparte = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="nombre_corto"
-            value={estadoForma.nombre_corto}
-            disabled={!modoEditar}
+            value={estado.forma.nombre_corto}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "nombre_corto" && (
             <MensajeError mensaje={error.mensaje} />
@@ -406,10 +505,9 @@ const FormaCoparte = () => {
           <label className="form-label">Estatus legal</label>
           <select
             className="form-control"
-            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-            name="i_estatus_legal"
-            value={estadoForma.i_estatus_legal}
-            disabled={!modoEditar}
+            onChange={handleChangeEstatusLegal}
+            value={estado.forma.i_estatus_legal}
+            disabled={!estado.modoEditar}
           >
             <option value="1">Constituida</option>
             <option value="2">No constituida</option>
@@ -423,8 +521,8 @@ const FormaCoparte = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="representante_legal"
-            value={estadoForma.representante_legal}
-            disabled={!modoEditar || estadoForma.i_estatus_legal != 1}
+            value={estado.forma.representante_legal}
+            disabled={!estado.modoEditar || estado.forma.i_estatus_legal != 1}
           />
           {error.campo == "representante_legal" && (
             <MensajeError mensaje={error.mensaje} />
@@ -438,8 +536,8 @@ const FormaCoparte = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="rfc_organizacion"
-            value={estadoForma.rfc}
-            disabled={!modoEditar || estadoForma.i_estatus_legal != 1}
+            value={estado.forma.rfc}
+            disabled={!estado.modoEditar || estado.forma.i_estatus_legal != 1}
           />
           {error.campo == "rfc_organizacion" && (
             <MensajeError mensaje={error.mensaje} />
@@ -451,14 +549,16 @@ const FormaCoparte = () => {
             className="form-control"
             name="id_administrador"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-            value={estadoForma.id_administrador}
-            disabled={!modoEditar}
+            value={estado.forma.id_administrador}
+            disabled={!estado.modoEditar}
           >
-            {administardoresDB.map(({ id, nombre, apellido_paterno }) => (
-              <option key={id} value={id}>
-                {nombre} {apellido_paterno}
-              </option>
-            ))}
+            {estado.administradoresDB.map(
+              ({ id, nombre, apellido_paterno }) => (
+                <option key={id} value={id}>
+                  {nombre} {apellido_paterno}
+                </option>
+              )
+            )}
           </select>
           {error.campo == "id_administrador" && (
             <MensajeError mensaje={error.mensaje} />
@@ -477,8 +577,8 @@ const FormaCoparte = () => {
             type="text"
             onChange={(e) => handleChange(e, "DIRECCION")}
             name="calle"
-            value={estadoForma.direccion.calle}
-            disabled={!modoEditar}
+            value={estado.forma.direccion.calle}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "calle" && <MensajeError mensaje={error.mensaje} />}
         </div>
@@ -489,8 +589,8 @@ const FormaCoparte = () => {
             type="text"
             onChange={(e) => handleChange(e, "DIRECCION")}
             name="numero_ext"
-            value={estadoForma.direccion.numero_ext}
-            disabled={!modoEditar}
+            value={estado.forma.direccion.numero_ext}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "numero_ext" && (
             <MensajeError mensaje={error.mensaje} />
@@ -503,8 +603,8 @@ const FormaCoparte = () => {
             type="text"
             onChange={(e) => handleChange(e, "DIRECCION")}
             name="numero_int"
-            value={estadoForma.direccion.numero_int}
-            disabled={!modoEditar}
+            value={estado.forma.direccion.numero_int}
+            disabled={!estado.modoEditar}
           />
         </div>
         <div className="col-12 col-lg-6 mb-3">
@@ -514,8 +614,8 @@ const FormaCoparte = () => {
             type="text"
             onChange={(e) => handleChange(e, "DIRECCION")}
             name="colonia"
-            value={estadoForma.direccion.colonia}
-            disabled={!modoEditar}
+            value={estado.forma.direccion.colonia}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "colonia" && <MensajeError mensaje={error.mensaje} />}
         </div>
@@ -526,8 +626,8 @@ const FormaCoparte = () => {
             type="text"
             onChange={(e) => handleChange(e, "DIRECCION")}
             name="municipio"
-            value={estadoForma.direccion.municipio}
-            disabled={!modoEditar}
+            value={estado.forma.direccion.municipio}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "municipio" && (
             <MensajeError mensaje={error.mensaje} />
@@ -540,8 +640,8 @@ const FormaCoparte = () => {
             type="text"
             onChange={(e) => handleChange(e, "DIRECCION")}
             name="cp"
-            value={estadoForma.direccion.cp}
-            disabled={!modoEditar}
+            value={estado.forma.direccion.cp}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "cp" && <MensajeError mensaje={error.mensaje} />}
         </div>
@@ -551,8 +651,8 @@ const FormaCoparte = () => {
             className="form-control"
             onChange={(e) => handleChange(e, "DIRECCION")}
             name="id_estado"
-            value={estadoForma.direccion.id_estado}
-            disabled={!modoEditar}
+            value={estado.forma.direccion.id_estado}
+            disabled={!estado.modoEditar}
           >
             {estados.map(({ id, nombre }) => (
               <option key={id} value={id}>
@@ -576,7 +676,7 @@ const FormaCoparte = () => {
                 type="text"
                 onChange={(e) => handleChange(e, "ENLACE")}
                 name="nombre"
-                value={estadoForma.enlace.nombre}
+                value={estado.forma.enlace.nombre}
               />
               {error.campo == "nombre" && (
                 <MensajeError mensaje={error.mensaje} />
@@ -589,7 +689,7 @@ const FormaCoparte = () => {
                 type="text"
                 onChange={(e) => handleChange(e, "ENLACE")}
                 name="apellido_paterno"
-                value={estadoForma.enlace.apellido_paterno}
+                value={estado.forma.enlace.apellido_paterno}
               />
               {error.campo == "apellido_paterno" && (
                 <MensajeError mensaje={error.mensaje} />
@@ -602,7 +702,7 @@ const FormaCoparte = () => {
                 type="text"
                 onChange={(e) => handleChange(e, "ENLACE")}
                 name="apellido_materno"
-                value={estadoForma.enlace.apellido_materno}
+                value={estado.forma.enlace.apellido_materno}
               />
               {error.campo == "apellido_materno" && (
                 <MensajeError mensaje={error.mensaje} />
@@ -615,7 +715,7 @@ const FormaCoparte = () => {
                 type="text"
                 onChange={(e) => handleChange(e, "ENLACE")}
                 name="email"
-                value={estadoForma.enlace.email}
+                value={estado.forma.enlace.email}
               />
               {error.campo == "email" && (
                 <MensajeError mensaje={error.mensaje} />
@@ -628,7 +728,7 @@ const FormaCoparte = () => {
                 type="text"
                 onChange={(e) => handleChange(e, "ENLACE")}
                 name="telefono"
-                value={estadoForma.enlace.telefono}
+                value={estado.forma.enlace.telefono}
               />
               {error.campo == "telefono" && (
                 <MensajeError mensaje={error.mensaje} />
@@ -642,7 +742,7 @@ const FormaCoparte = () => {
                 type="text"
                 onChange={(e) => handleChange(e, "ENLACE")}
                 name="password"
-                value={estadoForma.enlace.password}
+                value={estado.forma.enlace.password}
               />
               {error.campo == "password" && (
                 <MensajeError mensaje={error.mensaje} />
@@ -655,7 +755,7 @@ const FormaCoparte = () => {
                 type="text"
                 onChange={(e) => handleChange(e, "ENLACE")}
                 name="cargo"
-                value={estadoForma.enlace.cargo}
+                value={estado.forma.enlace.cargo}
               />
               {error.campo == "cargo" && (
                 <MensajeError mensaje={error.mensaje} />
@@ -663,7 +763,7 @@ const FormaCoparte = () => {
             </div>
           </>
         )}
-        {modoEditar && (
+        {estado.modoEditar && (
           <div className="col-12 text-end">
             <BtnCancelar onclick={cancelar} margin={"r"} />
             <BtnRegistrar modalidad={modalidad} margin={false} />
@@ -676,7 +776,7 @@ const FormaCoparte = () => {
           <div className="row mb-5">
             <div className="col-12 mb-3 d-flex justify-content-between">
               <h2 className="color1 mb-0">Usuarios</h2>
-              {(estadoForma.id_administrador == user.id ||
+              {(estado.forma.id_administrador == user.id ||
                 user.id_rol == 1) && (
                 <Link
                   href={`/copartes/${idCoparte}/usuarios/registro`}
@@ -699,7 +799,7 @@ const FormaCoparte = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {estadoForma.usuarios.map(
+                  {estado.forma.usuarios.map(
                     ({
                       id,
                       nombre,
@@ -742,7 +842,7 @@ const FormaCoparte = () => {
           <div className="row mb-5">
             <div className="col-12 mb-3 d-flex justify-content-between">
               <h2 className="color1 mb-0">Proyectos</h2>
-              {estadoForma.id_administrador == user.id ||
+              {estado.forma.id_administrador == user.id ||
                 (user.id_rol == 1 && (
                   <Link
                     href={`/copartes/${idCoparte}/proyectos/registro`}
@@ -767,7 +867,7 @@ const FormaCoparte = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {estadoForma.proyectos.map(
+                  {estado.forma.proyectos.map(
                     ({
                       id,
                       id_alt,
@@ -816,7 +916,7 @@ const FormaCoparte = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {estadoForma.notas.map(
+                  {estado.forma.notas.map(
                     ({ id, usuario, mensaje, dt_registro }) => (
                       <tr key={id}>
                         <td>{usuario}</td>
@@ -832,8 +932,8 @@ const FormaCoparte = () => {
               <input
                 type="text"
                 className="form-control"
-                value={mensajeNota}
-                onChange={({ target }) => setMensajeNota(target.value)}
+                value={estado.mensajeNota}
+                onChange={setMensajeNota}
                 placeholder="mensaje de la nota"
                 ref={inputNota}
               ></input>
