@@ -2,6 +2,7 @@ import { UsuarioDB } from "@api/db/usuarios"
 import { RespuestaController } from "@api/utils/response"
 import { LoginUsuario, ResUsuarioDB } from "@api/models/usuario.model"
 import { Usuario, QueriesUsuario, UsuarioMin } from "@models/usuario.model"
+import { rolesUsuario } from "@assets/utils/constantes"
 
 class UsuariosServices {
   static async login(dataUsuario: LoginUsuario) {
@@ -42,7 +43,7 @@ class UsuariosServices {
       rol: usuariosDB.rol,
     }
 
-    if (usuariosDB.id_rol == 3) {
+    if (usuariosDB.id_rol == rolesUsuario.COPARTE) {
       dataUsuario = {
         ...dataUsuario,
         coparte: {
@@ -56,6 +57,22 @@ class UsuariosServices {
     }
 
     return dataUsuario
+  }
+
+  static trimPayload(data: Usuario): Usuario {
+    return {
+      ...data,
+      nombre: data.nombre.trim(),
+      apellido_paterno: data.apellido_paterno.trim(),
+      apellido_materno: data.apellido_materno.trim(),
+      email: data.email.trim(),
+      telefono: data.telefono.trim(),
+      password: data.password.trim(),
+      coparte: {
+        ...data.coparte,
+        cargo: data.coparte?.cargo?.trim(),
+      },
+    }
   }
 
   static async obtener(queries: QueriesUsuario) {
@@ -89,7 +106,8 @@ class UsuariosServices {
 
   static async crear(data: Usuario) {
     try {
-      const cr = await UsuarioDB.crear(data)
+      const payload = this.trimPayload(data)
+      const cr = await UsuarioDB.crear(payload)
 
       return RespuestaController.exitosa(201, "Usuario creado con éxito", {
         idInsertado: cr,
@@ -105,7 +123,8 @@ class UsuariosServices {
 
   static async actualizar(id_usuario: number, data: Usuario) {
     try {
-      const upUsuario = await UsuarioDB.actualizar(id_usuario, data)
+      const payload = this.trimPayload(data)
+      const upUsuario = await UsuarioDB.actualizar(id_usuario, payload)
 
       return RespuestaController.exitosa(
         200,

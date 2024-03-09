@@ -4,6 +4,7 @@ import { QueriesUsuario, Usuario } from "@models/usuario.model"
 import { LoginUsuario } from "@api/models/usuario.model"
 import { RespuestaDB } from "@api/utils/response"
 import { fechaActualAEpoch } from "@assets/utils/common"
+import { rolesUsuario } from "@assets/utils/constantes"
 
 class UsuarioDB {
   static encryptKey = () => "dakshina23"
@@ -137,7 +138,7 @@ class UsuarioDB {
             const id_usuario = results.insertId
             phCoparteUsuario.unshift(id_usuario)
 
-            if (data.id_rol == 3) {
+            if (data.id_rol == rolesUsuario.COPARTE) {
               //crear coparte - usuario
               connection.query(
                 qCoparteUsuario,
@@ -210,7 +211,7 @@ class UsuarioDB {
               })
             }
 
-            if (data.id_rol == 3) {
+            if (data.id_rol == rolesUsuario.COPARTE) {
               //actualizar coparte - usuario
               connection.query(
                 qCoparteUsuario,

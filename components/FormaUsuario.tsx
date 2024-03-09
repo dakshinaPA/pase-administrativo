@@ -1,4 +1,4 @@
-import { useEffect, useState, useReducer, useRef } from "react"
+import { useEffect, useReducer } from "react"
 import { useRouter } from "next/router"
 import { ChangeEvent } from "@assets/models/formEvents.model"
 import { Usuario } from "@models/usuario.model"
@@ -16,33 +16,113 @@ import { obtenerCopartes, obtenerUsuarios } from "@assets/utils/common"
 import { useErrores } from "@hooks/useErrores"
 import { MensajeError } from "./Mensajes"
 import { useSesion } from "@hooks/useSesion"
-import { Banner, estadoInicialBanner } from "./Banner"
+import { Banner, EstadoInicialBannerProps, estadoInicialBanner } from "./Banner"
+import { rolesUsuario } from "@assets/utils/constantes"
 
-type ActionTypes = "CARGA_INICIAL" | "HANDLE_CHANGE" | "HANDLE_CHANGE_COPARTE"
+interface EstadoProps {
+  cargaInicial: Usuario
+  forma: Usuario
+  copartesDB: CoparteMin[]
+  isLoading: boolean
+  banner: EstadoInicialBannerProps
+  modoEditar: boolean
+  modalidad: "CREAR" | "EDITAR"
+}
+
+type ActionTypes =
+  | "LOADING_ON"
+  | "LOADING_OFF"
+  | "ERROR_API"
+  | "CARGAR_COPARTES"
+  | "CARGA_INICIAL"
+  | "HANDLE_CHANGE"
+  | "HANDLE_CHANGE_COPARTE"
+  | "MODO_EDITAR_ON"
+  | "CANCELAR_EDITAR"
 
 interface ActionDispatch {
   type: ActionTypes
-  payload: any
+  payload?: any
 }
 
-const reducer = (state: Usuario, action: ActionDispatch): Usuario => {
+const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
   const { type, payload } = action
 
   switch (type) {
+    case "LOADING_ON":
+      return {
+        ...state,
+        isLoading: true,
+      }
+    case "LOADING_OFF":
+      return {
+        ...state,
+        isLoading: false,
+        modoEditar: false,
+      }
+    case "ERROR_API":
+      return {
+        ...state,
+        isLoading: false,
+        banner: {
+          show: true,
+          mensaje: payload,
+          tipo: "error",
+        },
+      }
+    case "CARGAR_COPARTES":
+      const copartesDB = payload
+
+      return {
+        ...state,
+        copartesDB: copartesDB,
+        forma: {
+          ...state.forma,
+          coparte: {
+            ...state.forma.coparte,
+            id_coparte: copartesDB[0]?.id,
+          },
+        },
+        isLoading: false,
+      }
     case "CARGA_INICIAL":
-      return payload
+      return {
+        ...state,
+        forma: payload,
+        cargaInicial: payload,
+        isLoading: false,
+      }
     case "HANDLE_CHANGE":
       return {
         ...state,
-        [payload.name]: payload.value,
+        forma: {
+          ...state.forma,
+          [payload.name]: payload.value,
+        },
       }
     case "HANDLE_CHANGE_COPARTE":
       return {
         ...state,
-        coparte: {
-          ...state.coparte,
-          [payload.name]: payload.value,
+        forma: {
+          ...state.forma,
+          coparte: {
+            ...state.forma.coparte,
+            [payload.name]: payload.value,
+          },
         },
+      }
+    case "MODO_EDITAR_ON":
+      return {
+        ...state,
+        modoEditar: true,
+      }
+    case "CANCELAR_EDITAR":
+      return {
+        ...state,
+        forma: {
+          ...state.cargaInicial,
+        },
+        modoEditar: false,
       }
     default:
       return state
@@ -74,29 +154,33 @@ const FormaUsuario = () => {
   }
   const idCoparte = Number(router.query.idC)
   const idUsuario = Number(router.query.id)
-  const [estadoForma, dispatch] = useReducer(reducer, estadoInicialForma)
-  const [copartesDB, setCopartesDB] = useState<CoparteMin[]>([])
+
+  const estadoInicial: EstadoProps = {
+    cargaInicial: estadoInicialForma,
+    forma: estadoInicialForma,
+    copartesDB: [],
+    isLoading: true,
+    banner: estadoInicialBanner,
+    modoEditar: !idUsuario,
+    modalidad: idUsuario ? "EDITAR" : "CREAR",
+  }
+
+  const [estado, dispatch] = useReducer(reducer, estadoInicial)
   const { error, validarCampos, formRef } = useErrores()
-  const [isLoading, setIsLoading] = useState<boolean>(false)
-  const [showBanner, setShowBanner] = useState(estadoInicialBanner)
-  const [modoEditar, setModoEditar] = useState<boolean>(!idUsuario)
   const modalidad = idUsuario ? "EDITAR" : "CREAR"
-  const primeraCarga = useRef(null)
 
   useEffect(() => {
     cargarData()
   }, [])
 
   const cargarData = async () => {
-    setIsLoading(true)
-
     try {
       if (modalidad === "CREAR") {
         let queries: QueriesCoparte = {}
 
         if (idCoparte) {
           queries = { id: idCoparte }
-        } else if (user.id_rol == 2) {
+        } else if (user.id_rol == rolesUsuario.ADMINISTRADOR) {
           queries = { id_admin: user.id }
         }
 
@@ -104,20 +188,16 @@ const FormaUsuario = () => {
         if (reCopartes.error) throw reCopartes
 
         const copartes = reCopartes.data as CoparteMin[]
-        setCopartesDB(copartes)
+
         dispatch({
-          type: "HANDLE_CHANGE_COPARTE",
-          payload: {
-            name: "id_coparte",
-            value: copartes[0]?.id || 0,
-          },
+          type: "CARGAR_COPARTES",
+          payload: copartes,
         })
       } else {
         const reUsuario = await obtenerUsuarios({ id: idUsuario })
         if (reUsuario.error) throw reUsuario
 
         const usuario = reUsuario.data[0] as Usuario
-        primeraCarga.current = usuario
         dispatch({
           type: "CARGA_INICIAL",
           payload: usuario,
@@ -125,31 +205,24 @@ const FormaUsuario = () => {
       }
     } catch ({ data, mensaje }) {
       console.log(data)
-      setShowBanner({
-        mensaje,
-        show: true,
-        tipo: "error",
+      dispatch({
+        type: "ERROR_API",
+        payload: mensaje,
       })
-    } finally {
-      setIsLoading(false)
     }
   }
 
   const registrar = async () => {
-    return ApiCall.post("/usuarios", estadoForma)
+    return ApiCall.post("/usuarios", estado.forma)
   }
 
   const editar = async () => {
-    return ApiCall.put(`/usuarios/${idUsuario}`, estadoForma)
+    return ApiCall.put(`/usuarios/${idUsuario}`, estado.forma)
   }
 
   const cancelar = () => {
     if (modalidad === "EDITAR") {
-      dispatch({
-        type: "CARGA_INICIAL",
-        payload: primeraCarga.current,
-      })
-      setModoEditar(false)
+      dispatch({ type: "CANCELAR_EDITAR" })
     } else {
       router.push("/usuarios")
     }
@@ -170,17 +243,21 @@ const FormaUsuario = () => {
 
   const validarForma = () => {
     const campos = {
-      nombre: estadoForma.nombre,
-      apellido_paterno: estadoForma.apellido_paterno,
-      apellido_materno: estadoForma.apellido_materno,
-      email: estadoForma.email,
-      telefono: estadoForma.telefono,
-      password: estadoForma.password,
-      id_coparte: estadoForma.coparte?.id_coparte,
-      cargo: estadoForma.coparte?.cargo,
+      nombre: estado.forma.nombre,
+      apellido_paterno: estado.forma.apellido_paterno,
+      apellido_materno: estado.forma.apellido_materno,
+      email: estado.forma.email,
+      telefono: estado.forma.telefono,
+      password: estado.forma.password,
+      id_coparte: estado.forma.coparte?.id_coparte,
+      cargo: estado.forma.coparte?.cargo,
     }
 
-    if ([1, 2].includes(Number(estadoForma.id_rol))) {
+    if (
+      [rolesUsuario.SUPER_USUARIO, rolesUsuario.ADMINISTRADOR].includes(
+        Number(estado.forma.id_rol)
+      )
+    ) {
       delete campos.id_coparte
       delete campos.cargo
     }
@@ -190,31 +267,29 @@ const FormaUsuario = () => {
 
   const handleSubmit = async () => {
     if (!validarForma()) return
-    console.log(estadoForma)
+    console.log(estado.forma)
 
-    setIsLoading(true)
+    dispatch({ type: "LOADING_ON" })
     const { error, data, mensaje } =
       modalidad === "EDITAR" ? await editar() : await registrar()
-    setIsLoading(false)
 
     if (error) {
       console.log(data)
-      setShowBanner({
-        mensaje,
-        show: true,
-        tipo: "error",
+      dispatch({
+        type: "ERROR_API",
+        payload: mensaje,
       })
     } else {
       if (modalidad === "CREAR") {
         //@ts-ignore
         router.push(`/usuarios/${data.idInsertado}`)
       } else {
-        setModoEditar(false)
+        dispatch({ type: "LOADING_OFF" })
       }
     }
   }
 
-  if (isLoading) {
+  if (estado.isLoading) {
     return (
       <Contenedor>
         <Loader />
@@ -222,10 +297,10 @@ const FormaUsuario = () => {
     )
   }
 
-  if (showBanner.show) {
+  if (estado.banner.show) {
     return (
       <Contenedor>
-        <Banner tipo={showBanner.tipo} mensaje={showBanner.mensaje} />
+        <Banner tipo={estado.banner.tipo} mensaje={estado.banner.mensaje} />
       </Contenedor>
     )
   }
@@ -235,10 +310,12 @@ const FormaUsuario = () => {
         <div className="col-12 d-flex justify-content-between">
           <div className="d-flex align-items-center">
             <BtnBack navLink="/usuarios" />
-            {!idUsuario && <h2 className="color1 mb-0">Registrar usuario</h2>}
+            {modalidad === "CREAR" && (
+              <h2 className="color1 mb-0">Registrar usuario</h2>
+            )}
           </div>
-          {!modoEditar && idUsuario && (
-            <BtnEditar onClick={() => setModoEditar(true)} />
+          {modalidad === "EDITAR" && !estado.modoEditar && (
+            <BtnEditar onClick={() => dispatch({ type: "MODO_EDITAR_ON" })} />
           )}
         </div>
       </div>
@@ -250,8 +327,8 @@ const FormaUsuario = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="nombre"
-            value={estadoForma.nombre}
-            disabled={!modoEditar}
+            value={estado.forma.nombre}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "nombre" && <MensajeError mensaje={error.mensaje} />}
         </div>
@@ -262,8 +339,8 @@ const FormaUsuario = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="apellido_paterno"
-            value={estadoForma.apellido_paterno}
-            disabled={!modoEditar}
+            value={estado.forma.apellido_paterno}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "apellido_paterno" && (
             <MensajeError mensaje={error.mensaje} />
@@ -276,8 +353,8 @@ const FormaUsuario = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="apellido_materno"
-            value={estadoForma.apellido_materno}
-            disabled={!modoEditar}
+            value={estado.forma.apellido_materno}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "apellido_materno" && (
             <MensajeError mensaje={error.mensaje} />
@@ -290,8 +367,8 @@ const FormaUsuario = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="email"
-            value={estadoForma.email}
-            disabled={!modoEditar}
+            value={estado.forma.email}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "email" && <MensajeError mensaje={error.mensaje} />}
         </div>
@@ -302,8 +379,8 @@ const FormaUsuario = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="telefono"
-            value={estadoForma.telefono}
-            disabled={!modoEditar}
+            value={estado.forma.telefono}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "telefono" && (
             <MensajeError mensaje={error.mensaje} />
@@ -316,8 +393,8 @@ const FormaUsuario = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="password"
-            value={estadoForma.password}
-            disabled={!modoEditar}
+            value={estado.forma.password}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "password" && (
             <MensajeError mensaje={error.mensaje} />
@@ -329,7 +406,7 @@ const FormaUsuario = () => {
             className="form-control"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="id_rol"
-            value={estadoForma.id_rol}
+            value={estado.forma.id_rol}
             disabled={
               Boolean(idUsuario) || Boolean(idCoparte) || user.id_rol == 2
             }
@@ -339,7 +416,7 @@ const FormaUsuario = () => {
             <option value="3">Coparte</option>
           </select>
         </div>
-        {estadoForma.id_rol == 3 && (
+        {estado.forma.id_rol == 3 && (
           <>
             <div className="col-12 col-md-6 col-lg-4 mb-3">
               <label className="form-label">Coparte</label>
@@ -348,10 +425,10 @@ const FormaUsuario = () => {
                   className="form-control"
                   onChange={(e) => handleChange(e, "HANDLE_CHANGE_COPARTE")}
                   name="id_coparte"
-                  value={estadoForma.coparte.id_coparte}
+                  value={estado.forma.coparte.id_coparte}
                   disabled={Boolean(idUsuario) || Boolean(idCoparte)}
                 >
-                  {copartesDB.map(({ id, nombre }) => (
+                  {estado.copartesDB.map(({ id, nombre }) => (
                     <option key={id} value={id}>
                       {nombre}
                     </option>
@@ -361,7 +438,7 @@ const FormaUsuario = () => {
                 <input
                   className="form-control"
                   type="text"
-                  value={estadoForma.coparte.coparte}
+                  value={estado.forma.coparte.coparte}
                   disabled
                 />
               )}
@@ -376,8 +453,8 @@ const FormaUsuario = () => {
                 type="text"
                 onChange={(e) => handleChange(e, "HANDLE_CHANGE_COPARTE")}
                 name="cargo"
-                value={estadoForma.coparte.cargo}
-                disabled={!modoEditar}
+                value={estado.forma.coparte.cargo}
+                disabled={!estado.modoEditar}
               />
               {error.campo == "cargo" && (
                 <MensajeError mensaje={error.mensaje} />
@@ -385,7 +462,7 @@ const FormaUsuario = () => {
             </div>
           </>
         )}
-        {modoEditar && (
+        {estado.modoEditar && (
           <div className="col-12 text-end">
             <BtnCancelar onclick={cancelar} margin={"r"} />
             <BtnRegistrar modalidad={modalidad} margin={false} />
