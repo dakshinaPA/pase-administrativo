@@ -101,7 +101,12 @@ class ColaboradorServices {
 
   static async crear(data: ColaboradorProyecto) {
     try {
-      const payload = this.trimPayload(data)
+      // quitar periodos servicio si es colaborador sin pago
+      let payload: ColaboradorProyecto = {
+        ...data,
+        periodos_servicio: data.i_tipo == 3 ? [] : [...data.periodos_servicio],
+      }
+      payload = this.trimPayload(data)
       const cr = await ColaboradorDB.crear(payload)
 
       return RespuestaController.exitosa(201, "Colaborador creado con éxito", {

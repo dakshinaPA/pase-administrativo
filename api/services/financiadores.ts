@@ -25,6 +25,7 @@ class FinanciadoresServices {
       rfc_representante_legal: data.rfc_representante_legal.trim(),
       pagina_web: data.pagina_web.trim(),
       enlace: {
+        ...data.direccion,
         nombre: data.enlace.nombre.trim(),
         apellido_paterno: data.enlace.apellido_paterno.trim(),
         apellido_materno: data.enlace.apellido_materno.trim(),

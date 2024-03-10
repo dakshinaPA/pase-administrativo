@@ -254,7 +254,7 @@ const Colaboradores = () => {
                           <LinkAccion
                             margin={false}
                             icono="bi-eye-fill"
-                            ruta={`/proyectos/${id_proyecto}/colaboradores/${id}`}
+                            ruta={`/colaboradores/${id}`}
                             title="ver detalle"
                           />
                           {user.id_rol != 3 && (

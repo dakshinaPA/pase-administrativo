@@ -32,11 +32,25 @@ import {
 import { useErrores } from "@hooks/useErrores"
 import { MensajeError } from "./Mensajes"
 import { useSesion } from "@hooks/useSesion"
-import { Banner, estadoInicialBanner, mensajesBanner } from "./Banner"
+import {
+  Banner,
+  EstadoInicialBannerProps,
+  estadoInicialBanner,
+  mensajesBanner,
+} from "./Banner"
+import { rolesUsuario } from "@assets/utils/constantes"
 
 type ActionTypes =
+  | "LOADING_ON"
+  | "ERROR_API"
+  | "SIN_PROYECTOS"
+  | "CARGAR_PROYECTOS"
   | "CARGA_INICIAL"
+  | "RELOAD"
+  | "MODO_EDITAR_ON"
+  | "CANCELAR_EDITAR"
   | "HANDLE_CHANGE"
+  | "CAMBIO_CLABE"
   | "HANDLE_CHANGE_DIRECCION"
   | "HANDLE_CHANGE_PERIODO"
   | "AGREGAR_PERIODO"
@@ -44,49 +58,195 @@ type ActionTypes =
 
 interface ActionDispatch {
   type: ActionTypes
-  payload: any
+  payload?: any
 }
 
-const reducer = (
-  state: ColaboradorProyecto,
-  action: ActionDispatch
-): ColaboradorProyecto => {
+interface EstadoProps {
+  cargaInicial: ColaboradorProyecto
+  forma: ColaboradorProyecto
+  proyectosDB: ProyectoMin[]
+  isLoading: boolean
+  mensajeNota: string
+  banner: EstadoInicialBannerProps
+  modoEditar: boolean
+  modalidad: "CREAR" | "EDITAR"
+}
+
+const estadoInicialForma: ColaboradorProyecto = {
+  id_proyecto: 0,
+  i_tipo: 1,
+  id_empleado: "",
+  nombre: "",
+  apellido_paterno: "",
+  apellido_materno: "",
+  clabe: "",
+  id_banco: 0,
+  telefono: "",
+  email: "",
+  rfc: "",
+  curp: "",
+  direccion: {
+    calle: "",
+    numero_ext: "",
+    numero_int: "",
+    colonia: "",
+    municipio: "",
+    cp: "",
+    id_estado: 1,
+  },
+  periodos_servicio: [
+    {
+      i_numero_ministracion: 1,
+      f_monto: 0,
+      servicio: "",
+      descripcion: "",
+      dt_inicio: "",
+      dt_fin: "",
+      cp: "",
+    },
+  ],
+}
+
+const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
   const { type, payload } = action
 
   switch (type) {
+    case "LOADING_ON":
+      return {
+        ...state,
+        isLoading: true,
+      }
+    case "ERROR_API":
+      return {
+        ...state,
+        isLoading: false,
+        banner: {
+          show: true,
+          mensaje: payload,
+          tipo: "error",
+        },
+      }
+    case "SIN_PROYECTOS":
+      return {
+        ...state,
+        isLoading: false,
+        banner: {
+          show: true,
+          mensaje: mensajesBanner.sinProyectos,
+          tipo: "warning",
+        },
+      }
+    case "CARGAR_PROYECTOS":
+      return {
+        ...state,
+        proyectosDB: payload,
+        forma: {
+          ...state.forma,
+          id_proyecto: payload[0].id,
+        },
+        isLoading: false,
+      }
     case "CARGA_INICIAL":
-      return payload
+      return {
+        ...state,
+        forma: payload,
+        cargaInicial: payload,
+        isLoading: false,
+      }
+    case "RELOAD":
+      return {
+        ...state,
+        forma: payload,
+        cargaInicial: payload,
+        isLoading: false,
+        modoEditar: false,
+      }
+    case "MODO_EDITAR_ON":
+      return {
+        ...state,
+        modoEditar: true,
+      }
+    case "CANCELAR_EDITAR":
+      return {
+        ...state,
+        forma: { ...state.cargaInicial },
+        modoEditar: false,
+      }
     case "HANDLE_CHANGE":
       return {
         ...state,
-        [payload.name]: payload.value,
+        forma: {
+          ...state.forma,
+          [payload.name]: payload.value,
+        },
+      }
+    case "CAMBIO_CLABE":
+      return {
+        ...state,
+        forma: {
+          ...state.forma,
+          clabe: payload.clabe,
+          id_banco: payload.id_banco,
+        },
       }
     case "HANDLE_CHANGE_DIRECCION":
       return {
         ...state,
-        direccion: {
-          ...state.direccion,
-          [payload.name]: payload.value,
+        forma: {
+          ...state.forma,
+          direccion: {
+            ...state.forma.direccion,
+            [payload.name]: payload.value,
+          },
         },
       }
     case "AGREGAR_PERIODO":
+      const ultimoPeriodo =
+        state.forma.periodos_servicio[state.forma.periodos_servicio.length - 1]
+
       return {
         ...state,
-        periodos_servicio: [...state.periodos_servicio, payload],
+        forma: {
+          ...state.forma,
+          periodos_servicio: [
+            ...state.forma.periodos_servicio,
+            {
+              ...estadoInicialForma.periodos_servicio[0],
+              i_numero_ministracion: ultimoPeriodo.i_numero_ministracion + 1,
+              cp: ultimoPeriodo.cp,
+            },
+          ],
+        },
       }
     case "QUITAR_PERIODO":
-      const nuevaLista = state.periodos_servicio.filter(
+      const nuevaLista = state.forma.periodos_servicio.filter(
         (periodo, index) => index != payload
       )
 
       return {
         ...state,
-        periodos_servicio: nuevaLista,
+        forma: {
+          ...state.forma,
+          periodos_servicio: nuevaLista,
+        },
       }
     case "HANDLE_CHANGE_PERIODO":
+      const nuevosPeriodos = state.forma.periodos_servicio.map((ps, index) => {
+        if (payload.index == index) {
+          return {
+            ...ps,
+            [payload.name]: payload.value,
+          }
+        }
+        return ps
+      })
+
       return {
         ...state,
-        periodos_servicio: payload,
+        forma: {
+          ...state.forma,
+          periodos_servicio: nuevosPeriodos,
+        },
       }
     default:
       return state
@@ -101,82 +261,26 @@ const FormaColaborador = () => {
   const idProyecto = Number(router.query.id)
   const idColaborador = Number(router.query.idC)
 
-  const estadoInicialForma: ColaboradorProyecto = {
-    id_proyecto: idProyecto || 0,
-    i_tipo: 1,
-    id_empleado: "",
-    nombre: "",
-    apellido_paterno: "",
-    apellido_materno: "",
-    clabe: "",
-    id_banco: 0,
-    telefono: "",
-    email: "",
-    rfc: "",
-    curp: "",
-    direccion: {
-      calle: "",
-      numero_ext: "",
-      numero_int: "",
-      colonia: "",
-      municipio: "",
-      cp: "",
-      id_estado: 1,
-    },
-    periodos_servicio: [
-      {
-        i_numero_ministracion: 1,
-        f_monto: 0,
-        servicio: "",
-        descripcion: "",
-        dt_inicio: "",
-        dt_fin: "",
-        cp: "",
-      },
-    ],
+  const estadoInicial: EstadoProps = {
+    cargaInicial: estadoInicialForma,
+    forma: estadoInicialForma,
+    proyectosDB: [],
+    isLoading: true,
+    mensajeNota: "",
+    banner: estadoInicialBanner,
+    modoEditar: !idColaborador,
+    modalidad: idColaborador ? "EDITAR" : "CREAR",
   }
 
   const { estados, bancos } = useCatalogos()
-  const [estadoForma, dispatch] = useReducer(reducer, estadoInicialForma)
-  const [proyectosDB, setProyectosDB] = useState<ProyectoMin[]>([])
+  const [estado, dispatch] = useReducer(reducer, estadoInicial)
   const { error, validarCampos, formRef } = useErrores()
-  const [isLoading, setIsLoading] = useState<boolean>(true)
-  const [modoEditar, setModoEditar] = useState<boolean>(!idColaborador)
-  const [showBanner, setShowBanner] = useState(estadoInicialBanner)
   const modalidad = idColaborador ? "EDITAR" : "CREAR"
-  const estadoOriginalColaborador = useRef(null)
   const tBodyPeriodos = useRef(null)
 
   useEffect(() => {
     cargarData()
   }, [])
-
-  useEffect(() => {
-    if (modalidad === "CREAR") {
-      const payload =
-        estadoForma.i_tipo == 3 ? [] : estadoInicialForma.periodos_servicio
-
-      dispatch({
-        type: "HANDLE_CHANGE_PERIODO",
-        payload,
-      })
-    }
-  }, [estadoForma.i_tipo])
-
-  useEffect(() => {
-    //el banco depende de los primero 3 digios de la clabe
-    const matchBanco = bancos.find(
-      (banco) => banco.clave === estadoForma.clabe.substring(0, 3)
-    )
-
-    dispatch({
-      type: "HANDLE_CHANGE",
-      payload: {
-        name: "id_banco",
-        value: matchBanco?.id || 0,
-      },
-    })
-  }, [estadoForma.clabe])
 
   const cargarData = async () => {
     try {
@@ -186,41 +290,27 @@ const FormaColaborador = () => {
 
         const proyectosDB = reProyectos.data as ProyectoMin[]
         if (!proyectosDB.length) {
-          setShowBanner({
-            mensaje: mensajesBanner.sinProyectos,
-            show: true,
-            tipo: "warning",
-          })
+          dispatch({ type: "SIN_PROYECTOS" })
         } else {
-          setProyectosDB(proyectosDB)
           dispatch({
-            type: "HANDLE_CHANGE",
-            payload: {
-              name: "id_proyecto",
-              value: proyectosDB[0]?.id || 0,
-            },
+            type: "CARGAR_PROYECTOS",
+            payload: proyectosDB,
           })
         }
       } else {
         const reColaborador = await obtenerColaboradores(null, idColaborador)
         if (reColaborador.error) throw reColaborador
-
-        const colaborador = reColaborador.data[0] as ColaboradorProyecto
-        estadoOriginalColaborador.current = colaborador
         dispatch({
           type: "CARGA_INICIAL",
-          payload: colaborador,
+          payload: reColaborador.data[0],
         })
       }
     } catch ({ data, mensaje }) {
       console.log(data)
-      setShowBanner({
-        mensaje,
-        show: true,
-        tipo: "error",
+      dispatch({
+        type: "ERROR_API",
+        payload: mensaje,
       })
-    } finally {
-      setIsLoading(false)
     }
   }
 
@@ -233,20 +323,16 @@ const FormaColaborador = () => {
   }
 
   const registrar = async () => {
-    return ApiCall.post("/colaboradores", estadoForma)
+    return ApiCall.post("/colaboradores", estado.forma)
   }
 
   const editar = async () => {
-    return ApiCall.put(`/colaboradores/${idColaborador}`, estadoForma)
+    return ApiCall.put(`/colaboradores/${idColaborador}`, estado.forma)
   }
 
   const cancelar = () => {
     if (modalidad === "EDITAR") {
-      dispatch({
-        type: "CARGA_INICIAL",
-        payload: estadoOriginalColaborador.current,
-      })
-      setModoEditar(false)
+      dispatch({ type: "CANCELAR_EDITAR" })
     } else {
       router.back()
     }
@@ -265,20 +351,26 @@ const FormaColaborador = () => {
     })
   }
 
-  const handleChangePeriodo = (ev: ChangeEvent, index: number) => {
-    let { name, value } = ev.target
+  const handleChangeClabe = (ev: ChangeEvent) => {
+    const { value } = ev.target
 
-    if (name === "cp_periodo") name = "cp"
-
-    const copiaPeriodos = [...estadoForma.periodos_servicio]
-    copiaPeriodos[index] = {
-      ...copiaPeriodos[index],
-      [name]: value,
+    if (error.campo === "clabe") {
+      validarCampos({ clabe: value })
     }
 
+    const matchBanco = bancos.find((ban) => ban.clave === value.substring(0, 3))
+
+    dispatch({
+      type: "CAMBIO_CLABE",
+      payload: { clabe: value, id_banco: matchBanco?.id || 0 },
+    })
+  }
+
+  const handleChangePeriodo = (ev: ChangeEvent, index: number) => {
+    let { name, value } = ev.target
     dispatch({
       type: "HANDLE_CHANGE_PERIODO",
-      payload: copiaPeriodos,
+      payload: { index, name, value },
     })
   }
 
@@ -290,19 +382,7 @@ const FormaColaborador = () => {
   }
 
   const agregarPeriodo = () => {
-    const ultimoPeriodo =
-      estadoForma.periodos_servicio[estadoForma.periodos_servicio.length - 1]
-    const clacularNumeroMinistracion =
-      Number(ultimoPeriodo?.i_numero_ministracion || 0) + 1
-
-    dispatch({
-      type: "AGREGAR_PERIODO",
-      payload: {
-        ...estadoInicialForma.periodos_servicio[0],
-        i_numero_ministracion: clacularNumeroMinistracion,
-        cp: ultimoPeriodo?.cp || "",
-      },
-    })
+    dispatch({ type: "AGREGAR_PERIODO" })
   }
 
   const determinarMinDataFinPeriodoServicio = (dt_inicio: string) => {
@@ -311,22 +391,22 @@ const FormaColaborador = () => {
     return dtInicioMasDia
   }
 
-  const determinarMaxDataFinPeriodoServicio = (dt_inicio: string) => {
-    if (!dt_inicio || estadoForma.i_tipo > 1) return ""
-    const dtInicioMasSeisMeses = fechaMasMesesFutuosString(dt_inicio, 6)
-    return dtInicioMasSeisMeses
-  }
+  // const determinarMaxDataFinPeriodoServicio = (dt_inicio: string) => {
+  //   if (!dt_inicio || estadoForma.i_tipo > 1) return ""
+  //   const dtInicioMasSeisMeses = fechaMasMesesFutuosString(dt_inicio, 6)
+  //   return dtInicioMasSeisMeses
+  // }
 
   const validarPeriodos = (): boolean => {
     try {
-      estadoForma.periodos_servicio.forEach((periodo, index) => {
+      estado.forma.periodos_servicio.forEach((periodo, index) => {
         if (!Number(periodo.i_numero_ministracion))
           throw { index, campo: "i_numero_ministracion" }
         if (!Number(periodo.f_monto)) throw { index, campo: "f_monto" }
         if (!periodo.servicio) throw { index, campo: "servicio" }
         if (!periodo.descripcion) throw { index, campo: "descripcion" }
         if (!Number(periodo.cp) || periodo.cp.length != 5)
-          throw { index, campo: "cp_periodo" }
+          throw { index, campo: "cp" }
         if (!periodo.dt_inicio) throw { index, campo: "dt_inicio" }
         if (!periodo.dt_fin) throw { index, campo: "dt_fin" }
       })
@@ -342,21 +422,21 @@ const FormaColaborador = () => {
 
   const validarForma = () => {
     const campos = {
-      id_proyecto: estadoForma.id_proyecto,
-      nombre: estadoForma.nombre,
-      apellido_paterno: estadoForma.apellido_paterno,
-      apellido_materno: estadoForma.apellido_materno,
-      clabe: estadoForma.clabe,
-      id_banco: estadoForma.id_banco,
-      email: estadoForma.email,
-      telefono: estadoForma.telefono,
-      rfc: estadoForma.rfc,
-      curp: estadoForma.curp,
-      calle: estadoForma.direccion.calle,
-      numero_ext: estadoForma.direccion.numero_ext,
-      colonia: estadoForma.direccion.colonia,
-      municipio: estadoForma.direccion.municipio,
-      cp: estadoForma.direccion.cp,
+      id_proyecto: estado.forma.id_proyecto,
+      nombre: estado.forma.nombre,
+      apellido_paterno: estado.forma.apellido_paterno,
+      apellido_materno: estado.forma.apellido_materno,
+      clabe: estado.forma.clabe,
+      id_banco: estado.forma.id_banco,
+      email: estado.forma.email,
+      telefono: estado.forma.telefono,
+      rfc: estado.forma.rfc,
+      curp: estado.forma.curp,
+      calle: estado.forma.direccion.calle,
+      numero_ext: estado.forma.direccion.numero_ext,
+      colonia: estado.forma.direccion.colonia,
+      municipio: estado.forma.direccion.municipio,
+      cp: estado.forma.direccion.cp,
     }
 
     // console.log(campos)
@@ -366,40 +446,45 @@ const FormaColaborador = () => {
   const handleSubmit = async () => {
     if (!validarForma()) return
     if (!validarPeriodos()) return
-    console.log(estadoForma)
+    console.log(estado.forma)
 
-    setIsLoading(true)
+    dispatch({ type: "LOADING_ON" })
+
     const { error, data, mensaje } =
       modalidad === "EDITAR" ? await editar() : await registrar()
-    setIsLoading(false)
 
     if (error) {
       console.log(data)
-      setShowBanner({
-        mensaje,
-        show: true,
-        tipo: "error",
+      dispatch({
+        type: "ERROR_API",
+        payload: mensaje,
       })
     } else {
       if (modalidad === "CREAR") {
         router.push(
           //@ts-ignore
-          `/proyectos/${estadoForma.id_proyecto}/colaboradores/${data.idInsertado}`
+          `/colaboradores/${data.idInsertado}`
         )
       } else {
-        estadoOriginalColaborador.current = data
         dispatch({
-          type: "CARGA_INICIAL",
+          type: "RELOAD",
           payload: data,
         })
-        setModoEditar(false)
       }
     }
   }
 
-  const showBtnEliminarPeriodo = estadoForma.periodos_servicio.length > 1
+  const showBtnEliminarPeriodo = estado.forma.periodos_servicio.length > 1
+  const showBtnEditar =
+    modalidad === "EDITAR" &&
+    !estado.modoEditar &&
+    (user.id == estado.forma.id_responsable ||
+      user.id_rol == rolesUsuario.SUPER_USUARIO)
+  const enableSlctTipo =
+    modalidad === "CREAR" ||
+    (estado.modoEditar && user.id_rol === rolesUsuario.SUPER_USUARIO)
 
-  if (isLoading) {
+  if (estado.isLoading) {
     return (
       <Contenedor>
         <Loader />
@@ -407,10 +492,10 @@ const FormaColaborador = () => {
     )
   }
 
-  if (showBanner.show) {
+  if (estado.banner.show) {
     return (
       <Contenedor>
-        <Banner tipo={showBanner.tipo} mensaje={showBanner.mensaje} />
+        <Banner tipo={estado.banner.tipo} mensaje={estado.banner.mensaje} />
       </Contenedor>
     )
   }
@@ -424,11 +509,9 @@ const FormaColaborador = () => {
               <h2 className="color1 mb-0">Registrar Colaborador</h2>
             )}
           </div>
-          {!modoEditar &&
-            idColaborador &&
-            user.id == estadoForma.id_responsable && (
-              <BtnEditar onClick={() => setModoEditar(true)} />
-            )}
+          {showBtnEditar && (
+            <BtnEditar onClick={() => dispatch({ type: "MODO_EDITAR_ON" })} />
+          )}
         </div>
       </div>
       <FormaContenedor onSubmit={handleSubmit} formaRef={formRef}>
@@ -441,24 +524,20 @@ const FormaColaborador = () => {
                   className="form-control"
                   onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
                   name="id_proyecto"
-                  value={estadoForma.id_proyecto}
+                  value={estado.forma.id_proyecto}
                   disabled={!!idProyecto}
                 >
-                  {proyectosDB.length > 0 ? (
-                    proyectosDB.map(({ id, id_alt, nombre }) => (
-                      <option key={id} value={id}>
-                        {nombre} - {id_alt}
-                      </option>
-                    ))
-                  ) : (
-                    <option value="0">No hay proyectos</option>
-                  )}
+                  {estado.proyectosDB.map(({ id, id_alt, nombre }) => (
+                    <option key={id} value={id}>
+                      {nombre} - {id_alt}
+                    </option>
+                  ))}
                 </select>
               ) : (
                 <input
                   className="form-control"
                   type="text"
-                  value={estadoForma.proyecto}
+                  value={estado.forma.proyecto}
                   disabled
                 />
               )}
@@ -472,8 +551,8 @@ const FormaColaborador = () => {
                 className="form-control"
                 onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
                 name="i_tipo"
-                value={estadoForma.i_tipo}
-                disabled={!!idColaborador}
+                value={estado.forma.i_tipo}
+                disabled={!enableSlctTipo}
               >
                 <option value="1">Asimilado</option>
                 <option value="2">Honorarios</option>
@@ -486,9 +565,7 @@ const FormaColaborador = () => {
                 <input
                   className="form-control"
                   type="text"
-                  onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-                  name="id_empleado"
-                  value={estadoForma.id_empleado}
+                  value={estado.forma.id_empleado}
                   disabled
                 />
               </div>
@@ -502,8 +579,8 @@ const FormaColaborador = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="nombre"
-            value={estadoForma.nombre}
-            disabled={!modoEditar}
+            value={estado.forma.nombre}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "nombre" && <MensajeError mensaje={error.mensaje} />}
         </div>
@@ -514,8 +591,8 @@ const FormaColaborador = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="apellido_paterno"
-            value={estadoForma.apellido_paterno}
-            disabled={!modoEditar}
+            value={estado.forma.apellido_paterno}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "apellido_paterno" && (
             <MensajeError mensaje={error.mensaje} />
@@ -528,8 +605,8 @@ const FormaColaborador = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="apellido_materno"
-            value={estadoForma.apellido_materno}
-            disabled={!modoEditar}
+            value={estado.forma.apellido_materno}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "apellido_materno" && (
             <MensajeError mensaje={error.mensaje} />
@@ -540,10 +617,9 @@ const FormaColaborador = () => {
           <input
             className="form-control"
             type="text"
-            onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-            name="clabe"
-            value={estadoForma.clabe}
-            disabled={!modoEditar}
+            onChange={handleChangeClabe}
+            value={estado.forma.clabe}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "clabe" && <MensajeError mensaje={error.mensaje} />}
         </div>
@@ -553,8 +629,7 @@ const FormaColaborador = () => {
             className="form-control"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="id_banco"
-            value={estadoForma.id_banco}
-            // disabled={!modoEditar}
+            value={estado.forma.id_banco}
             disabled
           >
             <option value="0" disabled></option>
@@ -575,8 +650,8 @@ const FormaColaborador = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="email"
-            value={estadoForma.email}
-            disabled={!modoEditar}
+            value={estado.forma.email}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "email" && <MensajeError mensaje={error.mensaje} />}
         </div>
@@ -587,8 +662,8 @@ const FormaColaborador = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="telefono"
-            value={estadoForma.telefono}
-            disabled={!modoEditar}
+            value={estado.forma.telefono}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "telefono" && (
             <MensajeError mensaje={error.mensaje} />
@@ -601,8 +676,8 @@ const FormaColaborador = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="rfc"
-            value={estadoForma.rfc}
-            disabled={!modoEditar}
+            value={estado.forma.rfc}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "rfc" && <MensajeError mensaje={error.mensaje} />}
         </div>
@@ -613,12 +688,12 @@ const FormaColaborador = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="curp"
-            value={estadoForma.curp}
-            disabled={!modoEditar}
+            value={estado.forma.curp}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "curp" && <MensajeError mensaje={error.mensaje} />}
         </div>
-        {estadoForma.i_tipo != 3 && (
+        {estado.forma.i_tipo != 3 && (
           <>
             <div className="col-12">
               <hr />
@@ -628,7 +703,7 @@ const FormaColaborador = () => {
                 <div className="col-12 col-sm-6 col-lg-8 col-xl-10 mb-3">
                   <h4 className="color1 mb-0">Periodos de servicio</h4>
                 </div>
-                {modoEditar && (
+                {estado.modoEditar && (
                   <div className="col mb-3">
                     <BtnNeutro
                       margin={false}
@@ -657,7 +732,7 @@ const FormaColaborador = () => {
                     </th>
                     <th>Fecha inicio</th>
                     <th>Fecha fin</th>
-                    {modoEditar && (
+                    {estado.modoEditar && (
                       <th>
                         <i className="bi bi-trash"></i>
                       </th>
@@ -665,7 +740,7 @@ const FormaColaborador = () => {
                   </tr>
                 </thead>
                 <tbody ref={tBodyPeriodos}>
-                  {estadoForma.periodos_servicio.map((periodo, index) => {
+                  {estado.forma.periodos_servicio.map((periodo, index) => {
                     const {
                       id,
                       i_numero_ministracion,
@@ -677,7 +752,7 @@ const FormaColaborador = () => {
                       dt_fin,
                     } = periodo
 
-                    if (modoEditar) {
+                    if (estado.modoEditar) {
                       return (
                         <tr key={id || `periodo_${index}`}>
                           <td>
@@ -720,7 +795,7 @@ const FormaColaborador = () => {
                             <input
                               type="text"
                               className="form-control"
-                              name="cp_periodo"
+                              name="cp"
                               value={cp}
                               onChange={(e) => handleChangePeriodo(e, index)}
                             />
@@ -794,8 +869,8 @@ const FormaColaborador = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE_DIRECCION")}
             name="calle"
-            value={estadoForma.direccion.calle}
-            disabled={!modoEditar}
+            value={estado.forma.direccion.calle}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "calle" && <MensajeError mensaje={error.mensaje} />}
         </div>
@@ -806,8 +881,8 @@ const FormaColaborador = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE_DIRECCION")}
             name="numero_ext"
-            value={estadoForma.direccion.numero_ext}
-            disabled={!modoEditar}
+            value={estado.forma.direccion.numero_ext}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "numero_ext" && (
             <MensajeError mensaje={error.mensaje} />
@@ -820,8 +895,8 @@ const FormaColaborador = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE_DIRECCION")}
             name="numero_int"
-            value={estadoForma.direccion.numero_int}
-            disabled={!modoEditar}
+            value={estado.forma.direccion.numero_int}
+            disabled={!estado.modoEditar}
           />
         </div>
         <div className="col-12 col-lg-6 mb-3">
@@ -831,8 +906,8 @@ const FormaColaborador = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE_DIRECCION")}
             name="colonia"
-            value={estadoForma.direccion.colonia}
-            disabled={!modoEditar}
+            value={estado.forma.direccion.colonia}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "colonia" && <MensajeError mensaje={error.mensaje} />}
         </div>
@@ -843,8 +918,8 @@ const FormaColaborador = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE_DIRECCION")}
             name="municipio"
-            value={estadoForma.direccion.municipio}
-            disabled={!modoEditar}
+            value={estado.forma.direccion.municipio}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "municipio" && (
             <MensajeError mensaje={error.mensaje} />
@@ -857,8 +932,8 @@ const FormaColaborador = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE_DIRECCION")}
             name="cp"
-            value={estadoForma.direccion.cp}
-            disabled={!modoEditar}
+            value={estado.forma.direccion.cp}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "cp" && <MensajeError mensaje={error.mensaje} />}
         </div>
@@ -868,8 +943,8 @@ const FormaColaborador = () => {
             className="form-control"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE_DIRECCION")}
             name="id_estado"
-            value={estadoForma.direccion.id_estado}
-            disabled={!modoEditar}
+            value={estado.forma.direccion.id_estado}
+            disabled={!estado.modoEditar}
           >
             {estados.map(({ id, nombre }) => (
               <option key={id} value={id}>
@@ -878,7 +953,7 @@ const FormaColaborador = () => {
             ))}
           </select>
         </div>
-        {modoEditar && (
+        {estado.modoEditar && (
           <div className="col-12 text-end">
             <BtnCancelar onclick={cancelar} margin={"r"} />
             <BtnRegistrar modalidad={modalidad} margin={false} />
