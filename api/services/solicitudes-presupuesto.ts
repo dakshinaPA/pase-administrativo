@@ -39,6 +39,17 @@ class SolicitudesPresupuestoServices {
     }
   }
 
+  static trimPayload(data: SolicitudPresupuesto): SolicitudPresupuesto {
+    return {
+      ...data,
+      email: data.email.trim(),
+      proveedor: data.proveedor.trim(),
+      descripcion_gasto: data.descripcion_gasto.trim(),
+      f_importe: Number(data.f_importe),
+      f_retenciones: Number(data.f_retenciones),
+    }
+  }
+
   static trasnformarData(
     solicitudRes: SolicitudPresupuesto
   ): SolicitudPresupuesto {
@@ -148,16 +159,16 @@ class SolicitudesPresupuestoServices {
 
   static async crear(data: SolicitudPresupuesto) {
     try {
-      const payload: SolicitudPresupuesto = {
-        ...data,
-        comprobantes: data.comprobantes.map((com) => ({
+      let payload = this.trimPayload(data)
+      payload = {
+        ...payload,
+        comprobantes: payload.comprobantes.map((com) => ({
           ...com,
           dt_timbrado: com.dt_timbrado
             ? String(inputDateAEpoch(com.dt_timbrado))
             : "",
         })),
       }
-
       const cr = await SolicitudesPresupuestoDB.crear(payload)
 
       return RespuestaController.exitosa(
@@ -180,8 +191,9 @@ class SolicitudesPresupuestoServices {
     id_rol: IdRolUsuario
   ) {
     try {
-      const payload: SolicitudPresupuesto = {
-        ...data,
+      let payload = this.trimPayload(data)
+      payload = {
+        ...payload,
         i_estatus:
           id_rol === rolesUsuario.COPARTE &&
           [estatusSolicitud.RECHAZADA, estatusSolicitud.DEVOLUCION].includes(
@@ -196,7 +208,6 @@ class SolicitudesPresupuestoServices {
             : "",
         })),
       }
-
       const up = await SolicitudesPresupuestoDB.actualizar(id, payload)
 
       return RespuestaController.exitosa(
