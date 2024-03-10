@@ -16,6 +16,30 @@ class ProveedorServices {
     }
   }
 
+  static trimPayload(data: ProveedorProyecto): ProveedorProyecto {
+    return {
+      ...data,
+      nombre: textoMayusculaSinAcentos(data.nombre),
+      bank: textoMayusculaSinAcentos(data.bank),
+      bank_branch_address: data.bank_branch_address.trim(),
+      bic_code: data.bic_code.trim(),
+      intermediary_bank: textoMayusculaSinAcentos(data.intermediary_bank),
+      routing_number: data.routing_number.trim(),
+      descripcion_servicio: data.descripcion_servicio.trim(),
+      direccion: {
+        ...data.direccion,
+        calle: data.direccion.calle.trim(),
+        numero_ext: data.direccion.numero_ext.trim(),
+        numero_int: data.direccion.numero_int.trim(),
+        colonia: data.direccion.colonia.trim(),
+        municipio: data.direccion.municipio.trim(),
+        cp: data.direccion.cp.trim(),
+        estado: textoMayusculaSinAcentos(data.direccion.estado),
+        pais: textoMayusculaSinAcentos(data.direccion.pais),
+      },
+    }
+  }
+
   static async obtener(id_proyecto: number, id_proveedor?: number) {
     try {
       const re = (await ProveedorDB.obtener(
@@ -25,26 +49,10 @@ class ProveedorServices {
 
       const proveedores: ProveedorProyecto[] = re.map((proveedor) => {
         return {
-          id: proveedor.id,
-          id_proyecto: proveedor.id_proyecto,
-          proyecto: proveedor.proyecto,
-          id_responsable: proveedor.id_responsable,
+          ...proveedor,
           nombre: textoMayusculaSinAcentos(proveedor.nombre),
-          i_tipo: proveedor.i_tipo,
           tipo: this.obtenerTipo(proveedor.i_tipo),
-          clabe: proveedor.clabe,
-          id_banco: proveedor.id_banco,
           banco: proveedor.banco || "",
-          telefono: proveedor.telefono,
-          email: proveedor.email,
-          rfc: proveedor.rfc,
-          bank: proveedor.bank,
-          bank_branch_address: proveedor.bank_branch_address,
-          account_number: proveedor.account_number,
-          bic_code: proveedor.bic_code,
-          intermediary_bank: proveedor.intermediary_bank,
-          routing_number: proveedor.routing_number,
-          descripcion_servicio: proveedor.descripcion_servicio,
           direccion: {
             id: proveedor.id_direccion,
             calle: proveedor.calle,
@@ -74,28 +82,8 @@ class ProveedorServices {
 
   static async crear(data: ProveedorProyecto) {
     try {
-      const dataTransformada: ProveedorProyecto = {
-        ...data,
-        nombre: textoMayusculaSinAcentos(data.nombre),
-        bank: textoMayusculaSinAcentos(data.bank),
-        bank_branch_address: data.bank_branch_address.trim(),
-        bic_code: data.bic_code.trim(),
-        intermediary_bank: textoMayusculaSinAcentos(data.intermediary_bank),
-        routing_number: data.routing_number.trim(),
-        descripcion_servicio: data.descripcion_servicio.trim(),
-        direccion: {
-          ...data.direccion,
-          calle: data.direccion.calle.trim(),
-          numero_int: data.direccion.numero_int.trim(),
-          colonia: data.direccion.colonia.trim(),
-          municipio: data.direccion.municipio.trim(),
-          cp: data.direccion.cp.trim(),
-          estado: textoMayusculaSinAcentos(data.direccion.estado),
-          pais: textoMayusculaSinAcentos(data.direccion.pais),
-        },
-      }
-
-      const cr = await ProveedorDB.crear(dataTransformada)
+      const payload = this.trimPayload(data)
+      const cr = await ProveedorDB.crear(payload)
 
       return RespuestaController.exitosa(201, "Proveedor creado con éxito", {
         idInsertado: cr,
@@ -111,12 +99,8 @@ class ProveedorServices {
 
   static async actualizar(id_proveedor: number, data: ProveedorProyecto) {
     try {
-      const dataTransformada = {
-        ...data,
-        nombre: textoMayusculaSinAcentos(data.nombre),
-      }
-
-      const up = await ProveedorDB.actualizar(id_proveedor, dataTransformada)
+      const payload = this.trimPayload(data)
+      const up = await ProveedorDB.actualizar(id_proveedor, payload)
 
       return RespuestaController.exitosa(
         200,
