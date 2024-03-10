@@ -16,6 +16,32 @@ class ColaboradorServices {
     }
   }
 
+  static trimPayload(data: ColaboradorProyecto): ColaboradorProyecto {
+    return {
+      ...data,
+      nombre: textoMayusculaSinAcentos(data.nombre),
+      apellido_paterno: textoMayusculaSinAcentos(data.apellido_paterno),
+      apellido_materno: textoMayusculaSinAcentos(data.apellido_materno),
+      direccion: {
+        ...data.direccion,
+        calle: data.direccion.calle.trim(),
+        numero_ext: data.direccion.numero_ext.trim(),
+        numero_int: data.direccion.numero_int.trim(),
+        colonia: data.direccion.colonia.trim(),
+        municipio: data.direccion.municipio.trim(),
+        cp: data.direccion.cp.trim(),
+      },
+      periodos_servicio: data.periodos_servicio.map((ps) => ({
+        ...ps,
+        i_numero_ministracion: Number(ps.i_numero_ministracion),
+        f_monto: Number(ps.f_monto),
+        servicio: ps.servicio.trim(),
+        descripcion: ps.descripcion.trim(),
+        cp: ps.cp.trim(),
+      })),
+    }
+  }
+
   static async obtener(id_proyecto: number, id_colaborador?: number) {
     try {
       const re = (await ColaboradorDB.obtener(
@@ -75,22 +101,8 @@ class ColaboradorServices {
 
   static async crear(data: ColaboradorProyecto) {
     try {
-      const dataTransformada: ColaboradorProyecto = {
-        ...data,
-        nombre: textoMayusculaSinAcentos(data.nombre),
-        apellido_paterno: textoMayusculaSinAcentos(data.apellido_paterno),
-        apellido_materno: textoMayusculaSinAcentos(data.apellido_materno),
-        direccion: {
-          ...data.direccion,
-          calle: data.direccion.calle.trim(),
-          numero_int: data.direccion.numero_int.trim(),
-          colonia: data.direccion.colonia.trim(),
-          municipio: data.direccion.municipio.trim(),
-          cp: data.direccion.cp.trim(),
-        }
-      }
-
-      const cr = await ColaboradorDB.crear(dataTransformada)
+      const payload = this.trimPayload(data)
+      const cr = await ColaboradorDB.crear(payload)
 
       return RespuestaController.exitosa(201, "Colaborador creado con éxito", {
         idInsertado: cr,
@@ -106,16 +118,8 @@ class ColaboradorServices {
 
   static async actualizar(id_colaborador: number, data: ColaboradorProyecto) {
     try {
-      const dataTransformada = {
-        ...data,
-        nombre: textoMayusculaSinAcentos(data.nombre),
-        apellido_paterno: textoMayusculaSinAcentos(data.apellido_paterno),
-        apellido_materno: textoMayusculaSinAcentos(data.apellido_materno),
-      }
-      const up = await ColaboradorDB.actualizar(
-        id_colaborador,
-        dataTransformada
-      )
+      const payload = this.trimPayload(data)
+      const up = await ColaboradorDB.actualizar(id_colaborador, payload)
       const reColaboradorUp = await this.obtener(null, id_colaborador)
       if (reColaboradorUp.error) throw reColaboradorUp.data
 
