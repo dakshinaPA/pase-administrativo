@@ -1,7 +1,10 @@
 import { RespuestaDB } from "@api/utils/response"
 import { queryDBPlaceHolder } from "./query"
 import { connectionDB } from "./connectionPool"
-import { ColaboradorProyecto } from "@models/proyecto.model"
+import {
+  ColaboradorProyecto,
+  PeriodoServicioColaborador,
+} from "@models/proyecto.model"
 import { fechaActualAEpoch } from "@assets/utils/common"
 
 class ColaboradorDB {
@@ -28,10 +31,16 @@ class ColaboradorDB {
     return query
   }
 
+  static qRePeriodosServicio = () => {
+    return `
+      SELECT id, i_numero_ministracion, f_monto, servicio, descripcion, cp, dt_inicio,
+      dt_fin, dt_registro FROM colaborador_periodos_servicio WHERE id_colaborador=? AND b_activo=1
+    `
+  }
+
   static async obtener(id_proyecto: number, id_colaborador?: number) {
     const qColaborador = this.queryRe(id_proyecto, id_colaborador)
-    const qPeriodos = `SELECT id, i_numero_ministracion, f_monto, servicio, descripcion, cp, dt_inicio,
-    dt_fin, dt_registro FROM colaborador_periodos_servicio WHERE id_colaborador=? AND b_activo=1`
+    const qPeriodos = this.qRePeriodosServicio()
 
     const qCombinados = [qColaborador]
 
@@ -207,13 +216,14 @@ class ColaboradorDB {
     const { direccion, periodos_servicio } = data
 
     const qColaborador = `UPDATE colaboradores SET id_empleado=?, nombre=UPPER(?), apellido_paterno=UPPER(?), apellido_materno=UPPER(?),
-      clabe=?, id_banco=?, telefono=?, email=?, rfc=?, curp=? WHERE id=?`
+      i_tipo=?, clabe=?, id_banco=?, telefono=?, email=?, rfc=?, curp=? WHERE id=?`
 
     const phColaborador = [
       data.id_empleado,
       data.nombre,
       data.apellido_paterno,
       data.apellido_materno,
+      data.i_tipo,
       data.clabe,
       data.id_banco,
       data.telefono,
@@ -239,6 +249,8 @@ class ColaboradorDB {
 
     const qUpPeriodoServicio = `UPDATE colaborador_periodos_servicio SET i_numero_ministracion=?, f_monto=?,
       servicio=?, descripcion=?, cp=?, dt_inicio=?, dt_fin=? WHERE id=? LIMIT 1`
+
+    const qDlPeriodoServicio = `UPDATE colaborador_periodos_servicio SET b_activo=0 WHERE id=? LIMIT 1`
 
     const qCombinados = [qColaborador, qDireccion]
     const phCombinados = [...phColaborador, ...phDireccion]
@@ -282,6 +294,30 @@ class ColaboradorDB {
             return rej(err)
           }
 
+          // connection.query(
+          //   this.qRePeriodosServicio(),
+          //   id_colaborador,
+          //   (error, results, fields) => {
+          //     if (error) {
+          //       return connection.rollback(() => {
+          //         connection.destroy()
+          //         rej(error)
+          //       })
+          //     }
+
+          //     const periodosDB = results as PeriodoServicioColaborador[]
+
+          //     //revisar si algun periodo fue desactivado
+          //     for (const psDB of periodosDB) {
+          //       const matchVista = periodos_servicio.find( ps => ps.id == psDB.id)
+          //       if(!matchVista){
+          //         qCombinados.push(qDlPeriodoServicio)
+          //         phCombinados.push(psDB.id)
+          //       }
+          //     }
+          //   }
+          // )
+
           //actualizar colaborador
           connection.query(
             qCombinados.join(";"),
@@ -294,11 +330,33 @@ class ColaboradorDB {
                 })
               }
 
-              connection.commit((err) => {
-                if (err) connection.rollback(() => rej(err))
-                connection.destroy()
-                res(true)
-              })
+              const qRe = [
+                this.queryRe(null, id_colaborador),
+                this.qRePeriodosServicio(),
+              ]
+
+              //traer colaborador actualizado
+              connection.query(
+                qRe.join(";"),
+                [id_colaborador, id_colaborador],
+                (error, results, fields) => {
+                  if (error) {
+                    return connection.rollback(() => {
+                      connection.destroy()
+                      rej(error)
+                    })
+                  }
+
+                  connection.commit((err) => {
+                    if (err) connection.rollback(() => rej(err))
+                    connection.destroy()
+                    res({
+                      ...results[0][0],
+                      periodos_servicio: results[1],
+                    })
+                  })
+                }
+              )
             }
           )
         })

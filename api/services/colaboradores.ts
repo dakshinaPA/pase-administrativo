@@ -42,6 +42,28 @@ class ColaboradorServices {
     }
   }
 
+  static formatData(colaborador: ResColaboradoreDB): ColaboradorProyecto {
+    return {
+      ...colaborador,
+      tipo: this.obtenerTipo(colaborador.i_tipo),
+      nombre: textoMayusculaSinAcentos(colaborador.nombre),
+      apellido_paterno: textoMayusculaSinAcentos(colaborador.apellido_paterno),
+      apellido_materno: textoMayusculaSinAcentos(colaborador.apellido_materno),
+      direccion: {
+        id: colaborador.id_direccion,
+        calle: colaborador.calle,
+        numero_ext: colaborador.numero_ext,
+        numero_int: colaborador.numero_int,
+        colonia: colaborador.colonia,
+        municipio: colaborador.municipio,
+        cp: colaborador.cp_direccion,
+        id_estado: colaborador.id_estado,
+        estado: colaborador.estado,
+      },
+      periodos_servicio: colaborador.periodos_servicio,
+    }
+  }
+
   static async obtener(id_proyecto: number, id_colaborador?: number) {
     try {
       const re = (await ColaboradorDB.obtener(
@@ -49,43 +71,9 @@ class ColaboradorServices {
         id_colaborador
       )) as ResColaboradoreDB[]
 
-      const colaboradores: ColaboradorProyecto[] = re.map((colaborador) => {
-        const {
-          periodos_servicio,
-          id_direccion,
-          calle,
-          numero_ext,
-          numero_int,
-          colonia,
-          municipio,
-          cp_direccion,
-          id_estado,
-          estado,
-          ...resto
-        } = colaborador
-
-        const data: ColaboradorProyecto = {
-          ...resto,
-          tipo: this.obtenerTipo(resto.i_tipo),
-          nombre: textoMayusculaSinAcentos(resto.nombre),
-          apellido_paterno: textoMayusculaSinAcentos(resto.apellido_paterno),
-          apellido_materno: textoMayusculaSinAcentos(resto.apellido_materno),
-          direccion: {
-            id: id_direccion,
-            calle,
-            numero_ext,
-            numero_int,
-            colonia,
-            municipio,
-            cp: cp_direccion,
-            id_estado,
-            estado,
-          },
-          periodos_servicio,
-        }
-
-        return data
-      })
+      const colaboradores: ColaboradorProyecto[] = re.map((col) =>
+        this.formatData(col)
+      )
 
       return RespuestaController.exitosa(200, "Consulta exitosa", colaboradores)
     } catch (error) {
@@ -123,12 +111,18 @@ class ColaboradorServices {
 
   static async actualizar(id_colaborador: number, data: ColaboradorProyecto) {
     try {
-      const payload = this.trimPayload(data)
-      const up = await ColaboradorDB.actualizar(id_colaborador, payload)
-      const reColaboradorUp = await this.obtener(null, id_colaborador)
-      if (reColaboradorUp.error) throw reColaboradorUp.data
+      // quitar periodos servicio si es colaborador sin pago
+      let payload: ColaboradorProyecto = {
+        ...data,
+        periodos_servicio: data.i_tipo == 3 ? [] : [...data.periodos_servicio],
+      }
+      payload = this.trimPayload(data)
+      const up = (await ColaboradorDB.actualizar(
+        id_colaborador,
+        payload
+      )) as ResColaboradoreDB
 
-      const colaboradorUp = reColaboradorUp.data[0] as ColaboradorProyecto
+      const colaboradorUp = this.formatData(up)
 
       return RespuestaController.exitosa(
         200,
