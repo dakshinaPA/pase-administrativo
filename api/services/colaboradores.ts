@@ -43,12 +43,17 @@ class ColaboradorServices {
   }
 
   static formatData(colaborador: ResColaboradoreDB): ColaboradorProyecto {
+
+    const [idFinanciar, idCoparte, idProyecto] = colaborador.proyecto.split("_")
+    const id_empleado = `${idFinanciar}${idCoparte}${idProyecto}_${colaborador.id}`
+
     return {
       ...colaborador,
       tipo: this.obtenerTipo(colaborador.i_tipo),
       nombre: textoMayusculaSinAcentos(colaborador.nombre),
       apellido_paterno: textoMayusculaSinAcentos(colaborador.apellido_paterno),
       apellido_materno: textoMayusculaSinAcentos(colaborador.apellido_materno),
+      id_empleado,
       direccion: {
         id: colaborador.id_direccion,
         calle: colaborador.calle,

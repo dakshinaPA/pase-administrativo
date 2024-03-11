@@ -253,19 +253,13 @@ class ProyectosServices {
           }
         })
 
-      const colaboradoresHyd = colaboradores.map((col) => ({
-        ...col,
-        tipo: ColaboradorServices.obtenerTipo(col.i_tipo),
-        nombre: textoMayusculaSinAcentos(col.nombre),
-        apellido_paterno: textoMayusculaSinAcentos(col.apellido_paterno),
-        apellido_materno: textoMayusculaSinAcentos(col.apellido_materno),
-      }))
+      const colaboradoresHyd = colaboradores.map((col) =>
+        ColaboradorServices.formatData(col)
+      )
 
-      const proveedoresHyd = proveedores.map((prov) => ({
-        ...prov,
-        tipo: ProveedorServices.obtenerTipo(prov.i_tipo),
-        nombre: textoMayusculaSinAcentos(prov.nombre),
-      }))
+      const proveedoresHyd = proveedores.map((prov) =>
+        ProveedorServices.formatData(prov)
+      )
 
       const solicitudesHyd = solicitudes.map((sol) => {
         return {

@@ -53,12 +53,23 @@ import { UsuarioLogin, UsuarioMin } from "@models/usuario.model"
 import { PieChart } from "./PieChart"
 import { Banner, EstadoInicialBannerProps, estadoInicialBanner } from "./Banner"
 import Link from "next/link"
-import { rolesUsuario, tiposFinanciamiento } from "@assets/utils/constantes"
+import { rolesUsuario } from "@assets/utils/constantes"
 import { useSesion } from "@hooks/useSesion"
 import { useRouter } from "next/router"
+import { ModalEliminar, ModalEliminarProps } from "./ModalEliminar"
 
 interface NuevaMinistracion extends MinistracionProyecto {
   id_rubro: number
+}
+
+type EntidadesEliminar =
+  | ""
+  | "colaboradores"
+  | "proveedores"
+  | "solicitudes-presupuesto"
+
+interface ModalEliminarComplexProps extends ModalEliminarProps {
+  entidad: EntidadesEliminar
 }
 
 interface EstadoProps {
@@ -71,6 +82,7 @@ interface EstadoProps {
   modoEditar: boolean
   isLoading: boolean
   banner: EstadoInicialBannerProps
+  modalEliminar: ModalEliminarComplexProps
 }
 
 type ActionTypes =
@@ -94,6 +106,8 @@ type ActionTypes =
   | "CAMBIO_TIPO_FINANCIAMIENTO"
   | "RELOAD_PROYECTO"
   | "RECARGAR_NOTAS"
+  | "ABRIRL_MODAL_ELIMINAR"
+  | "CANCELAR_ELIMINAR"
 
 interface ActionDispatch {
   type: ActionTypes
@@ -106,6 +120,7 @@ interface ProyectoProvider {
   user: UsuarioLogin
   despachar: (type: ActionTypes, payload?: any) => void
   formMinistracion: MutableRefObject<any>
+  abrirModalEliminar: (id: number, entidad: EntidadesEliminar) => void
 }
 
 const ProyectoContext: Context<ProyectoProvider> = createContext(null)
@@ -122,6 +137,13 @@ const estaInicialFormaMinistracion: NuevaMinistracion = {
       f_monto: 0,
     },
   ],
+}
+
+const estadoInicialModalEliminar: ModalEliminarComplexProps = {
+  show: false,
+  id: 0,
+  nombre: "",
+  entidad: "",
 }
 
 const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
@@ -365,6 +387,41 @@ const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
           notas: payload,
         },
       }
+    case "ABRIRL_MODAL_ELIMINAR":
+      let nombreEliminar = ""
+
+      switch (payload.entidad) {
+        case "colaboradores":
+          const matchCol = state.forma.colaboradores.find(
+            (col) => col.id == payload.id
+          )
+          nombreEliminar = `al colaborador ${matchCol.nombre} con id de empelado ${matchCol.id_empleado}`
+          break
+        case "proveedores":
+          const matchProv = state.forma.proveedores.find(
+            (prov) => prov.id == payload.id
+          )
+          nombreEliminar = `al proveedor ${matchProv.nombre} con id ${matchProv.id}`
+          break
+        case "solicitudes-presupuesto":
+          nombreEliminar = `la solicitud ${payload.id}`
+          break
+      }
+
+      return {
+        ...state,
+        modalEliminar: {
+          show: true,
+          id: payload.id,
+          nombre: nombreEliminar,
+          entidad: payload.entidad,
+        },
+      }
+    case "CANCELAR_ELIMINAR":
+      return {
+        ...state,
+        modalEliminar: estadoInicialModalEliminar,
+      }
     default:
       return state
   }
@@ -423,6 +480,7 @@ const FormaProyecto = () => {
     formaMinistracion: estaInicialFormaMinistracion,
     isLoading: true,
     banner: estadoInicialBanner,
+    modalEliminar: estadoInicialModalEliminar,
     modoEditar: modalidad === "CREAR",
   }
 
@@ -475,13 +533,7 @@ const FormaProyecto = () => {
           },
         })
       } else {
-        const reProyecto = await obtenerProyectos({
-          id: idProyecto,
-          min: false,
-        })
-
-        if (reProyecto.error) throw reProyecto
-        const proyectoDB = reProyecto.data as Proyecto
+        const proyectoDB = await obtener()
         const usuariosCoparteDB = await obtenerUsuariosCoparte(
           proyectoDB.id_coparte
         )
@@ -532,6 +584,24 @@ const FormaProyecto = () => {
     }
   }
 
+  const obtener = async () => {
+    const reProyecto = await obtenerProyectos({
+      id: idProyecto,
+      min: false,
+    })
+
+    if (reProyecto.error) throw reProyecto
+    return reProyecto.data as Proyecto
+  }
+
+  const reload = async () => {
+    const proyectoActualizado = await obtener()
+    dispatch({
+      type: "RELOAD_PROYECTO",
+      payload: proyectoActualizado,
+    })
+  }
+
   const registrar = () => {
     return ApiCall.post("/proyectos", estado.forma)
   }
@@ -565,6 +635,39 @@ const FormaProyecto = () => {
     return estado.forma.dt_inicio
       ? fechaMasDiasFutuosString(estado.forma.dt_inicio, 1)
       : ""
+  }
+
+  const despachar = (type: ActionTypes, payload?: any) => {
+    dispatch({
+      type,
+      payload,
+    })
+  }
+
+  const eliminarEntidad = async () => {
+    dispatch({ type: "LOADING_ON" })
+
+    try {
+      const dl = await ApiCall.delete(
+        `/${estado.modalEliminar.entidad}/${estado.modalEliminar.id}`
+      )
+      if (dl.error) throw dl
+      reload()
+    } catch ({ data, mensaje }) {
+      console.log(data)
+      dispatch({
+        type: "ERROR_API",
+        payload: mensaje,
+      })
+    }
+  }
+
+  const cancelarEliminarEntidad = () => {
+    despachar("CANCELAR_ELIMINAR")
+  }
+
+  const abrirModalEliminar = (id: number, entidad: EntidadesEliminar) => {
+    despachar("ABRIRL_MODAL_ELIMINAR", { id, entidad })
   }
 
   const validarForma = () => {
@@ -609,17 +712,7 @@ const FormaProyecto = () => {
       if (modalidad === "CREAR") {
         router.push("/proyectos")
       } else {
-        const reProyectoActualizado = await obtenerProyectos({
-          id: idProyecto,
-          min: false,
-        })
-        if (reProyectoActualizado.error) throw reProyectoActualizado
-
-        const proyectoActualizado = reProyectoActualizado.data as Proyecto
-        dispatch({
-          type: "RELOAD_PROYECTO",
-          payload: proyectoActualizado,
-        })
+        reload()
       }
     } catch ({ data, mensaje }) {
       console.log(data)
@@ -630,13 +723,6 @@ const FormaProyecto = () => {
     }
   }
 
-  const despachar = (type: ActionTypes, payload?: any) => {
-    dispatch({
-      type,
-      payload,
-    })
-  }
-
   const showBtnEditar =
     !estado.modoEditar &&
     idProyecto &&
@@ -644,11 +730,10 @@ const FormaProyecto = () => {
       user.id_rol == rolesUsuario.SUPER_USUARIO)
 
   const enableSlctFinanciadores = modalidad === "CREAR"
-    // modalidad === "CREAR" ||
-    // (modalidad === "EDITAR" &&
-    //   estado.modoEditar &&
-    //   user.id_rol == rolesUsuario.SUPER_USUARIO)
-
+  // modalidad === "CREAR" ||
+  // (modalidad === "EDITAR" &&
+  //   estado.modoEditar &&
+  //   user.id_rol == rolesUsuario.SUPER_USUARIO)
 
   const showFormaMinistracion = estado.modoEditar
 
@@ -674,286 +759,300 @@ const FormaProyecto = () => {
     despachar,
     idProyecto,
     formMinistracion,
+    abrirModalEliminar,
   }
 
   return (
-    <RegistroContenedor>
-      <div className="row mb-3">
-        <div className="col-12 d-flex justify-content-between">
-          <div className="d-flex align-items-center">
-            <BtnBack navLink="/proyectos" />
-            {!idProyecto && <h2 className="color1 mb-0">Registrar proyecto</h2>}
+    <>
+      <RegistroContenedor>
+        <div className="row mb-3">
+          <div className="col-12 d-flex justify-content-between">
+            <div className="d-flex align-items-center">
+              <BtnBack navLink="/proyectos" />
+              {!idProyecto && (
+                <h2 className="color1 mb-0">Registrar proyecto</h2>
+              )}
+            </div>
+            {showBtnEditar && (
+              <BtnEditar onClick={() => despachar("MODO_EDITAR_ON")} />
+            )}
           </div>
-          {showBtnEditar && (
-            <BtnEditar onClick={() => despachar("MODO_EDITAR_ON")} />
-          )}
         </div>
-      </div>
-      <ProyectoContext.Provider value={value}>
-        <FormaContenedor onSubmit={handleSubmit} formaRef={formRef}>
-          {modalidad === "EDITAR" && (
+        <ProyectoContext.Provider value={value}>
+          <FormaContenedor onSubmit={handleSubmit} formaRef={formRef}>
+            {modalidad === "EDITAR" && (
+              <div className="col-12 col-md-6 col-lg-4 mb-3">
+                <label className="form-label">Id alterno</label>
+                <input
+                  className="form-control"
+                  type="text"
+                  value={estado.forma.id_alt}
+                  disabled
+                />
+                {error.campo == "id_alt" && (
+                  <MensajeError mensaje={error.mensaje} />
+                )}
+              </div>
+            )}
             <div className="col-12 col-md-6 col-lg-4 mb-3">
-              <label className="form-label">Id alterno</label>
+              <label className="form-label">Nombre</label>
               <input
                 className="form-control"
                 type="text"
-                value={estado.forma.id_alt}
-                disabled
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+                name="nombre"
+                value={estado.forma.nombre}
+                disabled={!estado.modoEditar}
               />
-              {error.campo == "id_alt" && (
+              {error.campo == "nombre" && (
                 <MensajeError mensaje={error.mensaje} />
               )}
             </div>
-          )}
-          <div className="col-12 col-md-6 col-lg-4 mb-3">
-            <label className="form-label">Nombre</label>
-            <input
-              className="form-control"
-              type="text"
-              onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-              name="nombre"
-              value={estado.forma.nombre}
-              disabled={!estado.modoEditar}
-            />
-            {error.campo == "nombre" && (
-              <MensajeError mensaje={error.mensaje} />
-            )}
-          </div>
-          <div className="col-12 col-md-6 col-lg-4 mb-3">
-            <label className="form-label">Financiador</label>
-            <select
-              className="form-control"
-              onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-              name="id_financiador"
-              value={estado.forma.id_financiador}
-              disabled={!enableSlctFinanciadores}
-            >
-              {estado.financiadoresDB.map(({ id, nombre }) => (
-                <option key={id} value={id}>
-                  {nombre}
-                </option>
-              ))}
-            </select>
-            {error.campo == "id_financiador" && (
-              <MensajeError mensaje={error.mensaje} />
-            )}
-          </div>
-          <div className="col-12 col-md-6 col-lg-4 mb-3">
-            <label className="form-label">Coparte</label>
-            {modalidad === "CREAR" ? (
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label">Financiador</label>
               <select
                 className="form-control"
-                onChange={handleChangeCoparte}
-                value={estado.forma.id_coparte}
-                name="id_coparte"
-                disabled={Boolean(idProyecto) || Boolean(idCoparte)}
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+                name="id_financiador"
+                value={estado.forma.id_financiador}
+                disabled={!enableSlctFinanciadores}
               >
-                {estado.copartesDB.map(({ id, nombre }) => (
+                {estado.financiadoresDB.map(({ id, nombre }) => (
                   <option key={id} value={id}>
                     {nombre}
                   </option>
                 ))}
               </select>
-            ) : (
+              {error.campo == "id_financiador" && (
+                <MensajeError mensaje={error.mensaje} />
+              )}
+            </div>
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label">Coparte</label>
+              {modalidad === "CREAR" ? (
+                <select
+                  className="form-control"
+                  onChange={handleChangeCoparte}
+                  value={estado.forma.id_coparte}
+                  name="id_coparte"
+                  disabled={Boolean(idProyecto) || Boolean(idCoparte)}
+                >
+                  {estado.copartesDB.map(({ id, nombre }) => (
+                    <option key={id} value={id}>
+                      {nombre}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  className="form-control"
+                  type="text"
+                  value={estado.forma.coparte}
+                  disabled
+                />
+              )}
+              {error.campo == "id_coparte" && (
+                <MensajeError mensaje={error.mensaje} />
+              )}
+            </div>
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label">Responsable</label>
+              <select
+                className="form-control"
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+                name="id_responsable"
+                value={estado.forma.id_responsable}
+                disabled={!estado.modoEditar}
+              >
+                {estado.usuariosCoparteDB.map(
+                  ({ id, nombre, apellido_paterno }) => (
+                    <option key={id} value={id}>
+                      {nombre} {apellido_paterno}
+                    </option>
+                  )
+                )}
+                {error.campo == "id_responsable" && (
+                  <MensajeError mensaje={error.mensaje} />
+                )}
+              </select>
+            </div>
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label">Tipo de financiamiento</label>
+              <select
+                className="form-control"
+                onChange={(e) =>
+                  despachar("CAMBIO_TIPO_FINANCIAMIENTO", e.target.value)
+                }
+                name="i_tipo_financiamiento"
+                value={estado.forma.i_tipo_financiamiento}
+                disabled={modalidad === "EDITAR"}
+              >
+                <option value="1">Estipendio</option>
+                <option value="2">Única ministración</option>
+                <option value="3">Varias Ministraciones</option>
+                <option value="4">Multi anual</option>
+              </select>
+            </div>
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label">Tema social</label>
+              <select
+                className="form-control"
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+                name="id_tema_social"
+                value={estado.forma.id_tema_social}
+                disabled={!estado.modoEditar}
+              >
+                {temas_sociales.map(({ id, nombre }) => (
+                  <option key={id} value={id}>
+                    {nombre.length > 50
+                      ? `${nombre.substring(0, 50)}...`
+                      : nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label">Sector beneficiado</label>
               <input
                 className="form-control"
                 type="text"
-                value={estado.forma.coparte}
-                disabled
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+                name="sector_beneficiado"
+                value={estado.forma.sector_beneficiado}
+                disabled={!estado.modoEditar}
               />
-            )}
-            {error.campo == "id_coparte" && (
-              <MensajeError mensaje={error.mensaje} />
-            )}
-          </div>
-          <div className="col-12 col-md-6 col-lg-4 mb-3">
-            <label className="form-label">Responsable</label>
-            <select
-              className="form-control"
-              onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-              name="id_responsable"
-              value={estado.forma.id_responsable}
-              disabled={!estado.modoEditar}
-            >
-              {estado.usuariosCoparteDB.map(
-                ({ id, nombre, apellido_paterno }) => (
-                  <option key={id} value={id}>
-                    {nombre} {apellido_paterno}
-                  </option>
-                )
-              )}
-              {error.campo == "id_responsable" && (
+              {error.campo == "sector_beneficiado" && (
                 <MensajeError mensaje={error.mensaje} />
               )}
-            </select>
-          </div>
-          <div className="col-12 col-md-6 col-lg-4 mb-3">
-            <label className="form-label">Tipo de financiamiento</label>
-            <select
-              className="form-control"
-              onChange={(e) =>
-                despachar("CAMBIO_TIPO_FINANCIAMIENTO", e.target.value)
-              }
-              name="i_tipo_financiamiento"
-              value={estado.forma.i_tipo_financiamiento}
-              disabled={modalidad === "EDITAR"}
-            >
-              <option value="1">Estipendio</option>
-              <option value="2">Única ministración</option>
-              <option value="3">Varias Ministraciones</option>
-              <option value="4">Multi anual</option>
-            </select>
-          </div>
-          <div className="col-12 col-md-6 col-lg-4 mb-3">
-            <label className="form-label">Tema social</label>
-            <select
-              className="form-control"
-              onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-              name="id_tema_social"
-              value={estado.forma.id_tema_social}
-              disabled={!estado.modoEditar}
-            >
-              {temas_sociales.map(({ id, nombre }) => (
-                <option key={id} value={id}>
-                  {nombre.length > 50
-                    ? `${nombre.substring(0, 50)}...`
-                    : nombre}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="col-12 col-md-6 col-lg-4 mb-3">
-            <label className="form-label">Sector beneficiado</label>
-            <input
-              className="form-control"
-              type="text"
-              onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-              name="sector_beneficiado"
-              value={estado.forma.sector_beneficiado}
-              disabled={!estado.modoEditar}
-            />
-            {error.campo == "sector_beneficiado" && (
-              <MensajeError mensaje={error.mensaje} />
-            )}
-          </div>
-          <div className="col-12 col-md-6 col-lg-4 mb-3">
-            <label className="form-label me-1">Estado</label>
-            <TooltipInfo texto="Estado de acción del proyecto" />
-            <select
-              className="form-control"
-              onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-              name="id_estado"
-              value={estado.forma.id_estado}
-              disabled={!estado.modoEditar}
-            >
-              {estados.map(({ id, nombre }) => (
-                <option key={id} value={id}>
-                  {nombre}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="col-12 col-md-6 col-lg-4 mb-3">
-            <label className="form-label me-1">Municipio</label>
-            <TooltipInfo texto="Municipio de acción del proyecto" />
-            <input
-              className="form-control"
-              type="text"
-              onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-              name="municipio"
-              value={estado.forma.municipio}
-              disabled={!estado.modoEditar}
-            />
-            {error.campo == "municipio" && (
-              <MensajeError mensaje={error.mensaje} />
-            )}
-          </div>
-          <div className="col-12 col-md-6 col-lg-4 mb-3">
-            <label className="form-label me-1">Fecha inicio</label>
-            <TooltipInfo texto="Inicio de la ejecución del proyecto" />
-            <input
-              className="form-control"
-              type="date"
-              onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-              name="dt_inicio"
-              value={estado.forma.dt_inicio}
-              disabled={!estado.modoEditar}
-            />
-            {error.campo == "dt_inicio" && (
-              <MensajeError mensaje={error.mensaje} />
-            )}
-          </div>
-          <div className="col-12 col-md-6 col-lg-4 mb-3">
-            <label className="form-label me-1">Fecha fin</label>
-            <TooltipInfo texto="Fin de la ejecución del proyecto" />
-            <input
-              className="form-control"
-              type="date"
-              onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-              name="dt_fin"
-              value={estado.forma.dt_fin}
-              min={calcularDtMinFin()}
-              disabled={!estado.modoEditar}
-            />
-            {error.campo == "dt_fin" && (
-              <MensajeError mensaje={error.mensaje} />
-            )}
-          </div>
-          <div className="col-12 col-md-6 col-lg-4 mb-3">
-            <label className="form-label">Beneficiados</label>
-            <input
-              className="form-control"
-              type="text"
-              onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-              name="i_beneficiados"
-              value={estado.forma.i_beneficiados}
-              disabled={!estado.modoEditar}
-            />
-            {error.campo == "i_beneficiados" && (
-              <MensajeError mensaje={error.mensaje} />
-            )}
-          </div>
-          <div className="col-12 mb-3">
-            <label className="form-label me-1">Descripción</label>
-            <textarea
-              className="form-control"
-              onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-              name="descripcion"
-              value={estado.forma.descripcion}
-              disabled={!estado.modoEditar}
-            />
-            {error.campo == "descripcion" && (
-              <MensajeError mensaje={error.mensaje} />
-            )}
-          </div>
-          <div className="col-12">
-            <hr />
-          </div>
-          {/* Seccion Ministraciones */}
-          <div className="col-12 mb-3">
-            <h4 className="color1 mb-0">Ministraciones</h4>
-          </div>
-          <TablaMinistraciones />
-          {showFormaMinistracion && <FormaMinistracion />}
-          {estado.modoEditar && (
-            <div className="col-12 text-end">
-              <BtnCancelar onclick={cancelar} margin={"r"} />
-              <BtnRegistrar modalidad={modalidad} margin={false} />
             </div>
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label me-1">Estado</label>
+              <TooltipInfo texto="Estado de acción del proyecto" />
+              <select
+                className="form-control"
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+                name="id_estado"
+                value={estado.forma.id_estado}
+                disabled={!estado.modoEditar}
+              >
+                {estados.map(({ id, nombre }) => (
+                  <option key={id} value={id}>
+                    {nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label me-1">Municipio</label>
+              <TooltipInfo texto="Municipio de acción del proyecto" />
+              <input
+                className="form-control"
+                type="text"
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+                name="municipio"
+                value={estado.forma.municipio}
+                disabled={!estado.modoEditar}
+              />
+              {error.campo == "municipio" && (
+                <MensajeError mensaje={error.mensaje} />
+              )}
+            </div>
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label me-1">Fecha inicio</label>
+              <TooltipInfo texto="Inicio de la ejecución del proyecto" />
+              <input
+                className="form-control"
+                type="date"
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+                name="dt_inicio"
+                value={estado.forma.dt_inicio}
+                disabled={!estado.modoEditar}
+              />
+              {error.campo == "dt_inicio" && (
+                <MensajeError mensaje={error.mensaje} />
+              )}
+            </div>
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label me-1">Fecha fin</label>
+              <TooltipInfo texto="Fin de la ejecución del proyecto" />
+              <input
+                className="form-control"
+                type="date"
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+                name="dt_fin"
+                value={estado.forma.dt_fin}
+                min={calcularDtMinFin()}
+                disabled={!estado.modoEditar}
+              />
+              {error.campo == "dt_fin" && (
+                <MensajeError mensaje={error.mensaje} />
+              )}
+            </div>
+            <div className="col-12 col-md-6 col-lg-4 mb-3">
+              <label className="form-label">Beneficiados</label>
+              <input
+                className="form-control"
+                type="text"
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+                name="i_beneficiados"
+                value={estado.forma.i_beneficiados}
+                disabled={!estado.modoEditar}
+              />
+              {error.campo == "i_beneficiados" && (
+                <MensajeError mensaje={error.mensaje} />
+              )}
+            </div>
+            <div className="col-12 mb-3">
+              <label className="form-label me-1">Descripción</label>
+              <textarea
+                className="form-control"
+                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+                name="descripcion"
+                value={estado.forma.descripcion}
+                disabled={!estado.modoEditar}
+              />
+              {error.campo == "descripcion" && (
+                <MensajeError mensaje={error.mensaje} />
+              )}
+            </div>
+            <div className="col-12">
+              <hr />
+            </div>
+            {/* Seccion Ministraciones */}
+            <div className="col-12 mb-3">
+              <h4 className="color1 mb-0">Ministraciones</h4>
+            </div>
+            <TablaMinistraciones />
+            {showFormaMinistracion && <FormaMinistracion />}
+            {estado.modoEditar && (
+              <div className="col-12 text-end">
+                <BtnCancelar onclick={cancelar} margin={"r"} />
+                <BtnRegistrar modalidad={modalidad} margin={false} />
+              </div>
+            )}
+          </FormaContenedor>
+          <Toast estado={toastState} cerrar={cerrarToast} />
+          {modalidad === "EDITAR" && (
+            <>
+              <Saldos />
+              <Colaboradores />
+              <Proveedores />
+              <SolicitudesPresupuesto />
+              {user.id_rol != rolesUsuario.COPARTE && <Notas />}
+            </>
           )}
-        </FormaContenedor>
-        <Toast estado={toastState} cerrar={cerrarToast} />
-        {modalidad === "EDITAR" && (
-          <>
-            <Saldos />
-            <Colaboradores />
-            <Proveedores />
-            <SolicitudesPresupuesto />
-            {user.id_rol != rolesUsuario.COPARTE && <Notas />}
-          </>
-        )}
-      </ProyectoContext.Provider>
-    </RegistroContenedor>
+        </ProyectoContext.Provider>
+      </RegistroContenedor>
+      <ModalEliminar
+        show={estado.modalEliminar.show}
+        aceptar={eliminarEntidad}
+        cancelar={cancelarEliminarEntidad}
+      >
+        <p className="mb-0">
+          ¿Estás segur@ de eliminar {estado.modalEliminar.nombre}?
+        </p>
+      </ModalEliminar>
+    </>
   )
 }
 
@@ -1141,7 +1240,8 @@ const Saldos = () => {
 }
 
 const Colaboradores = () => {
-  const { estado, user, idProyecto } = useContext(ProyectoContext)
+  const { estado, user, idProyecto, abrirModalEliminar } =
+    useContext(ProyectoContext)
 
   return (
     <div className="row mb-5">
@@ -1200,6 +1300,14 @@ const Colaboradores = () => {
                       ruta={`/proyectos/${idProyecto}/colaboradores/${id}`}
                       title="ver colaborador"
                     />
+                    {user.id_rol == rolesUsuario.SUPER_USUARIO && (
+                      <BtnAccion
+                        margin="l"
+                        icono="bi-x-circle"
+                        onclick={() => abrirModalEliminar(id, "colaboradores")}
+                        title="eliminar colaborador"
+                      />
+                    )}
                   </td>
                 </tr>
               )
@@ -1212,7 +1320,8 @@ const Colaboradores = () => {
 }
 
 const Proveedores = () => {
-  const { estado, user, idProyecto } = useContext(ProyectoContext)
+  const { estado, user, idProyecto, abrirModalEliminar } =
+    useContext(ProyectoContext)
 
   return (
     <div className="row mb-5">
@@ -1231,6 +1340,7 @@ const Proveedores = () => {
         <table className="table">
           <thead className="table-light">
             <tr className="color1">
+              <th>#Id</th>
               <th>Nombre</th>
               <th>Tipo</th>
               <th>Servicio</th>
@@ -1256,6 +1366,7 @@ const Proveedores = () => {
                 bank,
               }) => (
                 <tr key={id}>
+                  <td>{id}</td>
                   <td>{nombre}</td>
                   <td>{tipo}</td>
                   <td>{descripcion_servicio}</td>
@@ -1270,6 +1381,14 @@ const Proveedores = () => {
                       ruta={`/proyectos/${idProyecto}/proveedores/${id}`}
                       title="ver proveedor"
                     />
+                    {user.id_rol == rolesUsuario.SUPER_USUARIO && (
+                      <BtnAccion
+                        margin="l"
+                        icono="bi-x-circle"
+                        onclick={() => abrirModalEliminar(id, "proveedores")}
+                        title="eliminar proveedor"
+                      />
+                    )}
                   </td>
                 </tr>
               )
@@ -1282,7 +1401,8 @@ const Proveedores = () => {
 }
 
 const SolicitudesPresupuesto = () => {
-  const { estado, user, idProyecto } = useContext(ProyectoContext)
+  const { estado, user, idProyecto, abrirModalEliminar } =
+    useContext(ProyectoContext)
 
   return (
     <div className="row mb-5">
@@ -1304,6 +1424,7 @@ const SolicitudesPresupuesto = () => {
         <table className="table">
           <thead className="table-light">
             <tr className="color1">
+              <th>#Id</th>
               <th>Tipo gasto</th>
               <th>Partida presupuestal</th>
               <th>Descripción gasto</th>
@@ -1329,6 +1450,7 @@ const SolicitudesPresupuesto = () => {
                 estatus,
               }) => (
                 <tr key={id}>
+                  <td>{id}</td>
                   <td>{tipo_gasto}</td>
                   <td>{rubro}</td>
                   <td>{descripcion_gasto}</td>
@@ -1351,6 +1473,16 @@ const SolicitudesPresupuesto = () => {
                       ruta={`/solicitudes-presupuesto/${id}`}
                       title="ver proveedor"
                     />
+                    {user.id_rol == rolesUsuario.SUPER_USUARIO && (
+                      <BtnAccion
+                        margin="l"
+                        icono="bi-x-circle"
+                        onclick={() =>
+                          abrirModalEliminar(id, "solicitudes-presupuesto")
+                        }
+                        title="eliminar solicitud"
+                      />
+                    )}
                   </td>
                 </tr>
               )

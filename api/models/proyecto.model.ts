@@ -1,6 +1,11 @@
-import { ColaboradorProyecto, MinistracionProyecto, NotaProyecto, ProveedorProyecto, RubroMinistracion } from "@models/proyecto.model"
-import { SolicitudPresupuesto } from "@models/solicitud-presupuesto.model"
+import {
+  MinistracionProyecto,
+  NotaProyecto,
+  RubroMinistracion,
+} from "@models/proyecto.model"
 import { ResSolicitudPresupuestoDB } from "./solicitudes-presupuesto.model"
+import { ResColaboradoreDB } from "./colaborador.model"
+import { ResProveedorDB } from "./proveedor.model"
 
 export interface ResProyectoDB {
   id: number
@@ -28,7 +33,7 @@ export interface ResProyectoDB {
 }
 
 interface Rubro {
-  f_monto: number,
+  f_monto: number
   id_proyecto: number
   id_rubro: number
 }
@@ -46,8 +51,8 @@ export interface ResProyectos {
   comprobantes: Comprobante[]
   ministraciones?: MinistracionProyecto[]
   rubros_ministracion?: RubroMinistracion[]
-  colaboradores?: ColaboradorProyecto[]
-  proveedores?: ProveedorProyecto[]
+  colaboradores?: ResColaboradoreDB[]
+  proveedores?: ResProveedorDB[]
   solicitudes?: ResSolicitudPresupuestoDB[]
   notas?: NotaProyecto[]
 }
