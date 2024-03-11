@@ -210,11 +210,25 @@ class ProveedorDB {
                 })
               }
 
-              connection.commit((err) => {
-                if (err) connection.rollback(() => rej(err))
-                connection.destroy()
-                res(true)
-              })
+              //traer colaborador actualizado
+              connection.query(
+                this.queryRe(null, id_proveedor),
+                id_proveedor,
+                (error, results, fields) => {
+                  if (error) {
+                    return connection.rollback(() => {
+                      connection.destroy()
+                      rej(error)
+                    })
+                  }
+
+                  connection.commit((err) => {
+                    if (err) connection.rollback(() => rej(err))
+                    connection.destroy()
+                    res(results[0])
+                  })
+                }
+              )
             }
           )
         })

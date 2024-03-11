@@ -240,7 +240,7 @@ const Proveedores = () => {
                           <LinkAccion
                             margin={false}
                             icono="bi-eye-fill"
-                            ruta={`/proyectos/${id_proyecto}/proveedores/${id}`}
+                            ruta={`/proveedores/${id}`}
                             title="ver detalle"
                           />
                           {user.id_rol != 3 && (

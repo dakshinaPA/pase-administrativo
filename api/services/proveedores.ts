@@ -3,6 +3,7 @@ import { RespuestaController } from "@api/utils/response"
 import { ResProveedorDB } from "@api/models/proveedor.model"
 import { ProveedorProyecto } from "@models/proyecto.model"
 import { textoMayusculaSinAcentos } from "@assets/utils/common"
+import { tiposProveedor } from "@assets/utils/constantes"
 
 class ProveedorServices {
   static obtenerTipo(id_tipo: 1 | 2 | 3) {
@@ -40,6 +41,57 @@ class ProveedorServices {
     }
   }
 
+  static formatData(proveedor: ResProveedorDB): ProveedorProyecto {
+    return {
+      ...proveedor,
+      nombre: textoMayusculaSinAcentos(proveedor.nombre),
+      tipo: this.obtenerTipo(proveedor.i_tipo),
+      banco: proveedor.banco || "",
+      direccion: {
+        id: proveedor.id_direccion,
+        calle: proveedor.calle,
+        numero_ext: proveedor.numero_ext,
+        numero_int: proveedor.numero_int,
+        colonia: proveedor.colonia,
+        municipio: proveedor.municipio,
+        cp: proveedor.cp,
+        id_estado: proveedor.id_estado,
+        estado: proveedor.estado,
+        pais: proveedor.pais,
+      },
+    }
+  }
+
+  static validarData(proveedor: ProveedorProyecto): ProveedorProyecto {
+    if (proveedor.i_tipo == tiposProveedor.EXTRANJERO) {
+      return {
+        ...proveedor,
+        clabe: "",
+        id_banco: 0,
+        rfc: "",
+        direccion: {
+          ...proveedor.direccion,
+          id_estado: 0,
+        },
+      }
+    }
+
+    return {
+      ...proveedor,
+      bank: "",
+      bank_branch_address: "",
+      account_number: "",
+      bic_code: "",
+      intermediary_bank: "",
+      routing_number: "",
+      direccion: {
+        ...proveedor.direccion,
+        estado: "",
+        pais: "",
+      },
+    }
+  }
+
   static async obtener(id_proyecto: number, id_proveedor?: number) {
     try {
       const re = (await ProveedorDB.obtener(
@@ -47,26 +99,9 @@ class ProveedorServices {
         id_proveedor
       )) as ResProveedorDB[]
 
-      const proveedores: ProveedorProyecto[] = re.map((proveedor) => {
-        return {
-          ...proveedor,
-          nombre: textoMayusculaSinAcentos(proveedor.nombre),
-          tipo: this.obtenerTipo(proveedor.i_tipo),
-          banco: proveedor.banco || "",
-          direccion: {
-            id: proveedor.id_direccion,
-            calle: proveedor.calle,
-            numero_ext: proveedor.numero_ext,
-            numero_int: proveedor.numero_int,
-            colonia: proveedor.colonia,
-            municipio: proveedor.municipio,
-            cp: proveedor.cp,
-            id_estado: proveedor.id_estado,
-            estado: proveedor.estado,
-            pais: proveedor.pais,
-          },
-        }
-      })
+      const proveedores: ProveedorProyecto[] = re.map((prov) =>
+        this.formatData(prov)
+      )
 
       return RespuestaController.exitosa(200, "Consulta exitosa", proveedores)
     } catch (error) {
@@ -82,7 +117,8 @@ class ProveedorServices {
 
   static async crear(data: ProveedorProyecto) {
     try {
-      const payload = this.trimPayload(data)
+      let payload = this.validarData(data)
+      payload = this.trimPayload(payload)
       const cr = await ProveedorDB.crear(payload)
 
       return RespuestaController.exitosa(201, "Proveedor creado con éxito", {
@@ -99,13 +135,18 @@ class ProveedorServices {
 
   static async actualizar(id_proveedor: number, data: ProveedorProyecto) {
     try {
-      const payload = this.trimPayload(data)
-      const up = await ProveedorDB.actualizar(id_proveedor, payload)
+      let payload = this.validarData(data)
+      payload = this.trimPayload(payload)
+      const up = (await ProveedorDB.actualizar(
+        id_proveedor,
+        payload
+      )) as ResProveedorDB
+      const proveedorUp = this.formatData(up)
 
       return RespuestaController.exitosa(
         200,
         "Proveedor actualizado con éxito",
-        up
+        proveedorUp
       )
     } catch (error) {
       return RespuestaController.fallida(

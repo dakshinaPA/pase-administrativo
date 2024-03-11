@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useRef, useState } from "react"
+import { useEffect, useReducer } from "react"
 import { useRouter } from "next/router"
 import { ChangeEvent } from "@assets/models/formEvents.model"
 import {
@@ -10,7 +10,6 @@ import { Loader } from "@components/Loader"
 import {
   RegistroContenedor,
   FormaContenedor,
-  TablaContenedor,
   Contenedor,
 } from "@components/Contenedores"
 import { ApiCall } from "@assets/utils/apiCalls"
@@ -20,67 +19,134 @@ import { obtenerProveedores, obtenerProyectos } from "@assets/utils/common"
 import { useErrores } from "@hooks/useErrores"
 import { MensajeError } from "./Mensajes"
 import { useSesion } from "@hooks/useSesion"
-import { Banner, estadoInicialBanner, mensajesBanner } from "./Banner"
+import {
+  Banner,
+  EstadoInicialBannerProps,
+  estadoInicialBanner,
+  mensajesBanner,
+} from "./Banner"
+import { rolesUsuario, tiposProveedor } from "@assets/utils/constantes"
 
 type ActionTypes =
+  | "LOADING_ON"
+  | "ERROR_API"
+  | "SIN_PROYECTOS"
+  | "CARGAR_PROYECTOS"
   | "CARGA_INICIAL"
+  | "RELOAD"
+  | "MODO_EDITAR_ON"
+  | "CANCELAR_EDITAR"
   | "HANDLE_CHANGE"
+  | "CAMBIO_CLABE"
   | "HANDLE_CHANGE_DIRECCION"
-  | "NO_EXTRANJERO"
-  | "EXTRANJERO"
 
 interface ActionDispatch {
   type: ActionTypes
-  payload: any
+  payload?: any
 }
 
-const reducer = (
-  state: ProveedorProyecto,
-  action: ActionDispatch
-): ProveedorProyecto => {
+interface EstadoProps {
+  cargaInicial: ProveedorProyecto
+  forma: ProveedorProyecto
+  proyectosDB: ProyectoMin[]
+  isLoading: boolean
+  mensajeNota: string
+  banner: EstadoInicialBannerProps
+  modoEditar: boolean
+  modalidad: "CREAR" | "EDITAR"
+}
+
+const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
   const { type, payload } = action
 
   switch (type) {
+    case "LOADING_ON":
+      return {
+        ...state,
+        isLoading: true,
+      }
+    case "ERROR_API":
+      return {
+        ...state,
+        isLoading: false,
+        banner: {
+          show: true,
+          mensaje: payload,
+          tipo: "error",
+        },
+      }
+    case "SIN_PROYECTOS":
+      return {
+        ...state,
+        isLoading: false,
+        banner: {
+          show: true,
+          mensaje: mensajesBanner.sinProyectos,
+          tipo: "warning",
+        },
+      }
+    case "CARGAR_PROYECTOS":
+      return {
+        ...state,
+        proyectosDB: payload,
+        forma: {
+          ...state.forma,
+          id_proyecto: payload[0].id,
+        },
+        isLoading: false,
+      }
     case "CARGA_INICIAL":
-      return payload
+      return {
+        ...state,
+        forma: payload,
+        cargaInicial: payload,
+        isLoading: false,
+      }
+    case "RELOAD":
+      return {
+        ...state,
+        forma: payload,
+        cargaInicial: payload,
+        isLoading: false,
+        modoEditar: false,
+      }
+    case "MODO_EDITAR_ON":
+      return {
+        ...state,
+        modoEditar: true,
+      }
+    case "CANCELAR_EDITAR":
+      return {
+        ...state,
+        forma: { ...state.cargaInicial },
+        modoEditar: false,
+      }
     case "HANDLE_CHANGE":
       return {
         ...state,
-        [payload.name]: payload.value,
+        forma: {
+          ...state.forma,
+          [payload.name]: payload.value,
+        },
+      }
+    case "CAMBIO_CLABE":
+      return {
+        ...state,
+        forma: {
+          ...state.forma,
+          clabe: payload.clabe,
+          id_banco: payload.id_banco,
+        },
       }
     case "HANDLE_CHANGE_DIRECCION":
       return {
         ...state,
-        direccion: {
-          ...state.direccion,
-          [payload.name]: payload.value,
-        },
-      }
-    case "EXTRANJERO":
-      return {
-        ...state,
-        clabe: "",
-        id_banco: 0,
-        banco: "",
-        rfc: "",
-        direccion: {
-          ...state.direccion,
-          id_estado: 0,
-        },
-      }
-    case "NO_EXTRANJERO":
-      return {
-        ...state,
-        bank: "",
-        bank_branch_address: "",
-        account_number: "",
-        bic_code: "",
-        intermediary_bank: "",
-        routing_number: "",
-        direccion: {
-          ...state.direccion,
-          estado: "",
-          pais: "",
+        forma: {
+          ...state.forma,
+          direccion: {
+            ...state.forma.direccion,
+            [payload.name]: payload.value,
+          },
         },
       }
     default:
@@ -97,7 +163,7 @@ const FormaProveedor = () => {
   const idProveedor = Number(router.query.idP)
 
   const estadoInicialForma: ProveedorProyecto = {
-    id_proyecto: idProyecto || 0,
+    id_proyecto: 0,
     nombre: "",
     i_tipo: 1,
     clabe: "",
@@ -125,43 +191,25 @@ const FormaProveedor = () => {
     },
   }
 
+  const estadoInicial: EstadoProps = {
+    cargaInicial: estadoInicialForma,
+    forma: estadoInicialForma,
+    proyectosDB: [],
+    isLoading: true,
+    mensajeNota: "",
+    banner: estadoInicialBanner,
+    modoEditar: !idProveedor,
+    modalidad: idProveedor ? "EDITAR" : "CREAR",
+  }
+
   const { estados, bancos } = useCatalogos()
-  const [estadoForma, dispatch] = useReducer(reducer, estadoInicialForma)
-  const [proyectosDB, setProyectosDB] = useState<ProyectoMin[]>([])
+  const [estado, dispatch] = useReducer(reducer, estadoInicial)
   const { error, validarCampos, formRef } = useErrores()
-  const [isLoading, setIsLoading] = useState<boolean>(true)
-  const [modoEditar, setModoEditar] = useState<boolean>(!idProveedor)
-  const [showBanner, setShowBanner] = useState(estadoInicialBanner)
   const modalidad = idProveedor ? "EDITAR" : "CREAR"
-  const primeraCarga = useRef(null)
 
   useEffect(() => {
     cargarData()
   }, [])
-
-  useEffect(() => {
-    //el banco depende de los primero 3 digios de la clabe
-    const matchBanco = bancos.find(
-      (banco) => banco.clave === estadoForma.clabe.substring(0, 3)
-    )
-
-    dispatch({
-      type: "HANDLE_CHANGE",
-      payload: {
-        name: "id_banco",
-        value: matchBanco?.id || 0,
-      },
-    })
-  }, [estadoForma.clabe])
-
-  useEffect(() => {
-    const type = estadoForma.i_tipo == 3 ? "EXTRANJERO" : "NO_EXTRANJERO"
-
-    dispatch({
-      type,
-      payload: {},
-    })
-  }, [estadoForma.i_tipo])
 
   const cargarData = async () => {
     try {
@@ -171,41 +219,27 @@ const FormaProveedor = () => {
 
         const proyectosDB = reProyectos.data as ProyectoMin[]
         if (!proyectosDB.length) {
-          setShowBanner({
-            mensaje: mensajesBanner.sinProyectos,
-            show: true,
-            tipo: "warning",
-          })
+          dispatch({ type: "SIN_PROYECTOS" })
         } else {
-          setProyectosDB(proyectosDB)
           dispatch({
-            type: "HANDLE_CHANGE",
-            payload: {
-              name: "id_proyecto",
-              value: proyectosDB[0]?.id || 0,
-            },
+            type: "CARGAR_PROYECTOS",
+            payload: proyectosDB,
           })
         }
       } else {
         const reProveedor = await obtenerProveedores(null, idProveedor)
         if (reProveedor.error) throw reProveedor
-
-        const proveedor = reProveedor.data[0] as ProveedorProyecto
-        primeraCarga.current = proveedor
         dispatch({
           type: "CARGA_INICIAL",
-          payload: proveedor,
+          payload: reProveedor.data[0],
         })
       }
     } catch ({ data, mensaje }) {
       console.log(data)
-      setShowBanner({
-        mensaje,
-        show: true,
-        tipo: "error",
+      dispatch({
+        type: "ERROR_API",
+        payload: mensaje,
       })
-    } finally {
-      setIsLoading(false)
     }
   }
 
@@ -218,20 +252,16 @@ const FormaProveedor = () => {
   }
 
   const registrar = async () => {
-    return ApiCall.post("/proveedores", estadoForma)
+    return ApiCall.post("/proveedores", estado.forma)
   }
 
   const editar = async () => {
-    return ApiCall.put(`/proveedores/${idProveedor}`, estadoForma)
+    return ApiCall.put(`/proveedores/${idProveedor}`, estado.forma)
   }
 
   const cancelar = () => {
     if (modalidad === "EDITAR") {
-      dispatch({
-        type: "CARGA_INICIAL",
-        payload: primeraCarga.current,
-      })
-      setModoEditar(false)
+      dispatch({ type: "CANCELAR_EDITAR" })
     } else {
       router.back()
     }
@@ -253,31 +283,45 @@ const FormaProveedor = () => {
     })
   }
 
-  const validarForma = () => {
-    const campos = {
-      id_proyecto: estadoForma.id_proyecto,
-      proveedor: estadoForma.nombre,
-      clabe: estadoForma.clabe,
-      id_banco: estadoForma.id_banco,
-      rfc: estadoForma.rfc,
-      rfc_organizacion: estadoForma.rfc,
-      bank: estadoForma.bank,
-      bank_branch_address: estadoForma.bank_branch_address,
-      account_number: estadoForma.account_number,
-      bic_code: estadoForma.bic_code,
-      email: estadoForma.email,
-      telefono: estadoForma.telefono,
-      descripcion_servicio: estadoForma.descripcion_servicio,
-      calle: estadoForma.direccion.calle,
-      numero_ext: estadoForma.direccion.numero_ext,
-      colonia: estadoForma.direccion.colonia,
-      municipio: estadoForma.direccion.municipio,
-      cp: estadoForma.direccion.cp,
-      id_estado: estadoForma.direccion.id_estado,
-      pais: estadoForma.direccion.pais,
+  const handleChangeClabe = (ev: ChangeEvent) => {
+    const { value } = ev.target
+
+    if (error.campo === "clabe") {
+      validarCampos({ clabe: value })
     }
 
-    if (estadoForma.i_tipo == 3) {
+    const matchBanco = bancos.find((ban) => ban.clave === value.substring(0, 3))
+    dispatch({
+      type: "CAMBIO_CLABE",
+      payload: { clabe: value, id_banco: matchBanco?.id || 0 },
+    })
+  }
+
+  const validarForma = () => {
+    const campos = {
+      id_proyecto: estado.forma.id_proyecto,
+      proveedor: estado.forma.nombre,
+      clabe: estado.forma.clabe,
+      id_banco: estado.forma.id_banco,
+      rfc: estado.forma.rfc,
+      rfc_organizacion: estado.forma.rfc,
+      bank: estado.forma.bank,
+      bank_branch_address: estado.forma.bank_branch_address,
+      account_number: estado.forma.account_number,
+      bic_code: estado.forma.bic_code,
+      email: estado.forma.email,
+      telefono: estado.forma.telefono,
+      descripcion_servicio: estado.forma.descripcion_servicio,
+      calle: estado.forma.direccion.calle,
+      numero_ext: estado.forma.direccion.numero_ext,
+      colonia: estado.forma.direccion.colonia,
+      municipio: estado.forma.direccion.municipio,
+      cp: estado.forma.direccion.cp,
+      id_estado: estado.forma.direccion.id_estado,
+      pais: estado.forma.direccion.pais,
+    }
+
+    if (estado.forma.i_tipo == tiposProveedor.EXTRANJERO) {
       delete campos.clabe
       delete campos.id_banco
       delete campos.rfc
@@ -290,7 +334,7 @@ const FormaProveedor = () => {
       delete campos.bic_code
       delete campos.pais
 
-      if (estadoForma.i_tipo == 1) {
+      if (estado.forma.i_tipo == tiposProveedor.FISICA) {
         delete campos.rfc_organizacion
       } else {
         delete campos.rfc
@@ -303,31 +347,45 @@ const FormaProveedor = () => {
 
   const handleSubmit = async (ev: React.SyntheticEvent) => {
     if (!validarForma()) return
-    console.log(estadoForma)
+    console.log(estado.forma)
 
-    setIsLoading(true)
+    dispatch({ type: "LOADING_ON" })
+
     const { error, data, mensaje } =
       modalidad === "EDITAR" ? await editar() : await registrar()
-    setIsLoading(false)
 
     if (error) {
       console.log(data)
-      setShowBanner({
-        mensaje,
-        show: true,
-        tipo: "error",
+      dispatch({
+        type: "ERROR_API",
+        payload: mensaje,
       })
     } else {
       if (modalidad === "CREAR") {
-        //@ts-ignore
-        router.push(`/proyectos/${idProyecto}/proveedores/${data.idInsertado}`)
+        router.push(
+          //@ts-ignore
+          `/proveedores/${data.idInsertado}`
+        )
       } else {
-        setModoEditar(false)
+        dispatch({
+          type: "RELOAD",
+          payload: data,
+        })
       }
     }
   }
 
-  if (isLoading) {
+  const showBtnEditar =
+    modalidad === "EDITAR" &&
+    !estado.modoEditar &&
+    (user.id == estado.forma.id_responsable ||
+      user.id_rol == rolesUsuario.SUPER_USUARIO)
+
+  const enableSlctItipo =
+    modalidad === "CREAR" ||
+    (estado.modoEditar && user.id_rol == rolesUsuario.SUPER_USUARIO)
+
+  if (estado.isLoading) {
     return (
       <Contenedor>
         <Loader />
@@ -335,10 +393,10 @@ const FormaProveedor = () => {
     )
   }
 
-  if (showBanner.show) {
+  if (estado.banner.show) {
     return (
       <Contenedor>
-        <Banner tipo={showBanner.tipo} mensaje={showBanner.mensaje} />
+        <Banner tipo={estado.banner.tipo} mensaje={estado.banner.mensaje} />
       </Contenedor>
     )
   }
@@ -351,11 +409,9 @@ const FormaProveedor = () => {
               <h2 className="color1 mb-0">Registrar Proveedor</h2>
             )}
           </div>
-          {!modoEditar &&
-            idProveedor &&
-            user.id == estadoForma.id_responsable && (
-              <BtnEditar onClick={() => setModoEditar(true)} />
-            )}
+          {showBtnEditar && (
+            <BtnEditar onClick={() => dispatch({ type: "MODO_EDITAR_ON" })} />
+          )}
         </div>
       </div>
       <FormaContenedor onSubmit={handleSubmit} formaRef={formRef}>
@@ -366,24 +422,20 @@ const FormaProveedor = () => {
               className="form-control"
               onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
               name="id_proyecto"
-              value={estadoForma.id_proyecto}
+              value={estado.forma.id_proyecto}
               disabled={!!idProyecto}
             >
-              {proyectosDB.length > 0 ? (
-                proyectosDB.map(({ id, id_alt, nombre }) => (
-                  <option key={id} value={id}>
-                    {nombre} - {id_alt}
-                  </option>
-                ))
-              ) : (
-                <option value="0">No hay proyectos</option>
-              )}
+              {estado.proyectosDB.map(({ id, id_alt, nombre }) => (
+                <option key={id} value={id}>
+                  {nombre} - {id_alt}
+                </option>
+              ))}
             </select>
           ) : (
             <input
               className="form-control"
               type="text"
-              value={estadoForma.proyecto}
+              value={estado.forma.proyecto}
               disabled
             />
           )}
@@ -398,12 +450,10 @@ const FormaProveedor = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="nombre"
-            value={estadoForma.nombre}
-            disabled={!modoEditar}
+            value={estado.forma.nombre}
+            disabled={!estado.modoEditar}
           />
-          {error.campo == "nombre" && (
-            <MensajeError mensaje={error.mensaje} />
-          )}
+          {error.campo == "nombre" && <MensajeError mensaje={error.mensaje} />}
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Tipo</label>
@@ -411,15 +461,15 @@ const FormaProveedor = () => {
             className="form-control"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="i_tipo"
-            value={estadoForma.i_tipo}
-            disabled={Boolean(idProveedor)}
+            value={estado.forma.i_tipo}
+            disabled={!enableSlctItipo}
           >
             <option value="1">Persona física</option>
             <option value="2">Persona moral</option>
             <option value="3">Extranjero</option>
           </select>
         </div>
-        {estadoForma.i_tipo == 3 ? (
+        {estado.forma.i_tipo == tiposProveedor.EXTRANJERO ? (
           <>
             <div className="col-12 col-md-6 col-lg-4 mb-3">
               <label className="form-label">Banco destino</label>
@@ -428,8 +478,8 @@ const FormaProveedor = () => {
                 type="text"
                 onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
                 name="bank"
-                value={estadoForma.bank}
-                disabled={!modoEditar}
+                value={estado.forma.bank}
+                disabled={!estado.modoEditar}
               />
               {error.campo == "bank" && (
                 <MensajeError mensaje={error.mensaje} />
@@ -442,8 +492,8 @@ const FormaProveedor = () => {
                 type="text"
                 onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
                 name="bank_branch_address"
-                value={estadoForma.bank_branch_address}
-                disabled={!modoEditar}
+                value={estado.forma.bank_branch_address}
+                disabled={!estado.modoEditar}
               />
               {error.campo == "bank_branch_address" && (
                 <MensajeError mensaje={error.mensaje} />
@@ -456,8 +506,8 @@ const FormaProveedor = () => {
                 type="text"
                 onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
                 name="account_number"
-                value={estadoForma.account_number}
-                disabled={!modoEditar}
+                value={estado.forma.account_number}
+                disabled={!estado.modoEditar}
               />
               {error.campo == "account_number" && (
                 <MensajeError mensaje={error.mensaje} />
@@ -470,8 +520,8 @@ const FormaProveedor = () => {
                 type="text"
                 onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
                 name="bic_code"
-                value={estadoForma.bic_code}
-                disabled={!modoEditar}
+                value={estado.forma.bic_code}
+                disabled={!estado.modoEditar}
               />
               {error.campo == "bic_code" && (
                 <MensajeError mensaje={error.mensaje} />
@@ -484,8 +534,8 @@ const FormaProveedor = () => {
                 type="text"
                 onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
                 name="intermediary_bank"
-                value={estadoForma.intermediary_bank}
-                disabled={!modoEditar}
+                value={estado.forma.intermediary_bank}
+                disabled={!estado.modoEditar}
               />
               {error.campo == "intermediary_bank" && (
                 <MensajeError mensaje={error.mensaje} />
@@ -498,8 +548,8 @@ const FormaProveedor = () => {
                 type="text"
                 onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
                 name="routing_number"
-                value={estadoForma.routing_number}
-                disabled={!modoEditar}
+                value={estado.forma.routing_number}
+                disabled={!estado.modoEditar}
               />
               {error.campo == "routing_number" && (
                 <MensajeError mensaje={error.mensaje} />
@@ -513,10 +563,10 @@ const FormaProveedor = () => {
               <input
                 className="form-control"
                 type="text"
-                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
+                onChange={handleChangeClabe}
                 name="clabe"
-                value={estadoForma.clabe}
-                disabled={!modoEditar}
+                value={estado.forma.clabe}
+                disabled={!estado.modoEditar}
               />
               {error.campo == "clabe" && (
                 <MensajeError mensaje={error.mensaje} />
@@ -526,10 +576,7 @@ const FormaProveedor = () => {
               <label className="form-label">Banco</label>
               <select
                 className="form-control"
-                onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-                name="id_banco"
-                value={estadoForma.id_banco}
-                // disabled={!modoEditar}
+                value={estado.forma.id_banco}
                 disabled
               >
                 <option value="0" disabled></option>
@@ -549,12 +596,14 @@ const FormaProveedor = () => {
                 className="form-control"
                 type="text"
                 onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
-                name={estadoForma.i_tipo == 1 ? "rfc" : "rfc_organizacion"}
-                value={estadoForma.rfc}
-                disabled={!modoEditar}
+                name={estado.forma.i_tipo == 1 ? "rfc" : "rfc_organizacion"}
+                value={estado.forma.rfc}
+                disabled={!estado.modoEditar}
               />
               {error.campo ==
-                (estadoForma.i_tipo == 1 ? "rfc" : "rfc_organizacion") && (
+                (estado.forma.i_tipo == tiposProveedor.FISICA
+                  ? "rfc"
+                  : "rfc_organizacion") && (
                 <MensajeError mensaje={error.mensaje} />
               )}
             </div>
@@ -567,8 +616,8 @@ const FormaProveedor = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="email"
-            value={estadoForma.email}
-            disabled={!modoEditar}
+            value={estado.forma.email}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "email" && <MensajeError mensaje={error.mensaje} />}
         </div>
@@ -579,8 +628,8 @@ const FormaProveedor = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="telefono"
-            value={estadoForma.telefono}
-            disabled={!modoEditar}
+            value={estado.forma.telefono}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "telefono" && (
             <MensajeError mensaje={error.mensaje} />
@@ -595,8 +644,8 @@ const FormaProveedor = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
             name="descripcion_servicio"
-            value={estadoForma.descripcion_servicio}
-            disabled={!modoEditar}
+            value={estado.forma.descripcion_servicio}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "descripcion_servicio" && (
             <MensajeError mensaje={error.mensaje} />
@@ -615,8 +664,8 @@ const FormaProveedor = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE_DIRECCION")}
             name="calle"
-            value={estadoForma.direccion.calle}
-            disabled={!modoEditar}
+            value={estado.forma.direccion.calle}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "calle" && <MensajeError mensaje={error.mensaje} />}
         </div>
@@ -627,8 +676,8 @@ const FormaProveedor = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE_DIRECCION")}
             name="numero_ext"
-            value={estadoForma.direccion.numero_ext}
-            disabled={!modoEditar}
+            value={estado.forma.direccion.numero_ext}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "numero_ext" && (
             <MensajeError mensaje={error.mensaje} />
@@ -641,8 +690,8 @@ const FormaProveedor = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE_DIRECCION")}
             name="numero_int"
-            value={estadoForma.direccion.numero_int}
-            disabled={!modoEditar}
+            value={estado.forma.direccion.numero_int}
+            disabled={!estado.modoEditar}
           />
         </div>
         <div className="col-12 col-lg-6 mb-3">
@@ -652,8 +701,8 @@ const FormaProveedor = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE_DIRECCION")}
             name="colonia"
-            value={estadoForma.direccion.colonia}
-            disabled={!modoEditar}
+            value={estado.forma.direccion.colonia}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "colonia" && <MensajeError mensaje={error.mensaje} />}
         </div>
@@ -664,8 +713,8 @@ const FormaProveedor = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE_DIRECCION")}
             name="municipio"
-            value={estadoForma.direccion.municipio}
-            disabled={!modoEditar}
+            value={estado.forma.direccion.municipio}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "municipio" && (
             <MensajeError mensaje={error.mensaje} />
@@ -678,12 +727,12 @@ const FormaProveedor = () => {
             type="text"
             onChange={(e) => handleChange(e, "HANDLE_CHANGE_DIRECCION")}
             name="cp"
-            value={estadoForma.direccion.cp}
-            disabled={!modoEditar}
+            value={estado.forma.direccion.cp}
+            disabled={!estado.modoEditar}
           />
           {error.campo == "cp" && <MensajeError mensaje={error.mensaje} />}
         </div>
-        {estadoForma.i_tipo == 3 ? (
+        {estado.forma.i_tipo == tiposProveedor.EXTRANJERO ? (
           <>
             <div className="col-12 col-md-6 col-lg-4 mb-3">
               <label className="form-label">Estado</label>
@@ -692,8 +741,8 @@ const FormaProveedor = () => {
                 type="text"
                 onChange={(e) => handleChange(e, "HANDLE_CHANGE_DIRECCION")}
                 name="estado"
-                value={estadoForma.direccion.estado}
-                disabled={!modoEditar}
+                value={estado.forma.direccion.estado}
+                disabled={!estado.modoEditar}
               />
             </div>
             <div className="col-12 col-md-6 col-lg-4 mb-3">
@@ -703,8 +752,8 @@ const FormaProveedor = () => {
                 type="text"
                 onChange={(e) => handleChange(e, "HANDLE_CHANGE_DIRECCION")}
                 name="pais"
-                value={estadoForma.direccion.pais}
-                disabled={!modoEditar}
+                value={estado.forma.direccion.pais}
+                disabled={!estado.modoEditar}
               />
               {error.campo == "pais" && (
                 <MensajeError mensaje={error.mensaje} />
@@ -718,8 +767,8 @@ const FormaProveedor = () => {
               className="form-control"
               onChange={(e) => handleChange(e, "HANDLE_CHANGE_DIRECCION")}
               name="id_estado"
-              value={estadoForma.direccion.id_estado}
-              disabled={!modoEditar}
+              value={estado.forma.direccion.id_estado}
+              disabled={!estado.modoEditar}
             >
               <option value="0" disabled>
                 Selecciona un estado
@@ -735,7 +784,7 @@ const FormaProveedor = () => {
             )}
           </div>
         )}
-        {modoEditar && (
+        {estado.modoEditar && (
           <div className="col-12 text-end">
             <BtnCancelar onclick={cancelar} margin={"r"} />
             <BtnRegistrar modalidad={modalidad} margin={false} />
