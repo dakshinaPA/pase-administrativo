@@ -40,7 +40,7 @@ import {
   estadoInicialBanner,
   mensajesBanner,
 } from "./Banner"
-import { rolesUsuario } from "@assets/utils/constantes"
+import { rolesUsuario, tiposColaborador } from "@assets/utils/constantes"
 
 type ActionTypes =
   | "LOADING_ON"
@@ -401,6 +401,7 @@ const FormaColaborador = () => {
   // }
 
   const validarPeriodos = (): boolean => {
+    if (estado.forma.i_tipo == tiposColaborador.SIN_PAGO) return true
     try {
       estado.forma.periodos_servicio.forEach((periodo, index) => {
         if (!Number(periodo.i_numero_ministracion))
@@ -701,7 +702,7 @@ const FormaColaborador = () => {
           />
           {error.campo == "curp" && <MensajeError mensaje={error.mensaje} />}
         </div>
-        {estado.forma.i_tipo != 3 && (
+        {estado.forma.i_tipo != tiposColaborador.SIN_PAGO && (
           <>
             <div className="col-12">
               <hr />
