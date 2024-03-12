@@ -230,6 +230,7 @@ const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
         cargaInicial: payload,
         isLoading: false,
         modoEditar: false,
+        modalEliminar: estadoInicialModalEliminar,
       }
     case "HANDLE_CHANGE":
       return {
