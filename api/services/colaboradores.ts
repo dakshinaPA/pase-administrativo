@@ -4,6 +4,7 @@ import { ResColaboradoreDB } from "@api/models/colaborador.model"
 import { ColaboradorProyecto } from "@models/proyecto.model"
 import { textoMayusculaSinAcentos } from "@assets/utils/common"
 import { SolicitudesPresupuestoServices } from "./solicitudes-presupuesto"
+import { tiposColaborador } from "@assets/utils/constantes"
 
 class ColaboradorServices {
   static obtenerTipo(id_tipo: 1 | 2 | 3) {
@@ -104,7 +105,10 @@ class ColaboradorServices {
       // quitar periodos servicio si es colaborador sin pago
       let payload: ColaboradorProyecto = {
         ...data,
-        periodos_servicio: data.i_tipo == 3 ? [] : [...data.periodos_servicio],
+        periodos_servicio:
+          data.i_tipo == tiposColaborador.SIN_PAGO
+            ? []
+            : [...data.periodos_servicio],
       }
       payload = this.trimPayload(data)
       const cr = await ColaboradorDB.crear(payload)
@@ -126,7 +130,10 @@ class ColaboradorServices {
       // quitar periodos servicio si es colaborador sin pago
       let payload: ColaboradorProyecto = {
         ...data,
-        periodos_servicio: data.i_tipo == 3 ? [] : [...data.periodos_servicio],
+        periodos_servicio:
+          data.i_tipo == tiposColaborador.SIN_PAGO
+            ? []
+            : [...data.periodos_servicio],
       }
       payload = this.trimPayload(data)
       const up = (await ColaboradorDB.actualizar(
