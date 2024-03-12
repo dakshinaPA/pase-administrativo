@@ -14,7 +14,6 @@ import { ResProyectos } from "@api/models/proyecto.model"
 import {
   epochAFecha,
   obtenerEstatusSolicitud,
-  textoMayusculaSinAcentos,
 } from "@assets/utils/common"
 import { SolicitudesPresupuestoServices } from "./solicitudes-presupuesto"
 import {

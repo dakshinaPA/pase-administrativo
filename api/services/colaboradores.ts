@@ -3,6 +3,7 @@ import { RespuestaController } from "@api/utils/response"
 import { ResColaboradoreDB } from "@api/models/colaborador.model"
 import { ColaboradorProyecto } from "@models/proyecto.model"
 import { textoMayusculaSinAcentos } from "@assets/utils/common"
+import { SolicitudesPresupuestoServices } from "./solicitudes-presupuesto"
 
 class ColaboradorServices {
   static obtenerTipo(id_tipo: 1 | 2 | 3) {
@@ -65,7 +66,13 @@ class ColaboradorServices {
         id_estado: colaborador.id_estado,
         estado: colaborador.estado,
       },
-      periodos_servicio: colaborador.periodos_servicio,
+      historial_pagos: colaborador.historial_pagos?.map((hp) => ({
+        ...hp,
+        tipo_gasto: SolicitudesPresupuestoServices.obtenerTipoGasto(
+          hp.i_tipo_gasto
+        ),
+        f_importe: Number(hp.f_importe),
+      })),
     }
   }
 

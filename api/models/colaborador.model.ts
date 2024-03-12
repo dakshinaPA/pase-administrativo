@@ -1,4 +1,5 @@
 import { PeriodoServicioColaborador } from "@models/proyecto.model"
+import { SolicitudPresupuesto } from "@models/solicitud-presupuesto.model"
 
 export interface ResColaboradoreDB {
   id: number
@@ -30,6 +31,7 @@ export interface ResColaboradoreDB {
   id_estado: number
   estado?: string
   periodos_servicio?: PeriodoServicioColaborador[]
+  historial_pagos?: SolicitudPresupuesto[]
 }
 
 /*

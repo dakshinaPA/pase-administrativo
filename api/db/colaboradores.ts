@@ -42,9 +42,20 @@ class ColaboradorDB {
     `
   }
 
+  static qReHistorialPagos = () => {
+    return `
+      SELECT sp.id, sp.i_tipo_gasto, sp.f_importe, sp.id_partida_presupuestal, sp.descripcion_gasto, sp.dt_pago,
+      rp.nombre rubro
+      FROM solicitudes_presupuesto sp
+      JOIN rubros_presupuestales rp ON rp.id = sp.id_partida_presupuestal
+      WHERE sp.i_tipo_gasto!=2 AND sp.id_titular_cuenta=? AND sp.i_estatus=4 AND sp.b_activo=1;
+    `
+  }
+
   static async obtener(id_proyecto: number, id_colaborador?: number) {
     const qColaborador = this.queryRe(id_proyecto, id_colaborador)
     const qPeriodos = this.qRePeriodosServicio()
+    const qHistorialPagos = this.qReHistorialPagos()
 
     const qCombinados = [qColaborador]
 
@@ -54,7 +65,8 @@ class ColaboradorDB {
       phCombinados.push(id_proyecto)
     } else if (id_colaborador) {
       qCombinados.push(qPeriodos)
-      phCombinados.push(id_colaborador, id_colaborador)
+      qCombinados.push(qHistorialPagos)
+      phCombinados.push(id_colaborador, id_colaborador, id_colaborador)
     }
 
     return new Promise((res, rej) => {
@@ -78,11 +90,13 @@ class ColaboradorDB {
             } else if (id_colaborador) {
               const dataColaborador = results[0][0]
               const periodos_servicio = results[1]
+              const historial_pagos = results[2]
 
               res([
                 {
                   ...dataColaborador,
                   periodos_servicio,
+                  historial_pagos,
                 },
               ])
             }

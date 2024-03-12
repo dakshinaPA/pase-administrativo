@@ -20,8 +20,10 @@ import {
   BtnEditar,
   BtnNeutro,
   BtnRegistrar,
+  LinkAccion,
 } from "./Botones"
 import {
+  epochAFecha,
   fechaMasDiasFutuosString,
   fechaMasMesesFutuosString,
   inputDateAformato,
@@ -483,6 +485,11 @@ const FormaColaborador = () => {
   const enableSlctTipo =
     modalidad === "CREAR" ||
     (estado.modoEditar && user.id_rol === rolesUsuario.SUPER_USUARIO)
+
+  const totalHistorialPago = estado.forma.historial_pagos.reduce(
+    (acum, { f_importe }) => acum + f_importe,
+    0
+  )
 
   if (estado.isLoading) {
     return (
@@ -960,6 +967,61 @@ const FormaColaborador = () => {
           </div>
         )}
       </FormaContenedor>
+      {modalidad === "EDITAR" && (
+        <div className="row mb-5">
+          <div className="col-12 mb-3">
+            <hr className="my-0" />
+          </div>
+          <div className="col-12 mb-3">
+            <h4 className="color1 mb-0">Historial de pagos</h4>
+          </div>
+          <div
+            className="col-12 table-responsive"
+            style={{ maxHeight: "500px", overflowY: "auto" }}
+          >
+            <table className="table">
+              <thead className="table-light">
+                <tr className="color1">
+                  <th>Tipo de gasto</th>
+                  <th>Rubro presupuestal</th>
+                  <th>Descripción</th>
+                  <th>Fecha de pago</th>
+                  <th>Importe</th>
+                  <th>Ver</th>
+                </tr>
+              </thead>
+              <tbody>
+                {estado.forma.historial_pagos.map((hp) => (
+                  <tr>
+                    <td>{hp.tipo_gasto}</td>
+                    <td>{hp.rubro}</td>
+                    <td>{hp.descripcion_gasto}</td>
+                    <td>{hp.dt_pago ? epochAFecha(hp.dt_pago) : "-"}</td>
+                    <td>{montoALocaleString(hp.f_importe)}</td>
+                    <td>
+                      <LinkAccion
+                        margin={false}
+                        icono="bi-eye-fill"
+                        ruta={`/solicitudes-presupuesto/${hp.id}`}
+                        title="ver solicitud"
+                      />
+                    </td>
+                  </tr>
+                ))}
+                <tr>
+                  <td colSpan={4} className="fw-bold">
+                    Total
+                  </td>
+                  <td className="fw-bold">
+                    {montoALocaleString(totalHistorialPago)}
+                  </td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </RegistroContenedor>
   )
 }

@@ -8,7 +8,6 @@ export interface QueriesProyecto {
   id_responsable?: number
   id_admin?: number
   min?: boolean
-  // registro_solicitud?: boolean
   activo?: boolean
 }
 
@@ -43,7 +42,8 @@ export interface ColaboradorProyecto {
   curp: string
   dt_registro?: string
   direccion: Direccion
-  periodos_servicio: PeriodoServicioColaborador[]
+  periodos_servicio?: PeriodoServicioColaborador[]
+  historial_pagos?: SolicitudPresupuesto[]
 }
 
 export interface DireccionProveedor extends Direccion {

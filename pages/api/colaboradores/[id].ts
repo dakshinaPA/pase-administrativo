@@ -7,7 +7,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   const id_colaborador = Number(req.query.id)
   const sesion = await getServerSession(req, res, authOptions)
   if (!sesion) {
-    return res.status(401).json({ mensaje: "Acceso no autorizado" })
+    // return res.status(401).json({ mensaje: "Acceso no autorizado" })
   }
 
   switch (req.method) {

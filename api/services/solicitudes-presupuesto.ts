@@ -1,9 +1,6 @@
 import { SolicitudesPresupuestoDB } from "@api/db/solicitudes-presupuesto"
 import { RespuestaController } from "@api/utils/response"
-import {
-  ResSolicitudPresupuestoDB,
-  SolicitudesDB,
-} from "@api/models/solicitudes-presupuesto.model"
+import { SolicitudesDB } from "@api/models/solicitudes-presupuesto.model"
 import {
   SolicitudPresupuesto,
   TipoGastoSolicitud,
@@ -59,7 +56,6 @@ class SolicitudesPresupuestoServices {
       f_importe,
       f_retenciones,
       i_estatus,
-      dt_pago,
       comprobantes,
     } = solicitudRes
 
@@ -136,7 +132,7 @@ class SolicitudesPresupuestoServices {
     try {
       const re = (await SolicitudesPresupuestoDB.obtenerUna(
         id
-      )) as ResSolicitudPresupuestoDB[]
+      )) as SolicitudPresupuesto[]
 
       const solicitud = this.trasnformarData(re[0])
 

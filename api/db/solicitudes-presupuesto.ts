@@ -9,7 +9,6 @@ import {
 } from "@models/solicitud-presupuesto.model"
 import { RespuestaDB } from "@api/utils/response"
 import { fechaActualAEpoch, inputDateAEpoch } from "@assets/utils/common"
-import { ResSolicitudPresupuestoDB } from "@api/models/solicitudes-presupuesto.model"
 import { estatusSolicitud } from "@assets/utils/constantes"
 
 class SolicitudesPresupuestoDB {
@@ -158,7 +157,7 @@ class SolicitudesPresupuestoDB {
             return rej(error)
           }
 
-          const solicitudes = results as ResSolicitudPresupuestoDB[]
+          const solicitudes = results as SolicitudPresupuesto[]
           if (!!solicitudes.length) {
             const ids = solicitudes.map((sol) => sol.id)
             const qComprobantes = this.qReSaldoComprobantes()

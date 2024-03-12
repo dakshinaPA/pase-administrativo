@@ -3,9 +3,9 @@ import {
   NotaProyecto,
   RubroMinistracion,
 } from "@models/proyecto.model"
-import { ResSolicitudPresupuestoDB } from "./solicitudes-presupuesto.model"
 import { ResColaboradoreDB } from "./colaborador.model"
 import { ResProveedorDB } from "./proveedor.model"
+import { SolicitudPresupuesto } from "@models/solicitud-presupuesto.model"
 
 export interface ResProyectoDB {
   id: number
@@ -53,6 +53,6 @@ export interface ResProyectos {
   rubros_ministracion?: RubroMinistracion[]
   colaboradores?: ResColaboradoreDB[]
   proveedores?: ResProveedorDB[]
-  solicitudes?: ResSolicitudPresupuestoDB[]
+  solicitudes?: SolicitudPresupuesto[]
   notas?: NotaProyecto[]
 }
