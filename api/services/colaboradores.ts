@@ -43,9 +43,9 @@ class ColaboradorServices {
   }
 
   static formatData(colaborador: ResColaboradoreDB): ColaboradorProyecto {
-
-    const [idFinanciar, idCoparte, idProyecto] = colaborador.proyecto.split("_")
-    const id_empleado = `${idFinanciar}${idCoparte}${idProyecto}_${colaborador.id}`
+    const [idFinanciar, idCoparte, idProyecto] =
+      colaborador.id_alt_proyecto.split("_")
+    const id_empleado = `${colaborador.id_alt_financiador}${colaborador.id_alt_coparte}${idProyecto}_${colaborador.id}`
 
     return {
       ...colaborador,

@@ -4,12 +4,14 @@ export interface ResColaboradoreDB {
   id: number
   id_proyecto: number
   proyecto: string
+  id_alt_financiador: string
+  id_alt_coparte: string
+  id_alt_proyecto: string
   id_responsable: number
-  id_empleado: string
   nombre: string
   apellido_paterno: string
   apellido_materno: string
-  i_tipo: 1 | 2 | 3// asimilados, salarios, persona fisica extranjera
+  i_tipo: 1 | 2 | 3 // asimilados, salarios, persona fisica extranjera
   clabe: string
   id_banco: number
   banco: string

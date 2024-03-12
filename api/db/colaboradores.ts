@@ -12,7 +12,9 @@ class ColaboradorDB {
     let query = `SELECT c.id, c.id_proyecto, c.nombre, c.apellido_paterno, c.apellido_materno, c.i_tipo, c.clabe,
       c.id_banco, c.telefono, c.email, c.rfc, c.curp, c.dt_registro,
       cd.id id_direccion, cd.calle, cd.numero_ext, cd.numero_int, cd.colonia, cd.municipio, cd.cp cp_direccion, cd.id_estado,
-      p.id_responsable, p.id_alt proyecto,  
+      p.id_responsable, p.id_alt id_alt_proyecto, p.nombre proyecto,
+      co.id_alt id_alt_coparte,
+      f.id_alt id_alt_financiador,
       e.nombre estado,
       b.nombre banco
       FROM colaboradores c
@@ -20,6 +22,8 @@ class ColaboradorDB {
       JOIN estados e ON cd.id_estado = e.id
       JOIN bancos b ON c.id_banco = b.id
       JOIN proyectos p ON c.id_proyecto = p.id
+      JOIN copartes co ON p.id_coparte = co.id
+      JOIN financiadores f ON p.id_financiador = f.id
       WHERE c.b_activo = 1`
 
     if (id_proyecto) {
