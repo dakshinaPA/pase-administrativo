@@ -6,6 +6,7 @@ import {
   PeriodoServicioColaborador,
 } from "@models/proyecto.model"
 import { fechaActualAEpoch } from "@assets/utils/common"
+import { SolicitudesPresupuestoDB } from "./solicitudes-presupuesto"
 
 class ColaboradorDB {
   static queryRe = (id_proyecto: number, id_colaborador?: number) => {
@@ -42,20 +43,11 @@ class ColaboradorDB {
     `
   }
 
-  static qReHistorialPagos = () => {
-    return `
-      SELECT sp.id, sp.i_tipo_gasto, sp.f_importe, sp.id_partida_presupuestal, sp.descripcion_gasto, sp.dt_pago,
-      rp.nombre rubro
-      FROM solicitudes_presupuesto sp
-      JOIN rubros_presupuestales rp ON rp.id = sp.id_partida_presupuestal
-      WHERE sp.i_tipo_gasto!=2 AND sp.id_titular_cuenta=? AND sp.i_estatus=4 AND sp.b_activo=1;
-    `
-  }
-
   static async obtener(id_proyecto: number, id_colaborador?: number) {
     const qColaborador = this.queryRe(id_proyecto, id_colaborador)
     const qPeriodos = this.qRePeriodosServicio()
-    const qHistorialPagos = this.qReHistorialPagos()
+    const qHistorialPagos =
+      SolicitudesPresupuestoDB.qReHistorialPagos("colaborador")
 
     const qCombinados = [qColaborador]
 

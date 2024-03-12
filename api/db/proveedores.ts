@@ -3,6 +3,7 @@ import { queryDBPlaceHolder } from "./query"
 import { connectionDB } from "./connectionPool"
 import { ProveedorProyecto } from "@models/proyecto.model"
 import { fechaActualAEpoch } from "@assets/utils/common"
+import { SolicitudesPresupuestoDB } from "./solicitudes-presupuesto"
 
 class ProveedorDB {
   static queryRe = (id_proyecto: number, id_proveedor?: number) => {
@@ -27,28 +28,50 @@ class ProveedorDB {
 
   static async obtener(id_proyecto: number, id_proveedor?: number) {
     const qProveedor = this.queryRe(id_proyecto, id_proveedor)
+    const qHistorialPagos =
+      SolicitudesPresupuestoDB.qReHistorialPagos("proveedor")
 
     const phProveedor = []
+
+    const qComb = [qProveedor]
 
     if (id_proyecto) {
       phProveedor.push(id_proyecto)
     } else if (id_proveedor) {
-      phProveedor.push(id_proveedor)
+      qComb.push(qHistorialPagos)
+      phProveedor.push(id_proveedor, id_proveedor)
     }
 
     return new Promise((res, rej) => {
       connectionDB.getConnection((err, connection) => {
         if (err) return rej(err)
 
-        connection.query(qProveedor, phProveedor, (error, results, fields) => {
-          if (error) {
-            connection.destroy()
-            return rej(error)
-          }
+        connection.query(
+          qComb.join(";"),
+          phProveedor,
+          (error, results, fields) => {
+            if (error) {
+              connection.destroy()
+              return rej(error)
+            }
 
-          connection.destroy()
-          res(results)
-        })
+            connection.destroy()
+
+            if (id_proyecto) {
+              res(results)
+            } else if (id_proveedor) {
+              const dataProveedir = results[0][0]
+              const historial_pagos = results[1]
+
+              res([
+                {
+                  ...dataProveedir,
+                  historial_pagos,
+                },
+              ])
+            }
+          }
+        )
       })
     })
   }

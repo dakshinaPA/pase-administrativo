@@ -107,6 +107,7 @@ const estadoInicialForma: ColaboradorProyecto = {
       cp: "",
     },
   ],
+  historial_pagos: [],
 }
 
 const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
@@ -992,7 +993,7 @@ const FormaColaborador = () => {
               </thead>
               <tbody>
                 {estado.forma.historial_pagos.map((hp) => (
-                  <tr>
+                  <tr key={hp.id}>
                     <td>{hp.tipo_gasto}</td>
                     <td>{hp.rubro}</td>
                     <td>{hp.descripcion_gasto}</td>

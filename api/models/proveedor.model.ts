@@ -1,3 +1,5 @@
+import { SolicitudPresupuesto } from "@models/solicitud-presupuesto.model"
+
 export interface ResProveedorDB {
   id: number
   id_proyecto: number
@@ -29,4 +31,5 @@ export interface ResProveedorDB {
   id_estado: number
   estado?: string
   pais: string
+  historial_pagos: SolicitudPresupuesto[]
 }

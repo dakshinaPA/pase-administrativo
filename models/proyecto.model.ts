@@ -73,6 +73,7 @@ export interface ProveedorProyecto {
   descripcion_servicio: string
   dt_registro?: string
   direccion: DireccionProveedor
+  historial_pagos?: SolicitudPresupuesto[]
 }
 
 export interface RubroMinistracionMin {

@@ -4,6 +4,7 @@ import { ResProveedorDB } from "@api/models/proveedor.model"
 import { ProveedorProyecto } from "@models/proyecto.model"
 import { textoMayusculaSinAcentos } from "@assets/utils/common"
 import { tiposProveedor } from "@assets/utils/constantes"
+import { SolicitudesPresupuestoServices } from "./solicitudes-presupuesto"
 
 class ProveedorServices {
   static obtenerTipo(id_tipo: 1 | 2 | 3) {
@@ -59,6 +60,13 @@ class ProveedorServices {
         estado: proveedor.estado,
         pais: proveedor.pais,
       },
+      historial_pagos: proveedor.historial_pagos?.map((hp) => ({
+        ...hp,
+        tipo_gasto: SolicitudesPresupuestoServices.obtenerTipoGasto(
+          hp.i_tipo_gasto
+        ),
+        f_importe: Number(hp.f_importe),
+      })),
     }
   }
 
