@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react"
+import React, { useEffect, useReducer, useRef } from "react"
 import { ApiCall } from "@assets/utils/apiCalls"
 import { useRouter } from "next/router"
 import { Loader } from "@components/Loader"
@@ -19,85 +19,263 @@ import {
   SolicitudPresupuesto,
 } from "@models/solicitud-presupuesto.model"
 import { BtnAccion, BtnNeutro, LinkAccion } from "@components/Botones"
-import { Filtros } from "@components/FiltrosSolicitudes"
+import {
+  Filtros,
+  FiltrosProps,
+  estadoInicialFiltros,
+} from "@components/FiltrosSolicitudes"
 import styles from "@components/styles/Filtros.module.css"
 import { useSesion } from "@hooks/useSesion"
-import { Banner, estadoInicialBanner } from "@components/Banner"
-import { rolesUsuario } from "@assets/utils/constantes"
+import {
+  Banner,
+  EstadoInicialBannerProps,
+  estadoInicialBanner,
+} from "@components/Banner"
+import { estatusSolicitud, rolesUsuario } from "@assets/utils/constantes"
+import { UsuarioLogin } from "@models/usuario.model"
+import { ChangeEvent } from "@assets/models/formEvents.model"
+
+type ActionTypes =
+  | "LOADING_ON"
+  | "ERROR_API"
+  | "LOAD_SOLICITUDES"
+  | "NO_SOLICITUDES"
+  | "SHOW_FILTROS"
+  | "LIMPIAR_FILTROS"
+  | "ABRIR_MODAL_ELIMIAR"
+  | "CANCELAR_ELIMINAR"
+  | "SELECCIONAR_TODAS_SOLICITUDES"
+  | "CAMBIO_ESTATUS_SOLICITUD_CB"
+  | "HANDLE_CHANGE_FILTRO"
+  | "HANDLE_CHANGE_FILTRO_COPARTE"
+
+interface ActionDispatch {
+  type: ActionTypes
+  payload?: any
+}
 
 interface SolicitudPresupuestoVista extends SolicitudPresupuesto {
   checked: boolean
+}
+
+interface EstadoProps {
+  solicitudes: SolicitudPresupuestoVista[]
+  modalEliminar: {
+    show: boolean
+    id: number
+  }
+  filtros: FiltrosProps
+  selectEstatus: 0 | EstatusSolicitud
+  cbEstatus: boolean
+  isLoading: boolean
+  banner: EstadoInicialBannerProps
+  user: UsuarioLogin
+}
+
+const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
+  const { type, payload } = action
+
+  switch (type) {
+    case "LOADING_ON":
+      return {
+        ...state,
+        isLoading: true,
+        banner: estadoInicialBanner,
+      }
+    case "ERROR_API":
+      return {
+        ...state,
+        isLoading: false,
+        banner: {
+          show: true,
+          mensaje: payload,
+          tipo: "error",
+        },
+      }
+    case "LOAD_SOLICITUDES":
+      return {
+        ...state,
+        solicitudes: payload,
+        isLoading: false,
+        filtros: {
+          estado: {
+            ...state.filtros.estado,
+            id_coparte: 0,
+            id_proyecto: 0,
+          },
+          show: false,
+        },
+      }
+    case "NO_SOLICITUDES":
+      return {
+        ...state,
+        solicitudes: [],
+        isLoading: false,
+        filtros: {
+          estado: {
+            ...state.filtros.estado,
+            id_coparte: 0,
+            id_proyecto: 0,
+          },
+          show: false,
+        },
+        banner: {
+          show: true,
+          mensaje: "No hay solicitudes para mostrar",
+          tipo: "warning",
+        },
+      }
+    case "SHOW_FILTROS":
+      return {
+        ...state,
+        filtros: {
+          ...state.filtros,
+          show: !state.filtros.show,
+        },
+      }
+    case "LIMPIAR_FILTROS":
+      return {
+        ...state,
+        filtros: {
+          ...state.filtros,
+          estado: {
+            ...estadoInicialFiltros,
+            i_estatus:
+              state.user.id_rol == rolesUsuario.COPARTE
+                ? 0
+                : estatusSolicitud.REVISION,
+          },
+        },
+      }
+    case "ABRIR_MODAL_ELIMIAR":
+      return {
+        ...state,
+        modalEliminar: {
+          show: true,
+          id: payload,
+        },
+      }
+    case "CANCELAR_ELIMINAR":
+      return {
+        ...state,
+        modalEliminar: {
+          show: false,
+          id: 0,
+        },
+      }
+    case "SELECCIONAR_TODAS_SOLICITUDES":
+      const cb = !state.cbEstatus
+
+      return {
+        ...state,
+        cbEstatus: cb,
+        solicitudes: state.solicitudes.map((sol) => ({ ...sol, checked: cb })),
+      }
+    case "CAMBIO_ESTATUS_SOLICITUD_CB":
+      const nuevaListaSolicitudes = state.solicitudes.map((sol) => {
+        if (sol.id == payload) {
+          return {
+            ...sol,
+            checked: !sol.checked,
+          }
+        }
+        return sol
+      })
+      return {
+        ...state,
+        solicitudes: nuevaListaSolicitudes,
+      }
+    case "HANDLE_CHANGE_FILTRO":
+      return {
+        ...state,
+        filtros: {
+          ...state.filtros,
+          estado: {
+            ...state.filtros.estado,
+            [payload.name]: payload.value,
+          },
+        },
+      }
+    case "HANDLE_CHANGE_FILTRO_COPARTE":
+      return {
+        ...state,
+        filtros: {
+          ...state.filtros,
+          estado: {
+            ...state.filtros.estado,
+            id_coparte: payload,
+            id_proyecto: 0,
+          },
+        },
+      }
+    default:
+      return state
+  }
 }
 
 const SolicitudesPresupuesto = () => {
   const { user, status } = useSesion()
   if (status !== "authenticated" || !user) return null
 
-  const estadoInicialFiltros: QueriesSolicitud = {
-    id_coparte: 0,
-    id_proyecto: 0,
-    i_estatus: user.id_rol == 3 ? 0 : 1,
-    titular: "",
-    dt_inicio: "",
-    dt_fin: "",
+  const estadoInicialFiltrosStatus = {
+    ...estadoInicialFiltros,
+    i_estatus:
+      user.id_rol == rolesUsuario.COPARTE ? 0 : estatusSolicitud.REVISION,
+  }
+
+  const estadoInicial: EstadoProps = {
+    solicitudes: [],
+    modalEliminar: {
+      show: false,
+      id: 0,
+    },
+    filtros: {
+      show: false,
+      estado: estadoInicialFiltrosStatus,
+    },
+    selectEstatus: 0,
+    cbEstatus: false,
+    isLoading: true,
+    banner: estadoInicialBanner,
+    user,
   }
 
   const router = useRouter()
-  const [solicitudesFiltradas, setSolicitudesFiltradas] = useState<
-    SolicitudPresupuestoVista[]
-  >([])
-  const [solicitudAeliminar, setSolicitudAEliminar] = useState<number>(0)
-
-  const [showModalEliminar, setShowModalEliminar] = useState<boolean>(false)
-  const [showFiltros, setShowFiltros] = useState<boolean>(false)
-  const [nuevoEstatus, setNuevoEstatus] = useState(0)
-  const [cbStatusSolicitudes, setCbStatusSolicitudes] = useState(false)
-  const [isLoading, setIsLoading] = useState<boolean>(true)
-  const [filtros, setFiltros] = useState(estadoInicialFiltros)
-  const [showBanner, setShowBanner] = useState(estadoInicialBanner)
-
+  const [estado, dispatch] = useReducer(reducer, estadoInicial)
   const aExcel = useRef(null)
 
   useEffect(() => {
     cargarSolicitudes()
   }, [])
 
-  useEffect(() => {
-    setSolicitudesFiltradas((prevState) => {
-      return prevState.map((sol) => ({
-        ...sol,
-        checked: cbStatusSolicitudes,
-      }))
-    })
-  }, [cbStatusSolicitudes])
-
   const cargarSolicitudes = async () => {
     try {
       const queries: QueriesSolicitud = {}
 
-      if (user.id_rol == 2) {
+      if (user.id_rol == rolesUsuario.ADMINISTRADOR) {
         queries.id_admin = user.id
-      } else if (user.id_rol == 3) {
+      } else if (user.id_rol == rolesUsuario.COPARTE) {
         queries.id_responsable = user.id
       }
 
-      if (Number(filtros.id_coparte)) queries.id_coparte = filtros.id_coparte
-      if (Number(filtros.id_proyecto)) {
-        queries.id_proyecto = filtros.id_proyecto
+      if (Number(estado.filtros.estado.id_coparte))
+        queries.id_coparte = estado.filtros.estado.id_coparte
+      if (Number(estado.filtros.estado.id_proyecto)) {
+        queries.id_proyecto = estado.filtros.estado.id_proyecto
         delete queries.id_coparte
       }
-      if (Number(filtros.i_estatus)) queries.i_estatus = filtros.i_estatus
-      if (filtros.titular) queries.titular = filtros.titular
-      if (filtros.dt_inicio)
-        queries.dt_inicio = String(inputDateAEpoch(filtros.dt_inicio))
-      if (filtros.dt_fin)
-        queries.dt_fin = String(inputDateAEpoch(filtros.dt_fin))
+      if (Number(estado.filtros.estado.i_estatus))
+        queries.i_estatus = estado.filtros.estado.i_estatus
+      if (estado.filtros.estado.titular)
+        queries.titular = estado.filtros.estado.titular
+      if (estado.filtros.estado.dt_inicio)
+        queries.dt_inicio = String(
+          inputDateAEpoch(estado.filtros.estado.dt_inicio)
+        )
+      if (estado.filtros.estado.dt_fin)
+        queries.dt_fin = String(inputDateAEpoch(estado.filtros.estado.dt_fin))
 
-      setIsLoading(true)
-      // limpiar banner cada que se cargan nuevas solicitudes
-      if (showBanner.show) {
-        setShowBanner(estadoInicialBanner)
-      }
+      dispatch({ type: "LOADING_ON" })
 
       const reSolicitudes = await obtenerSolicitudes(queries)
       if (reSolicitudes.error) throw reSolicitudes
@@ -106,93 +284,83 @@ const SolicitudesPresupuesto = () => {
       const solicitudesVista: SolicitudPresupuestoVista[] = solicitudesDB.map(
         (sol) => ({ ...sol, checked: false })
       )
-      setSolicitudesFiltradas(solicitudesVista)
-      if (!solicitudesDB.length) {
-        setShowBanner({
-          mensaje: "No hay solicitudes de presupuesto para mostrar",
-          show: true,
-          tipo: "warning",
-        })
+
+      if (!!solicitudesDB.length) {
+        dispatch({ type: "LOAD_SOLICITUDES", payload: solicitudesVista })
+      } else {
+        dispatch({ type: "NO_SOLICITUDES" })
       }
     } catch ({ data, mensaje }) {
       console.log(data)
-      setShowBanner({
-        mensaje,
-        show: true,
-        tipo: "error",
+      dispatch({
+        type: "ERROR_API",
+        payload: mensaje,
       })
-    } finally {
-      setIsLoading(false)
     }
   }
 
-  const cambiarEstatusSolicitudes = async (i_estatus: EstatusSolicitud) => {
-    const idsSelecionados = solicitudesFiltradas
-      .filter((sol) => !!sol.checked)
-      .map((sol) => sol.id)
-
-    // no enviar peticion si no hay ids seleccionados
-    if (!idsSelecionados.length) return
-
-    setIsLoading(true)
-    setCbStatusSolicitudes(false)
-
-    const payload: PayloadCambioEstatus = {
-      i_estatus,
-      ids_solicitudes: idsSelecionados,
-    }
-    const { error, data, mensaje } = await ApiCall.put(
-      "/solicitudes-presupuesto/cambio-estatus",
-      payload
-    )
-    if (error) {
-      console.log(data)
-      setShowBanner({
-        mensaje,
-        show: true,
-        tipo: "error",
-      })
-    } else {
-      cargarSolicitudes()
-    }
-    setIsLoading(false)
+  const despachar = (type: ActionTypes, payload?: any) => {
+    dispatch({ type, payload })
   }
 
-  const limpiarFiltros = () => {
-    setFiltros(estadoInicialFiltros)
+  const cambiarEstatusSolicitudes = async (ev: ChangeEvent) => {
+    const i_estatus = ev.target.value
+
+    console.log(i_estatus)
+
+    // EstatusSolicitud
+    // const idsSelecionados = solicitudesFiltradas
+    //   .filter((sol) => !!sol.checked)
+    //   .map((sol) => sol.id)
+    // // no enviar peticion si no hay ids seleccionados
+    // if (!idsSelecionados.length) return
+    // setIsLoading(true)
+    // setCbStatusSolicitudes(false)
+    // const payload: PayloadCambioEstatus = {
+    //   i_estatus,
+    //   ids_solicitudes: idsSelecionados,
+    // }
+    // const { error, data, mensaje } = await ApiCall.put(
+    //   "/solicitudes-presupuesto/cambio-estatus",
+    //   payload
+    // )
+    // if (error) {
+    //   console.log(data)
+    //   setShowBanner({
+    //     mensaje,
+    //     show: true,
+    //     tipo: "error",
+    //   })
+    // } else {
+    //   cargarSolicitudes()
+    // }
+    // setIsLoading(false)
   }
 
   const abrirModalEliminarSolicitud = (id: number) => {
-    setSolicitudAEliminar(id)
-    setShowModalEliminar(true)
+    dispatch({ type: "ABRIR_MODAL_ELIMIAR", payload: id })
   }
 
   const eliminarSolicitud = async () => {
-    setSolicitudAEliminar(0)
-    setShowModalEliminar(false)
-    setIsLoading(true)
+    dispatch({ type: "LOADING_ON" })
 
     const { error, data, mensaje } = await ApiCall.delete(
-      `/solicitudes-presupuesto/${solicitudAeliminar}`
+      `/solicitudes-presupuesto/${estado.modalEliminar.id}`
     )
 
     if (error) {
       console.log(data)
-      setShowBanner({
-        mensaje,
-        show: true,
-        tipo: "error",
+      dispatch({
+        type: "ERROR_API",
+        payload: mensaje,
       })
     } else {
       await cargarSolicitudes()
     }
-
-    setIsLoading(false)
   }
 
   const cancelarEliminarSolicitud = () => {
-    setSolicitudAEliminar(0)
-    setShowModalEliminar(false)
+    dispatch({ type: "CANCELAR_ELIMINAR" })
   }
 
   const descargarExcel = () => {
@@ -216,7 +384,7 @@ const SolicitudesPresupuesto = () => {
       "Estatus",
     ]
 
-    const solicituesAArray = solicitudesFiltradas.map((solicitud) => {
+    const solicituesAArray = estado.solicitudes.map((solicitud) => {
       const dtPago = solicitud.dt_pago ? epochAFecha(solicitud.dt_pago) : ""
 
       return [
@@ -249,27 +417,21 @@ const SolicitudesPresupuesto = () => {
     })
   }
 
-  const seleccionarSolicitudCambioStatus = (
-    checked: boolean,
-    id_solicitud: number
-  ) => {
-    const nuevaListaSolicitudes = solicitudesFiltradas.map((sol) => {
-      if (sol.id == id_solicitud) {
-        return {
-          ...sol,
-          checked,
-        }
-      }
-      return sol
+  const seleccionarSolicitudCambioStatus = (id_solicitud: number) => {
+    dispatch({
+      type: "CAMBIO_ESTATUS_SOLICITUD_CB",
+      payload: id_solicitud,
     })
-
-    setSolicitudesFiltradas(nuevaListaSolicitudes)
   }
 
-  const showSelectEstatus = solicitudesFiltradas.some((sol) => !!sol.checked)
-  const showCbStatus = user.id_rol != 3
+  const selectAllSolicitudes = () => {
+    dispatch({ type: "SELECCIONAR_TODAS_SOLICITUDES" })
+  }
 
-  if (isLoading) {
+  const showSelectEstatus = estado.solicitudes.some((sol) => !!sol.checked)
+  const showCbStatus = user.id_rol != rolesUsuario.COPARTE
+
+  if (estado.isLoading) {
     return (
       <Contenedor>
         <Loader />
@@ -280,7 +442,7 @@ const SolicitudesPresupuesto = () => {
   return (
     <TablaContenedor>
       <div className="row mb-2">
-        {user.id_rol == 3 && (
+        {user.id_rol == rolesUsuario.COPARTE && (
           <div className="col-12 col-sm-6 col-lg-3 col-xl-2 mb-3">
             <BtnNeutro
               texto="Registrar +"
@@ -296,18 +458,15 @@ const SolicitudesPresupuesto = () => {
           <button
             type="button"
             className={`btn btn-outline-secondary w-100`}
-            onClick={() => setShowFiltros(!showFiltros)}
+            onClick={() => dispatch({ type: "SHOW_FILTROS" })}
           >
             Filtros
             <i className="bi bi-funnel ms-1"></i>
           </button>
           <Filtros
-            filtros={filtros}
-            setFiltros={setFiltros}
-            show={showFiltros}
-            setShow={setShowFiltros}
+            filtros={estado.filtros}
+            despachar={despachar}
             cargarSolicitudes={cargarSolicitudes}
-            limpiarFiltros={limpiarFiltros}
             user={user}
           />
         </div>
@@ -316,12 +475,8 @@ const SolicitudesPresupuesto = () => {
           <div className="col-12 col-sm-6 col-lg-3 mb-3">
             <select
               className="form-control"
-              onChange={({ target }) =>
-                cambiarEstatusSolicitudes(
-                  Number(target.value) as EstatusSolicitud
-                )
-              }
-              value={nuevoEstatus}
+              onChange={cambiarEstatusSolicitudes}
+              value={estado.selectEstatus}
             >
               <option value="0" disabled>
                 Selecciona estatus
@@ -352,8 +507,8 @@ const SolicitudesPresupuesto = () => {
       </div>
       <>
         <div className="row">
-          {showBanner.show ? (
-            <Banner tipo={showBanner.tipo} mensaje={showBanner.mensaje} />
+          {estado.banner.show ? (
+            <Banner tipo={estado.banner.tipo} mensaje={estado.banner.mensaje} />
           ) : (
             <div className="col-12 table-responsive">
               <table className="table">
@@ -380,10 +535,8 @@ const SolicitudesPresupuesto = () => {
                         <input
                           type="checkbox"
                           className="form-check-input"
-                          onChange={() =>
-                            setCbStatusSolicitudes(!cbStatusSolicitudes)
-                          }
-                          checked={cbStatusSolicitudes}
+                          onChange={selectAllSolicitudes}
+                          checked={estado.cbEstatus}
                         />
                       </th>
                     )}
@@ -391,7 +544,7 @@ const SolicitudesPresupuesto = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {solicitudesFiltradas.map((solicitud) => {
+                  {estado.solicitudes.map((solicitud) => {
                     const {
                       id,
                       id_proyecto,
@@ -446,11 +599,8 @@ const SolicitudesPresupuesto = () => {
                             <input
                               type="checkbox"
                               className="form-check-input"
-                              onChange={({ target }) =>
-                                seleccionarSolicitudCambioStatus(
-                                  target.checked,
-                                  id
-                                )
+                              onChange={() =>
+                                seleccionarSolicitudCambioStatus(id)
                               }
                               checked={checked}
                             />
@@ -483,12 +633,12 @@ const SolicitudesPresupuesto = () => {
         </div>
       </>
       <ModalEliminar
-        show={showModalEliminar}
+        show={estado.modalEliminar.show}
         aceptar={eliminarSolicitud}
         cancelar={cancelarEliminarSolicitud}
       >
         <p className="mb-0">
-          ¿Estás segur@ de eliminar la solicitud {solicitudAeliminar}?
+          ¿Estás segur@ de eliminar la solicitud {estado.modalEliminar.id}?
         </p>
       </ModalEliminar>
     </TablaContenedor>

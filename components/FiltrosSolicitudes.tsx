@@ -5,26 +5,40 @@ import { QueriesSolicitud } from "@models/solicitud-presupuesto.model"
 import { useState, useEffect } from "react"
 import styles from "@components/styles/Filtros.module.css"
 import { UsuarioLogin } from "@models/usuario.model"
+import { rolesUsuario } from "@assets/utils/constantes"
+import { ChangeEvent } from "@assets/models/formEvents.model"
 
-interface FiltrosProps {
-  filtros: QueriesSolicitud
-  setFiltros: React.Dispatch<React.SetStateAction<QueriesSolicitud>>
+export interface FiltrosProps {
   show: boolean
-  setShow: (show: boolean) => void
+  estado: QueriesSolicitud
+}
+
+type ActionTypes =
+  | "LIMPIAR_FILTROS"
+  | "HANDLE_CHANGE_FILTRO"
+  | "HANDLE_CHANGE_FILTRO_COPARTE"
+
+interface FiltrosPropsUI {
+  filtros: FiltrosProps
+  despachar: (type: ActionTypes, payload?: any) => void
   cargarSolicitudes: () => Promise<void>
-  limpiarFiltros: () => void
   user: UsuarioLogin
+}
+
+const estadoInicialFiltros: QueriesSolicitud = {
+  id_coparte: 0,
+  id_proyecto: 0,
+  titular: "",
+  dt_inicio: "",
+  dt_fin: "",
 }
 
 const Filtros = ({
   filtros,
-  setFiltros,
-  show,
-  setShow,
+  despachar,
   cargarSolicitudes,
-  limpiarFiltros,
   user,
-}: FiltrosProps) => {
+}: FiltrosPropsUI) => {
   const [copartesUsuario, setCopartesUsuario] = useState<CoparteMin[]>([])
   const [proyectosUsuario, setProyectosUsuario] = useState<ProyectoMin[]>([])
 
@@ -32,23 +46,9 @@ const Filtros = ({
     cargarDataUsuario()
   }, [])
 
-  useEffect(() => {
-    if (filtros.id_coparte == 0) {
-      // limpuiar filtro de proyectos
-      setFiltros((prevState) => ({
-        ...prevState,
-        id_proyecto: 0,
-      }))
-      setProyectosUsuario([])
-      return
-    }
-
-    cargarProyectos({ id_coparte: filtros.id_coparte })
-  }, [filtros.id_coparte])
-
   const cargarDataUsuario = async () => {
     //llenar select de copartes si no es usuario coparte
-    if (user.id_rol != 3) {
+    if (user.id_rol != rolesUsuario.COPARTE) {
       cargarCopartesUsuario()
     } else {
       cargarProyectos({ id_responsable: user.id })
@@ -57,7 +57,7 @@ const Filtros = ({
 
   const cargarCopartesUsuario = async () => {
     const queries: QueriesCoparte =
-      user.id_rol == 2 ? { id_admin: user.id } : {}
+      user.id_rol == rolesUsuario.ADMINISTRADOR ? { id_admin: user.id } : {}
 
     try {
       const reCopartes = await obtenerCopartes(queries)
@@ -80,33 +80,43 @@ const Filtros = ({
     }
   }
 
-  const handleChange = (ev) => {
+  const handleChange = (ev: ChangeEvent) => {
     const { name, value } = ev.target
+    despachar("HANDLE_CHANGE_FILTRO", { name, value })
+  }
 
-    setFiltros((prevState) => ({
-      ...prevState,
-      [name]: value,
-    }))
+  const handleChangeCoparte = (ev: ChangeEvent) => {
+    const id_coparte = Number(ev.target.value)
+    despachar("HANDLE_CHANGE_FILTRO_COPARTE", id_coparte)
+
+    if (!id_coparte) {
+      setProyectosUsuario([])
+      return
+    }
+    cargarProyectos({ id_coparte })
   }
 
   const buscarSolicitudes = () => {
     cargarSolicitudes()
-    setShow(false)
   }
 
-  if (!show) return null
+  const limpiarFiltros = () => {
+    despachar("LIMPIAR_FILTROS")
+  }
+
+  if (!filtros.show) return null
 
   return (
     <div className={styles.filtro}>
       <div className="border px-2 py-3">
-        {user.id_rol != 3 && (
+        {user.id_rol != rolesUsuario.COPARTE && (
           <div className="mb-3">
             <label className="form-label color1 fw-semibold">Coparte</label>
             <select
               className="form-control"
               name="id_coparte"
-              onChange={handleChange}
-              value={filtros.id_coparte}
+              onChange={handleChangeCoparte}
+              value={filtros.estado.id_coparte}
             >
               <option value="0">Todas</option>
               {copartesUsuario.map(({ id, nombre }) => (
@@ -123,7 +133,7 @@ const Filtros = ({
             className="form-control"
             name="id_proyecto"
             onChange={handleChange}
-            value={filtros.id_proyecto}
+            value={filtros.estado.id_proyecto}
           >
             <option value="0">Todos</option>
             {proyectosUsuario.map(({ id, id_alt, nombre }) => (
@@ -139,7 +149,7 @@ const Filtros = ({
             className="form-control"
             name="i_estatus"
             onChange={handleChange}
-            value={filtros.i_estatus}
+            value={filtros.estado.i_estatus}
           >
             <option value="0">Todos</option>
             <option value="1">Revisión</option>
@@ -158,7 +168,7 @@ const Filtros = ({
             type="text"
             name="titular"
             onChange={handleChange}
-            value={filtros.titular}
+            value={filtros.estado.titular}
           />
         </div>
         <div className="mb-3">
@@ -168,7 +178,7 @@ const Filtros = ({
             type="date"
             name="dt_inicio"
             onChange={handleChange}
-            value={filtros.dt_inicio}
+            value={filtros.estado.dt_inicio}
           />
         </div>
         <div className="mb-3">
@@ -178,7 +188,7 @@ const Filtros = ({
             type="date"
             name="dt_fin"
             onChange={handleChange}
-            value={filtros.dt_fin}
+            value={filtros.estado.dt_fin}
           />
         </div>
         <button
@@ -202,4 +212,4 @@ const Filtros = ({
   )
 }
 
-export { Filtros }
+export { Filtros, estadoInicialFiltros }
