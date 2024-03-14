@@ -48,6 +48,9 @@ type ActionTypes =
   | "CAMBIO_ESTATUS_SOLICITUD_CB"
   | "HANDLE_CHANGE_FILTRO"
   | "HANDLE_CHANGE_FILTRO_COPARTE"
+  | "SHOW_CAMBIO_ESTATUS"
+  | "HANDLE_CHANGE_SLCT_ESTATUS"
+  | "CANCELAR_CAMBIO_ESTATUS"
 
 interface ActionDispatch {
   type: ActionTypes
@@ -58,6 +61,12 @@ interface SolicitudPresupuestoVista extends SolicitudPresupuesto {
   checked: boolean
 }
 
+interface SelectEstatusProps {
+  show: boolean
+  i_estatus: 0 | EstatusSolicitud
+  dt_pago: string
+}
+
 interface EstadoProps {
   solicitudes: SolicitudPresupuestoVista[]
   modalEliminar: {
@@ -65,11 +74,17 @@ interface EstadoProps {
     id: number
   }
   filtros: FiltrosProps
-  selectEstatus: 0 | EstatusSolicitud
+  selectEstatus: SelectEstatusProps
   cbEstatus: boolean
   isLoading: boolean
   banner: EstadoInicialBannerProps
   user: UsuarioLogin
+}
+
+const estadoInicialSelectEstatus: SelectEstatusProps = {
+  show: false,
+  i_estatus: 0,
+  dt_pago: "",
 }
 
 const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
@@ -81,6 +96,15 @@ const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
         ...state,
         isLoading: true,
         banner: estadoInicialBanner,
+        filtros: {
+          estado: {
+            ...state.filtros.estado,
+            id_coparte: 0,
+            id_proyecto: 0,
+          },
+          show: false,
+        },
+        selectEstatus: estadoInicialSelectEstatus,
       }
     case "ERROR_API":
       return {
@@ -93,32 +117,20 @@ const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
         },
       }
     case "LOAD_SOLICITUDES":
+      const solicitudesDB = payload as SolicitudPresupuesto[]
+      const solicitudesVista: SolicitudPresupuestoVista[] = solicitudesDB.map(
+        (sol) => ({ ...sol, checked: false })
+      )
       return {
         ...state,
-        solicitudes: payload,
+        solicitudes: solicitudesVista,
         isLoading: false,
-        filtros: {
-          estado: {
-            ...state.filtros.estado,
-            id_coparte: 0,
-            id_proyecto: 0,
-          },
-          show: false,
-        },
       }
     case "NO_SOLICITUDES":
       return {
         ...state,
         solicitudes: [],
         isLoading: false,
-        filtros: {
-          estado: {
-            ...state.filtros.estado,
-            id_coparte: 0,
-            id_proyecto: 0,
-          },
-          show: false,
-        },
         banner: {
           show: true,
           mensaje: "No hay solicitudes para mostrar",
@@ -208,6 +220,31 @@ const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
           },
         },
       }
+    case "SHOW_CAMBIO_ESTATUS":
+      return {
+        ...state,
+        selectEstatus: {
+          ...state.selectEstatus,
+          show: true,
+        },
+        filtros: {
+          ...state.filtros,
+          show: false,
+        },
+      }
+    case "HANDLE_CHANGE_SLCT_ESTATUS":
+      return {
+        ...state,
+        selectEstatus: {
+          ...state.selectEstatus,
+          [payload.name]: payload.value,
+        },
+      }
+    case "CANCELAR_CAMBIO_ESTATUS":
+      return {
+        ...state,
+        selectEstatus: estadoInicialSelectEstatus,
+      }
     default:
       return state
   }
@@ -233,7 +270,7 @@ const SolicitudesPresupuesto = () => {
       show: false,
       estado: estadoInicialFiltrosStatus,
     },
-    selectEstatus: 0,
+    selectEstatus: estadoInicialSelectEstatus,
     cbEstatus: false,
     isLoading: true,
     banner: estadoInicialBanner,
@@ -242,6 +279,8 @@ const SolicitudesPresupuesto = () => {
 
   const router = useRouter()
   const [estado, dispatch] = useReducer(reducer, estadoInicial)
+  const slectEstatus = useRef(null)
+  const slectDtPAgo = useRef(null)
   const aExcel = useRef(null)
 
   useEffect(() => {
@@ -281,12 +320,9 @@ const SolicitudesPresupuesto = () => {
       if (reSolicitudes.error) throw reSolicitudes
 
       const solicitudesDB = reSolicitudes.data as SolicitudPresupuesto[]
-      const solicitudesVista: SolicitudPresupuestoVista[] = solicitudesDB.map(
-        (sol) => ({ ...sol, checked: false })
-      )
 
       if (!!solicitudesDB.length) {
-        dispatch({ type: "LOAD_SOLICITUDES", payload: solicitudesVista })
+        dispatch({ type: "LOAD_SOLICITUDES", payload: solicitudesDB })
       } else {
         dispatch({ type: "NO_SOLICITUDES" })
       }
@@ -303,38 +339,9 @@ const SolicitudesPresupuesto = () => {
     dispatch({ type, payload })
   }
 
-  const cambiarEstatusSolicitudes = async (ev: ChangeEvent) => {
-    const i_estatus = ev.target.value
-
-    console.log(i_estatus)
-
-    // EstatusSolicitud
-    // const idsSelecionados = solicitudesFiltradas
-    //   .filter((sol) => !!sol.checked)
-    //   .map((sol) => sol.id)
-    // // no enviar peticion si no hay ids seleccionados
-    // if (!idsSelecionados.length) return
-    // setIsLoading(true)
-    // setCbStatusSolicitudes(false)
-    // const payload: PayloadCambioEstatus = {
-    //   i_estatus,
-    //   ids_solicitudes: idsSelecionados,
-    // }
-    // const { error, data, mensaje } = await ApiCall.put(
-    //   "/solicitudes-presupuesto/cambio-estatus",
-    //   payload
-    // )
-    // if (error) {
-    //   console.log(data)
-    //   setShowBanner({
-    //     mensaje,
-    //     show: true,
-    //     tipo: "error",
-    //   })
-    // } else {
-    //   cargarSolicitudes()
-    // }
-    // setIsLoading(false)
+  const handleChangeSlctEstatus = async (ev: ChangeEvent) => {
+    const { name, value } = ev.target
+    dispatch({ type: "HANDLE_CHANGE_SLCT_ESTATUS", payload: { name, value } })
   }
 
   const abrirModalEliminarSolicitud = (id: number) => {
@@ -428,6 +435,43 @@ const SolicitudesPresupuesto = () => {
     dispatch({ type: "SELECCIONAR_TODAS_SOLICITUDES" })
   }
 
+  const cambiarEstatusMasivo = async () => {
+    const idsSolCamdioStatus = estado.solicitudes
+      .filter(({ checked }) => !!checked)
+      .map(({ id }) => id)
+
+    const payload: PayloadCambioEstatus = {
+      i_estatus: Number(estado.selectEstatus.i_estatus) as EstatusSolicitud,
+      dt_pago: estado.selectEstatus.dt_pago,
+      ids_solicitudes: idsSolCamdioStatus,
+    }
+
+    // validar que haya un estatus seleccionado
+    if (!payload.i_estatus) {
+      slectEstatus.current.focus()
+      return false
+    }
+    // si el estatus es procesado, debe tener fecha de pago
+    if (payload.i_estatus == estatusSolicitud.PROCESADA && !payload.dt_pago) {
+      slectDtPAgo.current.focus()
+      return false
+    }
+
+    const { error, data, mensaje } = await ApiCall.put(
+      "/solicitudes-presupuesto/cambio-estatus",
+      payload
+    )
+    if (error) {
+      console.log(data)
+      dispatch({
+        type: "ERROR_API",
+        payload: mensaje,
+      })
+    } else {
+      cargarSolicitudes()
+    }
+  }
+
   const showSelectEstatus = estado.solicitudes.some((sol) => !!sol.checked)
   const showCbStatus = user.id_rol != rolesUsuario.COPARTE
 
@@ -452,9 +496,7 @@ const SolicitudesPresupuesto = () => {
             />
           </div>
         )}
-        <div
-          className={`col-12 col-sm-6 col-lg-3 mb-3 ${styles.filtros_contenedor}`}
-        >
+        <div className="col-12 col-sm-6 col-lg-3 mb-3 position-relative">
           <button
             type="button"
             className={`btn btn-outline-secondary w-100`}
@@ -472,23 +514,78 @@ const SolicitudesPresupuesto = () => {
         </div>
         <div className="col d-none d-xl-block"></div>
         {showSelectEstatus && (
-          <div className="col-12 col-sm-6 col-lg-3 mb-3">
-            <select
-              className="form-control"
-              onChange={cambiarEstatusSolicitudes}
-              value={estado.selectEstatus}
+          <div className="col-12 col-sm-6 col-lg-3 mb-3 position-relative">
+            <button
+              type="button"
+              className={`btn btn-outline-secondary w-100`}
+              onClick={() => dispatch({ type: "SHOW_CAMBIO_ESTATUS" })}
             >
-              <option value="0" disabled>
-                Selecciona estatus
-              </option>
-              <option value="1">Revisión</option>
-              <option value="2">Autorizada</option>
-              <option value="3">Rechazada</option>
-              {user.id_rol == rolesUsuario.SUPER_USUARIO && (
-                <option value="4">Procesada</option>
-              )}
-              <option value="5">Devolución</option>
-            </select>
+              Cambiar estatus
+              <i className="bi bi bi-toggles ms-1"></i>
+            </button>
+            {estado.selectEstatus.show && (
+              <div className={styles.filtro}>
+                <div className="px-2 py-3">
+                  <div className="mb-3">
+                    <label className="form-label color1 fw-semibold">
+                      Estatus
+                    </label>
+                    <select
+                      className="form-control"
+                      onChange={handleChangeSlctEstatus}
+                      name="i_estatus"
+                      value={estado.selectEstatus.i_estatus}
+                      ref={slectEstatus}
+                    >
+                      <option value="0" disabled>
+                        Selecciona estatus
+                      </option>
+                      <option value="1">Revisión</option>
+                      <option value="2">Autorizada</option>
+                      <option value="3">Rechazada</option>
+                      {user.id_rol == rolesUsuario.SUPER_USUARIO && (
+                        <option value="4">Procesada</option>
+                      )}
+                      <option value="5">Devolución</option>
+                    </select>
+                  </div>
+                  {estado.selectEstatus.i_estatus ==
+                    estatusSolicitud.PROCESADA && (
+                    <div className="mb-3">
+                      <label className="form-label color1 fw-semibold">
+                        Fecha de pago
+                      </label>
+                      <input
+                        className="form-control"
+                        type="date"
+                        onChange={handleChangeSlctEstatus}
+                        name="dt_pago"
+                        ref={slectDtPAgo}
+                        value={estado.selectEstatus.dt_pago}
+                      />
+                    </div>
+                  )}
+                  <div className="d-flex justify-content-between">
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-danger"
+                      onClick={() =>
+                        dispatch({ type: "CANCELAR_CAMBIO_ESTATUS" })
+                      }
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-success"
+                      onClick={cambiarEstatusMasivo}
+                    >
+                      Aceptar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
         <div className="col-12 col-sm-6 col-lg-3 col-xl-2 mb-3">
@@ -522,6 +619,7 @@ const SolicitudesPresupuesto = () => {
                     <th>Titular</th>
                     <th>Proveedor</th>
                     <th>Descripción</th>
+                    <th>CLABE</th>
                     <th>Importe solicitado</th>
                     <th>Comprobado</th>
                     <th>Por comprobar</th>
@@ -554,6 +652,7 @@ const SolicitudesPresupuesto = () => {
                       titular_cuenta,
                       proveedor,
                       descripcion_gasto,
+                      clabe,
                       rubro,
                       f_importe,
                       saldo,
@@ -576,6 +675,7 @@ const SolicitudesPresupuesto = () => {
                         <td>{titular_cuenta}</td>
                         <td>{proveedor}</td>
                         <td>{descripcion_gasto}</td>
+                        <td>{clabe}</td>
                         <td>{montoALocaleString(f_importe)}</td>
                         <td>
                           {montoALocaleString(saldo.f_total_comprobaciones)}

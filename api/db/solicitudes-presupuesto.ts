@@ -529,20 +529,14 @@ class SolicitudesPresupuestoDB {
   }
 
   static async cambiarEstatus(payload: PayloadCambioEstatus) {
-    const { i_estatus, ids_solicitudes } = payload
+    const { i_estatus, dt_pago, ids_solicitudes } = payload
 
-    let query = `UPDATE solicitudes_presupuesto SET i_estatus=${i_estatus} WHERE id IN (`
-
-    const idsAstring = ids_solicitudes
-      .map((id, index) =>
-        index == ids_solicitudes.length - 1 ? `${id})` : `${id},`
-      )
-      .join("")
-
-    query += idsAstring
+    let qUp =
+      "UPDATE solicitudes_presupuesto SET i_estatus=?, dt_pago=? WHERE id IN (?)"
+    const ph: any[] = [i_estatus, dt_pago, ids_solicitudes]
 
     try {
-      const res = await queryDB(query)
+      const res = await queryDBPlaceHolder(qUp, ph)
       return RespuestaDB.exitosa(res)
     } catch (error) {
       return RespuestaDB.fallida(error)

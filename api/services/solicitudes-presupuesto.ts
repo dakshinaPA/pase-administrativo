@@ -19,6 +19,7 @@ import {
 } from "@assets/utils/common"
 import { IdRolUsuario } from "@models/usuario.model"
 import { estatusSolicitud, rolesUsuario } from "@assets/utils/constantes"
+import solicitudesPresupuesto from "pages/api/solicitudes-presupuesto"
 
 class SolicitudesPresupuestoServices {
   static obtenerTipoGasto(i_tipo_gasto: TipoGastoSolicitud) {
@@ -267,21 +268,40 @@ class SolicitudesPresupuestoServices {
   }
 
   static async cambiarEstatus(payload: PayloadCambioEstatus) {
-    const up = await SolicitudesPresupuestoDB.cambiarEstatus(payload)
+    try {
+      const i_estatus = Number(payload.i_estatus) as EstatusSolicitud
+      let dt_pago = payload.dt_pago
+      //no puede ir con estatus 0
+      if (!i_estatus) throw i_estatus
+      if (i_estatus !== estatusSolicitud.PROCESADA) {
+        dt_pago = ""
+      } else {
+        if (!dt_pago) throw "Falta fecha de pago"
+        dt_pago = String(inputDateAEpoch(dt_pago))
+      }
 
-    if (up.error) {
+      //verificar payload
+      const data: PayloadCambioEstatus = {
+        ...payload,
+        i_estatus,
+        dt_pago,
+      }
+
+      const up = await SolicitudesPresupuestoDB.cambiarEstatus(data)
+      if (up.error) throw up.data
+
+      return RespuestaController.exitosa(
+        200,
+        "Estatus de solicitudes de presupuesto actualizados con éxito",
+        null
+      )
+    } catch (error) {
       return RespuestaController.fallida(
         400,
         "Error al actualizar estatus de solicitudes de presupuesto, contactar a soporte",
-        up.data
+        error
       )
     }
-
-    return RespuestaController.exitosa(
-      200,
-      "Estatus de solicitudes de presupuesto actualizados con éxito",
-      null
-    )
   }
 
   static async obtenerNotas(id_solicitud: number) {

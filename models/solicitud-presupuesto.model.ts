@@ -88,5 +88,6 @@ export interface SolicitudPresupuesto {
 
 export interface PayloadCambioEstatus {
   i_estatus: EstatusSolicitud
+  dt_pago: string
   ids_solicitudes: number[]
 }

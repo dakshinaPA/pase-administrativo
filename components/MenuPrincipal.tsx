@@ -1,3 +1,4 @@
+import { rolesUsuario } from "@assets/utils/constantes"
 import { useSesion } from "@hooks/useSesion"
 import Link from "next/link"
 
@@ -271,7 +272,7 @@ const MenuPrincipal = ({ shrinkMenu }) => {
           {shrinkMenu ? <i className="bi bi-code-square"></i> : "Formatos"}
         </Link>
       </div>
-      {user?.id_rol == 1 && (
+      {user?.id_rol != rolesUsuario.COPARTE && (
         <div style={{ padding: "1rem 1.25rem" }}>
           <Link href="/reportes" className="text-white">
             {shrinkMenu ? (

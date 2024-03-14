@@ -108,7 +108,7 @@ const Filtros = ({
 
   return (
     <div className={styles.filtro}>
-      <div className="border px-2 py-3">
+      <div className="px-2 py-3">
         {user.id_rol != rolesUsuario.COPARTE && (
           <div className="mb-3">
             <label className="form-label color1 fw-semibold">Coparte</label>
