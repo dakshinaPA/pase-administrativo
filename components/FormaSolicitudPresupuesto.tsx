@@ -739,6 +739,7 @@ const FormaSolicitudPresupuesto = () => {
       f_importe: estado.forma.f_importe,
       f_retenciones: estado.forma.f_retenciones,
       f_retenciones_extranjeros: estado.forma.f_retenciones,
+      dt_pago: estado.forma.dt_pago,
     }
 
     if (estado.forma.i_tipo_gasto == tiposGasto.GASTOS_X_COMPROBAR) {
@@ -771,6 +772,10 @@ const FormaSolicitudPresupuesto = () => {
         rubrosPresupuestales.PAGOS_EXTRANJERO
     ) {
       delete campos.f_retenciones_extranjeros
+    }
+
+    if (estado.forma.i_estatus != estatusSolicitud.PROCESADA) {
+      delete campos.dt_pago
     }
 
     return validarCampos(campos)
@@ -1291,6 +1296,9 @@ const FormaSolicitudPresupuesto = () => {
                 value={estado.forma.dt_pago}
                 disabled={!estado.modoEditar}
               />
+              {error.campo == "dt_pago" && (
+                <MensajeError mensaje={error.mensaje} />
+              )}
             </div>
           )}
           {modalidad === "CREAR" && (

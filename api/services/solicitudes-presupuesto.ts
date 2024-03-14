@@ -198,6 +198,10 @@ class SolicitudesPresupuestoServices {
           )
             ? (estatusSolicitud.REVISION as EstatusSolicitud)
             : data.i_estatus,
+        dt_pago:
+          data.i_estatus == estatusSolicitud.PROCESADA && data.dt_pago
+            ? String(inputDateAEpoch(data.dt_pago))
+            : "",
         comprobantes: data.comprobantes.map((com) => ({
           ...com,
           dt_timbrado: com.dt_timbrado

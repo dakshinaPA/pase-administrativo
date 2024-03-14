@@ -88,8 +88,7 @@ const useErrores = () => {
             if (!/^.{2,}$/.test(campos[key])) throw [key, "Mínimo 2 caracteres"]
             break
           case "numero_ext":
-            if (!/^.{1,}$/.test(campos[key]))
-              throw [key, "Mínimo 1 caracter"]
+            if (!/^.{1,}$/.test(campos[key])) throw [key, "Mínimo 1 caracter"]
             break
           case "rfc":
           case "rfc_representante_legal":
@@ -122,6 +121,7 @@ const useErrores = () => {
           case "dt_constitucion":
           case "dt_inicio":
           case "dt_fin":
+          case "dt_pago":
             if (!/^[0-9]{4}\-[0-1][0-9]\-[0-3][0-9]$/.test(campos[key]))
               throw [key, "Fecha inválida"]
             break

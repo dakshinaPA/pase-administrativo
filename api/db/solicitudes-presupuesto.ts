@@ -414,11 +414,6 @@ class SolicitudesPresupuestoDB {
               const comprobantesDB = results[0] as ComprobanteSolicitud[]
               const comprobantesInactivos = results[1] as ComprobanteSolicitud[]
 
-              const dtPago =
-                data.i_estatus == estatusSolicitud.PROCESADA && data.dt_pago
-                  ? inputDateAEpoch(data.dt_pago)
-                  : ""
-
               const qCombinados = [qUpSolicitud]
               const phCombinados = [
                 data.clabe,
@@ -432,7 +427,7 @@ class SolicitudesPresupuestoDB {
                 data.f_importe,
                 data.f_retenciones,
                 data.i_estatus,
-                dtPago,
+                data.dt_pago,
                 id,
               ]
 
