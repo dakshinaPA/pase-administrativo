@@ -108,10 +108,14 @@ class SolicitudesPresupuestoServices {
         const comprobantes = re.comprobantes.filter(
           (comp) => comp.id_solicitud_presupuesto == sol.id
         )
+        const notas = re.notas.filter(
+          (nota) => nota.id_solicitud == sol.id
+        )
 
         return {
           ...sol,
           comprobantes,
+          notas
         }
       })
 
