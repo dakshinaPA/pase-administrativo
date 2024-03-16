@@ -3,7 +3,10 @@ import { ApiCall } from "@assets/utils/apiCalls"
 import { useRouter } from "next/router"
 import { Loader } from "@components/Loader"
 import { Contenedor, TablaContenedor } from "@components/Contenedores"
-import { ModalEliminar } from "@components/ModalEliminar"
+import {
+  ModalEliminar,
+  estaInicialModalEliminar,
+} from "@components/ModalEliminar"
 import {
   epochAFecha,
   inputDateAEpoch,
@@ -105,6 +108,7 @@ const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
           show: false,
         },
         selectEstatus: estadoInicialSelectEstatus,
+        modalEliminar: estaInicialModalEliminar,
       }
     case "ERROR_API":
       return {
