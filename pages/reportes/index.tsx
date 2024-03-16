@@ -28,8 +28,10 @@ const Comprobantes = () => {
       "Retenciones totales",
       "Forma de pago",
       "Régimen fiscal emisor",
+      "RFC emisor",
       "Fecha de registro",
       "Fecha de timbrado",
+      "Fecha de pago",
     ]
 
 
@@ -46,8 +48,10 @@ const Comprobantes = () => {
         comprobante.f_retenciones,
         comprobante.forma_pago,
         comprobante.regimen_fiscal,
+        comprobante.rfc_emisor,
         comprobante.dt_registro,
         comprobante.dt_timbrado,
+        comprobante.dt_pago,
       ]
     })
 

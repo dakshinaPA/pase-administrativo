@@ -21,6 +21,9 @@ class ReportesServices {
           dt_timbrado: comprobante.dt_timbrado
             ? epochAFecha(comprobante.dt_timbrado)
             : "",
+          dt_pago: comprobante.dt_pago
+          ? epochAFecha(comprobante.dt_pago)
+          : "",
         }
       })
 
