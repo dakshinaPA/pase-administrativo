@@ -774,7 +774,10 @@ const FormaSolicitudPresupuesto = () => {
       delete campos.f_retenciones_extranjeros
     }
 
-    if (estado.forma.i_estatus != estatusSolicitud.PROCESADA) {
+    if (
+      user.id_rol != rolesUsuario.SUPER_USUARIO ||
+      estado.forma.i_estatus != estatusSolicitud.PROCESADA
+    ) {
       delete campos.dt_pago
     }
 
