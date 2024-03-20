@@ -127,11 +127,10 @@ class SolicitudesPresupuestoServices {
             (comp) => comp.id_solicitud_presupuesto == sol.id
           )
           const notas = re.notas.filter((nota) => nota.id_solicitud == sol.id)
-          const titular = re[
+          const titular =
             sol.i_tipo_gasto == tiposGasto.PAGO_A_PROVEEDOR
-              ? "proveedores"
-              : "colaboradores"
-          ].find(({ id }) => id == sol.id_titular_cuenta)
+              ? re.proveedores.find(({ id }) => id == sol.id_titular_cuenta)
+              : re.colaboradores.find(({ id }) => id == sol.id_titular_cuenta)
 
           return {
             ...sol,
