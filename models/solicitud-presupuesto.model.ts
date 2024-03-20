@@ -77,6 +77,8 @@ export interface SolicitudPresupuesto {
   estatus?: string
   id_titular_cuenta?: number
   titular_cuenta?: string
+  rfc_titular?: string
+  email_titular?: string
   clabe: string
   id_banco?: number
   banco?: string

@@ -121,18 +121,27 @@ class SolicitudesPresupuestoServices {
       )) as SolicitudesDB
 
       //hacer match de solicitudes con comprobantes
-      const solicitudesDB = re.solicitudes.map((sol) => {
-        const comprobantes = re.comprobantes.filter(
-          (comp) => comp.id_solicitud_presupuesto == sol.id
-        )
-        const notas = re.notas.filter((nota) => nota.id_solicitud == sol.id)
+      const solicitudesDB: SolicitudPresupuesto[] = re.solicitudes.map(
+        (sol) => {
+          const comprobantes = re.comprobantes.filter(
+            (comp) => comp.id_solicitud_presupuesto == sol.id
+          )
+          const notas = re.notas.filter((nota) => nota.id_solicitud == sol.id)
+          const titular = re[
+            sol.i_tipo_gasto == tiposGasto.PAGO_A_PROVEEDOR
+              ? "proveedores"
+              : "colaboradores"
+          ].find(({ id }) => id == sol.id_titular_cuenta)
 
-        return {
-          ...sol,
-          comprobantes,
-          notas,
+          return {
+            ...sol,
+            rfc_titular: titular?.rfc,
+            email_titular: titular?.email,
+            comprobantes,
+            notas,
+          }
         }
-      })
+      )
 
       const solicitudes: SolicitudPresupuesto[] = solicitudesDB.map((sol) =>
         this.trasnformarData(sol)

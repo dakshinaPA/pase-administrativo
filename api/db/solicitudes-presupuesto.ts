@@ -9,7 +9,7 @@ import {
 } from "@models/solicitud-presupuesto.model"
 import { RespuestaDB } from "@api/utils/response"
 import { fechaActualAEpoch, inputDateAEpoch } from "@assets/utils/common"
-import { estatusSolicitud } from "@assets/utils/constantes"
+import { estatusSolicitud, tiposGasto } from "@assets/utils/constantes"
 
 class SolicitudesPresupuestoDB {
   static queryRe = (queries: QueriesSolicitud) => {
@@ -118,6 +118,18 @@ class SolicitudesPresupuestoDB {
     `
   }
 
+  static qReColaboradores = () => {
+    return `
+      SELECT id, rfc, email FROM colaboradores WHERE id IN (?)
+    `
+  }
+
+  static qReProveedores = () => {
+    return `
+      SELECT id, rfc, email FROM proveedores WHERE id IN (?)
+    `
+  }
+
   static qReHistorialPagos = (tipo: "colaborador" | "proveedor") => {
     const condicion = tipo === "colaborador" ? "!=" : "="
 
@@ -172,10 +184,33 @@ class SolicitudesPresupuestoDB {
           const solicitudes = results as SolicitudPresupuesto[]
           if (!!solicitudes.length) {
             const ids = solicitudes.map((sol) => sol.id)
+            let idsColaboradores = solicitudes
+              .filter(
+                ({ i_tipo_gasto }) =>
+                  i_tipo_gasto != tiposGasto.PAGO_A_PROVEEDOR
+              )
+              .map(({ id_titular_cuenta }) => id_titular_cuenta)
+            idsColaboradores = !!idsColaboradores.length
+              ? idsColaboradores
+              : [0]
+            let idsProveedores = solicitudes
+              .filter(
+                ({ i_tipo_gasto }) =>
+                  i_tipo_gasto == tiposGasto.PAGO_A_PROVEEDOR
+              )
+              .map(({ id_titular_cuenta }) => id_titular_cuenta)
+            idsProveedores = !!idsProveedores.length ? idsProveedores : [0]
             const qComprobantes = this.qReSaldoComprobantes()
             const qNotas = this.qReNotas()
-            const qCombiandos = [qComprobantes, qNotas].join(";")
-            const phCombiandos = [ids, ids]
+            const qColaboradores = this.qReColaboradores()
+            const qProveedores = this.qReProveedores()
+            const qCombiandos = [
+              qComprobantes,
+              qNotas,
+              qColaboradores,
+              qProveedores,
+            ].join(";")
+            const phCombiandos = [ids, ids, idsColaboradores, idsProveedores]
 
             connection.query(
               qCombiandos,
@@ -188,21 +223,22 @@ class SolicitudesPresupuestoDB {
 
                 const comprobantes = results[0]
                 const notas = results[1]
+                const colaboradores = results[2]
+                const proveedores = results[3]
 
                 connection.destroy()
                 res({
                   solicitudes,
                   comprobantes,
                   notas,
+                  colaboradores,
+                  proveedores
                 })
               }
             )
           } else {
             connection.destroy()
-            res({
-              solicitudes,
-              comprobantes: [],
-            })
+            res({ solicitudes })
           }
         })
       })
