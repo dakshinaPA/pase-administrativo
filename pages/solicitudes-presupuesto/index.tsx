@@ -376,46 +376,62 @@ const SolicitudesPresupuesto = () => {
 
   const descargarExcel = () => {
     const encabezado = [
+      "No.",
       "Id proyecto",
-      "Fecha registro",
       "Fecha de pago",
       "Coparte",
       "Proveedor",
-      "ClABE/Cuenta",
-      "Titular",
-      "Email",
+      "CLABE",
+      "Titular cuenta",
+      "RFC titular",
+      "Email titular",
       "Tipo de gasto",
       "Descricpión del gasto",
-      "Partida presupuestal",
+      "Partida presupuestal del proyecto",
       "Importe solicitado",
-      "Comprobado",
+      "Importe comprobado",
       "Por comprobar",
-      "Retenciones",
-      "Total",
-      "Estatus",
+      "Impuestos ISR",
+      "Impuestos IVA",
+      "Total retenciones",
+      "35% ISR",
+      "Comprobación",
+      "Observaciones",
     ]
 
     const solicituesAArray = estado.solicitudes.map((solicitud) => {
       const dtPago = solicitud.dt_pago ? epochAFecha(solicitud.dt_pago) : ""
+      const proveedor = solicitud.proveedor || "Por definir"
+      const folios_fiscales = solicitud.comprobantes
+        .map(({ folio_fiscal }) => folio_fiscal)
+        .join("/")
+
+      const notas = solicitud.notas
+        .map(({ usuario, mensaje }) => `${usuario} - ${mensaje}`)
+        .join(" / ")
 
       return [
+        solicitud.id,
         solicitud.proyecto.split(" ")[0],
-        epochAFecha(solicitud.dt_registro),
         dtPago,
         solicitud.coparte,
-        solicitud.proveedor,
+        proveedor,
         solicitud.clabe,
         solicitud.titular_cuenta,
-        solicitud.email,
+        "",
+        "",
         solicitud.tipo_gasto,
         solicitud.descripcion_gasto,
         solicitud.rubro,
         solicitud.f_importe,
         solicitud.saldo.f_total_comprobaciones,
-        solicitud.saldo.f_monto_comprobar,
+        "",
+        solicitud.saldo.f_total_isr,
+        solicitud.saldo.f_total_iva,
         solicitud.saldo.f_total_impuestos_retenidos,
-        solicitud.saldo.f_total,
-        solicitud.estatus,
+        "",
+        folios_fiscales,
+        notas,
       ]
     })
 

@@ -85,7 +85,7 @@ class SolicitudesPresupuestoDB {
 
   static qReSaldoComprobantes = () => {
     return `
-      SELECT spc.id, spc.folio_fiscal, spc.id_solicitud_presupuesto, spc.f_total, spc.f_retenciones
+      SELECT spc.id, spc.folio_fiscal, spc.id_solicitud_presupuesto, spc.f_total, spc.f_retenciones, spc.f_isr, spc.f_iva
       FROM solicitud_presupuesto_comprobantes spc
       WHERE spc.id_solicitud_presupuesto IN (?) AND spc.b_activo=1
     `
@@ -111,17 +111,9 @@ class SolicitudesPresupuestoDB {
 
   static qReNotas = () => {
     return `
-      SELECT spn.id, spn.mensaje, spn.dt_registro,
+      SELECT spn.id, spn.id_solicitud, spn.mensaje, spn.dt_registro,
       CONCAT(u.nombre, ' ', u.apellido_paterno) usuario
       FROM solicitud_presupuesto_notas spn JOIN usuarios u ON spn.id_usuario = u.id
-      WHERE spn.id_solicitud=? AND spn.b_activo=1
-    `
-  }
-
-  static qReNotasMasivas = () => {
-    return `
-      SELECT spn.id, spn.id_solicitud, spn.mensaje
-      FROM solicitud_presupuesto_notas spn
       WHERE spn.id_solicitud IN (?) AND spn.b_activo=1
     `
   }
@@ -181,7 +173,7 @@ class SolicitudesPresupuestoDB {
           if (!!solicitudes.length) {
             const ids = solicitudes.map((sol) => sol.id)
             const qComprobantes = this.qReSaldoComprobantes()
-            const qNotas = this.qReNotasMasivas()
+            const qNotas = this.qReNotas()
             const qCombiandos = [qComprobantes, qNotas].join(";")
             const phCombiandos = [ids, ids]
 
@@ -201,7 +193,7 @@ class SolicitudesPresupuestoDB {
                 res({
                   solicitudes,
                   comprobantes,
-                  notas
+                  notas,
                 })
               }
             )

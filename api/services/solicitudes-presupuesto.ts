@@ -18,7 +18,12 @@ import {
   obtenerMetodoPago,
 } from "@assets/utils/common"
 import { IdRolUsuario } from "@models/usuario.model"
-import { estatusSolicitud, rolesUsuario } from "@assets/utils/constantes"
+import {
+  estatusSolicitud,
+  rolesUsuario,
+  rubrosPresupuestales,
+  tiposGasto,
+} from "@assets/utils/constantes"
 import solicitudesPresupuesto from "pages/api/solicitudes-presupuesto"
 
 class SolicitudesPresupuestoServices {
@@ -61,12 +66,22 @@ class SolicitudesPresupuestoServices {
     } = solicitudRes
 
     const f_total_comprobaciones =
-      i_tipo_gasto == 3 || id_partida_presupuestal == 22
+      i_tipo_gasto == tiposGasto.ASIMILADOS ||
+      id_partida_presupuestal == rubrosPresupuestales.PAGOS_EXTRANJERO
         ? f_importe
         : comprobantes.reduce((acum, com) => acum + Number(com.f_total), 0)
     const f_total_impuestos_retenidos =
       comprobantes.reduce((acum, com) => acum + Number(com.f_retenciones), 0) +
       Number(f_retenciones)
+    const f_total_iva = comprobantes.reduce(
+      (acum, com) => acum + Number(com.f_iva),
+      0
+    )
+    const f_total_isr = comprobantes.reduce(
+      (acum, com) => acum + Number(com.f_isr),
+      0
+    )
+    const f_monto_comprobar = Number(f_importe) - f_total_comprobaciones
 
     return {
       ...solicitudRes,
@@ -76,8 +91,10 @@ class SolicitudesPresupuestoServices {
       estatus: obtenerEstatusSolicitud(i_estatus),
       saldo: {
         f_total_comprobaciones,
-        f_monto_comprobar: Number(f_importe) - f_total_comprobaciones,
+        f_monto_comprobar,
         f_total_impuestos_retenidos,
+        f_total_iva,
+        f_total_isr,
         f_total: Number(f_importe) + f_total_impuestos_retenidos,
       },
     }
@@ -108,14 +125,12 @@ class SolicitudesPresupuestoServices {
         const comprobantes = re.comprobantes.filter(
           (comp) => comp.id_solicitud_presupuesto == sol.id
         )
-        const notas = re.notas.filter(
-          (nota) => nota.id_solicitud == sol.id
-        )
+        const notas = re.notas.filter((nota) => nota.id_solicitud == sol.id)
 
         return {
           ...sol,
           comprobantes,
-          notas
+          notas,
         }
       })
 

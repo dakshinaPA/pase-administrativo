@@ -44,6 +44,8 @@ export interface SaldoSolicitud {
   f_total_comprobaciones: number
   f_monto_comprobar: number
   f_total_impuestos_retenidos: number
+  f_total_iva: number
+  f_total_isr: number
   f_total: number
 }
 
