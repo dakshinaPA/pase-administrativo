@@ -93,7 +93,7 @@ const Reportes = () => {
         <div className="col-12">
           <table className="table">
             <thead className="table-light">
-              <tr>
+              <tr className="color1">
                 <th>Nombre</th>
                 <th>Acción</th>
               </tr>

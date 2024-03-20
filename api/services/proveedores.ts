@@ -76,7 +76,7 @@ class ProveedorServices {
         ...proveedor,
         clabe: "",
         id_banco: 0,
-        rfc: "",
+        rfc: "XEXXX010101000",
         direccion: {
           ...proveedor.direccion,
           id_estado: 0,
