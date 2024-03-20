@@ -1193,6 +1193,15 @@ const Saldos = () => {
               <td>{montoALocaleString(estado.forma.saldo.f_retenciones)}</td>
             </tr>
             <tr>
+              <td>
+                <span className="me-1">Por comprobar</span>
+                <TooltipInfo texto="con base a este monto se calcula el 35% ISR" />
+              </td>
+              <td style={{ color: "#ffa704" }}>
+                {montoALocaleString(estado.forma.saldo.f_por_comprobar)}
+              </td>
+            </tr>
+            <tr>
               <td>35% ISR</td>
               <td>{montoALocaleString(estado.forma.saldo.f_isr)}</td>
             </tr>
