@@ -7,7 +7,6 @@ import {
   MetodosPAgo,
   QueriesSolicitud,
 } from "@models/solicitud-presupuesto.model"
-import { text } from "stream/consumers"
 
 const aMinuscula = (clave: string) => clave.toLowerCase()
 
@@ -35,7 +34,8 @@ const inputDateAformato = (fecha: string): string => {
 
 const inputDateAEpoch = (InputDate: string): number => {
   const InputDateAFecha = new Date(InputDate)
-  const timeZoneOffsetSegundos = InputDateAFecha.getTimezoneOffset() * 60
+  // const timeZoneOffsetSegundos = InputDateAFecha.getTimezoneOffset() * 60
+  const timeZoneOffsetSegundos = 25200 // 7 horas mas para que siempre cuadre
   const dtAEpochDiezDigitos = InputDateAFecha.valueOf() / 1000
   const sumaOffset = dtAEpochDiezDigitos + timeZoneOffsetSegundos
   return sumaOffset
