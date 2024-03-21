@@ -54,6 +54,11 @@ import {
   tiposGasto,
   tiposProveedor,
 } from "@assets/utils/constantes"
+import {
+  ModalInfoRubro,
+  ModalInfoRubros,
+  estaInicialModalInfoRubros,
+} from "./ModalInfoRubros"
 
 type ActionTypes =
   | "LOADING_ON"
@@ -76,6 +81,8 @@ type ActionTypes =
   | "ACEPTAR_TERMINOS"
   | "MODO_EDITAR_ON"
   | "MODO_EDITAR_OFF"
+  | "ABRIR_MODAL_INFO_RUBRO"
+  | "CERRAR_MODAL_INFO_RUBRO"
 
 interface ActionProps {
   type: ActionTypes
@@ -92,6 +99,7 @@ interface EstadoProps {
     show: boolean
     mensaje: string
   }
+  modalInfoRubro: ModalInfoRubros
   isLoading: boolean
   banner: EstadoInicialBannerProps
   modoEditar: boolean
@@ -330,6 +338,19 @@ const reducer = (state: EstadoProps, action: ActionProps): EstadoProps => {
         forma: { ...state.cargaInicial },
         modoEditar: false,
       }
+    case "ABRIR_MODAL_INFO_RUBRO":
+      return {
+        ...state,
+        modalInfoRubro: {
+          show: true,
+          id_rubro: state.forma.id_partida_presupuestal,
+        },
+      }
+    case "CERRAR_MODAL_INFO_RUBRO":
+      return {
+        ...state,
+        modalInfoRubro: estaInicialModalInfoRubros,
+      }
     default:
       return state
   }
@@ -363,6 +384,7 @@ const FormaSolicitudPresupuesto = () => {
       show: false,
       mensaje: "",
     },
+    modalInfoRubro: estaInicialModalInfoRubros,
     isLoading: true,
     banner: estadoInicialBanner,
     modoEditar: modalidad === "CREAR",
@@ -1086,7 +1108,18 @@ const FormaSolicitudPresupuesto = () => {
                 )}
               </div>
               <div className="col-12 col-md-6 col-lg-4 mb-3">
-                <label className="form-label">Partida presupuestal</label>
+                <label className="form-label">
+                  <span>Partida presupuestal</span>
+                  {!!estado.forma.id_partida_presupuestal && (
+                    <i
+                      className="bi bi-info-circle ms-1"
+                      style={{ cursor: "pointer" }}
+                      onClick={() =>
+                        dispatch({ type: "ABRIR_MODAL_INFO_RUBRO" })
+                      }
+                    ></i>
+                  )}
+                </label>
                 <select
                   className="form-control"
                   name="id_partida_presupuestal"
@@ -1461,6 +1494,10 @@ const FormaSolicitudPresupuesto = () => {
       <Toast
         estado={estado.toast}
         cerrar={() => dispatch({ type: "CERRAR_TOAST" })}
+      />
+      <ModalInfoRubro
+        {...estado.modalInfoRubro}
+        cerrar={() => dispatch({ type: "CERRAR_MODAL_INFO_RUBRO" })}
       />
     </>
   )

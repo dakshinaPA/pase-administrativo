@@ -2,13 +2,16 @@ import { FondoNegro } from "@components/FondoNegro"
 import styles from "./styles/Modal.module.css"
 import { useCatalogos } from "@contexts/catalogos.context"
 
-export interface ModalInfoRubrosProps {
+export interface ModalInfoRubros {
   show: boolean
   id_rubro: number
+}
+
+interface ModalInfoRubrosProps extends ModalInfoRubros {
   cerrar: () => void
 }
 
-const estaInicialModalInfoRubros = {
+const estaInicialModalInfoRubros: ModalInfoRubros = {
   show: false,
   id_rubro: 0,
 }
