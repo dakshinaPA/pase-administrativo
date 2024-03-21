@@ -1088,6 +1088,10 @@ const TablaMinistraciones = () => {
     despachar("QUITAR_MINISTRACION", i_numero)
   }
 
+  const showModalInfoRubros = (id_rubro: number) => {
+    console.log(id_rubro)
+  }
+
   return (
     <div className="col-12 col-md table-responsive mb-3">
       <table className="table">
@@ -1127,7 +1131,16 @@ const TablaMinistraciones = () => {
                           ({ id_rubro, rubro, f_monto }) => {
                             return (
                               <tr key={id_rubro}>
-                                <td>{rubro}</td>
+                                <td>
+                                  <span className="me-1">{rubro}</span>
+                                  <i
+                                    className="bi bi-info-circle"
+                                    style={{ cursor: "pointer" }}
+                                    onClick={() =>
+                                      showModalInfoRubros(id_rubro)
+                                    }
+                                  ></i>
+                                </td>
                                 <td className="w-25">
                                   {montoALocaleString(Number(f_monto))}
                                 </td>

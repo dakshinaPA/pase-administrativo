@@ -778,3 +778,30 @@ ALTER TABLE solicitud_presupuesto_comprobantes ADD COLUMN dt_timbrado VARCHAR(10
 
 -- 11/03/24
 ALTER TABLE colaboradores DROP COLUMN id_empleado;
+
+-- 21/03/24
+ALTER TABLE rubros_presupuestales ADD COLUMN descripcion TEXT NOT NULL AFTER nombre;
+ALTER TABLE rubros_presupuestales ADD COLUMN importante TEXT NOT NULL AFTER descripcion;
+UPDATE rubros_presupuestales SET descripcion="Asimilados (No RESICO), período máximo 6 meses por año fiscal. Solo colaboradores del proyecto", importante="Integrar expediente de la persona colaboradora, orden de servicio y firma de contrato" WHERE id=2 LIMIT 1;
+UPDATE rubros_presupuestales SET descripcion="Servicios profesionales a personas físicas. Sólo colaboradores", importante="Integrar expediente de la persona colaboradora y orden de servicio" WHERE id=3 LIMIT 1;
+UPDATE rubros_presupuestales SET nombre="Arrendamiento a personas físicas", descripcion="Pago de renta a personas físicas", importante="Concepto de facturación: Arrendamiento para el desarrollo del proyecto XXX. No puede decir 'Renta del mes…'" WHERE id=4 LIMIT 1;
+UPDATE rubros_presupuestales SET descripcion="Pago de renta a personas morales", importante="Concepto de facturación: Arrendamiento para el desarrollo del proyecto XXX. No puede decir 'Renta del mes…'" WHERE id=5 LIMIT 1;
+UPDATE rubros_presupuestales SET descripcion="Gasolinas para actividades del proyecto. No viáticos", importante="Forma de pago: tarjetas o transferencia" WHERE id=6 LIMIT 1;
+UPDATE rubros_presupuestales SET descripcion="Hospedaje, alimentos, traslados", importante="Gastos de alimentos deberán incluir un CFDI que ampare el hospedaje o transporte. Cuando sólo se acompaña el CFDI relativo al transporte, los viáticos serán deducibles sólo si el pago se realizó mediante tarjeta de crédito de la persona que realice el viaje. Complementar con el formato de Reporte de comisión y desglose de viáticos" WHERE id=7 LIMIT 1;
+INSERT INTO rubros_presupuestales (nombre, descripcion, importante) VALUES ("Alimentos y coffee break", "Compra de insumos para coffee break (galletas, snacks, refrescos, café, té, agua, jugos, etc.), e insumos de consumo para reuniones, talleres y conviviencias", "No se admite compra de alcohol, cigarros, despensas particulares, perfumes, comida para mascotas");
+UPDATE rubros_presupuestales SET descripcion="Telefonía celular. Recargas de tiempo aire. Pago de internet" WHERE id=8 LIMIT 1;
+UPDATE rubros_presupuestales SET descripcion="Adquisición de equipo relacionado con el proyecto", importante="Para adquisiciones mayores a $10,000.00 se debe integrar el expediente y contrato de comodato" WHERE id=9 LIMIT 1;
+UPDATE rubros_presupuestales SET descripcion="Artículos de limpieza, higiene y medicamentos, siempre y cuando el proyecto lo justifique", importante="En caso de entrega de beneficios a terceros, términos de referencia, evidencia documental y fotográfica" WHERE id=10 LIMIT 1;
+UPDATE rubros_presupuestales SET descripcion="Papelería, fotocopias, impresiones, artículos de oficina" WHERE id=11 LIMIT 1;
+UPDATE rubros_presupuestales SET descripcion="Servicios de mantenimiento menor a espacios físicos del proyecto y mantenimiento de equipo" WHERE id=12 LIMIT 1;
+UPDATE rubros_presupuestales SET descripcion="Material y servicios publicitarios. Folletos, trípticos, lonas, playeras, cuadernos, termos, y cualquier tipo de publicidad corporativa" WHERE id=13 LIMIT 1;
+UPDATE rubros_presupuestales SET descripcion="Desarrollo de asesorías, talleres, cursos tanto para los beneficiarios del proyecto como para la coparte", importante="En este rubro se contemplan los pagos de honorarios de proveedores personas físicas y personas morales" WHERE id=14 LIMIT 1;
+UPDATE rubros_presupuestales SET descripcion="Cuando la coparte se vuelve donataria y solicita el remanente", importante="La coparte debe mandar el recibo de donativo correspondiente y la autorización de donataria" WHERE id=15 LIMIT 1;
+UPDATE rubros_presupuestales SET descripcion="Servicios de asesoría o servicios técnicos recibidos por la Coparte por una persona moral", importante="En este rubro se contemplan los pagos a las copartes por concepto de 'Coordinación operativa del proyecto…'" WHERE id=16 LIMIT 1;
+UPDATE rubros_presupuestales SET descripcion="Gastos de los cuales por su naturaleza, no se podrá contar con un CFDI" WHERE id=17 LIMIT 1;
+UPDATE rubros_presupuestales SET descripcion="Servicios de envío, paquetería y mensajería" WHERE id=18 LIMIT 1;
+UPDATE rubros_presupuestales SET descripcion="Servicios de tecnologías de la información, desarrollo de software, página web" WHERE id=19 LIMIT 1;
+UPDATE rubros_presupuestales SET descripcion="Actividades asistenciales de entrega de despensa a beneficiarios", importante="En caso de entrega de beneficios a terceros, términos de referencia, evidencia documental y fotográfica" WHERE id=20 LIMIT 1;
+UPDATE rubros_presupuestales SET descripcion="Materiales diversos no incluidos en los rubros anteriores que se requieren para la operación del proyecto, siempre y cuando se justifique dentro del proyecto y la autorización de donataria" WHERE id=21 LIMIT 1;
+UPDATE rubros_presupuestales SET descripcion="Pagos diversos realizados al extranjero, siempre y cuando se tenga el INVOICE correspondiente", importante="Razón social, domicilio y en su caso numero de ID fiscal o equivalente de quien lo expide" WHERE id=22 LIMIT 1;
+UPDATE rubros_presupuestales SET descripcion="Se refiere los saldos" WHERE id=23 LIMIT 1;

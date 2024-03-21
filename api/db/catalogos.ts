@@ -7,7 +7,7 @@ class CatalogosDB {
       "SELECT id, nombre FROM paises WHERE b_activo=1",
       "SELECT id, nombre FROM estados",
       "SELECT id, nombre FROM temas_sociales WHERE b_activo=1",
-      "SELECT id, nombre FROM rubros_presupuestales WHERE b_activo=1",
+      "SELECT id, nombre, descripcion, importante FROM rubros_presupuestales WHERE b_activo=1",
       "SELECT id, nombre, clave FROM bancos WHERE b_activo=1 ORDER BY nombre",
       "SELECT id, clave, nombre FROM formas_pago",
       "SELECT id, clave, nombre FROM regimenes_fiscales",
@@ -57,7 +57,7 @@ class CatalogosDB {
   }
 
   static async obtenerRubrosPresupuestales() {
-    let query = `SELECT id, nombre FROM rubros_presupuestales WHERE b_activo=1`
+    let query = `SELECT id, nombre, descripcion, importante FROM rubros_presupuestales WHERE b_activo=1`
 
     try {
       const res = await queryDB(query)
