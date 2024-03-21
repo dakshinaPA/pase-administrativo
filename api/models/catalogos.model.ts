@@ -9,7 +9,10 @@ export interface EstadoDB extends CatalogoGenerico {}
 
 export interface TemasSocialesDB extends CatalogoGenerico {}
 
-export interface RubrosPresupuestalesDB extends CatalogoGenerico {}
+export interface RubrosPresupuestalesDB extends CatalogoGenerico {
+  descripcion: string
+  importante: string
+}
 
 export interface BancosDB extends CatalogoGenerico {
   clave: string

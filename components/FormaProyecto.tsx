@@ -53,10 +53,11 @@ import { UsuarioLogin, UsuarioMin } from "@models/usuario.model"
 import { PieChart } from "./PieChart"
 import { Banner, EstadoInicialBannerProps, estadoInicialBanner } from "./Banner"
 import Link from "next/link"
-import { rolesUsuario } from "@assets/utils/constantes"
+import { rolesUsuario, rubrosPresupuestales } from "@assets/utils/constantes"
 import { useSesion } from "@hooks/useSesion"
 import { useRouter } from "next/router"
 import { ModalEliminar, ModalEliminarProps } from "./ModalEliminar"
+import { ModalInfoRubro, estaInicialModalInfoRubros } from "./ModalInfoRubros"
 
 interface NuevaMinistracion extends MinistracionProyecto {
   id_rubro: number
@@ -1060,6 +1061,9 @@ const FormaProyecto = () => {
 const TablaMinistraciones = () => {
   const { estado, user, despachar, formMinistracion } =
     useContext(ProyectoContext)
+  const [modalInfoRubros, setModalInfoRubros] = useState(
+    estaInicialModalInfoRubros
+  )
 
   const showAcciones =
     (user.id == estado.forma.id_administrador ||
@@ -1089,100 +1093,113 @@ const TablaMinistraciones = () => {
   }
 
   const showModalInfoRubros = (id_rubro: number) => {
-    console.log(id_rubro)
+    setModalInfoRubros({
+      show: true,
+      id_rubro,
+    })
+  }
+
+  const cerrarModal = () => {
+    setModalInfoRubros(estaInicialModalInfoRubros)
   }
 
   return (
-    <div className="col-12 col-md table-responsive mb-3">
-      <table className="table">
-        <thead className="table-light">
-          <tr className="color1">
-            <th>Número</th>
-            {/* <th>Grupo</th> */}
-            <th>Fecha de recepción</th>
-            <th>Rubros</th>
-            <th>Monto</th>
-            {showAcciones && <th>Acciones</th>}
-          </tr>
-        </thead>
-        <tbody>
-          {estado.forma.ministraciones.map(
-            ({
-              id,
-              i_numero,
-              i_grupo,
-              dt_recepcion,
-              rubros_presupuestales,
-            }) => {
-              const f_monto = rubros_presupuestales.reduce(
-                (acum, rp) => acum + Number(rp.f_monto),
-                0
-              )
+    <>
+      <div className="col-12 col-md table-responsive mb-3">
+        <table className="table">
+          <thead className="table-light">
+            <tr className="color1">
+              <th>Número</th>
+              {/* <th>Grupo</th> */}
+              <th>Fecha de recepción</th>
+              <th>Rubros</th>
+              <th>Monto</th>
+              {showAcciones && <th>Acciones</th>}
+            </tr>
+          </thead>
+          <tbody>
+            {estado.forma.ministraciones.map(
+              ({
+                id,
+                i_numero,
+                i_grupo,
+                dt_recepcion,
+                rubros_presupuestales,
+              }) => {
+                const f_monto = rubros_presupuestales.reduce(
+                  (acum, rp) => acum + Number(rp.f_monto),
+                  0
+                )
 
-              return (
-                <tr key={i_numero}>
-                  <td>{i_numero}</td>
-                  {/* <td>{i_grupo}</td> */}
-                  <td>{inputDateAformato(dt_recepcion)}</td>
-                  <td>
-                    <table className="table table-bordered mb-0">
-                      <tbody>
-                        {rubros_presupuestales.map(
-                          ({ id_rubro, rubro, f_monto }) => {
-                            return (
-                              <tr key={id_rubro}>
-                                <td>
-                                  <span className="me-1">{rubro}</span>
-                                  <i
-                                    className="bi bi-info-circle"
-                                    style={{ cursor: "pointer" }}
-                                    onClick={() =>
-                                      showModalInfoRubros(id_rubro)
-                                    }
-                                  ></i>
-                                </td>
-                                <td className="w-25">
-                                  {montoALocaleString(Number(f_monto))}
-                                </td>
-                              </tr>
-                            )
-                          }
-                        )}
-                      </tbody>
-                    </table>
-                  </td>
-                  <td>{montoALocaleString(f_monto)}</td>
-                  {showAcciones && (
+                return (
+                  <tr key={i_numero}>
+                    <td>{i_numero}</td>
+                    {/* <td>{i_grupo}</td> */}
+                    <td>{inputDateAformato(dt_recepcion)}</td>
                     <td>
-                      {id ? (
-                        <BtnAccion
-                          margin={false}
-                          icono="bi-pencil"
-                          onclick={() => editarMinistracion(id)}
-                          title="editar ministración"
-                        />
-                      ) : (
-                        <BtnAccion
-                          margin={false}
-                          icono="bi-x-circle"
-                          onclick={() => quitarMinistracion(i_numero)}
-                          title="editar ministración"
-                        />
-                      )}
+                      <table className="table table-bordered mb-0">
+                        <tbody>
+                          {rubros_presupuestales.map(
+                            ({ id_rubro, rubro, f_monto }) => {
+                              return (
+                                <tr key={id_rubro}>
+                                  <td>
+                                    {rubro}
+                                    {id_rubro !=
+                                      rubrosPresupuestales.GESTION_FINANCIERA && (
+                                      <i
+                                        className="bi bi-info-circle ms-1"
+                                        style={{ cursor: "pointer" }}
+                                        onClick={() =>
+                                          showModalInfoRubros(id_rubro)
+                                        }
+                                      ></i>
+                                    )}
+                                  </td>
+                                  <td className="w-25">
+                                    {montoALocaleString(Number(f_monto))}
+                                  </td>
+                                </tr>
+                              )
+                            }
+                          )}
+                        </tbody>
+                      </table>
                     </td>
-                  )}
-                </tr>
-              )
-            }
-          )}
-          <tr>
-            <td colSpan={3}></td>
-            <td>{montoALocaleString(sumaRubros)}</td>
-            {showAcciones && <td></td>}
-          </tr>
-        </tbody>
-      </table>
-    </div>
+                    <td>{montoALocaleString(f_monto)}</td>
+                    {showAcciones && (
+                      <td>
+                        {id ? (
+                          <BtnAccion
+                            margin={false}
+                            icono="bi-pencil"
+                            onclick={() => editarMinistracion(id)}
+                            title="editar ministración"
+                          />
+                        ) : (
+                          <BtnAccion
+                            margin={false}
+                            icono="bi-x-circle"
+                            onclick={() => quitarMinistracion(i_numero)}
+                            title="editar ministración"
+                          />
+                        )}
+                      </td>
+                    )}
+                  </tr>
+                )
+              }
+            )}
+            <tr>
+              <td colSpan={3}></td>
+              <td>{montoALocaleString(sumaRubros)}</td>
+              {showAcciones && <td></td>}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ModalInfoRubro {...modalInfoRubros} cerrar={cerrarModal} />
+    </>
   )
 }
 
@@ -1247,7 +1264,7 @@ const Saldos = () => {
                 <span className="me-1">Por comprobar</span>
                 <TooltipInfo texto="con base a este monto se calcula el 35% ISR" />
               </th>
-              <td style={{ color: "#ffa704" }}>
+              <td className="color-warning">
                 {montoALocaleString(estado.forma.saldo.f_por_comprobar)}
               </td>
             </tr>
