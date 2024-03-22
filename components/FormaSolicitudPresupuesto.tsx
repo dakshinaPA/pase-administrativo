@@ -1109,7 +1109,7 @@ const FormaSolicitudPresupuesto = () => {
               </div>
               <div className="col-12 col-md-6 col-lg-4 mb-3">
                 <label className="form-label">
-                  <span>Partida presupuestal</span>
+                  Partida presupuestal
                   {!!estado.forma.id_partida_presupuestal && (
                     <i
                       className="bi bi-info-circle ms-1"
@@ -1155,7 +1155,14 @@ const FormaSolicitudPresupuesto = () => {
                 />
               </div>
               <div className="col-12 col-md-6 col-lg-4 mb-3">
-                <label className="form-label">Partida presupuestal</label>
+                <label className="form-label">
+                  Partida presupuestal
+                  <i
+                    className="bi bi-info-circle ms-1"
+                    style={{ cursor: "pointer" }}
+                    onClick={() => dispatch({ type: "ABRIR_MODAL_INFO_RUBRO" })}
+                  ></i>
+                </label>
                 <input
                   className="form-control"
                   value={estado.forma.rubro}
