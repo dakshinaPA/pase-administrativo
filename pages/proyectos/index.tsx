@@ -13,6 +13,7 @@ import { Proyecto, QueriesProyecto } from "@models/proyecto.model"
 import { BtnAccion, BtnNeutro, LinkAccion } from "@components/Botones"
 import { Banner, estadoInicialBanner, mensajesBanner } from "@components/Banner"
 import { useSesion } from "@hooks/useSesion"
+import { rolesUsuario } from "@assets/utils/constantes"
 
 const Financiadores = () => {
   const { user, status } = useSesion()
@@ -129,7 +130,7 @@ const Financiadores = () => {
   return (
     <TablaContenedor>
       <div className="row mb-2">
-        {user.id_rol != 3 && (
+        {user.id_rol != rolesUsuario.COPARTE && (
           <div className="col-12 col-sm-6 col-lg-3 col-xl-2 mb-3">
             <BtnNeutro
               texto="Registrar +"
@@ -158,13 +159,13 @@ const Financiadores = () => {
       </div>
       <div className="row">
         <div className="col-12 table-responsive">
-          <table className="table">
+          <table className="table table-sm">
             <thead className="table-light">
               <tr className="color1">
                 <th>#id</th>
                 <th>Alt id</th>
                 <th>Nombre</th>
-                {user.id_rol != 3 && (
+                {user.id_rol != rolesUsuario.COPARTE && (
                   <>
                     <th>Responsable</th>
                     <th>Coparte</th>

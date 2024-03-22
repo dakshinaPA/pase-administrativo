@@ -7,3 +7,12 @@
     border-radius: 5px;
     overflow: hidden;
 }
+
+.linkPartidas {
+  color: var(--color-ternario);
+  font-size: 0.9rem;
+}
+
+.linkPartidas:hover {
+  color: var(--color-primario);
+}

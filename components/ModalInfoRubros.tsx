@@ -1,6 +1,7 @@
 import { FondoNegro } from "@components/FondoNegro"
 import styles from "./styles/Modal.module.css"
 import { useCatalogos } from "@contexts/catalogos.context"
+import Link from "next/link"
 
 export interface ModalInfoRubros {
   show: boolean
@@ -45,6 +46,11 @@ const ModalInfoRubro = ({ show, id_rubro, cerrar }: ModalInfoRubrosProps) => {
             <p>{match.importante}</p>
           </>
         )}
+        <div className="text-end">
+          <Link href="/partidas-presupuestales" target="_blank" className={styles.linkPartidas}>
+            ver tabla completa de partidas presupuestales
+          </Link>
+        </div>
       </div>
     </FondoNegro>
   )
