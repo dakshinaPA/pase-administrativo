@@ -589,6 +589,7 @@ const FormaSolicitudPresupuesto = () => {
       fileInput.current.value = ""
 
       const [comprobante] = xml.getElementsByTagName("cfdi:Comprobante")
+      // console.log(comprobante)
       const [timbre] = xml.getElementsByTagName("tfd:TimbreFiscalDigital")
       const [emisor] = xml.getElementsByTagName("cfdi:Emisor")
       const [receptor] = xml.getElementsByTagName("cfdi:Receptor")
@@ -600,6 +601,7 @@ const FormaSolicitudPresupuesto = () => {
       const claveRegimenFiscalReceptor = receptor.getAttribute(
         "RegimenFiscalReceptor"
       )
+      const rfcReceptor = receptor.getAttribute("Rfc")
       const usoCFDI = receptor.getAttribute("UsoCFDI")
       const f_total = comprobante?.getAttribute("Total")
       const f_claveProdServ = concepto?.getAttribute("ClaveProdServ")
@@ -642,6 +644,8 @@ const FormaSolicitudPresupuesto = () => {
         if (!metodo_pago) throw "Método de pago no identificado"
         if (claveRegimenFiscalReceptor !== "603" || !regimenFiscalReceptor.id)
           throw "Regimen fiscal de receptor inválido"
+        if (rfcReceptor !== "DAK1302063W9")
+          throw "RFC del receptor no coincide con Dakshina"
         if (usoCFDI !== "G03") throw "Uso CFDI inválido"
         if (clave_forma_pago === "01" && Number(f_total) >= 2000)
           throw "Pago en efectivo mayor o igual a 2000 no permitido"
