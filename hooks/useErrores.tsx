@@ -133,9 +133,11 @@ const useErrores = () => {
           case "f_retenciones_extranjeros":
             if (!Number(campos[key]) && campos[key] != 0)
               throw ["f_retenciones", "Sólo dígitos"]
+            break
           case "nombre_proyecto":
             if (!/^.{2,}$/.test(campos[key]))
               throw ["nombre", "Nombre inválido"]
+            break
           case "proveedor":
             if (!/^[a-zA-Z0-9\u00C0-\u017F\s\-]{2,}$/.test(campos[key]))
               throw ["nombre", "Nombre inválido"]
