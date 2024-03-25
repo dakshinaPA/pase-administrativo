@@ -397,6 +397,7 @@ const SolicitudesPresupuesto = () => {
       "35% ISR",
       "Comprobación",
       "Observaciones",
+      "Estatus",
     ]
 
     const solicituesAArray = estado.solicitudes.map((solicitud) => {
@@ -432,6 +433,7 @@ const SolicitudesPresupuesto = () => {
         "",
         folios_fiscales,
         notas,
+        solicitud.estatus,
       ]
     })
 
