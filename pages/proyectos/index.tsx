@@ -1,11 +1,16 @@
-import React, { useEffect, useState } from "react"
+import React, { use, useEffect, useState } from "react"
 import { ApiCall } from "@assets/utils/apiCalls"
 import { useRouter } from "next/router"
 import { Loader } from "@components/Loader"
 import { ModalEliminar } from "@components/ModalEliminar"
-import { Contenedor, TablaContenedor } from "@components/Contenedores"
+import {
+  Contenedor,
+  RegistroContenedor,
+  TablaContenedor,
+} from "@components/Contenedores"
 import {
   aMinuscula,
+  cortarString,
   montoALocaleString,
   obtenerProyectos,
 } from "@assets/utils/common"
@@ -14,6 +19,8 @@ import { BtnAccion, BtnNeutro, LinkAccion } from "@components/Botones"
 import { Banner, estadoInicialBanner, mensajesBanner } from "@components/Banner"
 import { useSesion } from "@hooks/useSesion"
 import { rolesUsuario } from "@assets/utils/constantes"
+import { PieChart } from "@components/PieChart"
+import { TooltipInfo } from "@components/Tooltip"
 
 const Financiadores = () => {
   const { user, status } = useSesion()
@@ -41,9 +48,9 @@ const Financiadores = () => {
       //setear copartes para filtrar si es admin o superu usuario
       let queries: QueriesProyecto = { min: false }
 
-      if (user.id_rol == 2) {
+      if (user.id_rol == rolesUsuario.ADMINISTRADOR) {
         queries = { ...queries, id_admin: user.id }
-      } else if (user.id_rol == 3) {
+      } else if (user.id_rol == rolesUsuario.COPARTE) {
         queries = { ...queries, id_responsable: user.id }
       }
 
@@ -127,19 +134,133 @@ const Financiadores = () => {
     )
   }
 
+  if (user.id_rol == rolesUsuario.COPARTE) {
+    return (
+      <RegistroContenedor>
+        {proyectosDB.map(({ id, id_coparte, nombre, id_alt, saldo }) => {
+          return (
+            <div key={id_alt} className="row mb-5 proyecto-card">
+              <div className="col-12 bg2 py-3 mb-3">
+                <div className="row">
+                  <div className="col-12 col-md-6 col-lg-8">
+                    <h4 className="mb-0 color4">
+                      {cortarString(nombre, 50)} - {id_alt}
+                    </h4>
+                  </div>
+                  <div className="col-12 col-md-6 col-lg-4 text-end">
+                    <LinkAccion
+                      margin={false}
+                      icono="bi-eye-fill"
+                      ruta={`/copartes/${id_coparte}/proyectos/${id}`}
+                      title="ver detalle"
+                    />
+                    <LinkAccion
+                      margin="l"
+                      icono="bi-ui-checks"
+                      ruta={`/proyectos/${id}/solicitudes-presupuesto/registro`}
+                      title="registrar solicitud"
+                    />
+                    <LinkAccion
+                      margin="l"
+                      icono="bi-person-plus"
+                      ruta={`/proyectos/${id}/colaboradores/registro`}
+                      title="registrar colaborador"
+                    />
+                    <LinkAccion
+                      margin="l"
+                      icono="bi-person-plus-fill"
+                      ruta={`/proyectos/${id}/proveedores/registro`}
+                      title="registrar proveedor"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="col-12 col-md-6 col-lg-4 mb-3">
+                <table className="table table-borderless">
+                  <tbody>
+                    <tr>
+                      <td>Solicitado transferido</td>
+                      <td>{montoALocaleString(saldo.f_transferido)}</td>
+                    </tr>
+                    <tr>
+                      <td>Impuestos</td>
+                      <td>{montoALocaleString(saldo.f_retenciones)}</td>
+                    </tr>
+                    <tr>
+                      <td>35% ISR</td>
+                      <td>{montoALocaleString(saldo.f_isr)}</td>
+                    </tr>
+                    <tr>
+                      <td>Pase administrativo</td>
+                      <td>{montoALocaleString(saldo.f_pa)}</td>
+                    </tr>
+                    <tr>
+                      <td colSpan={2}>
+                        <hr className="my-0" />
+                      </td>
+                    </tr>
+                    <tr>
+                      <th className="color1">Total ejecutado</th>
+                      <td className="fw-bold color1">
+                        {montoALocaleString(saldo.f_ejecutado)}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div className="col-12 col-md-6 col-lg-4 mb-3">
+                <table className="table table-borderless">
+                  <tbody>
+                    <tr>
+                      <th className="color1">Financiamiento</th>
+                      <td className="fw-bold color1">
+                        {montoALocaleString(saldo.f_monto_total)}
+                      </td>
+                    </tr>
+                    <tr>
+                      <th className="color1">Disponible</th>
+                      <td
+                        className={`fw-bold ${
+                          saldo.f_remanente < 0 ? "color-red" : "color3"
+                        }`}
+                      >
+                        {montoALocaleString(saldo.f_remanente)}
+                      </td>
+                    </tr>
+                    <tr>
+                      <th className="color1">
+                        <span className="me-1">Por comprobar</span>
+                        <TooltipInfo texto="con base a este monto se calcula el 35% ISR" />
+                      </th>
+                      <td className="color-warning">
+                        {montoALocaleString(saldo.f_por_comprobar)}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div className="col-12 col-lg-4 mb-3 text-center">
+                <h6 className="mb-3 color1 fw-bold">Avance</h6>
+                <PieChart lado={150} porcentaje={saldo.p_avance} />
+              </div>
+            </div>
+          )
+        })}
+      </RegistroContenedor>
+    )
+  }
+
   return (
     <TablaContenedor>
       <div className="row mb-2">
-        {user.id_rol != rolesUsuario.COPARTE && (
-          <div className="col-12 col-sm-6 col-lg-3 col-xl-2 mb-3">
-            <BtnNeutro
-              texto="Registrar +"
-              onclick={() => router.push("/proyectos/registro")}
-              margin={false}
-              width={true}
-            />
-          </div>
-        )}
+        <div className="col-12 col-sm-6 col-lg-3 col-xl-2 mb-3">
+          <BtnNeutro
+            texto="Registrar +"
+            onclick={() => router.push("/proyectos/registro")}
+            margin={false}
+            width={true}
+          />
+        </div>
         <div className="d-none d-lg-block col mb-3"></div>
         <div className="col-12 col-sm-6 col-xl-4 mb-2">
           <div className="input-group">
@@ -165,15 +286,10 @@ const Financiadores = () => {
                 <th>#id</th>
                 <th>Alt id</th>
                 <th>Nombre</th>
-                {user.id_rol != rolesUsuario.COPARTE && (
-                  <>
-                    <th>Responsable</th>
-                    <th>Coparte</th>
-                  </>
-                )}
+                <th>Responsable</th>
+                <th>Coparte</th>
                 <th>Tipo financiamiento</th>
                 <th>Financiamiento</th>
-                {/* <th>Solicitado</th> */}
                 <th>Transferido</th>
                 <th>Comprobado</th>
                 <th>Por comprobar</th>
@@ -206,15 +322,10 @@ const Financiadores = () => {
                     <td>{id}</td>
                     <td>{id_alt}</td>
                     <td>{nombre}</td>
-                    {user.id_rol != 3 && (
-                      <>
-                        <td>{responsable}</td>
-                        <td>{coparte}</td>
-                      </>
-                    )}
+                    <td>{responsable}</td>
+                    <td>{coparte}</td>
                     <td>{tipo_financiamiento}</td>
                     <td>{montoALocaleString(saldo.f_monto_total)}</td>
-                    {/* <td>{montoALocaleString(saldo.f_solicitado)}</td> */}
                     <td>{montoALocaleString(saldo.f_transferido)}</td>
                     <td>{montoALocaleString(saldo.f_comprobado)}</td>
                     <td>{montoALocaleString(saldo.f_por_comprobar)}</td>
@@ -232,29 +343,7 @@ const Financiadores = () => {
                           ruta={`/copartes/${id_coparte}/proyectos/${id}`}
                           title="ver detalle"
                         />
-                        {user.id == id_responsable && (
-                          <>
-                            <LinkAccion
-                              margin="l"
-                              icono="bi-ui-checks"
-                              ruta={`/proyectos/${id}/solicitudes-presupuesto/registro`}
-                              title="registrar solicitud"
-                            />
-                            <LinkAccion
-                              margin="l"
-                              icono="bi-person-plus"
-                              ruta={`/proyectos/${id}/colaboradores/registro`}
-                              title="registrar colaborador"
-                            />
-                            <LinkAccion
-                              margin="l"
-                              icono="bi-person-plus-fill"
-                              ruta={`/proyectos/${id}/proveedores/registro`}
-                              title="registrar proveedor"
-                            />
-                          </>
-                        )}
-                        {user.id_rol == 1 && (
+                        {user.id_rol == rolesUsuario.SUPER_USUARIO && (
                           <BtnAccion
                             margin="l"
                             icono="bi-x-circle"

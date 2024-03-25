@@ -1,3 +1,4 @@
+import { rolesUsuario } from "@assets/utils/constantes"
 import { useSesion } from "@hooks/useSesion"
 import { useRouter } from "next/router"
 
@@ -9,14 +10,14 @@ const Home = () => {
     let route = ""
 
     switch (user.id_rol) {
-      case 1:
+      case rolesUsuario.SUPER_USUARIO:
         route = "proyectos"
         break
-      case 2:
+      case rolesUsuario.ADMINISTRADOR:
         route = "copartes"
         break
-      case 3:
-        route = "videos"
+      case rolesUsuario.COPARTE:
+        route = "proyectos"
         break
       default:
         route = "videos"

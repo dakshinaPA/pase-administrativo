@@ -8,6 +8,11 @@ import {
   QueriesSolicitud,
 } from "@models/solicitud-presupuesto.model"
 
+const cortarString = (texto: string, max: number) => {
+  if (texto.length <= max) return texto
+  return `${texto.substring(0, max)}...`
+}
+
 const aMinuscula = (clave: string) => clave.toLowerCase()
 
 const montoALocaleString = (f_monto: number) => {
@@ -341,4 +346,5 @@ export {
   fechaMasMesesFutuosString,
   obtenerMetodoPago,
   textoMayusculaSinAcentos,
+  cortarString
 }

@@ -26,6 +26,7 @@ a {
 .color1{color: var(--color-primario);}
 .color2{color: var(--color-secundario);}
 .color3{color: var(--color-ternario);}
+.color4{color: #6c757d;}
 .color-warning{color: #ffa704}
 .color-red{color: red}
 
@@ -119,6 +120,12 @@ a {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.proyecto-card {
+  border-radius: 5px;
+  overflow: hidden;
+  box-shadow: 1px 1px 5px var(--color-cuaternario);
 }
 
 /* @media only screen and (max-width: 992px) {
