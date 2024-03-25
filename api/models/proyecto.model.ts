@@ -5,7 +5,7 @@ import {
 } from "@models/proyecto.model"
 import { ResColaboradoreDB } from "./colaborador.model"
 import { ResProveedorDB } from "./proveedor.model"
-import { SolicitudPresupuesto } from "@models/solicitud-presupuesto.model"
+import { ComprobanteSolicitud, SolicitudPresupuesto } from "@models/solicitud-presupuesto.model"
 
 export interface ResProyectoDB {
   id: number
@@ -38,17 +38,10 @@ interface Rubro {
   id_rubro: number
 }
 
-export interface Comprobante {
-  id_proyecto: number
-  f_total: number
-  f_retenciones: number
-  i_estatus: number
-}
-
 export interface ResProyectos {
   proyectos: ResProyectoDB[]
   rubros?: Rubro[]
-  comprobantes: Comprobante[]
+  comprobantes: ComprobanteSolicitud[]
   ministraciones?: MinistracionProyecto[]
   rubros_ministracion?: RubroMinistracion[]
   colaboradores?: ResColaboradoreDB[]

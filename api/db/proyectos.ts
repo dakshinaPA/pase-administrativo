@@ -81,19 +81,21 @@ class ProyectoDB {
     `
   }
 
-  static qReSolicitado() {
+  static qReSolicitudesPagadas() {
     return `
-      SELECT id, i_tipo_gasto, id_partida_presupuestal, f_importe, f_retenciones, id_proyecto, i_estatus FROM solicitudes_presupuesto
-      WHERE id_proyecto IN(?) AND b_activo=1
+      SELECT id, id_proyecto, i_tipo_gasto, id_partida_presupuestal, f_importe, f_retenciones, i_estatus
+      FROM solicitudes_presupuesto
+      WHERE id_proyecto IN (?) AND i_estatus IN (2,4) AND b_activo=1 
     `
   }
 
   static qReSaldoComprobantes() {
     return `
-      SELECT p.id id_proyecto, spc.f_total, spc.f_retenciones, sp.i_estatus FROM solicitud_presupuesto_comprobantes spc
-      JOIN solicitudes_presupuesto sp ON sp.id = spc.id_solicitud_presupuesto
-      JOIN proyectos p ON p.id = sp.id_proyecto
-      WHERE p.id IN (?) AND sp.b_activo=1 AND spc.b_activo=1
+      SELECT id_solicitud_presupuesto, f_total, f_retenciones
+      FROM solicitud_presupuesto_comprobantes
+      WHERE id_solicitud_presupuesto IN (
+        SELECT id FROM solicitudes_presupuesto WHERE id_proyecto IN (?) AND i_estatus IN (2,4) AND b_activo=1
+      ) AND b_activo=1
     `
   }
 
@@ -164,7 +166,7 @@ class ProyectoDB {
 
             //queries saldos
             const qRubros = this.qReRubros()
-            const qSaldoSolicitudes = this.qReSolicitado()
+            const qSaldoSolicitudes = this.qReSolicitudesPagadas()
             const qSaldoComprobantes = this.qReSaldoComprobantes()
             const qCombinados = [
               qRubros,

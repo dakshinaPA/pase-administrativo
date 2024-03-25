@@ -1,4 +1,3 @@
-import { Comprobante } from "@api/models/proyecto.model"
 import { Direccion } from "./direccion.model"
 import { SolicitudPresupuesto } from "./solicitud-presupuesto.model"
 
@@ -176,5 +175,4 @@ export interface DataProyecto {
 export interface CalcularSaldo {
   rubros: RubroMinistracion[]
   solicitudes: SolicitudPresupuesto[]
-  comprobantes: Comprobante[]
 }

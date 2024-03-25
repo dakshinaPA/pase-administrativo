@@ -27,6 +27,7 @@ a {
 .color2{color: var(--color-secundario);}
 .color3{color: var(--color-ternario);}
 .color-warning{color: #ffa704}
+.color-red{color: red}
 
 .bg1{background-color: var(--color-primario);}
 .bg2{background-color: var(--color-secundario);}

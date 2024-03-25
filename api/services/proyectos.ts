@@ -11,10 +11,7 @@ import {
 } from "@models/proyecto.model"
 
 import { ResProyectos } from "@api/models/proyecto.model"
-import {
-  epochAFecha,
-  obtenerEstatusSolicitud,
-} from "@assets/utils/common"
+import { epochAFecha, obtenerEstatusSolicitud } from "@assets/utils/common"
 import { SolicitudesPresupuestoServices } from "./solicitudes-presupuesto"
 import {
   estatusSolicitud,
@@ -69,67 +66,49 @@ class ProyectosServices {
   }
 
   static calcularSaldo(data: CalcularSaldo) {
-    const { rubros, solicitudes, comprobantes } = data
+    const { rubros, solicitudes } = data
 
-    const solicitudesProcesadas = solicitudes.filter(
-      (sol) => sol.i_estatus == estatusSolicitud.PROCESADA
-    )
-    const comprobantesProcesados = comprobantes.filter(
-      (com) => com.i_estatus == estatusSolicitud.PROCESADA
-    )
+    let f_monto_total = 0
+    let f_pa = 0
+    let f_comprobado = 0
+    let f_retenciones = 0
+    let f_transferido = 0
 
-    const f_monto_total = rubros.reduce(
-      (acum, { f_monto }) => acum + Number(f_monto),
-      0
-    )
+    for (const { f_monto, id_rubro } of rubros) {
+      const f_monto_number = Number(f_monto)
 
-    const f_pa = rubros
-      .filter((rub) => rub.id_rubro == rubrosPresupuestales.GESTION_FINANCIERA)
-      .reduce((acum, { f_monto }) => acum + Number(f_monto), 0)
+      f_monto_total += f_monto_number
 
-    // const f_solicitado = solicitudes
-    //   // .filter((sol) => [1, 2, 5].includes(sol.i_estatus))
-    //   .reduce((acum, { f_importe }) => acum + Number(f_importe), 0)
+      if (id_rubro == rubrosPresupuestales.GESTION_FINANCIERA) {
+        f_pa += f_monto_number
+      }
 
-    const f_comprobado_excepciones = solicitudesProcesadas
-      .filter(
-        ({ i_tipo_gasto, id_partida_presupuestal }) =>
-          i_tipo_gasto == tiposGasto.ASIMILADOS ||
-          id_partida_presupuestal == rubrosPresupuestales.PAGOS_EXTRANJERO
-      )
-      .reduce((acum, { f_importe }) => acum + Number(f_importe), 0)
+      if (id_rubro === rubrosPresupuestales.EJECUTADO_EJERCICIOS_ANTERIORES) {
+        f_transferido += f_monto_number
+        f_comprobado += f_monto_number
+      }
+    }
 
-    const f_comprobado_comprobantes = comprobantesProcesados.reduce(
-      (acum, { f_total }) => acum + Number(f_total),
-      0
-    )
+    for (const sol of solicitudes) {
+      const { i_tipo_gasto, id_partida_presupuestal, f_importe } = sol
 
-    const f_ejercicios_anteriores =
-      rubros.find(
-        (rb) =>
-          rb.id_rubro === rubrosPresupuestales.EJECUTADO_EJERCICIOS_ANTERIORES
-      )?.f_monto || 0
+      //Excepciones que se suman automaticamente
+      if (
+        i_tipo_gasto == tiposGasto.ASIMILADOS ||
+        id_partida_presupuestal == rubrosPresupuestales.PAGOS_EXTRANJERO
+      ) {
+        f_comprobado += Number(f_importe)
+      }
 
-    // sumar las retenciones de solicitudes de asimilados que se teclean a mano
-    const f_retenciones_solicitudes = solicitudesProcesadas.reduce(
-      (acum, { f_retenciones }) => acum + Number(f_retenciones),
-      0
-    )
-    const f_retenciones_comprobantes = comprobantesProcesados.reduce(
-      (acum, { f_retenciones }) => acum + Number(f_retenciones),
-      0
-    )
+      f_transferido += Number(f_importe)
+      f_retenciones += Number(sol.f_retenciones)
 
-    const f_comprobado =
-      f_comprobado_excepciones +
-      f_comprobado_comprobantes +
-      Number(f_ejercicios_anteriores)
-    const f_transferido =
-      solicitudesProcesadas.reduce(
-        (acum, { f_importe }) => acum + Number(f_importe),
-        0
-      ) + Number(f_ejercicios_anteriores)
-    const f_retenciones = f_retenciones_solicitudes + f_retenciones_comprobantes
+      for (const com of sol.comprobantes) {
+        f_comprobado += Number(com.f_total)
+        f_retenciones += Number(com.f_retenciones)
+      }
+    }
+
     const f_por_comprobar = f_transferido - f_comprobado
     const f_isr = f_por_comprobar * 0.35
     const f_ejecutado = f_transferido + f_retenciones + f_isr + f_pa
@@ -165,24 +144,24 @@ class ProyectosServices {
           const solicitudes = re.solicitudes.filter(
             (sol) => sol.id_proyecto == proyecto.id
           )
-          const comprobantes = re.comprobantes.filter(
-            (com) => com.id_proyecto == proyecto.id
-          )
 
-          const calculoSaldo = {
+          const calculoSaldo: CalcularSaldo = {
             rubros,
-            solicitudes,
-            comprobantes,
+            solicitudes: solicitudes.map((sol) => ({
+              ...sol,
+              comprobantes: re.comprobantes.filter(
+                ({ id_solicitud_presupuesto }) =>
+                  id_solicitud_presupuesto == sol.id
+              ),
+            })),
           }
-
-          const saldo = this.calcularSaldo(calculoSaldo)
 
           return {
             ...proyecto,
             tipo_financiamiento: this.obtenerTipoFinanciamiento(
               proyecto.i_tipo_financiamiento
             ),
-            saldo,
+            saldo: this.calcularSaldo(calculoSaldo),
           }
         }
       )
@@ -220,18 +199,27 @@ class ProyectosServices {
 
       const proyectoSaldo = {
         rubros: rubros_ministracion,
-        solicitudes,
-        comprobantes,
+        solicitudes: solicitudes
+          .filter(({ i_estatus }) =>
+            [estatusSolicitud.AUTORIZADA, estatusSolicitud.PROCESADA].includes(
+              i_estatus
+            )
+          )
+          .map((sol) => ({
+            ...sol,
+            comprobantes: comprobantes.filter(
+              ({ id_solicitud_presupuesto }) =>
+                id_solicitud_presupuesto == sol.id
+            ),
+          })),
       }
-
-      const saldo = this.calcularSaldo(proyectoSaldo)
 
       const dataProyecto = {
         ...proyectoDB,
         tipo_financiamiento: this.obtenerTipoFinanciamiento(
           proyectoDB.i_tipo_financiamiento
         ),
-        saldo,
+        saldo: this.calcularSaldo(proyectoSaldo),
       }
 
       const ministracionesConRubros: MinistracionProyecto[] =

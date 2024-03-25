@@ -46,7 +46,7 @@ const PageVideos = () => {
         </div>
         <div className="col-12 col-lg-6">
           <h3 className="color1">Video 4</h3>
-          <h4 className="color1">Registro de solicitudes</h4>
+          <h4 className="color1">Comprobación de solicitudes</h4>
           <video
             src="https://dakshina-imagen.s3.us-east-2.amazonaws.com/ingreso-solicitudes.mp4"
             width="100%"

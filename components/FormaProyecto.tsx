@@ -1255,7 +1255,11 @@ const Saldos = () => {
             </tr>
             <tr>
               <th>Disponible</th>
-              <td className="fw-bold color3">
+              <td
+                className={`fw-bold ${
+                  estado.forma.saldo.f_remanente < 0 ? "color-red" : "color3"
+                }`}
+              >
                 {montoALocaleString(estado.forma.saldo.f_remanente)}
               </td>
             </tr>
