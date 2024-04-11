@@ -1,7 +1,11 @@
 import { ReportesDB } from "@api/db/reportes"
-import { ComprobanteReportes } from "@api/models/reportes.model"
+import {
+  ColaboradorReportes,
+  ComprobanteReportes,
+} from "@api/models/reportes.model"
 import { RespuestaController } from "@api/utils/response"
-import { epochAFecha } from "@assets/utils/common"
+import { epochAFecha, inputDateAformato } from "@assets/utils/common"
+import { ColaboradorServices } from "./colaboradores"
 
 class ReportesServices {
   static async obtenerComprobantes() {
@@ -21,9 +25,7 @@ class ReportesServices {
           dt_timbrado: comprobante.dt_timbrado
             ? epochAFecha(comprobante.dt_timbrado)
             : "",
-          dt_pago: comprobante.dt_pago
-          ? epochAFecha(comprobante.dt_pago)
-          : "",
+          dt_pago: comprobante.dt_pago ? epochAFecha(comprobante.dt_pago) : "",
         }
       })
 
@@ -36,6 +38,41 @@ class ReportesServices {
       return RespuestaController.fallida(
         400,
         "Error al obtener folios fiscales",
+        error
+      )
+    }
+  }
+
+  static async obtenerColaboradores() {
+    try {
+      const re = await ReportesDB.obtenerColaboradores()
+      if (re.error) throw re.data
+
+      const colaboradores = re.data as ColaboradorReportes[]
+      const dataHyd: ColaboradorReportes[] = colaboradores.map((col) => {
+        const id_empleado = `${col.id_alt_proyecto.replaceAll("_", "")}_${
+          col.id_colaborador
+        }`
+
+        return {
+          ...col,
+          id_empleado,
+          tipo: ColaboradorServices.obtenerTipo(col.i_tipo).toLocaleUpperCase(),
+          f_monto: Number(col.f_monto),
+          dt_inicio: inputDateAformato(col.dt_inicio),
+          dt_fin: inputDateAformato(col.dt_fin),
+        }
+      })
+
+      return RespuestaController.exitosa(
+        200,
+        "Reporte de colaboradores obtenido con éxito",
+        dataHyd
+      )
+    } catch (error) {
+      return RespuestaController.fallida(
+        400,
+        "Error al obtener reporte de colaboradores",
         error
       )
     }

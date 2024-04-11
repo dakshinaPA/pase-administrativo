@@ -1,4 +1,7 @@
-import { ComprobanteReportes } from "@api/models/reportes.model"
+import {
+  ColaboradorReportes,
+  ComprobanteReportes,
+} from "@api/models/reportes.model"
 import { ApiCall } from "@assets/utils/apiCalls"
 import { crearExcel } from "@assets/utils/crearExcel"
 import { RegistroContenedor } from "@components/Contenedores"
@@ -33,7 +36,6 @@ const Comprobantes = () => {
       "Fecha de timbrado",
       "Fecha de pago",
     ]
-
 
     const comprobantesAArray = comprobantes.map((comprobante) => {
       return [
@@ -80,6 +82,100 @@ const Comprobantes = () => {
   )
 }
 
+const Colaboradores = () => {
+  const obtenerColaboradores = async () => {
+    const res = await ApiCall.get("/reportes/colaboradores")
+    if (res.error) {
+      console.log(res.data)
+    } else {
+      const colaboradores = res.data as ColaboradorReportes[]
+      // console.log(colaboradores)
+      generarExcel(colaboradores)
+    }
+  }
+
+  const generarExcel = (colaboradores: ColaboradorReportes[]) => {
+    const encabezado = [
+      "Id empleado",
+      "Nombre",
+      "Proyecto",
+      "Tipo",
+      "# ministracion",
+      "Monto",
+      "Servicio",
+      "Descripción del servicio",
+      "CP",
+      "Fecha inicio",
+      "Fecha fin",
+      "CLABE",
+      "Banco",
+      "Email",
+      "Teléfono",
+      "RFC",
+      "CURP",
+      "Calle",
+      "# ext",
+      "# int",
+      "Colonia",
+      "Municipio",
+      "CP dirección",
+      "Estado",
+    ]
+
+    const comprobantesAArray = colaboradores.map((col) => {
+      return [
+        col.id_empleado,
+        col.nombre,
+        col.id_alt_proyecto,
+        col.tipo,
+        col.i_numero_ministracion,
+        col.f_monto,
+        col.servicio,
+        col.descripcion,
+        col.cp,
+        col.dt_inicio,
+        col.dt_fin,
+        col.clabe,
+        col.banco,
+        col.email,
+        col.telefono,
+        col.rfc,
+        col.curp,
+        col.calle,
+        col.numero_ext,
+        col.numero_int,
+        col.colonia,
+        col.municipio,
+        col.cp_direccion,
+        col.estado,
+      ]
+    })
+
+    const dataSheet = [encabezado, ...comprobantesAArray]
+
+    crearExcel({
+      nombreHoja: "Libro 1",
+      nombreArchivo: "colaboradores.xlsx",
+      data: dataSheet,
+    })
+  }
+
+  return (
+    <tr>
+      <td>Colaboradores</td>
+      <td>
+        <button
+          className="btn btn-outline-secondary btn-sm"
+          onClick={obtenerColaboradores}
+        >
+          Exportar
+          <i className="bi bi-file-earmark-excel ms-1"></i>
+        </button>
+      </td>
+    </tr>
+  )
+}
+
 const Reportes = () => {
   const { status } = useSesion()
   if (status !== "authenticated") return null
@@ -100,6 +196,7 @@ const Reportes = () => {
             </thead>
             <tbody>
               <Comprobantes />
+              <Colaboradores />
             </tbody>
           </table>
         </div>

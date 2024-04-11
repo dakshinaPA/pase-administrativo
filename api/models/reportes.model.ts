@@ -1,3 +1,6 @@
+
+import { Direccion } from "@models/direccion.model";
+import { ColaboradorProyecto, PeriodoServicioColaborador } from "@models/proyecto.model";
 import { ComprobanteSolicitud } from "@models/solicitud-presupuesto.model";
 
 export interface ComprobanteReportes extends ComprobanteSolicitud {
@@ -9,4 +12,9 @@ export interface ComprobanteReportes extends ComprobanteSolicitud {
   titular_cuenta: string
   regimen_fiscal: string
   dt_pago: string
+}
+
+export interface ColaboradorReportes extends PeriodoServicioColaborador, Direccion, ColaboradorProyecto {
+  id_alt_proyecto: string,
+  cp_direccion: string
 }

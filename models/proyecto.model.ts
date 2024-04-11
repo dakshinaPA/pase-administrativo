@@ -12,6 +12,7 @@ export interface QueriesProyecto {
 
 export interface PeriodoServicioColaborador {
   id?: number
+  id_colaborador?: number
   i_numero_ministracion: number
   f_monto: number
   servicio: string

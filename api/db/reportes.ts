@@ -25,6 +25,33 @@ class ReportesDB {
       return RespuestaDB.fallida(error)
     }
   }
+
+  static async obtenerColaboradores() {
+    const query = `
+      SELECT ps.id, ps.id_colaborador, ps.i_numero_ministracion, ps.f_monto, ps.servicio, ps.descripcion, ps.cp, ps.dt_inicio, ps.dt_fin,
+      CONCAT(TRIM(UPPER(c.apellido_paterno)), " ", TRIM(UPPER(c.apellido_materno)), " ", TRIM(UPPER(c.nombre))) nombre, c.id_proyecto, c.i_tipo, c.clabe, c.id_banco, c.telefono, c.email, c.rfc, c.curp,
+      b.nombre banco,
+      p.id_alt id_alt_proyecto,
+      cd.calle, cd.numero_ext, cd.numero_int, cd.colonia, cd.municipio, cd.cp cp_direccion,
+      UPPER(e.nombre) estado
+      FROM colaborador_periodos_servicio ps
+      JOIN colaboradores c ON c.id = ps.id_colaborador
+      JOIN colaborador_direccion cd ON cd.id_colaborador = c.id
+      JOIN proyectos p ON p.id = c.id_proyecto
+      JOIN bancos b ON b.id = c.id_banco
+      JOIN estados e ON e.id = cd.id_estado
+      WHERE ps.b_activo=1 AND c.b_activo=1 ORDER BY nombre ASC
+    `
+    // JOIN copartes co ON co.id = p.id_coparte
+    // JOIN financiadores f ON f.id = p.id_financiador
+
+    try {
+      const res = await queryDB(query)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
 }
 
 export { ReportesDB }
