@@ -1337,7 +1337,7 @@ const Colaboradores = () => {
                   <td>{clabe}</td>
                   <td>{banco}</td>
                   <td>{telefono}</td>
-                  <td>
+                  <td className="d-flex">
                     <LinkAccion
                       margin={false}
                       icono="bi-eye-fill"
@@ -1418,7 +1418,7 @@ const Proveedores = () => {
                   <td>{rfc}</td>
                   <td>{clabe || account_number}</td>
                   <td>{banco || bank}</td>
-                  <td>
+                  <td className="d-flex">
                     <LinkAccion
                       margin={false}
                       icono="bi-eye-fill"
@@ -1510,7 +1510,7 @@ const SolicitudesPresupuesto = () => {
                       {estatus}
                     </span>
                   </td>
-                  <td>
+                  <td className="d-flex">
                     <LinkAccion
                       margin={false}
                       icono="bi-eye-fill"
