@@ -6,7 +6,7 @@ import { authOptions } from "../auth/[...nextauth]"
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   const sesion = await getServerSession(req, res, authOptions)
   if (!sesion) {
-    // return res.status(401).json({ mensaje: "Acceso no autorizado" })
+    return res.status(401).json({ mensaje: "Acceso no autorizado" })
   }
   switch (req.method) {
     case "GET":
