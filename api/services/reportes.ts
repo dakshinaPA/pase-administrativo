@@ -49,20 +49,50 @@ class ReportesServices {
       if (re.error) throw re.data
 
       const colaboradores = re.data as ColaboradorReportes[]
-      const dataHyd: ColaboradorReportes[] = colaboradores.map((col) => {
-        const id_empleado = `${col.id_alt_proyecto.replaceAll("_", "")}_${
-          col.id_colaborador
-        }`
+      const colaboradoresFiltrados: ColaboradorReportes[] = []
 
-        return {
-          ...col,
-          id_empleado,
-          tipo: ColaboradorServices.obtenerTipo(col.i_tipo).toLocaleUpperCase(),
-          f_monto: Number(col.f_monto),
-          dt_inicio: inputDateAformato(col.dt_inicio),
-          dt_fin: inputDateAformato(col.dt_fin),
+      //filtrar los colaboradores sin pago y periodos de servicio activos
+      for (const col of colaboradores) {
+        if (col.i_tipo == 3 || col.ps_activo == 1) {
+          colaboradoresFiltrados.push(col)
         }
-      })
+      }
+
+      const dataHyd: ColaboradorReportes[] = colaboradoresFiltrados.map(
+        (col) => {
+          const id_empleado = `${col.id_alt_proyecto.replaceAll("_", "")}_${
+            col.id
+          }`
+
+          if (col.i_tipo == 3) {
+            return {
+              ...col,
+              id_empleado,
+              tipo: ColaboradorServices.obtenerTipo(col.i_tipo).toUpperCase(),
+              i_numero_ministracion: 0,
+              f_monto: 0,
+              servicio: "",
+              descripcion: "",
+              cp: "",
+              dt_inicio: "",
+              dt_fin: "",
+            }
+          }
+
+          return {
+            ...col,
+            id_empleado,
+            tipo: ColaboradorServices.obtenerTipo(col.i_tipo).toUpperCase(),
+            i_numero_ministracion: col.i_numero_ministracion || 0,
+            f_monto: col.f_monto ? Number(col.f_monto) : 0,
+            servicio: col.servicio || "",
+            descripcion: col.descripcion || "",
+            cp: col.cp || "",
+            dt_inicio: col.dt_inicio ? inputDateAformato(col.dt_inicio) : "",
+            dt_fin: col.dt_fin ? inputDateAformato(col.dt_fin) : "",
+          }
+        }
+      )
 
       return RespuestaController.exitosa(
         200,

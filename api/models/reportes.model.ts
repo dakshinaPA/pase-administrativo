@@ -17,4 +17,5 @@ export interface ComprobanteReportes extends ComprobanteSolicitud {
 export interface ColaboradorReportes extends PeriodoServicioColaborador, Direccion, ColaboradorProyecto {
   id_alt_proyecto: string,
   cp_direccion: string
+  ps_activo: 0 | 1
 }

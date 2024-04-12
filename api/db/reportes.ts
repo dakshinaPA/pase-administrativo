@@ -28,19 +28,19 @@ class ReportesDB {
 
   static async obtenerColaboradores() {
     const query = `
-      SELECT ps.id, ps.id_colaborador, ps.i_numero_ministracion, ps.f_monto, ps.servicio, ps.descripcion, ps.cp, ps.dt_inicio, ps.dt_fin,
-      CONCAT(TRIM(UPPER(c.apellido_paterno)), " ", TRIM(UPPER(c.apellido_materno)), " ", TRIM(UPPER(c.nombre))) nombre, c.id_proyecto, c.i_tipo, c.clabe, c.id_banco, c.telefono, c.email, c.rfc, c.curp,
+      SELECT c.id, CONCAT(TRIM(UPPER(c.apellido_paterno)), " ", TRIM(UPPER(c.apellido_materno)), " ", TRIM(UPPER(c.nombre))) nombre, c.id_proyecto, c.i_tipo, c.clabe, c.id_banco, c.telefono, c.email, c.rfc, c.curp,
+      ps.i_numero_ministracion, ps.f_monto, ps.servicio, ps.descripcion, ps.cp, ps.dt_inicio, ps.dt_fin, ps.b_activo ps_activo,
       b.nombre banco,
       p.id_alt id_alt_proyecto,
       cd.calle, cd.numero_ext, cd.numero_int, cd.colonia, cd.municipio, cd.cp cp_direccion,
       UPPER(e.nombre) estado
-      FROM colaborador_periodos_servicio ps
-      JOIN colaboradores c ON c.id = ps.id_colaborador
+      FROM colaboradores c 
+      LEFT JOIN colaborador_periodos_servicio ps ON ps.id_colaborador = c.id
       JOIN colaborador_direccion cd ON cd.id_colaborador = c.id
       JOIN proyectos p ON p.id = c.id_proyecto
       JOIN bancos b ON b.id = c.id_banco
       JOIN estados e ON e.id = cd.id_estado
-      WHERE ps.b_activo=1 AND c.b_activo=1 ORDER BY nombre ASC
+      WHERE c.b_activo=1 AND p.b_activo=1 ORDER BY nombre ASC
     `
     // JOIN copartes co ON co.id = p.id_coparte
     // JOIN financiadores f ON f.id = p.id_financiador
