@@ -1,5 +1,5 @@
 import React, { useEffect, useReducer, useRef } from "react"
-import { ApiCall } from "@assets/utils/apiCalls"
+import { ApiCall, ApiCallRes } from "@assets/utils/apiCalls"
 import { useRouter } from "next/router"
 import { Loader } from "@components/Loader"
 import { Contenedor, TablaContenedor } from "@components/Contenedores"
@@ -12,6 +12,8 @@ import {
   inputDateAEpoch,
   montoALocaleString,
   obtenerBadgeStatusSolicitud,
+  obtenerCopartes,
+  obtenerProyectos,
   obtenerSolicitudes,
 } from "@assets/utils/common"
 import { crearExcel } from "@assets/utils/crearExcel"
@@ -37,10 +39,14 @@ import {
 import { estatusSolicitud, rolesUsuario } from "@assets/utils/constantes"
 import { UsuarioLogin } from "@models/usuario.model"
 import { ChangeEvent } from "@assets/models/formEvents.model"
+import { CoparteMin, QueriesCoparte } from "@models/coparte.model"
+import { ProyectoMin, QueriesProyecto } from "@models/proyecto.model"
 
 type ActionTypes =
+  | "CARGA_INICIAL"
   | "LOADING_ON"
   | "ERROR_API"
+  | "LOAD_PROYECTOS"
   | "LOAD_SOLICITUDES"
   | "NO_SOLICITUDES"
   | "SHOW_FILTROS"
@@ -94,17 +100,35 @@ const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
   const { type, payload } = action
 
   switch (type) {
+    case "CARGA_INICIAL":
+      let banner = estadoInicialBanner
+
+      if (!payload.solicitudesDB.length) {
+        banner = {
+          show: true,
+          mensaje: "No hay solicitudes para mostrar",
+          tipo: "warning",
+        }
+      }
+
+      return {
+        ...state,
+        filtros: {
+          ...state.filtros,
+          copartesDB: payload.copartesDB,
+          proyectosDB: payload.proyectosDB,
+        },
+        solicitudes: payload.solicitudesDB,
+        banner,
+        isLoading: false,
+      }
     case "LOADING_ON":
       return {
         ...state,
         isLoading: true,
         banner: estadoInicialBanner,
         filtros: {
-          estado: {
-            ...state.filtros.estado,
-            id_coparte: 0,
-            id_proyecto: 0,
-          },
+          ...state.filtros,
           show: false,
         },
         selectEstatus: estadoInicialSelectEstatus,
@@ -129,6 +153,19 @@ const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
         ...state,
         solicitudes: solicitudesVista,
         isLoading: false,
+      }
+    case "LOAD_PROYECTOS":
+      return {
+        ...state,
+        filtros: {
+          ...state.filtros,
+          estado: {
+            ...state.filtros,
+            id_coparte: payload.id_coparte,
+            id_proyecto: 0,
+          },
+          proyectosDB: payload.proyectosDB,
+        },
       }
     case "NO_SOLICITUDES":
       return {
@@ -272,6 +309,8 @@ const SolicitudesPresupuesto = () => {
     },
     filtros: {
       show: false,
+      copartesDB: [],
+      proyectosDB: [],
       estado: estadoInicialFiltrosStatus,
     },
     selectEstatus: estadoInicialSelectEstatus,
@@ -288,39 +327,95 @@ const SolicitudesPresupuesto = () => {
   const aExcel = useRef(null)
 
   useEffect(() => {
-    cargarSolicitudes()
+    cargarData()
   }, [])
+
+  const cargarData = async () => {
+    //llenar select de copartes si no es usuario coparte
+    const promesas = []
+
+    if (user.id_rol != rolesUsuario.COPARTE) {
+      promesas.push(obtenerCopartesDB())
+    } else {
+      promesas.push(obtenerProyectosDB({ id_responsable: user.id }))
+    }
+
+    promesas.push(obtenerSolicitudesDB())
+
+    const resComb = await Promise.all(promesas)
+    try {
+      for (const res of resComb) if (res.error) throw res
+
+      let copartesDB = []
+      let proyectosDB = []
+
+      if (user.id_rol != rolesUsuario.COPARTE) {
+        copartesDB = resComb[0].data as CoparteMin[]
+      } else {
+        proyectosDB = resComb[0].data as ProyectoMin[]
+      }
+      const solicitudesDB = resComb[1].data as SolicitudPresupuesto[]
+
+      dispatch({
+        type: "CARGA_INICIAL",
+        payload: {
+          copartesDB,
+          proyectosDB,
+          solicitudesDB,
+        },
+      })
+    } catch ({ mensaje }) {
+      dispatch({
+        type: "ERROR_API",
+        payload: mensaje,
+      })
+    }
+  }
+
+  const obtenerCopartesDB = () => {
+    const queries: QueriesCoparte =
+      user.id_rol == rolesUsuario.ADMINISTRADOR ? { id_admin: user.id } : {}
+    return obtenerCopartes(queries)
+  }
+
+  const obtenerProyectosDB = (queries: QueriesProyecto) => {
+    return obtenerProyectos(queries)
+  }
+
+  const obtenerSolicitudesDB = () => {
+    const queries: QueriesSolicitud = {}
+
+    if (user.id_rol == rolesUsuario.ADMINISTRADOR) {
+      queries.id_admin = user.id
+    } else if (user.id_rol == rolesUsuario.COPARTE) {
+      queries.id_responsable = user.id
+    }
+
+    if (Number(estado.filtros.estado.id_coparte))
+      queries.id_coparte = estado.filtros.estado.id_coparte
+    if (Number(estado.filtros.estado.id_proyecto)) {
+      queries.id_proyecto = estado.filtros.estado.id_proyecto
+      delete queries.id_coparte
+    }
+    if (Number(estado.filtros.estado.i_estatus))
+      queries.i_estatus = estado.filtros.estado.i_estatus
+    if (estado.filtros.estado.titular)
+      queries.titular = estado.filtros.estado.titular
+    if (estado.filtros.estado.dt_inicio)
+      queries.dt_inicio = String(
+        inputDateAEpoch(estado.filtros.estado.dt_inicio)
+      )
+    if (estado.filtros.estado.dt_fin)
+      queries.dt_fin = String(inputDateAEpoch(estado.filtros.estado.dt_fin))
+
+    return obtenerSolicitudes(queries)
+  }
 
   const cargarSolicitudes = async () => {
     try {
-      const queries: QueriesSolicitud = {}
-
-      if (user.id_rol == rolesUsuario.ADMINISTRADOR) {
-        queries.id_admin = user.id
-      } else if (user.id_rol == rolesUsuario.COPARTE) {
-        queries.id_responsable = user.id
-      }
-
-      if (Number(estado.filtros.estado.id_coparte))
-        queries.id_coparte = estado.filtros.estado.id_coparte
-      if (Number(estado.filtros.estado.id_proyecto)) {
-        queries.id_proyecto = estado.filtros.estado.id_proyecto
-        delete queries.id_coparte
-      }
-      if (Number(estado.filtros.estado.i_estatus))
-        queries.i_estatus = estado.filtros.estado.i_estatus
-      if (estado.filtros.estado.titular)
-        queries.titular = estado.filtros.estado.titular
-      if (estado.filtros.estado.dt_inicio)
-        queries.dt_inicio = String(
-          inputDateAEpoch(estado.filtros.estado.dt_inicio)
-        )
-      if (estado.filtros.estado.dt_fin)
-        queries.dt_fin = String(inputDateAEpoch(estado.filtros.estado.dt_fin))
-
       dispatch({ type: "LOADING_ON" })
 
-      const reSolicitudes = await obtenerSolicitudes(queries)
+      const reSolicitudes = await obtenerSolicitudesDB()
       if (reSolicitudes.error) throw reSolicitudes
 
       const solicitudesDB = reSolicitudes.data as SolicitudPresupuesto[]
@@ -336,6 +431,36 @@ const SolicitudesPresupuesto = () => {
         type: "ERROR_API",
         payload: mensaje,
       })
+    }
+  }
+
+  const handleChangeCoparte = async (id_coparte: number) => {
+    if (!id_coparte) {
+      dispatch({
+        type: "LOAD_PROYECTOS",
+        payload: {
+          id_coparte,
+          proyectosDB: [],
+        },
+      })
+    } else {
+      const { error, data, mensaje } = await obtenerProyectos({ id_coparte })
+
+      if (error) {
+        console.log(data)
+        dispatch({
+          type: "ERROR_API",
+          payload: mensaje,
+        })
+      } else {
+        dispatch({
+          type: "LOAD_PROYECTOS",
+          payload: {
+            id_coparte,
+            proyectosDB: data,
+          },
+        })
+      }
     }
   }
 
@@ -544,7 +669,10 @@ const SolicitudesPresupuesto = () => {
           </button>
           <Filtros
             filtros={estado.filtros}
+            copartesDB={estado.filtros.copartesDB}
+            proyectosDB={estado.filtros.proyectosDB}
             despachar={despachar}
+            handleChangeCoparte={handleChangeCoparte}
             cargarSolicitudes={cargarSolicitudes}
             user={user}
           />
@@ -679,25 +807,27 @@ const SolicitudesPresupuesto = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className="bg-light">
-                    <td className="fw-bold" colSpan={9}>
-                      Totales
-                    </td>
-                    <td className="fw-bold">
-                      {montoALocaleString(totalSolicitado)}
-                    </td>
-                    <td className="fw-bold">
-                      {montoALocaleString(totalComprobado)}
-                    </td>
-                    <td className="fw-bold">
-                      {montoALocaleString(totalXcomprobar)}
-                    </td>
-                    <td className="fw-bold">
-                      {montoALocaleString(totalRetenciones)}
-                    </td>
-                    <td className="fw-bold">{montoALocaleString(total)}</td>
-                    <td colSpan={showCbStatus ? 5 : 4}></td>
-                  </tr>
+                  {user.id_rol != rolesUsuario.COPARTE && (
+                    <tr className="bg-light">
+                      <td className="fw-bold" colSpan={9}>
+                        Totales
+                      </td>
+                      <td className="fw-bold">
+                        {montoALocaleString(totalSolicitado)}
+                      </td>
+                      <td className="fw-bold">
+                        {montoALocaleString(totalComprobado)}
+                      </td>
+                      <td className="fw-bold">
+                        {montoALocaleString(totalXcomprobar)}
+                      </td>
+                      <td className="fw-bold">
+                        {montoALocaleString(totalRetenciones)}
+                      </td>
+                      <td className="fw-bold">{montoALocaleString(total)}</td>
+                      <td colSpan={showCbStatus ? 5 : 4}></td>
+                    </tr>
+                  )}
                   {estado.solicitudes.map((solicitud) => {
                     const {
                       id,

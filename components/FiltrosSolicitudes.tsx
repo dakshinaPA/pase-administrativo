@@ -1,8 +1,6 @@
-import { obtenerCopartes, obtenerProyectos } from "@assets/utils/common"
-import { CoparteMin, QueriesCoparte } from "@models/coparte.model"
-import { ProyectoMin, QueriesProyecto } from "@models/proyecto.model"
+import { CoparteMin } from "@models/coparte.model"
+import { ProyectoMin } from "@models/proyecto.model"
 import { QueriesSolicitud } from "@models/solicitud-presupuesto.model"
-import { useState, useEffect } from "react"
 import styles from "@components/styles/Filtros.module.css"
 import { UsuarioLogin } from "@models/usuario.model"
 import { rolesUsuario } from "@assets/utils/constantes"
@@ -10,6 +8,8 @@ import { ChangeEvent } from "@assets/models/formEvents.model"
 
 export interface FiltrosProps {
   show: boolean
+  copartesDB: CoparteMin[]
+  proyectosDB: ProyectoMin[]
   estado: QueriesSolicitud
 }
 
@@ -22,6 +22,9 @@ interface FiltrosPropsUI {
   filtros: FiltrosProps
   despachar: (type: ActionTypes, payload?: any) => void
   cargarSolicitudes: () => Promise<void>
+  handleChangeCoparte: (id: number) => Promise<void>
+  copartesDB: CoparteMin[]
+  proyectosDB: ProyectoMin[]
   user: UsuarioLogin
 }
 
@@ -37,63 +40,14 @@ const Filtros = ({
   filtros,
   despachar,
   cargarSolicitudes,
+  handleChangeCoparte,
+  copartesDB,
+  proyectosDB,
   user,
 }: FiltrosPropsUI) => {
-  const [copartesUsuario, setCopartesUsuario] = useState<CoparteMin[]>([])
-  const [proyectosUsuario, setProyectosUsuario] = useState<ProyectoMin[]>([])
-
-  useEffect(() => {
-    cargarDataUsuario()
-  }, [])
-
-  const cargarDataUsuario = async () => {
-    //llenar select de copartes si no es usuario coparte
-    if (user.id_rol != rolesUsuario.COPARTE) {
-      cargarCopartesUsuario()
-    } else {
-      cargarProyectos({ id_responsable: user.id })
-    }
-  }
-
-  const cargarCopartesUsuario = async () => {
-    const queries: QueriesCoparte =
-      user.id_rol == rolesUsuario.ADMINISTRADOR ? { id_admin: user.id } : {}
-
-    try {
-      const reCopartes = await obtenerCopartes(queries)
-      if (reCopartes.error) throw reCopartes.data
-      const copartes = reCopartes.data as CoparteMin[]
-      setCopartesUsuario(copartes)
-    } catch (error) {
-      console.log(error)
-    }
-  }
-
-  const cargarProyectos = async (queries: QueriesProyecto) => {
-    try {
-      const reProyectos = await obtenerProyectos(queries)
-      if (reProyectos.error) throw reProyectos.data
-      const proyectos = reProyectos.data as ProyectoMin[]
-      setProyectosUsuario(proyectos)
-    } catch (error) {
-      console.log(error)
-    }
-  }
-
   const handleChange = (ev: ChangeEvent) => {
     const { name, value } = ev.target
     despachar("HANDLE_CHANGE_FILTRO", { name, value })
-  }
-
-  const handleChangeCoparte = (ev: ChangeEvent) => {
-    const id_coparte = Number(ev.target.value)
-    despachar("HANDLE_CHANGE_FILTRO_COPARTE", id_coparte)
-
-    if (!id_coparte) {
-      setProyectosUsuario([])
-      return
-    }
-    cargarProyectos({ id_coparte })
   }
 
   const buscarSolicitudes = () => {
@@ -115,11 +69,13 @@ const Filtros = ({
             <select
               className="form-control"
               name="id_coparte"
-              onChange={handleChangeCoparte}
+              onChange={({ target }) =>
+                handleChangeCoparte(Number(target.value))
+              }
               value={filtros.estado.id_coparte}
             >
               <option value="0">Todas</option>
-              {copartesUsuario.map(({ id, nombre }) => (
+              {copartesDB.map(({ id, nombre }) => (
                 <option key={id} value={id}>
                   {nombre}
                 </option>
@@ -136,7 +92,7 @@ const Filtros = ({
             value={filtros.estado.id_proyecto}
           >
             <option value="0">Todos</option>
-            {proyectosUsuario.map(({ id, id_alt, nombre }) => (
+            {proyectosDB.map(({ id, id_alt, nombre }) => (
               <option key={id} value={id}>
                 {id_alt} - {nombre}
               </option>
