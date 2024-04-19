@@ -197,6 +197,7 @@ const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
                 ? 0
                 : estatusSolicitud.REVISION,
           },
+          proyectosDB: []
         },
       }
     case "ABRIR_MODAL_ELIMIAR":
