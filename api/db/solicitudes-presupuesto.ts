@@ -1,4 +1,4 @@
-import { queryDB, queryDBPlaceHolder } from "./query"
+import { queryDBPlaceHolder } from "./query"
 import { connectionDB } from "./connectionPool"
 import {
   SolicitudPresupuesto,
@@ -9,7 +9,7 @@ import {
 } from "@models/solicitud-presupuesto.model"
 import { RespuestaDB } from "@api/utils/response"
 import { fechaActualAEpoch, inputDateAEpoch } from "@assets/utils/common"
-import { estatusSolicitud, tiposGasto } from "@assets/utils/constantes"
+import { tiposGasto } from "@assets/utils/constantes"
 
 class SolicitudesPresupuestoDB {
   static queryRe = (queries: QueriesSolicitud) => {
@@ -58,10 +58,10 @@ class SolicitudesPresupuestoDB {
       query += " AND UPPER(sp.titular_cuenta) LIKE UPPER(?)"
     }
     if (dt_inicio) {
-      query += " AND sp.dt_registro >= ?"
+      query += " AND sp.dt_pago >= ?"
     }
     if (dt_fin) {
-      query += " AND sp.dt_registro <= ?"
+      query += " AND sp.dt_pago <= ?"
     }
 
     query += " GROUP BY sp.id"
@@ -232,7 +232,7 @@ class SolicitudesPresupuestoDB {
                   comprobantes,
                   notas,
                   colaboradores,
-                  proveedores
+                  proveedores,
                 })
               }
             )

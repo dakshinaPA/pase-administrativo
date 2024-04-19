@@ -116,8 +116,16 @@ class SolicitudesPresupuestoServices {
   static async obtener(queries: QueriesSolicitud) {
     if (queries.id) return this.obtenerUna(queries.id)
     try {
+      const queriesHyd: QueriesSolicitud = {
+        ...queries,
+        dt_inicio: queries.dt_inicio
+          ? String(inputDateAEpoch(queries.dt_inicio))
+          : null,
+        dt_fin: queries.dt_fin ? String(inputDateAEpoch(queries.dt_fin)) : null,
+      }
+
       const re = (await SolicitudesPresupuestoDB.obtener(
-        queries
+        queriesHyd
       )) as SolicitudesDB
 
       //hacer match de solicitudes con comprobantes

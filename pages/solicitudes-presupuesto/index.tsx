@@ -1,5 +1,5 @@
 import React, { useEffect, useReducer, useRef } from "react"
-import { ApiCall, ApiCallRes } from "@assets/utils/apiCalls"
+import { ApiCall } from "@assets/utils/apiCalls"
 import { useRouter } from "next/router"
 import { Loader } from "@components/Loader"
 import { Contenedor, TablaContenedor } from "@components/Contenedores"
@@ -9,7 +9,6 @@ import {
 } from "@components/ModalEliminar"
 import {
   epochAFecha,
-  inputDateAEpoch,
   montoALocaleString,
   obtenerBadgeStatusSolicitud,
   obtenerCopartes,
@@ -402,11 +401,9 @@ const SolicitudesPresupuesto = () => {
     if (estado.filtros.estado.titular)
       queries.titular = estado.filtros.estado.titular
     if (estado.filtros.estado.dt_inicio)
-      queries.dt_inicio = String(
-        inputDateAEpoch(estado.filtros.estado.dt_inicio)
-      )
+      queries.dt_inicio = estado.filtros.estado.dt_inicio
     if (estado.filtros.estado.dt_fin)
-      queries.dt_fin = String(inputDateAEpoch(estado.filtros.estado.dt_fin))
+      queries.dt_fin = estado.filtros.estado.dt_fin
 
     return obtenerSolicitudes(queries)
   }
