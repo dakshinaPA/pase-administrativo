@@ -497,6 +497,21 @@ const SolicitudesPresupuesto = () => {
   const showSelectEstatus = estado.solicitudes.some((sol) => !!sol.checked)
   const showCbStatus = user.id_rol != rolesUsuario.COPARTE
 
+  //totales
+  let totalSolicitado = 0
+  let totalComprobado = 0
+  let totalXcomprobar = 0
+  let totalRetenciones = 0
+  let total = 0
+
+  for (const sol of estado.solicitudes) {
+    totalSolicitado += sol.f_importe
+    totalComprobado += sol.saldo.f_total_comprobaciones
+    totalXcomprobar += sol.saldo.f_monto_comprobar
+    totalRetenciones += sol.saldo.f_total_impuestos_retenidos
+    total += sol.saldo.f_total
+  }
+
   if (estado.isLoading) {
     return (
       <Contenedor>
@@ -664,6 +679,25 @@ const SolicitudesPresupuesto = () => {
                   </tr>
                 </thead>
                 <tbody>
+                  <tr className="bg-light">
+                    <td className="fw-bold" colSpan={9}>
+                      Totales
+                    </td>
+                    <td className="fw-bold">
+                      {montoALocaleString(totalSolicitado)}
+                    </td>
+                    <td className="fw-bold">
+                      {montoALocaleString(totalComprobado)}
+                    </td>
+                    <td className="fw-bold">
+                      {montoALocaleString(totalXcomprobar)}
+                    </td>
+                    <td className="fw-bold">
+                      {montoALocaleString(totalRetenciones)}
+                    </td>
+                    <td className="fw-bold">{montoALocaleString(total)}</td>
+                    <td colSpan={showCbStatus ? 5 : 4}></td>
+                  </tr>
                   {estado.solicitudes.map((solicitud) => {
                     const {
                       id,

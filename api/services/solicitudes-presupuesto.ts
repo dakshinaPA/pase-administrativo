@@ -68,7 +68,7 @@ class SolicitudesPresupuestoServices {
     const f_total_comprobaciones =
       i_tipo_gasto == tiposGasto.ASIMILADOS ||
       id_partida_presupuestal == rubrosPresupuestales.PAGOS_EXTRANJERO
-        ? f_importe
+        ? Number(f_importe)
         : comprobantes.reduce((acum, com) => acum + Number(com.f_total), 0)
     const f_total_impuestos_retenidos =
       comprobantes.reduce((acum, com) => acum + Number(com.f_retenciones), 0) +
