@@ -55,7 +55,7 @@ type ActionTypes =
   | "SELECCIONAR_TODAS_SOLICITUDES"
   | "CAMBIO_ESTATUS_SOLICITUD_CB"
   | "HANDLE_CHANGE_FILTRO"
-  | "HANDLE_CHANGE_FILTRO_COPARTE"
+  | "HANDLE_CHANGE_FILTRO_I_ESTATUS"
   | "SHOW_CAMBIO_ESTATUS"
   | "HANDLE_CHANGE_SLCT_ESTATUS"
   | "CANCELAR_CAMBIO_ESTATUS"
@@ -159,7 +159,7 @@ const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
         filtros: {
           ...state.filtros,
           estado: {
-            ...state.filtros,
+            ...state.filtros.estado,
             id_coparte: payload.id_coparte,
             id_proyecto: 0,
           },
@@ -248,15 +248,16 @@ const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
           },
         },
       }
-    case "HANDLE_CHANGE_FILTRO_COPARTE":
+    case "HANDLE_CHANGE_FILTRO_I_ESTATUS":
       return {
         ...state,
         filtros: {
           ...state.filtros,
           estado: {
             ...state.filtros.estado,
-            id_coparte: payload,
-            id_proyecto: 0,
+            i_estatus: payload,
+            dt_inicio: "",
+            dt_fin: ""
           },
         },
       }
@@ -666,8 +667,6 @@ const SolicitudesPresupuesto = () => {
           </button>
           <Filtros
             filtros={estado.filtros}
-            copartesDB={estado.filtros.copartesDB}
-            proyectosDB={estado.filtros.proyectosDB}
             despachar={despachar}
             handleChangeCoparte={handleChangeCoparte}
             cargarSolicitudes={cargarSolicitudes}

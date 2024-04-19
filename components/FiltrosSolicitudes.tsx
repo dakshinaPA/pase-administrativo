@@ -3,7 +3,7 @@ import { ProyectoMin } from "@models/proyecto.model"
 import { QueriesSolicitud } from "@models/solicitud-presupuesto.model"
 import styles from "@components/styles/Filtros.module.css"
 import { UsuarioLogin } from "@models/usuario.model"
-import { rolesUsuario } from "@assets/utils/constantes"
+import { estatusSolicitud, rolesUsuario } from "@assets/utils/constantes"
 import { ChangeEvent } from "@assets/models/formEvents.model"
 
 export interface FiltrosProps {
@@ -16,15 +16,13 @@ export interface FiltrosProps {
 type ActionTypes =
   | "LIMPIAR_FILTROS"
   | "HANDLE_CHANGE_FILTRO"
-  | "HANDLE_CHANGE_FILTRO_COPARTE"
+  | "HANDLE_CHANGE_FILTRO_I_ESTATUS"
 
 interface FiltrosPropsUI {
   filtros: FiltrosProps
   despachar: (type: ActionTypes, payload?: any) => void
   cargarSolicitudes: () => Promise<void>
   handleChangeCoparte: (id: number) => Promise<void>
-  copartesDB: CoparteMin[]
-  proyectosDB: ProyectoMin[]
   user: UsuarioLogin
 }
 
@@ -41,13 +39,15 @@ const Filtros = ({
   despachar,
   cargarSolicitudes,
   handleChangeCoparte,
-  copartesDB,
-  proyectosDB,
   user,
 }: FiltrosPropsUI) => {
   const handleChange = (ev: ChangeEvent) => {
     const { name, value } = ev.target
-    despachar("HANDLE_CHANGE_FILTRO", { name, value })
+    if (name === "i_estatus") {
+      despachar("HANDLE_CHANGE_FILTRO_I_ESTATUS", value)
+    } else {
+      despachar("HANDLE_CHANGE_FILTRO", { name, value })
+    }
   }
 
   const buscarSolicitudes = () => {
@@ -75,7 +75,7 @@ const Filtros = ({
               value={filtros.estado.id_coparte}
             >
               <option value="0">Todas</option>
-              {copartesDB.map(({ id, nombre }) => (
+              {filtros.copartesDB.map(({ id, nombre }) => (
                 <option key={id} value={id}>
                   {nombre}
                 </option>
@@ -92,7 +92,7 @@ const Filtros = ({
             value={filtros.estado.id_proyecto}
           >
             <option value="0">Todos</option>
-            {proyectosDB.map(({ id, id_alt, nombre }) => (
+            {filtros.proyectosDB.map(({ id, id_alt, nombre }) => (
               <option key={id} value={id}>
                 {id_alt} - {nombre}
               </option>
@@ -127,26 +127,32 @@ const Filtros = ({
             value={filtros.estado.titular}
           />
         </div>
-        <div className="mb-3">
-          <label className="form-label color1 fw-semibold">Fecha inicio</label>
-          <input
-            className="form-control"
-            type="date"
-            name="dt_inicio"
-            onChange={handleChange}
-            value={filtros.estado.dt_inicio}
-          />
-        </div>
-        <div className="mb-3">
-          <label className="form-label color1 fw-semibold">Fecha fin</label>
-          <input
-            className="form-control"
-            type="date"
-            name="dt_fin"
-            onChange={handleChange}
-            value={filtros.estado.dt_fin}
-          />
-        </div>
+        {filtros.estado.i_estatus == estatusSolicitud.PROCESADA && (
+          <>
+            <div className="mb-3">
+              <label className="form-label color1 fw-semibold">
+                Fecha inicio
+              </label>
+              <input
+                className="form-control"
+                type="date"
+                name="dt_inicio"
+                onChange={handleChange}
+                value={filtros.estado.dt_inicio}
+              />
+            </div>
+            <div className="mb-3">
+              <label className="form-label color1 fw-semibold">Fecha fin</label>
+              <input
+                className="form-control"
+                type="date"
+                name="dt_fin"
+                onChange={handleChange}
+                value={filtros.estado.dt_fin}
+              />
+            </div>
+          </>
+        )}
         <button
           type="button"
           className="btn btn-outline-secondary w-100 mb-3"
