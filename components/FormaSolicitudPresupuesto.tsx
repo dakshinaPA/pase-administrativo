@@ -867,6 +867,7 @@ const FormaSolicitudPresupuesto = () => {
 
   const disableSelectPartidaPresupuestal =
     user.id_rol != rolesUsuario.COPARTE ||
+    estado.forma.i_estatus != estatusSolicitud.REVISION ||
     !estado.modoEditar ||
     [tiposGasto.ASIMILADOS, tiposGasto.HONORARIOS].includes(
       estado.forma.i_tipo_gasto
