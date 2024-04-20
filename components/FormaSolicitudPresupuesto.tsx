@@ -126,6 +126,8 @@ const estadoInicialFormaExterior: SolicitudPresupuesto = {
 
 const reducer = (state: EstadoProps, action: ActionProps): EstadoProps => {
   const { type, payload } = action
+  const { PAGO_A_PROVEEDOR, ASIMILADOS, HONORARIOS } = tiposGasto
+  let proveedor = state.forma.proveedor
 
   switch (type) {
     case "LOADING_ON":
@@ -255,32 +257,34 @@ const reducer = (state: EstadoProps, action: ActionProps): EstadoProps => {
         },
       }
     case "CAMBIO_PARTIDA_PRESUPUESTAL":
+      const idPartida = Number(payload.value)
+
+      const comprobantes =
+        idPartida == rubrosPresupuestales.PAGOS_EXTRANJERO
+          ? []
+          : [...state.forma.comprobantes]
+
       return {
         ...state,
         forma: {
           ...state.forma,
-          id_partida_presupuestal: Number(payload.value),
+          id_partida_presupuestal: idPartida,
           id_titular_cuenta: 0,
           clabe: "",
           id_banco: 0,
           banco: "",
-          proveedor: "",
-          comprobantes: [],
+          comprobantes,
         },
       }
     case "CAMBIO_TITULAR":
       const idTitular = Number(payload.value)
       const iTipoGasto = state.forma.i_tipo_gasto
       const tipoTitular =
-        iTipoGasto == tiposGasto.PAGO_A_PROVEEDOR
-          ? "proveedores"
-          : "colaboradores"
+        iTipoGasto == PAGO_A_PROVEEDOR ? "proveedores" : "colaboradores"
       const match = state.dataProyecto[tipoTitular].find(
         (tit) => tit.id == idTitular
       )
 
-      let proveedor = ""
-      const { PAGO_A_PROVEEDOR, ASIMILADOS, HONORARIOS } = tiposGasto
       if ([PAGO_A_PROVEEDOR, ASIMILADOS, HONORARIOS].includes(iTipoGasto)) {
         proveedor = match.nombre
       }
@@ -861,10 +865,12 @@ const FormaSolicitudPresupuesto = () => {
     user.id_rol != rolesUsuario.COPARTE ||
     estado.forma.i_estatus != estatusSolicitud.REVISION
 
-  const disableSelectPartidaPresupuestal = [
-    tiposGasto.ASIMILADOS,
-    tiposGasto.HONORARIOS,
-  ].includes(estado.forma.i_tipo_gasto)
+  const disableSelectPartidaPresupuestal =
+    user.id_rol != rolesUsuario.COPARTE ||
+    !estado.modoEditar ||
+    [tiposGasto.ASIMILADOS, tiposGasto.HONORARIOS].includes(
+      estado.forma.i_tipo_gasto
+    )
 
   const disableInputXEstatus =
     !estado.modoEditar ||
@@ -1073,6 +1079,7 @@ const FormaSolicitudPresupuesto = () => {
               </h5>
             </div>
           )}
+
           {modalidad === "CREAR" ? (
             <>
               <div className="col-12 col-md-6 col-lg-4 mb-3">
@@ -1111,34 +1118,6 @@ const FormaSolicitudPresupuesto = () => {
                   <MensajeError mensaje={error.mensaje} />
                 )}
               </div>
-              <div className="col-12 col-md-6 col-lg-4 mb-3">
-                <label className="form-label">
-                  Partida presupuestal
-                  {!!estado.forma.id_partida_presupuestal && (
-                    <i
-                      className="bi bi-info-circle ms-1"
-                      style={{ cursor: "pointer" }}
-                      onClick={() =>
-                        dispatch({ type: "ABRIR_MODAL_INFO_RUBRO" })
-                      }
-                    ></i>
-                  )}
-                </label>
-                <select
-                  className="form-control"
-                  name="id_partida_presupuestal"
-                  onChange={(e) =>
-                    handleChange(e, "CAMBIO_PARTIDA_PRESUPUESTAL")
-                  }
-                  value={estado.forma.id_partida_presupuestal}
-                  disabled={disableSelectPartidaPresupuestal}
-                >
-                  <OptionsPartidaPresupuestal />
-                </select>
-                {error.campo == "id_partida_presupuestal" && (
-                  <MensajeError mensaje={error.mensaje} />
-                )}
-              </div>
             </>
           ) : (
             <>
@@ -1158,23 +1137,32 @@ const FormaSolicitudPresupuesto = () => {
                   disabled
                 />
               </div>
-              <div className="col-12 col-md-6 col-lg-4 mb-3">
-                <label className="form-label">
-                  Partida presupuestal
-                  <i
-                    className="bi bi-info-circle ms-1"
-                    style={{ cursor: "pointer" }}
-                    onClick={() => dispatch({ type: "ABRIR_MODAL_INFO_RUBRO" })}
-                  ></i>
-                </label>
-                <input
-                  className="form-control"
-                  value={estado.forma.rubro}
-                  disabled
-                />
-              </div>
             </>
           )}
+          <div className="col-12 col-md-6 col-lg-4 mb-3">
+            <label className="form-label">
+              Partida presupuestal
+              {!!estado.forma.id_partida_presupuestal && (
+                <i
+                  className="bi bi-info-circle ms-1"
+                  style={{ cursor: "pointer" }}
+                  onClick={() => dispatch({ type: "ABRIR_MODAL_INFO_RUBRO" })}
+                ></i>
+              )}
+            </label>
+            <select
+              className="form-control"
+              name="id_partida_presupuestal"
+              onChange={(e) => handleChange(e, "CAMBIO_PARTIDA_PRESUPUESTAL")}
+              value={estado.forma.id_partida_presupuestal}
+              disabled={disableSelectPartidaPresupuestal}
+            >
+              <OptionsPartidaPresupuestal />
+            </select>
+            {error.campo == "id_partida_presupuestal" && (
+              <MensajeError mensaje={error.mensaje} />
+            )}
+          </div>
           <div className="col-12 col-md-6 col-lg-4 mb-3">
             <label className="form-label">Titular cuenta</label>
             <select

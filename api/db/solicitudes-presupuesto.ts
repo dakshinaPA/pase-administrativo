@@ -417,7 +417,7 @@ class SolicitudesPresupuestoDB {
   static async actualizar(id: number, data: SolicitudPresupuesto) {
     const { comprobantes } = data
 
-    const qUpSolicitud = `UPDATE solicitudes_presupuesto SET clabe=?, id_banco=?, banco=?, id_titular_cuenta=?, titular_cuenta=?,
+    const qUpSolicitud = `UPDATE solicitudes_presupuesto SET id_partida_presupuestal=?, clabe=?, id_banco=?, banco=?, id_titular_cuenta=?, titular_cuenta=?,
       email=?, proveedor=?, descripcion_gasto=?, f_importe=?, f_retenciones=?, i_estatus=?, dt_pago=? WHERE id=?`
 
     const qReComprobantes =
@@ -461,6 +461,7 @@ class SolicitudesPresupuestoDB {
 
               const qCombinados = [qUpSolicitud]
               const phCombinados = [
+                data.id_partida_presupuestal,
                 data.clabe,
                 data.id_banco,
                 data.banco,
