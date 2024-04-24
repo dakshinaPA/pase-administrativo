@@ -60,6 +60,11 @@ const Formatos = () => {
           titulo="Reporte de comisión y desglose de viáticos"
           formato="excel"
         />
+        <FormatoFile
+          link="https://dakshina-imagen.s3.us-east-2.amazonaws.com/Integracion_expediente_prestadores_servicios_profesionales.docx"
+          titulo="Integración de expediente de prestadores de servicios profesionales"
+          formato="word"
+        />
       </div>
     </RegistroContenedor>
   )
