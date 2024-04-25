@@ -1,4 +1,4 @@
-import React, { use, useEffect, useState } from "react"
+import React, { useEffect, useState } from "react"
 import { ApiCall } from "@assets/utils/apiCalls"
 import { useRouter } from "next/router"
 import { Loader } from "@components/Loader"
@@ -66,8 +66,8 @@ const Financiadores = () => {
           tipo: "warning",
         })
       }
-    } catch ({ error, mensaje }) {
-      console.log(error)
+    } catch ({ data, mensaje }) {
+      console.log(data)
       setShowBanner({
         mensaje,
         show: true,
@@ -333,7 +333,11 @@ const Financiadores = () => {
                     <td>{montoALocaleString(saldo.f_retenciones)}</td>
                     <td>{montoALocaleString(saldo.f_pa)}</td>
                     <td>{montoALocaleString(saldo.f_ejecutado)}</td>
-                    <td>{montoALocaleString(saldo.f_remanente)}</td>
+                    <td
+                      className={saldo.f_remanente < 0 ? "color-red" : "color3"}
+                    >
+                      {montoALocaleString(saldo.f_remanente)}
+                    </td>
                     <td>{`${saldo.p_avance}%`}</td>
                     <td>
                       <div className="d-flex">

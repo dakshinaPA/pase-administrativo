@@ -1,4 +1,8 @@
-import { QueriesProyecto } from "@models/proyecto.model"
+import {
+  ItipoAjusteProyecto,
+  QueriesProyecto,
+  TipoAjusteProyecto,
+} from "@models/proyecto.model"
 import { ApiCall } from "./apiCalls"
 import { QueriesCoparte } from "@models/coparte.model"
 import { QueriesUsuario } from "@models/usuario.model"
@@ -306,6 +310,15 @@ const obtenerEstatusSolicitud = (i_estatus: number) => {
   }
 }
 
+const obtenerTipoAjuste = (i_tipo: ItipoAjusteProyecto): TipoAjusteProyecto => {
+  switch (i_tipo) {
+    case 1:
+      return "REINTEGRO"
+    case 2:
+      return "ACREEDORES"
+  }
+}
+
 const obtenerMetodoPago = (i_metodo_pago: IMetodosPAgo): MetodosPAgo => {
   return i_metodo_pago == 1 ? "PUE" : "PPD"
 }
@@ -319,6 +332,12 @@ const textoMayusculaSinAcentos = (texto: string) => {
   const txtSinAcento = quitarAcentos(texto)
   const txtMayuscula = textoAmasyuscula(txtSinAcento)
   return txtMayuscula.trim()
+}
+
+const numeroAdigitos = (f_monto: number | string) => {
+  const fMontoANumero = Number(f_monto)
+  if (Number.isInteger(fMontoANumero)) return fMontoANumero
+  return Number(fMontoANumero.toFixed(2))
 }
 
 export {
@@ -346,5 +365,7 @@ export {
   fechaMasMesesFutuosString,
   obtenerMetodoPago,
   textoMayusculaSinAcentos,
-  cortarString
+  cortarString,
+  numeroAdigitos,
+  obtenerTipoAjuste
 }

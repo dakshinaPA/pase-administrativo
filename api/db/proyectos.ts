@@ -100,6 +100,16 @@ class ProyectoDB {
     `
   }
 
+  static qReAjustes() {
+    return `
+      SELECT pa.id_proyecto, pa.id_partida_presupuestal, pa.i_tipo, pa.titular_cuenta, pa.clabe, pa.concepto, pa.f_total, pa.dt_ajuste, pa.dt_registro,
+      rp.nombre rubro
+      FROM proyecto_ajustes pa
+      JOIN rubros_presupuestales rp ON pa.id_partida_presupuestal = rp.id
+      WHERE pa.id_proyecto IN (?) AND pa.b_activo=1
+    `
+  }
+
   static qReMinistraciones = () => {
     return `SELECT id, id_proyecto, i_numero, i_grupo, dt_recepcion, dt_registro
       FROM proyecto_ministraciones pm WHERE id_proyecto=? AND b_activo=1`
@@ -169,13 +179,20 @@ class ProyectoDB {
             const qRubros = this.qReRubros()
             const qSaldoSolicitudes = this.qReSolicitudesPagadas()
             const qSaldoComprobantes = this.qReSaldoComprobantes()
+            const qAjustes = this.qReAjustes()
             const qCombinados = [
               qRubros,
               qSaldoSolicitudes,
               qSaldoComprobantes,
+              qAjustes,
             ].join(";")
 
-            const phCombinados = [idsProyectos, idsProyectos, idsProyectos]
+            const phCombinados = [
+              idsProyectos,
+              idsProyectos,
+              idsProyectos,
+              idsProyectos,
+            ]
 
             connection.query(
               qCombinados,
@@ -192,6 +209,7 @@ class ProyectoDB {
                   rubros: results[0],
                   solicitudes: results[1],
                   comprobantes: results[2],
+                  ajustes: results[3],
                 })
               }
             )
@@ -210,6 +228,7 @@ class ProyectoDB {
     const qProveedores = ProveedorDB.queryRe(id)
     const qSolicitudes = SolicitudesPresupuestoDB.queryRe({ id_proyecto: id })
     const qNotas = this.reNotas()
+    const qAjustes = this.qReAjustes()
 
     const qCombinados = [
       qProyecto,
@@ -220,9 +239,10 @@ class ProyectoDB {
       qProveedores,
       qSolicitudes,
       qNotas,
+      qAjustes,
     ].join(";")
 
-    const phCombinados = [id, id, id, id, id, id, id, id]
+    const phCombinados = [id, id, id, id, id, id, id, id, id]
 
     return new Promise((res, rej) => {
       connectionDB.getConnection((err, connection) => {
@@ -249,6 +269,7 @@ class ProyectoDB {
               proveedores: results[5],
               solicitudes: results[6],
               notas: results[7],
+              ajustes: results[8]
             }
 
             res(dataProyecto)

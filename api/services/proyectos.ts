@@ -12,11 +12,17 @@ import {
 } from "@models/proyecto.model"
 
 import { ResProyectos } from "@api/models/proyecto.model"
-import { epochAFecha, obtenerEstatusSolicitud } from "@assets/utils/common"
+import {
+  epochAFecha,
+  numeroAdigitos,
+  obtenerEstatusSolicitud,
+  obtenerTipoAjuste,
+} from "@assets/utils/common"
 import { SolicitudesPresupuestoServices } from "./solicitudes-presupuesto"
 import {
   estatusSolicitud,
   rubrosPresupuestales,
+  tiposAjusteProyecto,
   tiposGasto,
 } from "@assets/utils/constantes"
 
@@ -67,13 +73,15 @@ class ProyectosServices {
   }
 
   static calcularSaldo(data: CalcularSaldo) {
-    const { rubros, solicitudes } = data
+    const { rubros, solicitudes, ajustes } = data
 
     let f_monto_total = 0
     let f_pa = 0
     let f_comprobado = 0
     let f_retenciones = 0
     let f_transferido = 0
+    let f_reintegros = 0
+    let f_ajuste_acreedores = 0
 
     for (const { f_monto, id_rubro } of rubros) {
       const f_monto_number = Number(f_monto)
@@ -110,23 +118,31 @@ class ProyectosServices {
       }
     }
 
+    for (const { i_tipo, f_total } of ajustes) {
+      if (i_tipo == tiposAjusteProyecto.REINTEGRO) {
+        f_reintegros += Number(f_total)
+      } else if (i_tipo == tiposAjusteProyecto.ACREEDORES) {
+        f_ajuste_acreedores += Number(f_total)
+      }
+    }
+
     const f_por_comprobar = f_transferido - f_comprobado
     const f_isr = f_por_comprobar * 0.35
     const f_ejecutado = f_transferido + f_retenciones + f_isr + f_pa
-    const f_remanente = f_monto_total - f_ejecutado
-    const p_avance = Number(((f_ejecutado * 100) / f_monto_total).toFixed(2))
+    const f_remanente = f_monto_total - f_ejecutado + f_reintegros
+    const p_avance = numeroAdigitos((f_ejecutado * 100) / f_monto_total)
 
     return {
-      f_monto_total,
-      f_pa,
+      f_monto_total: numeroAdigitos(f_monto_total),
+      f_pa: numeroAdigitos(f_pa),
       f_solicitado: 0,
-      f_transferido,
-      f_comprobado,
-      f_retenciones,
-      f_por_comprobar,
-      f_isr: f_isr < 0 ? 0 : f_isr, //evitar que isr de numero negativo
-      f_ejecutado,
-      f_remanente,
+      f_transferido: numeroAdigitos(f_transferido),
+      f_comprobado: numeroAdigitos(f_comprobado),
+      f_retenciones: numeroAdigitos(f_retenciones),
+      f_por_comprobar: numeroAdigitos(f_por_comprobar),
+      f_isr: f_isr < 0 ? 0 : numeroAdigitos(f_isr), //evitar que isr de numero negativo
+      f_ejecutado: numeroAdigitos(f_ejecutado),
+      f_remanente: numeroAdigitos(f_remanente),
       p_avance,
     }
   }
@@ -145,6 +161,9 @@ class ProyectosServices {
           const solicitudes = re.solicitudes.filter(
             (sol) => sol.id_proyecto == proyecto.id
           )
+          const ajustes = re.ajustes.filter(
+            (ajuste) => ajuste.id_proyecto == proyecto.id
+          )
 
           const calculoSaldo: CalcularSaldo = {
             rubros,
@@ -155,6 +174,7 @@ class ProyectosServices {
                   id_solicitud_presupuesto == sol.id
               ),
             })),
+            ajustes,
           }
 
           return {
@@ -194,6 +214,7 @@ class ProyectosServices {
         proveedores,
         solicitudes,
         notas,
+        ajustes,
       } = re
 
       const proyectoDB = proyectos[0]
@@ -213,6 +234,7 @@ class ProyectosServices {
                 id_solicitud_presupuesto == sol.id
             ),
           })),
+        ajustes,
       }
 
       const dataProyecto = {
@@ -260,6 +282,15 @@ class ProyectosServices {
         }
       })
 
+      const ajustesHyd = ajustes.map((ajuste) => {
+        return {
+          ...ajuste,
+          tipo: obtenerTipoAjuste(ajuste.i_tipo),
+          f_total: Number(ajuste.f_total),
+          dt_registro: epochAFecha(ajuste.dt_registro),
+        }
+      })
+
       const proyecto: Proyecto = {
         ...dataProyecto,
         ministraciones: ministracionesConRubros,
@@ -267,6 +298,7 @@ class ProyectosServices {
         proveedores: proveedoresHyd,
         solicitudes_presupuesto: solicitudesHyd,
         notas,
+        ajustes: ajustesHyd
       }
 
       return RespuestaController.exitosa(200, "Consulta exitosa", proyecto)

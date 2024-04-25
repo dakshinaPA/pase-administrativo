@@ -1,4 +1,5 @@
 import {
+  AjusteProyecto,
   MinistracionProyecto,
   NotaProyecto,
   RubroMinistracion,
@@ -48,4 +49,5 @@ export interface ResProyectos {
   proveedores?: ResProveedorDB[]
   solicitudes?: SolicitudPresupuesto[]
   notas?: NotaProyecto[]
+  ajustes: AjusteProyecto[]
 }

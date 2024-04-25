@@ -47,6 +47,11 @@ const tiposFinanciamiento = {
   MULTI_ANUAL: 4,
 }
 
+const tiposAjusteProyecto = {
+  REINTEGRO: 1,
+  ACREEDORES: 2,
+}
+
 export {
   rolesUsuario,
   tiposGasto,
@@ -55,4 +60,5 @@ export {
   tiposColaborador,
   tiposProveedor,
   tiposFinanciamiento,
+  tiposAjusteProyecto,
 }

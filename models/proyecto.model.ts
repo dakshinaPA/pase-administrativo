@@ -154,6 +154,7 @@ export interface Proyecto extends ProyectoMin {
   proveedores?: ProveedorProyecto[]
   solicitudes_presupuesto?: SolicitudPresupuesto[]
   notas?: NotaProyecto[]
+  ajustes?: AjusteProyecto[]
 }
 
 export interface TitularProyecto {
@@ -176,15 +177,20 @@ export interface DataProyecto {
 export interface CalcularSaldo {
   rubros: RubroMinistracion[]
   solicitudes: SolicitudPresupuesto[]
+  ajustes: AjusteProyecto[]
 }
 
-export type TipoAjusteProyecto = 1 | 2
+export type ItipoAjusteProyecto = 1 | 2
+
+export type TipoAjusteProyecto = "REINTEGRO" | "ACREEDORES"
 
 export interface AjusteProyecto {
   id?: number
   id_proyecto: number
   id_partida_presupuestal: number
-  i_tipo: TipoAjusteProyecto
+  rubro?: string
+  i_tipo: ItipoAjusteProyecto
+  tipo?: TipoAjusteProyecto
   titular_cuenta: string
   clabe: string
   concepto: string
