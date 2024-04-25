@@ -6,6 +6,7 @@ import {
   NotaProyecto,
   QueriesProyecto,
   MinistracionProyecto,
+  AjusteProyecto,
 } from "@models/proyecto.model"
 import { fechaActualAEpoch } from "@assets/utils/common"
 import { connectionDB } from "./connectionPool"
@@ -708,6 +709,32 @@ class ProyectoDB {
       mensaje, dt_registro ) VALUES ( ?, ?, ?, ? )`
 
     const placeHolders = [id_proyecto, id_usuario, mensaje, fechaActualAEpoch()]
+
+    try {
+      const res = await queryDBPlaceHolder(query, placeHolders)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
+
+  static async crearAjuste(id_proyecto: number, data: AjusteProyecto) {
+    const query = `
+      INSERT INTO proyecto_ajustes ( id_proyecto, id_partida_presupuestal, i_tipo, titular_cuenta,
+      clabe, concepto, f_total, dt_ajuste, dt_registro) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ? )
+    `
+
+    const placeHolders = [
+      id_proyecto,
+      data.id_partida_presupuestal,
+      data.i_tipo,
+      data.titular_cuenta,
+      data.clabe,
+      data.concepto,
+      data.f_total,
+      data.dt_ajuste,
+      fechaActualAEpoch(),
+    ]
 
     try {
       const res = await queryDBPlaceHolder(query, placeHolders)

@@ -8,6 +8,7 @@ import {
   QueriesProyecto,
   NotaProyecto,
   CalcularSaldo,
+  AjusteProyecto,
 } from "@models/proyecto.model"
 
 import { ResProyectos } from "@api/models/proyecto.model"
@@ -385,6 +386,24 @@ class ProyectosServices {
       201,
       "Nota de proyecto creada con éxito",
       { idInsertado }
+    )
+  }
+
+  static async crearAjuste(id_proyecto: number, data: AjusteProyecto) {
+    const cr = await ProyectoDB.crearAjuste(id_proyecto, data)
+
+    if (cr.error) {
+      return RespuestaController.fallida(
+        400,
+        "Error al crear ajuste de proyecto",
+        cr.data
+      )
+    }
+
+    return RespuestaController.exitosa(
+      201,
+      "Ajuste de proyecto creado con éxito",
+      null
     )
   }
 }

@@ -177,3 +177,19 @@ export interface CalcularSaldo {
   rubros: RubroMinistracion[]
   solicitudes: SolicitudPresupuesto[]
 }
+
+export type TipoAjusteProyecto = 1 | 2
+
+export interface AjusteProyecto {
+  id?: number
+  id_proyecto: number
+  id_partida_presupuestal: number
+  i_tipo: TipoAjusteProyecto
+  titular_cuenta: string
+  clabe: string
+  concepto: string
+  f_total: number
+  dt_ajuste: string
+  b_activo: 0 | 1
+  dt_registro: string
+}

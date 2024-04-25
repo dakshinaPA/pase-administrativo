@@ -668,6 +668,36 @@ CREATE TABLE `solicitud_presupuesto_notas` (
 
 ------------------------------------------------------
 
+CREATE TABLE `proyecto_ajustes` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `id_proyecto` INT UNSIGNED NOT NULL,
+  `id_partida_presupuestal` INT UNSIGNED NOT NULL COMMENT 'id proyecto_rubros_presupuestales',
+  `i_tipo` TINYINT UNSIGNED NOT NULL COMMENT '1.Reintegro, 2.Ajuste por acreedores',
+  `titular_cuenta` VARCHAR(150) NOT NULL DEFAULT "",
+  `clabe` VARCHAR(20) NOT NULL DEFAULT "",
+  `concepto` TEXT NOT NULL,
+  `f_total` VARCHAR(20) NOT NULL DEFAULT "",
+  `dt_ajuste` VARCHAR(10) NOT NULL DEFAULT "",
+  `b_activo` TINYINT UNSIGNED NOT NULL DEFAULT 1,
+  `dt_registro` VARCHAR(10) NOT NULL DEFAULT "",
+  PRIMARY KEY (`id`),
+  INDEX (`id_proyecto`),
+  INDEX (`id_partida_presupuestal`));
+
+CREATE TABLE `proyecto_ajuste_notas` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `id_proyecto_ajuste` INT UNSIGNED NOT NULL,
+  `id_usuario` INT UNSIGNED NOT NULL,
+  `mensaje` TEXT NOT NULL,
+  `b_activo` TINYINT UNSIGNED NOT NULL DEFAULT 1,
+  `dt_registro` VARCHAR(10) NOT NULL DEFAULT "",
+  PRIMARY KEY (`id`),
+  INDEX (`id_proyecto_ajuste`),
+  INDEX (`id_usuario`));
+
+
+------------------------------------------------------
+
 
 TRUNCATE TABLE coparte_direccion;
 TRUNCATE TABLE coparte_usuarios;
