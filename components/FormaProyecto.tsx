@@ -410,7 +410,7 @@ const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
           nombreEliminar = `la solicitud ${payload.id}`
           break
         case "ajustes":
-          nombreEliminar = `el ajuste ${payload.id}`
+          nombreEliminar = `el ajuste de saldo con id ${payload.id}`
           break
       }
 
@@ -1289,7 +1289,8 @@ const Saldos = () => {
 }
 
 const Ajustes = () => {
-  const { estado, user, idProyecto, abrirModalEliminar } = useContext(ProyectoContext)
+  const { estado, user, idProyecto, abrirModalEliminar } =
+    useContext(ProyectoContext)
 
   return (
     <div className="row mb-5">
@@ -1308,6 +1309,7 @@ const Ajustes = () => {
         <table className="table">
           <thead className="table-light">
             <tr className="color1">
+              <th>#</th>
               <th>Tipo</th>
               <th>Rubro</th>
               <th>Titular de cuenta</th>
@@ -1330,9 +1332,10 @@ const Ajustes = () => {
                 concepto,
                 f_total,
                 dt_ajuste,
-                dt_registro
+                dt_registro,
               }) => (
                 <tr key={id}>
+                  <td>{id}</td>
                   <td>{tipo}</td>
                   <td>{rubro}</td>
                   <td>{titular_cuenta}</td>
@@ -1341,21 +1344,23 @@ const Ajustes = () => {
                   <td>{montoALocaleString(f_total)}</td>
                   <td>{dt_ajuste}</td>
                   <td>{dt_registro}</td>
-                  <td className="d-flex">
-                    <LinkAccion
-                      margin={false}
-                      icono="bi-eye-fill"
-                      ruta={`/proyectos/${idProyecto}/ajustes/${id}`}
-                      title="ver ajuste"
-                    />
-                    {user.id_rol == rolesUsuario.SUPER_USUARIO && (
-                      <BtnAccion
-                        margin="l"
-                        icono="bi-x-circle"
-                        onclick={() => abrirModalEliminar(id, "ajustes")}
-                        title="eliminar ajuste"
+                  <td>
+                    <div className="d-flex">
+                      <LinkAccion
+                        margin={false}
+                        icono="bi-eye-fill"
+                        ruta={`/proyectos/${idProyecto}/ajustes/${id}`}
+                        title="ver ajuste"
                       />
-                    )}
+                      {user.id_rol == rolesUsuario.SUPER_USUARIO && (
+                        <BtnAccion
+                          margin="l"
+                          icono="bi-x-circle"
+                          onclick={() => abrirModalEliminar(id, "ajustes")}
+                          title="eliminar ajuste"
+                        />
+                      )}
+                    </div>
                   </td>
                 </tr>
               )
@@ -1421,21 +1426,25 @@ const Colaboradores = () => {
                   <td>{clabe}</td>
                   <td>{banco}</td>
                   <td>{telefono}</td>
-                  <td className="d-flex">
-                    <LinkAccion
-                      margin={false}
-                      icono="bi-eye-fill"
-                      ruta={`/proyectos/${idProyecto}/colaboradores/${id}`}
-                      title="ver colaborador"
-                    />
-                    {user.id_rol == rolesUsuario.SUPER_USUARIO && (
-                      <BtnAccion
-                        margin="l"
-                        icono="bi-x-circle"
-                        onclick={() => abrirModalEliminar(id, "colaboradores")}
-                        title="eliminar colaborador"
+                  <td>
+                    <div className="d-flex">
+                      <LinkAccion
+                        margin={false}
+                        icono="bi-eye-fill"
+                        ruta={`/proyectos/${idProyecto}/colaboradores/${id}`}
+                        title="ver colaborador"
                       />
-                    )}
+                      {user.id_rol == rolesUsuario.SUPER_USUARIO && (
+                        <BtnAccion
+                          margin="l"
+                          icono="bi-x-circle"
+                          onclick={() =>
+                            abrirModalEliminar(id, "colaboradores")
+                          }
+                          title="eliminar colaborador"
+                        />
+                      )}
+                    </div>
                   </td>
                 </tr>
               )
@@ -1502,21 +1511,23 @@ const Proveedores = () => {
                   <td>{rfc}</td>
                   <td>{clabe || account_number}</td>
                   <td>{banco || bank}</td>
-                  <td className="d-flex">
-                    <LinkAccion
-                      margin={false}
-                      icono="bi-eye-fill"
-                      ruta={`/proyectos/${idProyecto}/proveedores/${id}`}
-                      title="ver proveedor"
-                    />
-                    {user.id_rol == rolesUsuario.SUPER_USUARIO && (
-                      <BtnAccion
-                        margin="l"
-                        icono="bi-x-circle"
-                        onclick={() => abrirModalEliminar(id, "proveedores")}
-                        title="eliminar proveedor"
+                  <td>
+                    <div className="d-flex">
+                      <LinkAccion
+                        margin={false}
+                        icono="bi-eye-fill"
+                        ruta={`/proyectos/${idProyecto}/proveedores/${id}`}
+                        title="ver proveedor"
                       />
-                    )}
+                      {user.id_rol == rolesUsuario.SUPER_USUARIO && (
+                        <BtnAccion
+                          margin="l"
+                          icono="bi-x-circle"
+                          onclick={() => abrirModalEliminar(id, "proveedores")}
+                          title="eliminar proveedor"
+                        />
+                      )}
+                    </div>
                   </td>
                 </tr>
               )
@@ -1594,23 +1605,25 @@ const SolicitudesPresupuesto = () => {
                       {estatus}
                     </span>
                   </td>
-                  <td className="d-flex">
-                    <LinkAccion
-                      margin={false}
-                      icono="bi-eye-fill"
-                      ruta={`/solicitudes-presupuesto/${id}`}
-                      title="ver proveedor"
-                    />
-                    {user.id_rol == rolesUsuario.SUPER_USUARIO && (
-                      <BtnAccion
-                        margin="l"
-                        icono="bi-x-circle"
-                        onclick={() =>
-                          abrirModalEliminar(id, "solicitudes-presupuesto")
-                        }
-                        title="eliminar solicitud"
+                  <td>
+                    <div className="d-flex">
+                      <LinkAccion
+                        margin={false}
+                        icono="bi-eye-fill"
+                        ruta={`/solicitudes-presupuesto/${id}`}
+                        title="ver proveedor"
                       />
-                    )}
+                      {user.id_rol == rolesUsuario.SUPER_USUARIO && (
+                        <BtnAccion
+                          margin="l"
+                          icono="bi-x-circle"
+                          onclick={() =>
+                            abrirModalEliminar(id, "solicitudes-presupuesto")
+                          }
+                          title="eliminar solicitud"
+                        />
+                      )}
+                    </div>
                   </td>
                 </tr>
               )

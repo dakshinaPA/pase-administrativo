@@ -441,6 +441,24 @@ class ProyectosServices {
       null
     )
   }
+
+  static async borrarAjuste(id_ajuste: number) {
+    const cr = await ProyectoDB.borrarAjuste(id_ajuste)
+
+    if (cr.error) {
+      return RespuestaController.fallida(
+        400,
+        "Error al borrar ajuste de proyecto",
+        cr.data
+      )
+    }
+
+    return RespuestaController.exitosa(
+      201,
+      "Ajuste de proyecto borrado con éxito",
+      null
+    )
+  }
 }
 
 export { ProyectosServices }

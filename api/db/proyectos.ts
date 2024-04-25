@@ -269,7 +269,7 @@ class ProyectoDB {
               proveedores: results[5],
               solicitudes: results[6],
               notas: results[7],
-              ajustes: results[8]
+              ajustes: results[8],
             }
 
             res(dataProyecto)
@@ -759,6 +759,19 @@ class ProyectoDB {
 
     try {
       const res = await queryDBPlaceHolder(query, placeHolders)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
+
+  static async borrarAjuste(id_ajuste: number) {
+    const query = `
+      UPDATE proyecto_ajustes SET b_activo=0 WHERE id=? LIMIT 1
+    `
+
+    try {
+      const res = await queryDBPlaceHolder(query, [id_ajuste])
       return RespuestaDB.exitosa(res)
     } catch (error) {
       return RespuestaDB.fallida(error)
