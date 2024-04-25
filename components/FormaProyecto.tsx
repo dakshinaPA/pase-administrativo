@@ -68,6 +68,7 @@ type EntidadesEliminar =
   | "colaboradores"
   | "proveedores"
   | "solicitudes-presupuesto"
+  | "ajustes"
 
 interface ModalEliminarComplexProps extends ModalEliminarProps {
   entidad: EntidadesEliminar
@@ -407,6 +408,9 @@ const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
           break
         case "solicitudes-presupuesto":
           nombreEliminar = `la solicitud ${payload.id}`
+          break
+        case "ajustes":
+          nombreEliminar = `el ajuste ${payload.id}`
           break
       }
 
@@ -1037,6 +1041,7 @@ const FormaProyecto = () => {
           {modalidad === "EDITAR" && (
             <>
               <Saldos />
+              <Ajustes />
               <Colaboradores />
               <Proveedores />
               <SolicitudesPresupuesto />
@@ -1278,6 +1283,85 @@ const Saldos = () => {
       <div className="col-12 col-lg-4 text-center">
         <h6 className="mb-3 fw-bold">Avance</h6>
         <PieChart lado={150} porcentaje={estado.forma.saldo.p_avance} />
+      </div>
+    </div>
+  )
+}
+
+const Ajustes = () => {
+  const { estado, user, idProyecto, abrirModalEliminar } = useContext(ProyectoContext)
+
+  return (
+    <div className="row mb-5">
+      <div className="col-12 mb-3 d-flex justify-content-between">
+        <h3 className="color1 mb-0">Ajustes de saldo</h3>
+        {user.id_rol != rolesUsuario.COPARTE && (
+          <Link
+            href={`/proyectos/${idProyecto}/ajustes/registro`}
+            className="btn btn-outline-secondary"
+          >
+            Registrar +
+          </Link>
+        )}
+      </div>
+      <div className="col-12 table-responsive">
+        <table className="table">
+          <thead className="table-light">
+            <tr className="color1">
+              <th>Tipo</th>
+              <th>Rubro</th>
+              <th>Titular de cuenta</th>
+              <th>CLABE</th>
+              <th>Concepto</th>
+              <th>Monto</th>
+              <th>Fecha ajuste</th>
+              <th>Fecha registro</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {estado.forma.ajustes.map(
+              ({
+                id,
+                tipo,
+                rubro,
+                titular_cuenta,
+                clabe,
+                concepto,
+                f_total,
+                dt_ajuste,
+                dt_registro
+              }) => (
+                <tr key={id}>
+                  <td>{tipo}</td>
+                  <td>{rubro}</td>
+                  <td>{titular_cuenta}</td>
+                  <td>{clabe}</td>
+                  <td>{concepto}</td>
+                  <td>{montoALocaleString(f_total)}</td>
+                  <td>{dt_ajuste}</td>
+                  <td>{dt_registro}</td>
+                  <td className="d-flex">
+                    <LinkAccion
+                      margin={false}
+                      icono="bi-eye-fill"
+                      ruta={`/proyectos/${idProyecto}/ajustes/${id}`}
+                      title="ver ajuste"
+                    />
+                    {user.id_rol == rolesUsuario.SUPER_USUARIO && (
+                      <BtnAccion
+                        margin="l"
+                        icono="bi-x-circle"
+                        onclick={() => abrirModalEliminar(id, "ajustes")}
+                        title="eliminar ajuste"
+                      />
+                    )}
+                  </td>
+                </tr>
+              )
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   )

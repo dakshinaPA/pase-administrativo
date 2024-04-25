@@ -102,7 +102,7 @@ class ProyectoDB {
 
   static qReAjustes() {
     return `
-      SELECT pa.id_proyecto, pa.id_partida_presupuestal, pa.i_tipo, pa.titular_cuenta, pa.clabe, pa.concepto, pa.f_total, pa.dt_ajuste, pa.dt_registro,
+      SELECT pa.id, pa.id_proyecto, pa.id_partida_presupuestal, pa.i_tipo, pa.titular_cuenta, pa.clabe, pa.concepto, pa.f_total, pa.dt_ajuste, pa.dt_registro,
       rp.nombre rubro
       FROM proyecto_ajustes pa
       JOIN rubros_presupuestales rp ON pa.id_partida_presupuestal = rp.id

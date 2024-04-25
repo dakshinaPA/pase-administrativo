@@ -14,6 +14,8 @@ import {
 import { ResProyectos } from "@api/models/proyecto.model"
 import {
   epochAFecha,
+  fechaActualAEpoch,
+  inputDateAformato,
   numeroAdigitos,
   obtenerEstatusSolicitud,
   obtenerTipoAjuste,
@@ -287,6 +289,7 @@ class ProyectosServices {
           ...ajuste,
           tipo: obtenerTipoAjuste(ajuste.i_tipo),
           f_total: Number(ajuste.f_total),
+          dt_ajuste: inputDateAformato(ajuste.dt_ajuste),
           dt_registro: epochAFecha(ajuste.dt_registro),
         }
       })
@@ -298,7 +301,7 @@ class ProyectosServices {
         proveedores: proveedoresHyd,
         solicitudes_presupuesto: solicitudesHyd,
         notas,
-        ajustes: ajustesHyd
+        ajustes: ajustesHyd,
       }
 
       return RespuestaController.exitosa(200, "Consulta exitosa", proyecto)
