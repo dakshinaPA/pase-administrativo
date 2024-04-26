@@ -31,6 +31,7 @@ import {
   meses,
   montoALocaleString,
   obtenerBadgeStatusSolicitud,
+  obtenerDataProyecto,
   obtenerEstatusSolicitud,
   obtenerProyectos,
   obtenerSolicitudes,
@@ -424,9 +425,6 @@ const FormaSolicitudPresupuesto = () => {
 
     return obtenerProyectos(queryProyectos)
   }
-
-  const obtenerDataProyecto = (id: number) =>
-    ApiCall.get(`/proyectos/${id}/data`)
 
   const cargarData = async () => {
     try {

@@ -189,6 +189,9 @@ const obtenerMinistraciones = (id_proyecto: number) => {
   return ApiCall.get(url)
 }
 
+const obtenerDataProyecto = (id: number) =>
+  ApiCall.get(`/proyectos/${id}/data`)
+
 const obtenerColaboradores = (id_proyecto?: number, id?: number) => {
   let url = ""
 
@@ -367,5 +370,6 @@ export {
   textoMayusculaSinAcentos,
   cortarString,
   numeroAdigitos,
-  obtenerTipoAjuste
+  obtenerTipoAjuste,
+  obtenerDataProyecto
 }

@@ -184,9 +184,12 @@ export type ItipoAjusteProyecto = 1 | 2
 
 export type TipoAjusteProyecto = "REINTEGRO" | "ACREEDORES"
 
+export interface NotaAjuste extends NotaProyecto {}
+
 export interface AjusteProyecto {
   id?: number
   id_proyecto: number
+  proyecto?: string
   id_partida_presupuestal: number
   rubro?: string
   i_tipo: ItipoAjusteProyecto
@@ -196,6 +199,7 @@ export interface AjusteProyecto {
   concepto: string
   f_total: number
   dt_ajuste: string
-  b_activo: 0 | 1
-  dt_registro: string
+  b_activo?: 0 | 1
+  dt_registro?: string
+  notas?: NotaAjuste[]
 }

@@ -1318,7 +1318,7 @@ const Ajustes = () => {
               <th>Monto</th>
               <th>Fecha ajuste</th>
               <th>Fecha registro</th>
-              <th>Acciones</th>
+              {user.id_rol != rolesUsuario.COPARTE && <th>Acciones</th>}
             </tr>
           </thead>
           <tbody>
@@ -1344,24 +1344,26 @@ const Ajustes = () => {
                   <td>{montoALocaleString(f_total)}</td>
                   <td>{dt_ajuste}</td>
                   <td>{dt_registro}</td>
-                  <td>
-                    <div className="d-flex">
-                      <LinkAccion
-                        margin={false}
-                        icono="bi-eye-fill"
-                        ruta={`/proyectos/${idProyecto}/ajustes/${id}`}
-                        title="ver ajuste"
-                      />
-                      {user.id_rol == rolesUsuario.SUPER_USUARIO && (
-                        <BtnAccion
-                          margin="l"
-                          icono="bi-x-circle"
-                          onclick={() => abrirModalEliminar(id, "ajustes")}
-                          title="eliminar ajuste"
+                  {user.id_rol != rolesUsuario.COPARTE && (
+                    <td>
+                      <div className="d-flex">
+                        <LinkAccion
+                          margin={false}
+                          icono="bi-eye-fill"
+                          ruta={`/proyectos/${idProyecto}/ajustes/${id}`}
+                          title="ver ajuste"
                         />
-                      )}
-                    </div>
-                  </td>
+                        {user.id_rol == rolesUsuario.SUPER_USUARIO && (
+                          <BtnAccion
+                            margin="l"
+                            icono="bi-x-circle"
+                            onclick={() => abrirModalEliminar(id, "ajustes")}
+                            title="eliminar ajuste"
+                          />
+                        )}
+                      </div>
+                    </td>
+                  )}
                 </tr>
               )
             )}
