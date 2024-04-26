@@ -16,6 +16,14 @@ import { ProveedorDB } from "./proveedores"
 import { SolicitudesPresupuestoDB } from "./solicitudes-presupuesto"
 
 class ProyectoDB {
+  static qReRubrosProyectoDistinct = `
+    SELECT DISTINCT mrp.id_rubro, rp.nombre rubro
+    FROM ministracion_rubros_presupuestales mrp
+    JOIN rubros_presupuestales rp ON rp.id = mrp.id_rubro
+    JOIN proyecto_ministraciones pm ON pm.id = mrp.id_ministracion
+    WHERE pm.id_proyecto=? AND mrp.id_rubro NOT IN (1,23)
+  `
+
   static async obtenerVMin(queries: QueriesProyecto) {
     const { id_responsable, id_coparte, id } = queries
 
@@ -100,14 +108,21 @@ class ProyectoDB {
     `
   }
 
-  static qReAjustes() {
-    return `
+  static qReAjustes(id_ajuste?: number) {
+    let qRe = `
       SELECT pa.id, pa.id_proyecto, pa.id_partida_presupuestal, pa.i_tipo, pa.titular_cuenta, pa.clabe, pa.concepto, pa.f_total, pa.dt_ajuste, pa.dt_registro,
       rp.nombre rubro
       FROM proyecto_ajustes pa
-      JOIN rubros_presupuestales rp ON pa.id_partida_presupuestal = rp.id
-      WHERE pa.id_proyecto IN (?) AND pa.b_activo=1
+      JOIN rubros_presupuestales rp ON pa.id_partida_presupuestal = rp.id WHERE
     `
+
+    if (id_ajuste) {
+      qRe += " pa.id=?"
+    } else {
+      qRe += " pa.id_proyecto IN (?) AND pa.b_activo=1"
+    }
+
+    return qRe
   }
 
   static qReMinistraciones = () => {
@@ -667,13 +682,8 @@ class ProyectoDB {
       LEFT JOIN bancos b ON b.id = p.id_banco
       WHERE p.id_proyecto=? AND p.b_activo=1
     `
-    const qRubrosProyecto = `
-      SELECT DISTINCT mrp.id_rubro, rp.nombre rubro
-      FROM ministracion_rubros_presupuestales mrp
-      JOIN rubros_presupuestales rp ON rp.id = mrp.id_rubro
-      JOIN proyecto_ministraciones pm ON pm.id = mrp.id_ministracion
-      WHERE pm.id_proyecto=? AND mrp.id_rubro NOT IN (1,23)
-    `
+    const qRubrosProyecto = this.qReRubrosProyectoDistinct
+
     const qCombinados = [qColaboradores, qProveedores, qRubrosProyecto].join(
       ";"
     )
@@ -739,6 +749,51 @@ class ProyectoDB {
     }
   }
 
+  static async obtenerDataAjuste(id_proyecto: number) {
+    const qNombreProyecto = `
+      SELECT CONCAT(id_alt, " - ", nombre) proyecto FROM proyectos WHERE id=? LIMIT 1
+    `
+
+    const ph = [id_proyecto, id_proyecto]
+
+    const qCombinados = [qNombreProyecto, this.qReRubrosProyectoDistinct].join(
+      ";"
+    )
+
+    return new Promise((res, rej) => {
+      connectionDB.getConnection((err, connection) => {
+        if (err) return rej(err)
+
+        connection.query(qCombinados, ph, (error, results, fields) => {
+          if (error) {
+            connection.destroy()
+            return rej(error)
+          }
+
+          connection.destroy()
+
+          const dataProyecto = {
+            proyecto: results[0][0]?.proyecto,
+            rubros_presupuestales: results[1],
+          }
+
+          res(dataProyecto)
+        })
+      })
+    })
+  }
+
+  static async obtenerAjuste(id_ajuste: number) {
+    const query = this.qReAjustes(id_ajuste)
+
+    try {
+      const res = await queryDBPlaceHolder(query, [id_ajuste])
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
+
   static async crearAjuste(id_proyecto: number, data: AjusteProyecto) {
     const query = `
       INSERT INTO proyecto_ajustes ( id_proyecto, id_partida_presupuestal, i_tipo, titular_cuenta,
@@ -755,6 +810,31 @@ class ProyectoDB {
       data.f_total,
       data.dt_ajuste,
       fechaActualAEpoch(),
+    ]
+
+    try {
+      const res = await queryDBPlaceHolder(query, placeHolders)
+      return RespuestaDB.exitosa(res)
+    } catch (error) {
+      return RespuestaDB.fallida(error)
+    }
+  }
+
+  static async editarAjuste(data: AjusteProyecto) {
+    const query = `
+      UPDATE proyecto_ajustes SET id_partida_presupuestal=?, i_tipo=?, titular_cuenta=?,
+      clabe=?, concepto=?, f_total=?, dt_ajuste=? WHERE id=? LIMIT 1
+    `
+
+    const placeHolders = [
+      data.id_partida_presupuestal,
+      data.i_tipo,
+      data.titular_cuenta,
+      data.clabe,
+      data.concepto,
+      data.f_total,
+      data.dt_ajuste,
+      data.id
     ]
 
     try {

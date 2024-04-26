@@ -424,6 +424,49 @@ class ProyectosServices {
     )
   }
 
+  static async obtenerDataAjuste(id_proyecto: number) {
+    try {
+      const re = await ProyectoDB.obtenerDataAjuste(id_proyecto)
+      return RespuestaController.exitosa(
+        200,
+        "Data de ajuste proyecto obtenida con éxito",
+        re
+      )
+    } catch (error) {
+      return RespuestaController.fallida(
+        400,
+        "Error al obtener data de ajuste proyecto",
+        error
+      )
+    }
+  }
+
+  static async obtenerAjuste(id_ajuste: number) {
+    const re = await ProyectoDB.obtenerAjuste(id_ajuste)
+
+    if (re.error) {
+      return RespuestaController.fallida(
+        400,
+        "Error al obtener ajuste de proyecto",
+        re.data
+      )
+    }
+
+    const ajuste = re.data[0] as AjusteProyecto
+    const ajusteHyd: AjusteProyecto = {
+      ...ajuste,
+      f_total: Number(ajuste.f_total),
+      dt_registro: epochAFecha(ajuste.dt_registro),
+      notas: []
+    }
+
+    return RespuestaController.exitosa(
+      200,
+      "Ajuste de proyecto obtenido con éxito",
+      ajusteHyd
+    )
+  }
+
   static async crearAjuste(id_proyecto: number, data: AjusteProyecto) {
     const cr = await ProyectoDB.crearAjuste(id_proyecto, data)
 
@@ -438,6 +481,24 @@ class ProyectosServices {
     return RespuestaController.exitosa(
       201,
       "Ajuste de proyecto creado con éxito",
+      null
+    )
+  }
+
+  static async editarAjuste(data: AjusteProyecto) {
+    const up = await ProyectoDB.editarAjuste(data)
+
+    if (up.error) {
+      return RespuestaController.fallida(
+        400,
+        "Error al editar ajuste de proyecto",
+        up.data
+      )
+    }
+
+    return RespuestaController.exitosa(
+      201,
+      "Ajuste de proyecto actualizado con éxito",
       null
     )
   }

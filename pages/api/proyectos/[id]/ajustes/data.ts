@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "pages/api/auth/[...nextauth]"
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
-  const idAjuste = Number(req.query.id)
+  const id_proyecto = Number(req.query.id)
   const sesion = await getServerSession(req, res, authOptions)
   if (!sesion) {
     return res.status(401).json({ mensaje: "Acceso no autorizado" })
@@ -12,15 +12,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
   switch (req.method) {
     case "GET":
-      var { status, ...data } = await ProyectosServices.obtenerAjuste(idAjuste)
-      res.status(status).json(data)
-      break
-    case "PUT":
-      var { status, ...data } = await ProyectosServices.editarAjuste(req.body)
-      res.status(status).json(data)
-      break
-    case "DELETE":
-      var { status, ...data } = await ProyectosServices.borrarAjuste(idAjuste)
+      var { status, ...data } = await ProyectosServices.obtenerDataAjuste(
+        id_proyecto
+      )
       res.status(status).json(data)
       break
     default:

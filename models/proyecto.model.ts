@@ -174,6 +174,11 @@ export interface DataProyecto {
   rubros_presupuestales: RubroMinistracionMin[]
 }
 
+export interface DataProyectoAjuste {
+  proyecto: string
+  rubros_presupuestales: RubroMinistracionMin[]
+}
+
 export interface CalcularSaldo {
   rubros: RubroMinistracion[]
   solicitudes: SolicitudPresupuesto[]

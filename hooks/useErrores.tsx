@@ -38,6 +38,8 @@ const useErrores = () => {
           case "actividad":
           case "sector_beneficiado":
           case "bank_branch_address":
+          case "titular_cuenta":
+          case "concepto":
             if (!/^.{5,}$/.test(campos[key])) throw [key, "Mínimo 5 caracteres"]
             break
           case "bic_code":
@@ -58,6 +60,7 @@ const useErrores = () => {
             break
           case "i_beneficiados":
           case "f_importe":
+          case "f_total":
           case "f_retenciones":
             if (!(campos[key] > 0)) throw [key, "Cantidad mayor a 0"]
             break
@@ -122,6 +125,7 @@ const useErrores = () => {
           case "dt_inicio":
           case "dt_fin":
           case "dt_pago":
+          case "dt_ajuste":
             if (!/^[0-9]{4}\-[0-1][0-9]\-[0-3][0-9]$/.test(campos[key]))
               throw [key, "Fecha inválida"]
             break

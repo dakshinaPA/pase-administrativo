@@ -10,24 +10,28 @@ import {
 } from "@components/Contenedores"
 import { BtnBack } from "@components/BtnBack"
 import { ApiCall } from "@assets/utils/apiCalls"
-import { useCatalogos } from "@contexts/catalogos.context"
+// import { useCatalogos } from "@contexts/catalogos.context"
 import { BtnCancelar, BtnEditar, BtnRegistrar } from "./Botones"
 import { useErrores } from "@hooks/useErrores"
 import { MensajeError } from "./Mensajes"
 import { useSesion } from "@hooks/useSesion"
 import { Banner, EstadoInicialBannerProps, estadoInicialBanner } from "./Banner"
 import { rolesUsuario } from "@assets/utils/constantes"
-import { AjusteProyecto } from "@models/proyecto.model"
-import { obtenerDataProyecto } from "@assets/utils/common"
+import {
+  AjusteProyecto,
+  DataProyecto,
+  DataProyectoAjuste,
+} from "@models/proyecto.model"
+import {
+  obtenerDataProyecto,
+  obtenerDataProyectoAjuste,
+} from "@assets/utils/common"
 
 type ActionTypes =
   | "ERROR_API"
   | "CARGA_INICIAL"
   | "CANCELAR_EDITAR"
   | "HANDLE_CHANGE"
-  | "HANDLE_CHANGE_DIRECCION"
-  | "HANDLE_CHANGE_ENLACE"
-  | "HANDLE_CHANGE_PAIS"
   | "HANDLE_CHANGE_NOTA"
   | "RECARGAR_NOTAS"
   | "MODO_EDITAR_ON"
@@ -42,6 +46,7 @@ interface ActionProps {
 interface EstadoProps {
   cargaInicial: AjusteProyecto
   forma: AjusteProyecto
+  dataProyecto: DataProyectoAjuste
   isLoading: boolean
   mensajeNota: string
   banner: EstadoInicialBannerProps
@@ -64,11 +69,22 @@ const reducer = (state: EstadoProps, action: ActionProps): EstadoProps => {
         },
       }
     case "CARGA_INICIAL":
+      let forma = {
+        ...state.forma,
+        id_partida_presupuestal:
+          payload.dataProyecto?.rubros_presupuestales[0]?.id_rubro || 0,
+      }
+
+      if (state.modalidad === "EDITAR") {
+        forma = payload.dataAjuste
+      }
+
       return {
         ...state,
         isLoading: false,
-        cargaInicial: payload,
-        forma: payload,
+        dataProyecto: payload.dataProyecto,
+        forma,
+        cargaInicial: payload.dataAjuste,
       }
     case "CANCELAR_EDITAR":
       return {
@@ -79,35 +95,13 @@ const reducer = (state: EstadoProps, action: ActionProps): EstadoProps => {
         },
       }
     case "HANDLE_CHANGE":
-      let clave = payload.clave
-      if (clave == "nombre_financiador") clave = "nombre"
+      let clave = payload[0]
+
       return {
         ...state,
         forma: {
           ...state.forma,
-          [clave]: payload.valor,
-        },
-      }
-    case "HANDLE_CHANGE_DIRECCION":
-      return {
-        ...state,
-        forma: {
-          ...state.forma,
-          direccion: {
-            ...state.forma.direccion,
-            [payload.clave]: payload.valor,
-          },
-        },
-      }
-    case "HANDLE_CHANGE_ENLACE":
-      return {
-        ...state,
-        forma: {
-          ...state.forma,
-          enlace: {
-            ...state.forma.enlace,
-            [payload.clave]: payload.valor,
-          },
+          [clave]: payload[1],
         },
       }
     case "HANDLE_CHANGE_NOTA":
@@ -123,27 +117,6 @@ const reducer = (state: EstadoProps, action: ActionProps): EstadoProps => {
           notas: payload,
         },
         mensajeNota: "",
-      }
-    case "HANDLE_CHANGE_PAIS":
-      let estado = state.forma.direccion.estado
-      let id_estado = 1
-
-      if (payload == 1) {
-        estado = ""
-      } else {
-        id_estado = 0
-      }
-
-      return {
-        ...state,
-        forma: {
-          ...state.forma,
-          direccion: {
-            ...state.forma.direccion,
-            id_estado,
-            estado,
-          },
-        },
       }
     case "MODO_EDITAR_ON":
       return {
@@ -182,9 +155,7 @@ const FormaAjuste = () => {
   const idAjuste = Number(router.query.idA)
 
   const estadoInicialForma: AjusteProyecto = {
-    id: idAjuste,
     id_proyecto: idProyecto,
-    proyecto: "",
     id_partida_presupuestal: 0,
     i_tipo: 1,
     titular_cuenta: "",
@@ -195,17 +166,22 @@ const FormaAjuste = () => {
     notas: [],
   }
 
+  const estadoInicialDataProyecto: DataProyectoAjuste = {
+    proyecto: "",
+    rubros_presupuestales: [],
+  }
+
   const estadoInicial: EstadoProps = {
     cargaInicial: estadoInicialForma,
     forma: estadoInicialForma,
-    isLoading: false,
+    dataProyecto: estadoInicialDataProyecto,
+    isLoading: true,
     mensajeNota: "",
     banner: estadoInicialBanner,
     modoEditar: !idAjuste,
     modalidad: idAjuste ? "EDITAR" : "CREAR",
   }
-
-  // const { estados, paises } = useCatalogos()
+  
   const [estado, dispatch] = useReducer(reducer, estadoInicial)
   const { error, validarCampos, formRef } = useErrores()
   const inputNota = useRef(null)
@@ -216,14 +192,23 @@ const FormaAjuste = () => {
 
   const cargarData = async () => {
     try {
-      const reProyecto = await obtenerDataProyecto(idProyecto)
+      const reProyecto = await obtenerDataProyectoAjuste(idProyecto)
+      let dataAjuste = estado.forma
+
       if (reProyecto.error) throw reProyecto
-      
+
       if (estado.modalidad === "EDITAR") {
         const reAjuste = await obtener()
         if (reAjuste.error) throw reAjuste
-      } 
- 
+        dataAjuste = reAjuste.data as AjusteProyecto
+      }
+
+      const dataProyecto = reProyecto.data as DataProyectoAjuste
+
+      dispatch({
+        type: "CARGA_INICIAL",
+        payload: { dataProyecto, dataAjuste },
+      })
     } catch ({ data, mensaje }) {
       console.log(data)
       dispatch({
@@ -251,7 +236,7 @@ const FormaAjuste = () => {
         type: "CANCELAR_EDITAR",
       })
     } else {
-      router.push(`/proyectos/${idProyecto}`)
+      router.back()
     }
   }
 
@@ -264,7 +249,7 @@ const FormaAjuste = () => {
 
     dispatch({
       type: "HANDLE_CHANGE",
-      payload: { clave: name, valor: value },
+      payload: [name, value],
     })
   }
 
@@ -289,15 +274,11 @@ const FormaAjuste = () => {
       dt_ajuste: estado.forma.dt_ajuste,
     }
 
-    // if (estado.forma.direccion.id_pais == 1) {
-    //   delete campos.estado
-    // }
-
     return validarCampos(campos)
   }
 
   const handleSubmit = async () => {
-    // if (!validarForma()) return
+    if (!validarForma()) return
     console.log(estado.forma)
 
     dispatch({ type: "LOADING_ON" })
@@ -312,12 +293,7 @@ const FormaAjuste = () => {
         payload: mensaje,
       })
     } else {
-      // if (estado.modalidad === "EDITAR") {
-      //   dispatch({ type: "EDITAR_SUCCESS" })
-      // } else {
-      //   //@ts-ignore
-      //   router.push(`/financiadores/${data.idInsertado}`)
-      // }
+      router.back()
     }
   }
 
@@ -388,12 +364,12 @@ const FormaAjuste = () => {
         </div>
       </div>
       <FormaContenedor onSubmit={handleSubmit} formaRef={formRef}>
-        <div className="col-12 col-md-6 col-lg-4 mb-3">
+        <div className="col-12 mb-3">
           <label className="form-label">Proyecto</label>
           <input
             className="form-control"
             type="text"
-            value={estado.forma.proyecto}
+            value={estado.dataProyecto.proyecto}
             disabled
           />
         </div>
@@ -404,13 +380,15 @@ const FormaAjuste = () => {
             name="id_partida_presupuestal"
             value={estado.forma.id_partida_presupuestal}
             onChange={(e) => handleChange(e)}
-            // disabled={true}
+            disabled={!estado.modoEditar}
           >
-            {[].map((rubro) => (
-              <option key={rubro.id} value={rubro.id}>
-                {rubro.nombre}
-              </option>
-            ))}
+            {estado.dataProyecto.rubros_presupuestales.map(
+              ({ id_rubro, rubro }) => (
+                <option key={id_rubro} value={id_rubro}>
+                  {rubro}
+                </option>
+              )
+            )}
           </select>
           {error.campo == "id_partida_presupuestal" && (
             <MensajeError mensaje={error.mensaje} />
@@ -421,9 +399,9 @@ const FormaAjuste = () => {
           <select
             className="form-control"
             name="i_tipo"
-            value={estado.forma.id_partida_presupuestal}
+            value={estado.forma.i_tipo}
             onChange={(e) => handleChange(e)}
-            // disabled={true}
+            disabled={!estado.modoEditar}
           >
             <option value="1">Reintegro</option>
             <option value="2">Acreedores</option>
@@ -456,20 +434,6 @@ const FormaAjuste = () => {
           {error.campo == "clabe" && <MensajeError mensaje={error.mensaje} />}
         </div>
         <div className="col-12 col-md-6 col-lg-4 mb-3">
-          <label className="form-label">Concepto</label>
-          <input
-            className="form-control"
-            type="text"
-            onChange={(e) => handleChange(e)}
-            name="concepto"
-            value={estado.forma.concepto}
-            disabled={!estado.modoEditar}
-          />
-          {error.campo == "concepto" && (
-            <MensajeError mensaje={error.mensaje} />
-          )}
-        </div>
-        <div className="col-12 col-md-6 col-lg-4 mb-3">
           <label className="form-label">Monto</label>
           <input
             className="form-control"
@@ -480,6 +444,33 @@ const FormaAjuste = () => {
             disabled={!estado.modoEditar}
           />
           {error.campo == "f_total" && <MensajeError mensaje={error.mensaje} />}
+        </div>
+        <div className="col-12 col-md-6 col-lg-4 mb-3">
+          <label className="form-label">Fecha</label>
+          <input
+            className="form-control"
+            type="date"
+            onChange={(e) => handleChange(e)}
+            name="dt_ajuste"
+            value={estado.forma.dt_ajuste}
+            disabled={!estado.modoEditar}
+          />
+          {error.campo == "dt_ajuste" && (
+            <MensajeError mensaje={error.mensaje} />
+          )}
+        </div>
+        <div className="col-12 mb-3">
+          <label className="form-label">Concepto</label>
+          <textarea
+            className="form-control"
+            onChange={(e) => handleChange(e)}
+            name="concepto"
+            value={estado.forma.concepto}
+            disabled={!estado.modoEditar}
+          />
+          {error.campo == "concepto" && (
+            <MensajeError mensaje={error.mensaje} />
+          )}
         </div>
         {estado.modoEditar && (
           <div className="col-12 text-end">
