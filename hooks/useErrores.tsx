@@ -68,12 +68,6 @@ const useErrores = () => {
             if (!/^[0-9]{3,}$/.test(campos[key]))
               throw [key, "Mínimo 3 dígitos"]
             break
-          case "descripcion":
-          case "descripcion_servicio":
-          case "descripcion_gasto":
-            if (!/^.{10,}$/.test(campos[key]))
-              throw [key, "Mínimo 10 caracteres"]
-            break
           case "nombre_financiador":
           case "nombre_coparte":
           case "calle":
@@ -88,6 +82,9 @@ const useErrores = () => {
             if (!/^.{1,}$/.test(campos[key])) throw [key, "Campo requerido"]
             break
           case "nombre_corto":
+          case "descripcion":
+          case "descripcion_servicio":
+          case "descripcion_gasto":
             if (!/^.{2,}$/.test(campos[key])) throw [key, "Mínimo 2 caracteres"]
             break
           case "numero_ext":
