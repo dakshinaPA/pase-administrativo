@@ -793,11 +793,19 @@ class ProyectoDB {
   }
 
   static async obtenerAjuste(id_ajuste: number) {
-    const query = this.qReAjustes(id_ajuste)
+    const qRe = this.qReAjustes(id_ajuste)
+    const qReNotas = this.qReNotasAjuste()
+
+    const qCombinados = [qRe, qReNotas].join(";")
+    const ph = [id_ajuste, id_ajuste]
 
     try {
-      const res = await queryDBPlaceHolder(query, [id_ajuste])
-      return RespuestaDB.exitosa(res)
+      const res = await queryDBPlaceHolder(qCombinados, ph)
+      const ajuste = {
+        ...res[0][0],
+        notas: res[1],
+      }
+      return RespuestaDB.exitosa(ajuste)
     } catch (error) {
       return RespuestaDB.fallida(error)
     }

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useReducer } from "react"
 import { useRouter } from "next/router"
 import { ChangeEvent } from "@assets/models/formEvents.model"
-import { Financiador, NotaFinanciador } from "@models/financiador.model"
+import { NotaFinanciador } from "@models/financiador.model"
 import { Loader } from "@components/Loader"
 import {
   RegistroContenedor,
@@ -10,22 +10,14 @@ import {
 } from "@components/Contenedores"
 import { BtnBack } from "@components/BtnBack"
 import { ApiCall } from "@assets/utils/apiCalls"
-// import { useCatalogos } from "@contexts/catalogos.context"
 import { BtnCancelar, BtnEditar, BtnRegistrar } from "./Botones"
 import { useErrores } from "@hooks/useErrores"
 import { MensajeError } from "./Mensajes"
 import { useSesion } from "@hooks/useSesion"
 import { Banner, EstadoInicialBannerProps, estadoInicialBanner } from "./Banner"
 import { rolesUsuario } from "@assets/utils/constantes"
-import {
-  AjusteProyecto,
-  DataProyecto,
-  DataProyectoAjuste,
-} from "@models/proyecto.model"
-import {
-  obtenerDataProyecto,
-  obtenerDataProyectoAjuste,
-} from "@assets/utils/common"
+import { AjusteProyecto, DataProyectoAjuste } from "@models/proyecto.model"
+import { obtenerDataProyectoAjuste } from "@assets/utils/common"
 
 type ActionTypes =
   | "ERROR_API"
@@ -36,7 +28,6 @@ type ActionTypes =
   | "RECARGAR_NOTAS"
   | "MODO_EDITAR_ON"
   | "LOADING_ON"
-  | "EDITAR_SUCCESS"
 
 interface ActionProps {
   type: ActionTypes
@@ -128,12 +119,6 @@ const reducer = (state: EstadoProps, action: ActionProps): EstadoProps => {
         ...state,
         isLoading: true,
       }
-    case "EDITAR_SUCCESS":
-      return {
-        ...state,
-        isLoading: false,
-        modoEditar: false,
-      }
     default:
       return state
   }
@@ -142,14 +127,9 @@ const reducer = (state: EstadoProps, action: ActionProps): EstadoProps => {
 const FormaAjuste = () => {
   const { user, status } = useSesion()
   const router = useRouter()
-  if (
-    status !== "authenticated" ||
-    !user ||
-    user.id_rol == rolesUsuario.COPARTE
-  ) {
-    router.push("/")
-    return null
-  }
+  const noPuedePasar =
+    status !== "authenticated" || !user || user.id_rol == rolesUsuario.COPARTE
+  if (noPuedePasar) return null
 
   const idProyecto = Number(router.query.id)
   const idAjuste = Number(router.query.idA)
@@ -187,6 +167,10 @@ const FormaAjuste = () => {
   const inputNota = useRef(null)
 
   useEffect(() => {
+    if (noPuedePasar) {
+      router.push("/")
+      return
+    }
     cargarData()
   }, [])
 
@@ -345,7 +329,7 @@ const FormaAjuste = () => {
       <div className="row mb-3">
         <div className="col-12 d-flex justify-content-between">
           <div className="d-flex align-items-center">
-            <BtnBack navLink="/financiadores" />
+            <BtnBack navLink="/proyectos" />
             {!idAjuste && (
               <h2 className="color1 mb-0">
                 Registrar ajuste de saldo de proyecto

@@ -453,12 +453,17 @@ class ProyectosServices {
       )
     }
 
-    const ajuste = re.data[0] as AjusteProyecto
+    const ajuste = re.data as unknown as AjusteProyecto
     const ajusteHyd: AjusteProyecto = {
       ...ajuste,
       f_total: Number(ajuste.f_total),
       dt_registro: epochAFecha(ajuste.dt_registro),
-      notas: [],
+      notas: ajuste.notas.map((nota) => {
+        return {
+          ...nota,
+          dt_registro: epochAFecha(nota.dt_registro),
+        }
+      }),
     }
 
     return RespuestaController.exitosa(
