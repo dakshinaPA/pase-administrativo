@@ -9,6 +9,7 @@ import {
   NotaProyecto,
   CalcularSaldo,
   AjusteProyecto,
+  NotaAjuste,
 } from "@models/proyecto.model"
 
 import { ResProyectos } from "@api/models/proyecto.model"
@@ -457,7 +458,7 @@ class ProyectosServices {
       ...ajuste,
       f_total: Number(ajuste.f_total),
       dt_registro: epochAFecha(ajuste.dt_registro),
-      notas: []
+      notas: [],
     }
 
     return RespuestaController.exitosa(
@@ -519,6 +520,31 @@ class ProyectosServices {
       "Ajuste de proyecto borrado con éxito",
       null
     )
+  }
+
+  static async crearAjusteNota(id_ajuste: number, data: NotaAjuste) {
+    try {
+      const cr = await ProyectoDB.crearAjusteNota(id_ajuste, data)
+
+      const notasRecargadas = cr.map((nota) => {
+        return {
+          ...nota,
+          dt_registro: epochAFecha(nota.dt_registro),
+        }
+      })
+
+      return RespuestaController.exitosa(
+        201,
+        "Notas de ajuste de proyecto obtenidas con éxito",
+        notasRecargadas
+      )
+    } catch (error) {
+      return RespuestaController.fallida(
+        400,
+        "Error al crear nota de ajuste de proyecto",
+        error
+      )
+    }
   }
 }
 

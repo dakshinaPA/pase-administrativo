@@ -7,6 +7,7 @@ import {
   QueriesProyecto,
   MinistracionProyecto,
   AjusteProyecto,
+  NotaAjuste,
 } from "@models/proyecto.model"
 import { fechaActualAEpoch } from "@assets/utils/common"
 import { connectionDB } from "./connectionPool"
@@ -151,6 +152,14 @@ class ProyectoDB {
 
   static qCrRubrosMinistracion = () =>
     `INSERT INTO ministracion_rubros_presupuestales ( id_ministracion, id_rubro, f_monto ) VALUES ( ?, ?, ? )`
+
+  static qReNotasAjuste = () => `
+    SELECT pan.id, pan.id_proyecto_ajuste, pan.id_usuario, pan.mensaje, pan.dt_registro,
+    CONCAT(u.nombre, " ", u.apellido_paterno) usuario
+    FROM proyecto_ajuste_notas pan
+    JOIN usuarios u ON pan.id_usuario = u.id
+    WHERE pan.b_activo=1 AND pan.id_proyecto_ajuste=?
+  `
 
   static async obtener(queries: QueriesProyecto) {
     const { id_coparte, id_responsable, id_admin } = queries
@@ -834,7 +843,7 @@ class ProyectoDB {
       data.concepto,
       data.f_total,
       data.dt_ajuste,
-      data.id
+      data.id,
     ]
 
     try {
@@ -856,6 +865,42 @@ class ProyectoDB {
     } catch (error) {
       return RespuestaDB.fallida(error)
     }
+  }
+
+  static async crearAjusteNota(
+    id_ajuste: number,
+    data: NotaAjuste
+  ): Promise<NotaAjuste[]> {
+    const qCr = `
+      INSERT proyecto_ajuste_notas SET id_proyecto_ajuste=?, id_usuario=?, mensaje=?, dt_registro=?
+    `
+
+    const phCr = [id_ajuste, data.id_usuario, data.mensaje, fechaActualAEpoch()]
+
+    return new Promise((res, rej) => {
+      connectionDB.getConnection((err, connection) => {
+        if (err) return rej(err)
+
+        connection.query(qCr, phCr, (error, results, fields) => {
+          if (error) {
+            connection.destroy()
+            return rej(error)
+          }
+
+          const qReNotas = this.qReNotasAjuste()
+
+          connection.query(qReNotas, id_ajuste, (error, results, fields) => {
+            if (error) {
+              connection.destroy()
+              return rej(error)
+            }
+
+            connection.destroy()
+            res(results as NotaAjuste[])
+          })
+        })
+      })
+    })
   }
 }
 

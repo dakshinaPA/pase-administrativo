@@ -181,7 +181,7 @@ const FormaAjuste = () => {
     modoEditar: !idAjuste,
     modalidad: idAjuste ? "EDITAR" : "CREAR",
   }
-  
+
   const [estado, dispatch] = useReducer(reducer, estadoInicial)
   const { error, validarCampos, formRef } = useErrores()
   const inputNota = useRef(null)
@@ -298,36 +298,30 @@ const FormaAjuste = () => {
   }
 
   const agregarNota = async () => {
-    if (estado.mensajeNota.length < 10) {
+    if (estado.mensajeNota.length < 2) {
       inputNota.current.focus()
       return
     }
 
-    const cr = await ApiCall.post(`/ajustes/${idAjuste}/notas`, {
-      id_usuario: user.id,
-      mensaje: estado.mensajeNota,
-    })
-    if (cr.error) {
-      console.log(cr.data)
+    const { error, data, mensaje } = await ApiCall.post(
+      `/ajustes/${idAjuste}/notas`,
+      {
+        mensaje: estado.mensajeNota,
+      }
+    )
+
+    if (error) {
+      console.log(data)
       dispatch({
         type: "ERROR_API",
-        payload: cr.mensaje,
+        payload: mensaje,
       })
     } else {
-      const re = await ApiCall.get(`/ajustes/${idAjuste}/notas`)
-      if (re.error) {
-        console.log(re.data)
-        dispatch({
-          type: "ERROR_API",
-          payload: re.mensaje,
-        })
-      } else {
-        const notasDB = re.data as NotaFinanciador[]
-        dispatch({
-          type: "RECARGAR_NOTAS",
-          payload: notasDB,
-        })
-      }
+      const notasDB = data as NotaFinanciador[]
+      dispatch({
+        type: "RECARGAR_NOTAS",
+        payload: notasDB,
+      })
     }
   }
 

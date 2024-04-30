@@ -1,3 +1,4 @@
+import { Nota } from "./common.model"
 import { Direccion } from "./direccion.model"
 import { SolicitudPresupuesto } from "./solicitud-presupuesto.model"
 
@@ -189,7 +190,9 @@ export type ItipoAjusteProyecto = 1 | 2
 
 export type TipoAjusteProyecto = "REINTEGRO" | "ACREEDORES"
 
-export interface NotaAjuste extends NotaProyecto {}
+export interface NotaAjuste extends Nota {
+  id_proyecto_ajuste?: number
+}
 
 export interface AjusteProyecto {
   id?: number
