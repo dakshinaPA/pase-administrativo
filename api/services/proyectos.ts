@@ -295,13 +295,18 @@ class ProyectosServices {
         }
       })
 
+      const notasHyd: NotaProyecto[] = notas.map((nota) => ({
+        ...nota,
+        dt_registro: epochAFecha(nota.dt_registro),
+      }))
+
       const proyecto: Proyecto = {
         ...dataProyecto,
         ministraciones: ministracionesConRubros,
         colaboradores: colaboradoresHyd,
         proveedores: proveedoresHyd,
         solicitudes_presupuesto: solicitudesHyd,
-        notas,
+        notas: notasHyd,
         ajustes: ajustesHyd,
       }
 
