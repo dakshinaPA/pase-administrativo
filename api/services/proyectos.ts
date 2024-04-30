@@ -128,8 +128,8 @@ class ProyectosServices {
       }
     }
 
-    const f_por_comprobar = f_transferido - f_comprobado
-    const f_isr = f_por_comprobar * 0.35
+    const f_por_comprobar = f_transferido - f_comprobado + f_ajuste_acreedores
+    const f_isr = f_por_comprobar > 0 ? f_por_comprobar * 0.35 : 0
     const f_ejecutado = f_transferido + f_retenciones + f_isr + f_pa
     const f_remanente = f_monto_total - f_ejecutado + f_reintegros
     const p_avance = numeroAdigitos((f_ejecutado * 100) / f_monto_total)
@@ -142,7 +142,7 @@ class ProyectosServices {
       f_comprobado: numeroAdigitos(f_comprobado),
       f_retenciones: numeroAdigitos(f_retenciones),
       f_por_comprobar: numeroAdigitos(f_por_comprobar),
-      f_isr: f_isr < 0 ? 0 : numeroAdigitos(f_isr), //evitar que isr de numero negativo
+      f_isr: numeroAdigitos(f_isr),
       f_ejecutado: numeroAdigitos(f_ejecutado),
       f_remanente: numeroAdigitos(f_remanente),
       p_avance,

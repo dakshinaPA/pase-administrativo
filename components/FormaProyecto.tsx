@@ -1041,10 +1041,10 @@ const FormaProyecto = () => {
           {modalidad === "EDITAR" && (
             <>
               <Saldos />
-              <Ajustes />
               <Colaboradores />
               <Proveedores />
               <SolicitudesPresupuesto />
+              <Ajustes />
               {user.id_rol != rolesUsuario.COPARTE && <Notas />}
             </>
           )}
