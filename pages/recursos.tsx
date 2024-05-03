@@ -17,6 +17,7 @@ const PageVideos = () => {
                 backgroundImage:
                   "url(https://dakshina-imagen.s3.us-east-2.amazonaws.com/osc.png)",
                 backgroundSize: "cover",
+                backgroundPositionY: "center",
               }}
             >
               <h3 className="text-white">Plataforma de aprendizaje para OSC</h3>
