@@ -39,9 +39,18 @@ const FormaMinistracion = () => {
     // })
   }
 
-  const actualizarMontoRubro = (f_monto: string, id_rubro: number) => {
-    const payload = { f_monto, id_rubro }
-    despachar("ACTUALIZAR_MONTO_RUBRO_MINISTRACION", payload)
+  // const actualizarMontoRubro = (f_monto: string, id_rubro: number) => {
+  //   const payload = { f_monto, id_rubro }
+  //   despachar("ACTUALIZAR_MONTO_RUBRO_MINISTRACION", payload)
+  // }
+
+  const handleChangeRubro = (e: ChangeEvent, id_rubro: number) => {
+    const payload = {
+      id_rubro,
+      clave: e.target.name,
+      valor: e.target.value
+    }
+    despachar("HANDLE_CHANGE_RUBRO_MINISTRACION", payload)
   }
 
   const quitarRubro = (id_rubro: number) => {
@@ -178,6 +187,7 @@ const FormaMinistracion = () => {
               <tr>
                 <th>Rubro</th>
                 <th>Monto</th>
+                <th>Nota</th>
                 <th>
                   <i className="bi bi-trash"></i>
                 </th>
@@ -185,18 +195,28 @@ const FormaMinistracion = () => {
             </thead>
             <tbody>
               {estado.formaMinistracion.rubros_presupuestales.map(
-                ({ id_rubro, rubro, f_monto }, index) => (
+                ({ id_rubro, rubro, f_monto, nota }, index) => (
                   <tr key={id_rubro}>
                     <td>{rubro}</td>
                     <td>
                       <input
                         type="text"
                         className="form-control"
+                        name="f_monto"
                         value={f_monto}
-                        onChange={({ target: { value } }) =>
-                          actualizarMontoRubro(value, id_rubro)
-                        }
+                        // onChange={({ target: { value } }) =>
+                        //   actualizarMontoRubro(value, id_rubro)
+                        // }
+                        onChange={(e) => handleChangeRubro(e, id_rubro)}
                       />
+                    </td>
+                    <td>
+                      <textarea
+                        className="form-control"
+                        value={nota}
+                        name="nota"
+                        onChange={(e) => handleChangeRubro(e, id_rubro)}
+                      ></textarea>
                     </td>
                     <td>
                       {id_rubro != rubrosPresupuestales.GESTION_FINANCIERA && (

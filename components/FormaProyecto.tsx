@@ -98,7 +98,8 @@ type ActionTypes =
   | "HANDLE_CHANGE"
   | "CHANGLE_FORMA_MINISTRACION"
   | "AGREGAR_RUBRO_MINISTRACION"
-  | "ACTUALIZAR_MONTO_RUBRO_MINISTRACION"
+  // | "ACTUALIZAR_MONTO_RUBRO_MINISTRACION"
+  | "HANDLE_CHANGE_RUBRO_MINISTRACION"
   | "QUITAR_RUBRO_MINISTRACION"
   | "AGREGAR_MINISTRACION"
   | "QUITAR_MINISTRACION"
@@ -137,6 +138,7 @@ const estaInicialFormaMinistracion: NuevaMinistracion = {
       id_rubro: 1,
       rubro: "Gestión financiera",
       f_monto: 0,
+      nota: "",
     },
   ],
 }
@@ -267,6 +269,7 @@ const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
               id_rubro: payload.id,
               rubro: payload.nombre,
               f_monto: 0,
+              nota: "",
             },
           ],
         },
@@ -284,13 +287,13 @@ const reducer = (state: EstadoProps, action: ActionDispatch): EstadoProps => {
           rubros_presupuestales: rubrosSinEliminar,
         },
       }
-    case "ACTUALIZAR_MONTO_RUBRO_MINISTRACION":
+    case "HANDLE_CHANGE_RUBRO_MINISTRACION":
       const rubrosMontosActualizados =
         state.formaMinistracion.rubros_presupuestales.map((rp) => {
           if (rp.id_rubro == payload.id_rubro) {
             return {
               ...rp,
-              f_monto: payload.f_monto,
+              [payload.clave]: payload.valor,
             }
           }
           return rp
@@ -1145,7 +1148,7 @@ const TablaMinistraciones = () => {
                       <table className="table table-bordered mb-0">
                         <tbody>
                           {rubros_presupuestales.map(
-                            ({ id_rubro, rubro, f_monto }) => {
+                            ({ id_rubro, rubro, f_monto, nota }) => {
                               return (
                                 <tr key={id_rubro}>
                                   <td>
@@ -1161,9 +1164,8 @@ const TablaMinistraciones = () => {
                                       ></i>
                                     )}
                                   </td>
-                                  <td className="w-25">
-                                    {montoALocaleString(Number(f_monto))}
-                                  </td>
+                                  <td>{montoALocaleString(Number(f_monto))}</td>
+                                  <td>{nota}</td>
                                 </tr>
                               )
                             }

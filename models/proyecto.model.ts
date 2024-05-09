@@ -86,6 +86,7 @@ export interface RubroMinistracion extends RubroMinistracionMin {
   id?: number
   id_ministracion?: number
   f_monto: number | string
+  nota: string
   b_activo?: boolean
 }
 
