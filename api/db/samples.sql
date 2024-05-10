@@ -835,3 +835,7 @@ UPDATE rubros_presupuestales SET descripcion="Actividades asistenciales de entre
 UPDATE rubros_presupuestales SET descripcion="Materiales diversos no incluidos en los rubros anteriores que se requieren para la operación del proyecto, siempre y cuando se justifique dentro del proyecto y la autorización de donataria" WHERE id=21 LIMIT 1;
 UPDATE rubros_presupuestales SET descripcion="Pagos diversos realizados al extranjero, siempre y cuando se tenga el INVOICE correspondiente", importante="Razón social, domicilio y en su caso numero de ID fiscal o equivalente de quien lo expide" WHERE id=22 LIMIT 1;
 UPDATE rubros_presupuestales SET descripcion="Se refiere los saldos" WHERE id=23 LIMIT 1;
+
+--09/05/24
+ALTER TABLE ministracion_rubros_presupuestales ADD COLUMN nota TEXT NOT NULL AFTER f_monto;
+

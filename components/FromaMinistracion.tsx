@@ -39,16 +39,11 @@ const FormaMinistracion = () => {
     // })
   }
 
-  // const actualizarMontoRubro = (f_monto: string, id_rubro: number) => {
-  //   const payload = { f_monto, id_rubro }
-  //   despachar("ACTUALIZAR_MONTO_RUBRO_MINISTRACION", payload)
-  // }
-
   const handleChangeRubro = (e: ChangeEvent, id_rubro: number) => {
     const payload = {
       id_rubro,
       clave: e.target.name,
-      valor: e.target.value
+      valor: e.target.value,
     }
     despachar("HANDLE_CHANGE_RUBRO_MINISTRACION", payload)
   }
@@ -204,9 +199,6 @@ const FormaMinistracion = () => {
                         className="form-control"
                         name="f_monto"
                         value={f_monto}
-                        // onChange={({ target: { value } }) =>
-                        //   actualizarMontoRubro(value, id_rubro)
-                        // }
                         onChange={(e) => handleChangeRubro(e, id_rubro)}
                       />
                     </td>
@@ -216,6 +208,7 @@ const FormaMinistracion = () => {
                         value={nota}
                         name="nota"
                         onChange={(e) => handleChangeRubro(e, id_rubro)}
+                        rows={1}
                       ></textarea>
                     </td>
                     <td>

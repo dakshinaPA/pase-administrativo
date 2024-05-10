@@ -70,6 +70,7 @@ class ProyectosServices {
         rubros_presupuestales: min.rubros_presupuestales.map((rp) => ({
           ...rp,
           f_monto: String(rp.f_monto).trim(),
+          nota: rp.nota.trim()
         })),
       })),
     }

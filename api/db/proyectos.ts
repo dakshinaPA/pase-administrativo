@@ -132,7 +132,7 @@ class ProyectoDB {
   }
 
   static qReRubrosMinistracion = (activos = true) => {
-    let query = `SELECT mrp.id, mrp.id_ministracion, mrp.id_rubro, mrp.f_monto, mrp.b_activo, rp.nombre rubro
+    let query = `SELECT mrp.id, mrp.id_ministracion, mrp.id_rubro, mrp.f_monto, mrp.nota, mrp.b_activo, rp.nombre rubro
       FROM ministracion_rubros_presupuestales mrp
       JOIN rubros_presupuestales rp ON rp.id = mrp.id_rubro
       WHERE mrp.id_ministracion IN (
@@ -151,7 +151,7 @@ class ProyectoDB {
     dt_recepcion, dt_registro ) VALUES ( ?, ?, ?, ?, ? )`
 
   static qCrRubrosMinistracion = () =>
-    `INSERT INTO ministracion_rubros_presupuestales ( id_ministracion, id_rubro, f_monto ) VALUES ( ?, ?, ? )`
+    `INSERT INTO ministracion_rubros_presupuestales ( id_ministracion, id_rubro, f_monto, nota ) VALUES ( ?, ?, ?, ? )`
 
   static qReNotasAjuste = () => `
     SELECT pan.id, pan.id_proyecto_ajuste, pan.id_usuario, pan.mensaje, pan.dt_registro,
@@ -426,9 +426,14 @@ class ProyectoDB {
 
                     ministraciones.forEach((min, index) => {
                       for (const rp of min.rubros_presupuestales) {
-                        const { id_rubro, f_monto } = rp
+                        const { id_rubro, f_monto, nota } = rp
                         qRubros.push(this.qCrRubrosMinistracion())
-                        phRubros.push(idsMinistracion[index], id_rubro, f_monto)
+                        phRubros.push(
+                          idsMinistracion[index],
+                          id_rubro,
+                          f_monto,
+                          nota
+                        )
                       }
                     })
 
@@ -469,7 +474,7 @@ class ProyectoDB {
     const qUpMinistracion = `UPDATE proyecto_ministraciones SET dt_recepcion=? WHERE id=? LIMIT 1`
 
     const qUpRubroMinistracion = `UPDATE ministracion_rubros_presupuestales SET
-      f_monto=? WHERE id=? LIMIT 1`
+      f_monto=?, nota=? WHERE id=? LIMIT 1`
 
     const qReAcRubro = `UPDATE ministracion_rubros_presupuestales SET b_activo=1, f_monto=? WHERE id=? LIMIT 1`
 
@@ -528,11 +533,11 @@ class ProyectoDB {
                   phCombinados.push(dt_recepcion, id)
 
                   for (const rp of rubros_presupuestales) {
-                    const { id, f_monto, id_rubro } = rp
+                    const { id, f_monto, nota, id_rubro } = rp
 
                     if (id) {
                       qCombinados.push(qUpRubroMinistracion)
-                      phCombinados.push(f_monto, id)
+                      phCombinados.push(f_monto, nota, id)
                     } else {
                       const esRegistrado = rubrosDB.find(
                         (rDB) =>
@@ -545,7 +550,7 @@ class ProyectoDB {
                         phCombinados.push(f_monto, esRegistrado.id)
                       } else {
                         qCombinados.push(this.qCrRubrosMinistracion())
-                        phCombinados.push(min.id, id_rubro, f_monto)
+                        phCombinados.push(min.id, id_rubro, f_monto, nota)
                       }
                     }
                   }
@@ -618,12 +623,13 @@ class ProyectoDB {
 
                         minAregistrar.forEach((min, index) => {
                           for (const rp of min.rubros_presupuestales) {
-                            const { id_rubro, f_monto } = rp
+                            const { id_rubro, f_monto, nota } = rp
                             qRubros.push(this.qCrRubrosMinistracion())
                             phRubros.push(
                               idsMinistracion[index],
                               id_rubro,
-                              f_monto
+                              f_monto,
+                              nota
                             )
                           }
                         })

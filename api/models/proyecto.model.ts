@@ -37,6 +37,7 @@ interface Rubro {
   f_monto: number
   id_proyecto: number
   id_rubro: number
+  nota: string
 }
 
 export interface ResProyectos {

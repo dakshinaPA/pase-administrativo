@@ -970,8 +970,13 @@ const FormaSolicitudPresupuesto = () => {
       case tiposGasto.REEMBOLSO:
       case tiposGasto.GASTOS_X_COMPROBAR:
         partidas = estado.dataProyecto.rubros_presupuestales.filter(
-          (rp) => rp.id_rubro != rubrosPresupuestales.PAGOS_EXTRANJERO
+          (rp) =>
+            ![
+              rubrosPresupuestales.PAGOS_EXTRANJERO,
+              rubrosPresupuestales.HONORARIOS,
+            ].includes(rp.id_rubro)
         )
+        debugger
         break
       case tiposGasto.PAGO_A_PROVEEDOR:
         partidas = estado.dataProyecto.rubros_presupuestales.filter(
