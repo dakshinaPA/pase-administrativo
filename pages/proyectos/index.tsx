@@ -151,7 +151,7 @@ const Financiadores = () => {
                     <LinkAccion
                       margin={false}
                       icono="bi-eye-fill"
-                      ruta={`/copartes/${id_coparte}/proyectos/${id}`}
+                      ruta={`/proyectos/${id}`}
                       title="ver detalle"
                     />
                     <LinkAccion
@@ -344,7 +344,7 @@ const Financiadores = () => {
                         <LinkAccion
                           margin={false}
                           icono="bi-eye-fill"
-                          ruta={`/copartes/${id_coparte}/proyectos/${id}`}
+                          ruta={`/proyectos/${id}`}
                           title="ver detalle"
                         />
                         {user.id_rol == rolesUsuario.SUPER_USUARIO && (

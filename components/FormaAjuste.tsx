@@ -131,7 +131,7 @@ const FormaAjuste = () => {
     status !== "authenticated" || !user || user.id_rol == rolesUsuario.COPARTE
   if (noPuedePasar) return null
 
-  const idProyecto = Number(router.query.id)
+  const idProyecto = Number(router.query.idP)
   const idAjuste = Number(router.query.idA)
 
   const estadoInicialForma: AjusteProyecto = {

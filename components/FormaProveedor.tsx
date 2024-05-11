@@ -164,8 +164,8 @@ const FormaProveedor = () => {
   if (status !== "authenticated" || !user) return null
 
   const router = useRouter()
-  const idProyecto = Number(router.query.id)
-  const idProveedor = Number(router.query.idP)
+  const idProyecto = Number(router.query.idP)
+  const idProveedor = Number(router.query.idPv)
 
   const estadoInicialForma: ProveedorProyecto = {
     id_proyecto: 0,

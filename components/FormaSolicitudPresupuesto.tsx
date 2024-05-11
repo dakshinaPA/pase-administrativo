@@ -366,7 +366,7 @@ const FormaSolicitudPresupuesto = () => {
   if (status !== "authenticated" || !user) return null
 
   const router = useRouter()
-  const idProyecto = Number(router.query.id)
+  const idProyecto = Number(router.query.idP)
   const idSolicitud = Number(router.query.idS)
   const modalidad = idSolicitud ? "EDITAR" : "CREAR"
 

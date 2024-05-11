@@ -261,7 +261,7 @@ const FormaColaborador = () => {
   if (status !== "authenticated" || !user) return null
 
   const router = useRouter()
-  const idProyecto = Number(router.query.id)
+  const idProyecto = Number(router.query.idP)
   const idColaborador = Number(router.query.idC)
 
   const estadoInicial: EstadoProps = {
