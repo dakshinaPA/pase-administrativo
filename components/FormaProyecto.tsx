@@ -469,6 +469,7 @@ const FormaProyecto = () => {
       f_isr: 0,
       f_retenciones: 0,
       f_pa: 0,
+      f_reintegros: 0,
       f_ejecutado: 0,
       f_remanente: 0,
       p_avance: 0,
@@ -1214,7 +1215,7 @@ const Saldos = () => {
   const { estado } = useContext(ProyectoContext)
 
   return (
-    <div className="row mb-5">
+    <div className="row mb-5 gx-5">
       <div className="col-12 mb-3">
         <h3 className="color1 mb-0">Saldo</h3>
       </div>
@@ -1223,19 +1224,23 @@ const Saldos = () => {
           <tbody>
             <tr>
               <td>Solicitado transferido</td>
-              <td>{montoALocaleString(estado.forma.saldo.f_transferido)}</td>
+              <td className="text-end">{montoALocaleString(estado.forma.saldo.f_transferido)}</td>
             </tr>
             <tr>
               <td>Impuestos</td>
-              <td>{montoALocaleString(estado.forma.saldo.f_retenciones)}</td>
+              <td className="text-end">{montoALocaleString(estado.forma.saldo.f_retenciones)}</td>
             </tr>
             <tr>
               <td>35% ISR</td>
-              <td>{montoALocaleString(estado.forma.saldo.f_isr)}</td>
+              <td className="text-end">{montoALocaleString(estado.forma.saldo.f_isr)}</td>
             </tr>
             <tr>
               <td>Pase administrativo</td>
-              <td>{montoALocaleString(estado.forma.saldo.f_pa)}</td>
+              <td className="text-end">{montoALocaleString(estado.forma.saldo.f_pa)}</td>
+            </tr>
+            <tr>
+              <td>Reintegros</td>
+              <td className="text-end">- {montoALocaleString(estado.forma.saldo.f_reintegros)}</td>
             </tr>
             <tr>
               <td colSpan={2}>
@@ -1244,7 +1249,7 @@ const Saldos = () => {
             </tr>
             <tr>
               <th>Total ejecutado</th>
-              <td className="fw-bold">
+              <td className="fw-bold text-end">
                 {montoALocaleString(estado.forma.saldo.f_ejecutado)}
               </td>
             </tr>
@@ -1256,14 +1261,14 @@ const Saldos = () => {
           <tbody>
             <tr>
               <th>Financiamiento</th>
-              <td className="fw-bold">
+              <td className="fw-bold text-end">
                 {montoALocaleString(estado.forma.saldo.f_monto_total)}
               </td>
             </tr>
             <tr>
               <th>Disponible</th>
               <td
-                className={`fw-bold ${
+                className={`fw-bold text-end ${
                   estado.forma.saldo.f_remanente < 0 ? "color-red" : "color3"
                 }`}
               >
@@ -1275,7 +1280,7 @@ const Saldos = () => {
                 <span className="me-1">Por comprobar</span>
                 <TooltipInfo texto="con base a este monto se calcula el 35% ISR" />
               </th>
-              <td className="color-warning">
+              <td className="color-warning text-end">
                 {montoALocaleString(estado.forma.saldo.f_por_comprobar)}
               </td>
             </tr>

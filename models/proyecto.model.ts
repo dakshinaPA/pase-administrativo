@@ -118,6 +118,7 @@ export interface SaldoProyecto {
   f_isr?: number
   f_retenciones: number
   f_pa: number //pase administrativo es la suma de las gestiones financieras
+  f_reintegros: number // lo que regresan copartes a dakshina se resta al ejecutado
   f_ejecutado?: number // suma de solicitado + retenciones + isr + gestion financiera
   f_remanente?: number
   p_avance?: number

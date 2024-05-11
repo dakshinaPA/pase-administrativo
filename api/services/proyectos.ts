@@ -10,6 +10,7 @@ import {
   CalcularSaldo,
   AjusteProyecto,
   NotaAjuste,
+  SaldoProyecto,
 } from "@models/proyecto.model"
 
 import { ResProyectos } from "@api/models/proyecto.model"
@@ -76,7 +77,7 @@ class ProyectosServices {
     }
   }
 
-  static calcularSaldo(data: CalcularSaldo) {
+  static calcularSaldo(data: CalcularSaldo): SaldoProyecto {
     const { rubros, solicitudes, ajustes } = data
 
     let f_monto_total = 0
@@ -132,8 +133,8 @@ class ProyectosServices {
 
     const f_por_comprobar = f_transferido - f_comprobado + f_ajuste_acreedores
     const f_isr = f_por_comprobar > 0 ? f_por_comprobar * 0.35 : 0
-    const f_ejecutado = f_transferido + f_retenciones + f_isr + f_pa
-    const f_remanente = f_monto_total - f_ejecutado + f_reintegros
+    const f_ejecutado = f_transferido + f_retenciones + f_isr + f_pa - f_reintegros
+    const f_remanente = f_monto_total - f_ejecutado
     const p_avance = numeroAdigitos((f_ejecutado * 100) / f_monto_total)
 
     return {
@@ -145,6 +146,7 @@ class ProyectosServices {
       f_retenciones: numeroAdigitos(f_retenciones),
       f_por_comprobar: numeroAdigitos(f_por_comprobar),
       f_isr: numeroAdigitos(f_isr),
+      f_reintegros,
       f_ejecutado: numeroAdigitos(f_ejecutado),
       f_remanente: numeroAdigitos(f_remanente),
       p_avance,
