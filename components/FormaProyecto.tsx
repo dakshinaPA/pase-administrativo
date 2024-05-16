@@ -1224,23 +1224,33 @@ const Saldos = () => {
           <tbody>
             <tr>
               <td>Solicitado transferido</td>
-              <td className="text-end">{montoALocaleString(estado.forma.saldo.f_transferido)}</td>
+              <td className="text-end">
+                {montoALocaleString(estado.forma.saldo.f_transferido)}
+              </td>
             </tr>
             <tr>
               <td>Impuestos</td>
-              <td className="text-end">{montoALocaleString(estado.forma.saldo.f_retenciones)}</td>
+              <td className="text-end">
+                {montoALocaleString(estado.forma.saldo.f_retenciones)}
+              </td>
             </tr>
             <tr>
               <td>35% ISR</td>
-              <td className="text-end">{montoALocaleString(estado.forma.saldo.f_isr)}</td>
+              <td className="text-end">
+                {montoALocaleString(estado.forma.saldo.f_isr)}
+              </td>
             </tr>
             <tr>
               <td>Pase administrativo</td>
-              <td className="text-end">{montoALocaleString(estado.forma.saldo.f_pa)}</td>
+              <td className="text-end">
+                {montoALocaleString(estado.forma.saldo.f_pa)}
+              </td>
             </tr>
             <tr>
               <td>Reintegros</td>
-              <td className="text-end">- {montoALocaleString(estado.forma.saldo.f_reintegros)}</td>
+              <td className="text-end">
+                - {montoALocaleString(estado.forma.saldo.f_reintegros)}
+              </td>
             </tr>
             <tr>
               <td colSpan={2}>
@@ -1385,6 +1395,10 @@ const Colaboradores = () => {
   const { estado, user, idProyecto, abrirModalEliminar } =
     useContext(ProyectoContext)
 
+  const showBtnEliminar =
+    user.id_rol == rolesUsuario.SUPER_USUARIO ||
+    user.id == estado.cargaInicial.id_administrador
+
   return (
     <div className="row mb-5">
       <div className="col-12 mb-3 d-flex justify-content-between">
@@ -1443,7 +1457,7 @@ const Colaboradores = () => {
                         ruta={`/proyectos/${idProyecto}/colaboradores/${id}`}
                         title="ver colaborador"
                       />
-                      {user.id_rol == rolesUsuario.SUPER_USUARIO && (
+                      {showBtnEliminar && (
                         <BtnAccion
                           margin="l"
                           icono="bi-x-circle"
@@ -1468,6 +1482,10 @@ const Colaboradores = () => {
 const Proveedores = () => {
   const { estado, user, idProyecto, abrirModalEliminar } =
     useContext(ProyectoContext)
+
+  const showBtnEliminar =
+    user.id_rol == rolesUsuario.SUPER_USUARIO ||
+    user.id == estado.cargaInicial.id_administrador
 
   return (
     <div className="row mb-5">
@@ -1528,7 +1546,7 @@ const Proveedores = () => {
                         ruta={`/proyectos/${idProyecto}/proveedores/${id}`}
                         title="ver proveedor"
                       />
-                      {user.id_rol == rolesUsuario.SUPER_USUARIO && (
+                      {showBtnEliminar && (
                         <BtnAccion
                           margin="l"
                           icono="bi-x-circle"
