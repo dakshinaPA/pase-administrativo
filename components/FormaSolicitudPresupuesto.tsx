@@ -896,9 +896,7 @@ const FormaSolicitudPresupuesto = () => {
   )
 
   const showComprobantesNecesarios =
-    estado.forma.i_tipo_gasto != tiposGasto.ASIMILADOS &&
-    estado.forma.id_partida_presupuestal !=
-      rubrosPresupuestales.PAGOS_EXTRANJERO
+    estado.forma.i_tipo_gasto != tiposGasto.ASIMILADOS
 
   const showInputDtPago =
     user.id_rol == rolesUsuario.SUPER_USUARIO &&
@@ -974,9 +972,10 @@ const FormaSolicitudPresupuesto = () => {
             ![
               rubrosPresupuestales.PAGOS_EXTRANJERO,
               rubrosPresupuestales.HONORARIOS,
+              rubrosPresupuestales.ASIMILADOS,
+              rubrosPresupuestales.DONATIVOS_Y_AYUDAS,
             ].includes(rp.id_rubro)
         )
-        debugger
         break
       case tiposGasto.PAGO_A_PROVEEDOR:
         partidas = estado.dataProyecto.rubros_presupuestales.filter(
@@ -1233,7 +1232,9 @@ const FormaSolicitudPresupuesto = () => {
           </div>
           <div className="col-12 col-md-6 col-lg-4 mb-3">
             <label className="form-label">Descripción del gasto</label>
-            {[3, 4].includes(Number(estado.forma.i_tipo_gasto)) ? (
+            {[tiposGasto.ASIMILADOS, tiposGasto.HONORARIOS].includes(
+              Number(estado.forma.i_tipo_gasto)
+            ) ? (
               <select
                 className="form-control"
                 onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
