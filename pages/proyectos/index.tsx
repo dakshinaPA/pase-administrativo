@@ -250,6 +250,29 @@ const Financiadores = () => {
     )
   }
 
+  //totales
+  let totalFinanciamiento = 0
+  let totalTransferido = 0
+  let totalComprobado = 0
+  let totalXComprobar = 0
+  let totalIsr = 0
+  let totalRetenciones = 0
+  let totalPa = 0
+  let totalEjecutado = 0
+  let totalRemanente = 0
+
+  for (const { saldo } of busquedaFiltrados) {
+    totalFinanciamiento += saldo.f_monto_total
+    totalTransferido += saldo.f_transferido
+    totalComprobado += saldo.f_comprobado
+    totalXComprobar += saldo.f_por_comprobar
+    totalIsr += saldo.f_isr
+    totalRetenciones += saldo.f_retenciones
+    totalPa += saldo.f_pa
+    totalEjecutado += saldo.f_ejecutado
+    totalRemanente += saldo.f_remanente
+  }
+
   return (
     <TablaContenedor>
       <div className="row mb-2">
@@ -303,6 +326,35 @@ const Financiadores = () => {
               </tr>
             </thead>
             <tbody>
+              <tr className="bg-light">
+                <td className="fw-bold" colSpan={6}>
+                  Totales
+                </td>
+                <td className="fw-bold">
+                  {montoALocaleString(totalFinanciamiento)}
+                </td>
+                <td className="fw-bold">
+                  {montoALocaleString(totalTransferido)}
+                </td>
+                <td className="fw-bold">
+                  {montoALocaleString(totalComprobado)}
+                </td>
+                <td className="fw-bold">
+                  {montoALocaleString(totalXComprobar)}
+                </td>
+                <td className="fw-bold">{montoALocaleString(totalIsr)}</td>
+                <td className="fw-bold">
+                  {montoALocaleString(totalRetenciones)}
+                </td>
+                <td className="fw-bold">{montoALocaleString(totalPa)}</td>
+                <td className="fw-bold">
+                  {montoALocaleString(totalEjecutado)}
+                </td>
+                <td className="fw-bold">
+                  {montoALocaleString(totalRemanente)}
+                </td>
+                <td colSpan={2}></td>
+              </tr>
               {busquedaFiltrados.map((proyecto) => {
                 const {
                   id,
