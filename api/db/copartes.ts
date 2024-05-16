@@ -8,7 +8,7 @@ import { ProyectoDB } from "./proyectos"
 
 class CoparteDB {
   static async obtenerVmin(id_coparte: number, id_admin: number) {
-    let query = `SELECT id, nombre, nombre_corto FROM copartes WHERE b_activo = 1`
+    let query = `SELECT id, id_alt, nombre, UPPER(nombre_corto) nombre_corto FROM copartes WHERE b_activo=1`
 
     if (id_admin) {
       query += ` AND id_administrador=${id_admin}`
@@ -18,7 +18,7 @@ class CoparteDB {
       query += ` AND id=${id_coparte}`
     }
 
-    query += " ORDER BY nombre"
+    query += " ORDER BY nombre_corto"
 
     try {
       const res = await queryDB(query)

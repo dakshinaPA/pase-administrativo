@@ -62,5 +62,7 @@ export interface Coparte {
 
 export interface CoparteMin {
   id: number
+  id_alt?: string
   nombre: string
+  nombre_corto?: string
 }

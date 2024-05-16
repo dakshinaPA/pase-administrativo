@@ -75,9 +75,9 @@ const Filtros = ({
               value={filtros.estado.id_coparte}
             >
               <option value="0">Todas</option>
-              {filtros.copartesDB.map(({ id, nombre }) => (
+              {filtros.copartesDB.map(({ id, id_alt, nombre_corto }) => (
                 <option key={id} value={id}>
-                  {nombre}
+                  {id_alt} - {nombre_corto}
                 </option>
               ))}
             </select>

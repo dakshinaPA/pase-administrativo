@@ -847,9 +847,9 @@ const FormaProyecto = () => {
                   name="id_coparte"
                   disabled={Boolean(idProyecto) || Boolean(idCoparte)}
                 >
-                  {estado.copartesDB.map(({ id, nombre }) => (
+                  {estado.copartesDB.map(({ id, id_alt, nombre_corto }) => (
                     <option key={id} value={id}>
-                      {nombre}
+                      {id_alt} - {nombre_corto}
                     </option>
                   ))}
                 </select>
