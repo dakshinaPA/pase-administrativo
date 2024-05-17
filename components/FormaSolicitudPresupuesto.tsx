@@ -1475,9 +1475,9 @@ const FormaSolicitudPresupuesto = () => {
                       )
                     })}
                     <tr>
-                      <td colSpan={10}></td>
+                      <td colSpan={11}></td>
                       <td>{montoALocaleString(total_comprobantes)}</td>
-                      {estado.modoEditar && <td></td>}
+                      {estado.modoEditar && <th></th>}
                     </tr>
                   </tbody>
                 </table>
