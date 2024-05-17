@@ -149,7 +149,13 @@ class ProveedorServices {
         id_proveedor,
         payload
       )) as ResProveedorDB
-      const proveedorUp = this.formatData(up)
+
+      const re = (await ProveedorDB.obtener(
+        0,
+        id_proveedor
+      )) as ResProveedorDB[]
+
+      const proveedorUp: ProveedorProyecto = this.formatData(re[0])
 
       return RespuestaController.exitosa(
         200,
