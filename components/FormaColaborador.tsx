@@ -834,14 +834,15 @@ const FormaColaborador = () => {
                             />
                           </td>
                           <td>
-                            {showBtnEliminarPeriodo && !id && (
-                              <BtnAccion
-                                margin={false}
-                                icono="bi-x-circle"
-                                onclick={() => quitarPeriodoServicio(index)}
-                                title="eliminar usuario"
-                              />
-                            )}
+                            {showBtnEliminarPeriodo &&
+                              (!id || user.id_rol != rolesUsuario.COPARTE) && (
+                                <BtnAccion
+                                  margin={false}
+                                  icono="bi-x-circle"
+                                  onclick={() => quitarPeriodoServicio(index)}
+                                  title="eliminar usuario"
+                                />
+                              )}
                           </td>
                         </tr>
                       )

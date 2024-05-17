@@ -141,7 +141,13 @@ class ColaboradorServices {
         payload
       )) as ResColaboradoreDB
 
-      const colaboradorUp = this.formatData(up)
+      //obtener colaborador actualizado
+      const re = (await ColaboradorDB.obtener(
+        0,
+        id_colaborador
+      )) as ResColaboradoreDB[]
+
+      const colaboradorUp: ColaboradorProyecto = this.formatData(re[0])
 
       return RespuestaController.exitosa(
         200,

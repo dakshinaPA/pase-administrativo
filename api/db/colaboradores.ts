@@ -246,7 +246,7 @@ class ColaboradorDB {
     const qUpPeriodoServicio = `UPDATE colaborador_periodos_servicio SET i_numero_ministracion=?, f_monto=?,
       servicio=?, descripcion=?, cp=?, dt_inicio=?, dt_fin=? WHERE id=? LIMIT 1`
 
-    // const qDlPeriodoServicio = `UPDATE colaborador_periodos_servicio SET b_activo=0 WHERE id=? LIMIT 1`
+    const qDlPeriodoServicio = `UPDATE colaborador_periodos_servicio SET b_activo=0 WHERE id=? LIMIT 1`
 
     const qCombinados = [qColaborador, qDireccion]
     const phCombinados = [...phColaborador, ...phDireccion]
@@ -290,34 +290,9 @@ class ColaboradorDB {
             return rej(err)
           }
 
-          // connection.query(
-          //   this.qRePeriodosServicio(),
-          //   id_colaborador,
-          //   (error, results, fields) => {
-          //     if (error) {
-          //       return connection.rollback(() => {
-          //         connection.destroy()
-          //         rej(error)
-          //       })
-          //     }
-
-          //     const periodosDB = results as PeriodoServicioColaborador[]
-
-          //     //revisar si algun periodo fue desactivado
-          //     for (const psDB of periodosDB) {
-          //       const matchVista = periodos_servicio.find( ps => ps.id == psDB.id)
-          //       if(!matchVista){
-          //         qCombinados.push(qDlPeriodoServicio)
-          //         phCombinados.push(psDB.id)
-          //       }
-          //     }
-          //   }
-          // )
-
-          //actualizar colaborador
           connection.query(
-            qCombinados.join(";"),
-            phCombinados,
+            this.qRePeriodosServicio(),
+            id_colaborador,
             (error, results, fields) => {
               if (error) {
                 return connection.rollback(() => {
@@ -326,15 +301,23 @@ class ColaboradorDB {
                 })
               }
 
-              const qRe = [
-                this.queryRe(null, id_colaborador),
-                this.qRePeriodosServicio(),
-              ]
+              const periodosDB = results as PeriodoServicioColaborador[]
 
-              //traer colaborador actualizado
+              //revisar si algun periodo fue desactivado
+              for (const psDB of periodosDB) {
+                const matchVista = periodos_servicio.find(
+                  (ps) => ps.id == psDB.id
+                )
+                if (!matchVista) {
+                  qCombinados.push(qDlPeriodoServicio)
+                  phCombinados.push(psDB.id)
+                }
+              }
+
+              //actualizar colaborador
               connection.query(
-                qRe.join(";"),
-                [id_colaborador, id_colaborador],
+                qCombinados.join(";"),
+                phCombinados,
                 (error, results, fields) => {
                   if (error) {
                     return connection.rollback(() => {
@@ -346,10 +329,7 @@ class ColaboradorDB {
                   connection.commit((err) => {
                     if (err) connection.rollback(() => rej(err))
                     connection.destroy()
-                    res({
-                      ...results[0][0],
-                      periodos_servicio: results[1],
-                    })
+                    res(true)
                   })
                 }
               )
