@@ -180,19 +180,33 @@ const Financiadores = () => {
                   <tbody>
                     <tr>
                       <td>Solicitado transferido</td>
-                      <td>{montoALocaleString(saldo.f_transferido)}</td>
+                      <td className="text-end">
+                        {montoALocaleString(saldo.f_transferido)}
+                      </td>
                     </tr>
                     <tr>
                       <td>Impuestos</td>
-                      <td>{montoALocaleString(saldo.f_retenciones)}</td>
+                      <td className="text-end">
+                        {montoALocaleString(saldo.f_retenciones)}
+                      </td>
                     </tr>
                     <tr>
                       <td>35% ISR</td>
-                      <td>{montoALocaleString(saldo.f_isr)}</td>
+                      <td className="text-end">
+                        {montoALocaleString(saldo.f_isr)}
+                      </td>
                     </tr>
                     <tr>
                       <td>Pase administrativo</td>
-                      <td>{montoALocaleString(saldo.f_pa)}</td>
+                      <td className="text-end">
+                        {montoALocaleString(saldo.f_pa)}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Reintegros</td>
+                      <td className="text-end">
+                        - {montoALocaleString(saldo.f_reintegros)}
+                      </td>
                     </tr>
                     <tr>
                       <td colSpan={2}>
@@ -201,7 +215,7 @@ const Financiadores = () => {
                     </tr>
                     <tr>
                       <th className="color1">Total ejecutado</th>
-                      <td className="fw-bold color1">
+                      <td className="text-end fw-bold color1">
                         {montoALocaleString(saldo.f_ejecutado)}
                       </td>
                     </tr>
@@ -213,14 +227,14 @@ const Financiadores = () => {
                   <tbody>
                     <tr>
                       <th className="color1">Financiamiento</th>
-                      <td className="fw-bold color1">
+                      <td className="text-end fw-bold color1">
                         {montoALocaleString(saldo.f_monto_total)}
                       </td>
                     </tr>
                     <tr>
                       <th className="color1">Disponible</th>
                       <td
-                        className={`fw-bold ${
+                        className={`text-end fw-bold ${
                           saldo.f_remanente < 0 ? "color-red" : "color3"
                         }`}
                       >
@@ -232,7 +246,7 @@ const Financiadores = () => {
                         <span className="me-1">Por comprobar</span>
                         <TooltipInfo texto="con base a este monto se calcula el 35% ISR" />
                       </th>
-                      <td className="color-warning">
+                      <td className="text-end color-warning">
                         {montoALocaleString(saldo.f_por_comprobar)}
                       </td>
                     </tr>
