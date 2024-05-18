@@ -468,7 +468,7 @@ class ProyectoDB {
   static async actualizar(id_proyecto: number, data: Proyecto) {
     const { ministraciones } = data
 
-    const qProyecto = `UPDATE proyectos SET id_financiador=?, id_responsable=?, nombre=?, id_tema_social=?, sector_beneficiado=?,
+    const qProyecto = `UPDATE proyectos SET id_financiador=?, id_responsable=?, id_alt=?, nombre=?, id_tema_social=?, sector_beneficiado=?,
       i_beneficiados=?, id_estado=?, municipio=?, descripcion=?, dt_inicio=?, dt_fin=? WHERE id=? LIMIT 1`
 
     const qUpMinistracion = `UPDATE proyecto_ministraciones SET dt_recepcion=? WHERE id=? LIMIT 1`
@@ -485,6 +485,7 @@ class ProyectoDB {
     const phCombinados = [
       data.id_financiador,
       data.id_responsable,
+      data.id_alt,
       data.nombre,
       data.id_tema_social,
       data.sector_beneficiado,

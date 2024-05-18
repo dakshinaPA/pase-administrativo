@@ -744,6 +744,8 @@ const FormaProyecto = () => {
   // (modalidad === "EDITAR" &&
   //   estado.modoEditar &&
   //   user.id_rol == rolesUsuario.SUPER_USUARIO)
+  const disableIdAlt =
+    user.id_rol != rolesUsuario.SUPER_USUARIO || !estado.modoEditar
 
   const showFormaMinistracion = estado.modoEditar
 
@@ -796,8 +798,10 @@ const FormaProyecto = () => {
                 <input
                   className="form-control"
                   type="text"
+                  name="id_alt"
+                  onChange={(e) => handleChange(e, "HANDLE_CHANGE")}
                   value={estado.forma.id_alt}
-                  disabled
+                  disabled={disableIdAlt}
                 />
                 {error.campo == "id_alt" && (
                   <MensajeError mensaje={error.mensaje} />
