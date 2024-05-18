@@ -329,13 +329,12 @@ class ProyectoDB {
     const qIdAlt = [
       "SELECT id_alt FROM financiadores WHERE id=? LIMIT 1",
       "SELECT id_alt FROM copartes WHERE id=? LIMIT 1",
-      "SELECT id_alt FROM proyectos WHERE id_financiador=? AND id_coparte=? ORDER BY dt_registro DESC LIMIT 1",
+      "SELECT id_alt FROM proyectos WHERE id_coparte=? ORDER BY dt_registro DESC LIMIT 1",
     ].join(";")
 
     const phIdALt = [
       data.id_financiador,
       data.id_coparte,
-      data.id_financiador,
       data.id_coparte,
     ]
 
