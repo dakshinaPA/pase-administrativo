@@ -729,7 +729,13 @@ const FormaColaborador = () => {
                 <thead className="table-light">
                   <tr className="color1">
                     <th># Ministración</th>
-                    <th style={{ minWidth: "90px" }}>Monto</th>
+                    <th style={{ minWidth: "90px" }}>
+                      Monto bruto
+                      <i
+                        title="Monto bruto con impuestos"
+                        className="bi bi-info-circle ms-1"
+                      ></i>
+                    </th>
                     <th style={{ minWidth: "200px" }}>Servicio</th>
                     <th style={{ minWidth: "300px" }}>Descricpión</th>
                     <th style={{ minWidth: "100px" }}>
