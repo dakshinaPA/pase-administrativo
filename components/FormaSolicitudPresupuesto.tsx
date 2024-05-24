@@ -591,7 +591,7 @@ const FormaSolicitudPresupuesto = () => {
       fileInput.current.value = ""
 
       const [comprobante] = xml.getElementsByTagName("cfdi:Comprobante")
-      // console.log(comprobante)
+      console.log(comprobante)
       const [timbre] = xml.getElementsByTagName("tfd:TimbreFiscalDigital")
       const [emisor] = xml.getElementsByTagName("cfdi:Emisor")
       const [receptor] = xml.getElementsByTagName("cfdi:Receptor")
@@ -605,13 +605,15 @@ const FormaSolicitudPresupuesto = () => {
       )
       const rfcReceptor = receptor.getAttribute("Rfc")
       const usoCFDI = receptor.getAttribute("UsoCFDI")
-      const f_total = comprobante?.getAttribute("Total")
+      let f_total = Number(comprobante?.getAttribute("Total"))
       const f_claveProdServ = concepto?.getAttribute("ClaveProdServ")
       const clavesProdServCombustibles = ["15101514", "15101515", "15101505"]
       const metodo_pago = comprobante?.getAttribute("MetodoPago") as
         | "PUE"
         | "PPD"
       const clave_forma_pago = comprobante?.getAttribute("FormaPago")
+      const moneda = comprobante?.getAttribute("Moneda")
+      const tipoCambio = comprobante?.getAttribute("TipoCambio")
       const formaPago = asignarIdFormaPAgo(clave_forma_pago)
       const claveRegimenFiscalEmisor = emisor?.getAttribute("RegimenFiscal")
       const rfcEmisor = emisor?.getAttribute("Rfc")
@@ -649,7 +651,7 @@ const FormaSolicitudPresupuesto = () => {
         if (rfcReceptor !== "DAK1302063W9")
           throw "RFC del receptor no coincide con Dakshina"
         if (usoCFDI !== "G03") throw "Uso CFDI inválido"
-        if (clave_forma_pago === "01" && Number(f_total) >= 2000)
+        if (clave_forma_pago === "01" && f_total >= 2000)
           throw "Pago en efectivo mayor o igual a 2000 no permitido"
         if (
           clavesProdServCombustibles.includes(f_claveProdServ) &&
@@ -670,9 +672,9 @@ const FormaSolicitudPresupuesto = () => {
         return
       }
 
-      let f_retenciones = ""
-      let f_iva = ""
-      let f_isr = ""
+      let f_retenciones = 0
+      let f_iva = 0
+      let f_isr = 0
 
       //a veces impuestos es mas de un tag y hay que buscarlo
       for (const imp of impuestos) {
@@ -686,13 +688,13 @@ const FormaSolicitudPresupuesto = () => {
             const importe = ret.getAttribute("Importe")
 
             if (tipoImpuesto === "001") {
-              f_isr = importe
+              f_isr = Number(importe)
             } else if (tipoImpuesto === "002") {
-              f_iva = importe
+              f_iva = Number(importe)
             }
           }
 
-          f_retenciones = impuestos
+          f_retenciones = Number(impuestos)
         }
       }
 
@@ -706,6 +708,15 @@ const FormaSolicitudPresupuesto = () => {
       //   return
       // }
 
+      //hacer conversion automatica si la moneda esta en dolares
+      if (moneda.toUpperCase() === "USD") {
+        const tipoCambioActual = Number(tipoCambio)
+        f_total *= tipoCambioActual
+        f_retenciones *= tipoCambioActual
+        f_isr *= tipoCambioActual
+        f_iva *= tipoCambioActual
+      }
+
       const dataComprobante: ComprobanteSolicitud = {
         folio_fiscal,
         rfc_emisor: rfcEmisor,
@@ -717,7 +728,7 @@ const FormaSolicitudPresupuesto = () => {
         clave_forma_pago: clave_forma_pago,
         forma_pago: formaPago.nombre,
         f_total,
-        f_retenciones: f_retenciones || "",
+        f_retenciones,
         f_iva,
         f_isr,
         uso_cfdi: usoCFDI,

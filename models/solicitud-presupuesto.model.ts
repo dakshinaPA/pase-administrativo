@@ -18,10 +18,10 @@ export interface ComprobanteSolicitud {
   id?: number
   id_solicitud_presupuesto?: number
   folio_fiscal: string
-  f_total: string
-  f_retenciones: string
-  f_iva: string
-  f_isr: string
+  f_total: number
+  f_retenciones: number
+  f_iva: number
+  f_isr: number
   i_metodo_pago: IMetodosPAgo // 1.PUE 2.PPD
   metodo_pago?: MetodosPAgo
   id_forma_pago: number

@@ -104,7 +104,7 @@ class SolicitudesPresupuestoDB {
 
   static qReactivarComprobante = () => {
     return `
-      UPDATE solicitud_presupuesto_comprobantes SET id_solicitud_presupuesto=?, f_isr=?, f_iva=?,
+      UPDATE solicitud_presupuesto_comprobantes SET id_solicitud_presupuesto=?, f_total=?, f_isr=?, f_iva=?,
       rfc_emisor=?, dt_timbrado=?, b_activo=1 WHERE id=?
     `
   }
@@ -352,6 +352,7 @@ class SolicitudesPresupuestoDB {
                   qComprobantes.push(this.qReactivarComprobante())
                   phComprobantes.push(
                     idSolicitud,
+                    comp.f_total,
                     comp.f_isr,
                     comp.f_iva,
                     comp.rfc_emisor,
@@ -490,6 +491,7 @@ class SolicitudesPresupuestoDB {
                     qCombinados.push(this.qReactivarComprobante())
                     phCombinados.push(
                       id,
+                      comp.f_total,
                       comp.f_isr,
                       comp.f_iva,
                       comp.rfc_emisor,
