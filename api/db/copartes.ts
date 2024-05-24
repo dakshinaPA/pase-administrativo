@@ -18,7 +18,7 @@ class CoparteDB {
       query += ` AND id=${id_coparte}`
     }
 
-    query += " ORDER BY nombre_corto"
+    query += " ORDER BY id_alt"
 
     try {
       const res = await queryDB(query)
