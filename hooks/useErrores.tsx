@@ -23,7 +23,7 @@ const useErrores = () => {
             break
           case "email":
             if (
-              !/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(campos[key])
+              !/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,})+$/.test(campos[key])
             )
               throw [key, "Correo inválido"]
             break
