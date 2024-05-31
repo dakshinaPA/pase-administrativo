@@ -53,6 +53,23 @@ const tiposAjusteProyecto = {
   ACREEDORES: 2,
 }
 
+const copartes = {
+  VIOLENCIAS: {
+    id: 126
+  }
+}
+
+const rfcReceptores = {
+  DAKSHINA: "DAK1302063W9",
+  VIOLENCIAS: "CIE800912J23"
+}
+
+const clavesProductoServicio = {
+  GAS_REGULAR: "15101514",
+  GAS_PREMIUM: "15101515",
+  DIESEL: "15101505"
+}
+
 export {
   rolesUsuario,
   tiposGasto,
@@ -62,4 +79,7 @@ export {
   tiposProveedor,
   tiposFinanciamiento,
   tiposAjusteProyecto,
+  rfcReceptores,
+  copartes,
+  clavesProductoServicio
 }

@@ -48,7 +48,9 @@ import {
   mensajesBanner,
 } from "./Banner"
 import {
+  clavesProductoServicio,
   estatusSolicitud,
+  rfcReceptores,
   rolesUsuario,
   rubrosPresupuestales,
   tiposColaborador,
@@ -607,7 +609,6 @@ const FormaSolicitudPresupuesto = () => {
       const usoCFDI = receptor.getAttribute("UsoCFDI")
       let f_total = Number(comprobante?.getAttribute("Total"))
       const f_claveProdServ = concepto?.getAttribute("ClaveProdServ")
-      const clavesProdServCombustibles = ["15101514", "15101515", "15101505"]
       const metodo_pago = comprobante?.getAttribute("MetodoPago") as
         | "PUE"
         | "PPD"
@@ -621,6 +622,9 @@ const FormaSolicitudPresupuesto = () => {
       const regimenFiscalReceptor = obtenerRegimenXClave(
         claveRegimenFiscalReceptor
       )
+
+      const { GAS_REGULAR, GAS_PREMIUM, DIESEL } = clavesProductoServicio
+      const clavesProdServCombustibles = [GAS_REGULAR, GAS_PREMIUM, DIESEL]
 
       // buscar si el folio que se quiere subir ya existe en base de datos
       const reFactura = await ApiCall.get(
@@ -648,7 +652,7 @@ const FormaSolicitudPresupuesto = () => {
         if (!metodo_pago) throw "Método de pago no identificado"
         if (claveRegimenFiscalReceptor !== "603" || !regimenFiscalReceptor.id)
           throw "Regimen fiscal de receptor inválido"
-        if (rfcReceptor !== "DAK1302063W9")
+        if (rfcReceptor !== rfcReceptores.DAKSHINA)
           throw "RFC del receptor no coincide con Dakshina"
         if (usoCFDI !== "G03") throw "Uso CFDI inválido"
         if (clave_forma_pago === "01" && f_total >= 2000)
