@@ -49,6 +49,7 @@ import {
 } from "./Banner"
 import {
   clavesProductoServicio,
+  copartes,
   estatusSolicitud,
   rfcReceptores,
   rolesUsuario,
@@ -623,8 +624,14 @@ const FormaSolicitudPresupuesto = () => {
         claveRegimenFiscalReceptor
       )
 
+      //claves de combustibles para reglas
       const { GAS_REGULAR, GAS_PREMIUM, DIESEL } = clavesProductoServicio
       const clavesProdServCombustibles = [GAS_REGULAR, GAS_PREMIUM, DIESEL]
+
+      //obtener coparte de proyecto para reglas especificas
+      const id_coparte =
+        estado.proyectosDB.find((p) => p.id == estado.forma.id_proyecto)
+          ?.id_coparte || 0
 
       // buscar si el folio que se quiere subir ya existe en base de datos
       const reFactura = await ApiCall.get(
@@ -652,14 +659,20 @@ const FormaSolicitudPresupuesto = () => {
         if (!metodo_pago) throw "Método de pago no identificado"
         if (claveRegimenFiscalReceptor !== "603" || !regimenFiscalReceptor.id)
           throw "Regimen fiscal de receptor inválido"
-        if (rfcReceptor !== rfcReceptores.DAKSHINA)
+        if (id_coparte == copartes.VIOLENCIAS.id) {
+          if (rfcReceptor !== rfcReceptores.VIOLENCIAS) {
+            throw "RFC del receptor no coincide con la coparte"
+          }
+        } else if (rfcReceptor !== rfcReceptores.DAKSHINA)
           throw "RFC del receptor no coincide con Dakshina"
         if (usoCFDI !== "G03") throw "Uso CFDI inválido"
         if (clave_forma_pago === "01" && f_total >= 2000)
           throw "Pago en efectivo mayor o igual a 2000 no permitido"
+        //coparte violencias si puede realizar pagos en efectivo para combustible
         if (
           clavesProdServCombustibles.includes(f_claveProdServ) &&
-          clave_forma_pago === "01"
+          clave_forma_pago === "01" &&
+          id_coparte != copartes.VIOLENCIAS.id
         )
           throw "Combustibles con pago en efectivo no permitido"
 

@@ -128,6 +128,7 @@ export interface ProyectoMin {
   id?: number
   id_alt: string
   nombre: string
+  id_coparte: number
 }
 
 export interface Proyecto extends ProyectoMin {
