@@ -110,6 +110,7 @@ interface EstadoProps {
 }
 
 const estadoInicialFormaExterior: SolicitudPresupuesto = {
+  id_coparte: 0,
   id_proyecto: 0,
   i_tipo_gasto: 0,
   id_titular_cuenta: 0,
@@ -154,6 +155,7 @@ const reducer = (state: EstadoProps, action: ActionProps): EstadoProps => {
         ...state,
         forma: {
           ...state.forma,
+          id_coparte: payload.proyectos[0].id_coparte,
           id_proyecto: payload.proyectos[0].id,
         },
         proyectosDB: payload.proyectos,
@@ -223,10 +225,15 @@ const reducer = (state: EstadoProps, action: ActionProps): EstadoProps => {
         },
       }
     case "CAMBIO_PROYECTO":
+      const id_coparte =
+        state.proyectosDB.find((proyecto) => proyecto.id == payload.idProyecto)
+          ?.id_coparte || 0
+
       return {
         ...state,
         forma: {
           ...estadoInicialFormaExterior,
+          id_coparte,
           id_proyecto: payload.idProyecto,
         },
         dataProyecto: payload.dataProyecto,
@@ -254,6 +261,7 @@ const reducer = (state: EstadoProps, action: ActionProps): EstadoProps => {
         ...state,
         forma: {
           ...estadoInicialFormaExterior,
+          id_coparte: state.forma.id_coparte,
           id_proyecto: state.forma.id_proyecto,
           i_tipo_gasto,
           id_partida_presupuestal,
@@ -629,9 +637,7 @@ const FormaSolicitudPresupuesto = () => {
       const clavesProdServCombustibles = [GAS_REGULAR, GAS_PREMIUM, DIESEL]
 
       //obtener coparte de proyecto para reglas especificas
-      const id_coparte =
-        estado.proyectosDB.find((p) => p.id == estado.forma.id_proyecto)
-          ?.id_coparte || 0
+      const id_coparte = estado.forma.id_coparte
 
       // buscar si el folio que se quiere subir ya existe en base de datos
       const reFactura = await ApiCall.get(
