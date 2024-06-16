@@ -11,7 +11,6 @@ const MainHeader = ({ abrirMenu }) => {
   }
 
   if (status !== "authenticated") {
-    // return <header className="colorHeader" style={{ height: "50px" }}></header>
     return null
   }
 
