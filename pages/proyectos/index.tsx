@@ -325,7 +325,7 @@ const Financiadores = () => {
                 <th>Nombre</th>
                 <th>Responsable</th>
                 <th>Coparte</th>
-                <th>Tipo financiamiento</th>
+                <th>Administrador</th>
                 <th>Financiamiento</th>
                 <th>Transferido</th>
                 <th>Comprobado</th>
@@ -374,10 +374,7 @@ const Financiadores = () => {
                   id,
                   id_alt,
                   nombre,
-                  id_coparte,
-                  id_responsable,
-                  financiador,
-                  tipo_financiamiento,
+                  administrador,
                   saldo,
                   responsable,
                   coparte,
@@ -390,7 +387,7 @@ const Financiadores = () => {
                     <td>{nombre}</td>
                     <td>{responsable}</td>
                     <td>{coparte}</td>
-                    <td>{tipo_financiamiento}</td>
+                    <td>{administrador}</td>
                     <td>{montoALocaleString(saldo.f_monto_total)}</td>
                     <td>{montoALocaleString(saldo.f_transferido)}</td>
                     <td>{montoALocaleString(saldo.f_comprobado)}</td>

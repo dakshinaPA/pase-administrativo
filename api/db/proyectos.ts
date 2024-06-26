@@ -63,12 +63,14 @@ class ProyectoDB {
       f.nombre financiador,
       c.nombre coparte, c.id_administrador,
       CONCAT(u.nombre, ' ', u.apellido_paterno) responsable,
+      CONCAT(us.nombre, ' ', us.apellido_paterno) administrador,
       ts.nombre tema_social,
       e.nombre estado
       FROM proyectos p
       JOIN financiadores f ON p.id_financiador = f.id
       JOIN copartes c ON p.id_coparte = c.id
       JOIN usuarios u ON p.id_responsable = u.id
+      JOIN usuarios us ON c.id_administrador = us.id
       JOIN temas_sociales ts ON p.id_tema_social = ts.id
       JOIN estados e ON p.id_estado = e.id
       WHERE p.b_activo = 1`

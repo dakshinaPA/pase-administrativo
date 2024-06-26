@@ -137,6 +137,7 @@ export interface Proyecto extends ProyectoMin {
   id_coparte: number
   coparte?: string
   id_administrador?: number
+  administrador?: string
   id_responsable: number
   responsable?: string
   id_tema_social: number
