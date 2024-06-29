@@ -131,7 +131,7 @@ class ProyectosServices {
       }
     }
 
-    const f_por_comprobar = f_transferido - f_comprobado + f_ajuste_acreedores
+    const f_por_comprobar = f_transferido - f_comprobado + f_ajuste_acreedores - f_reintegros
     const f_isr = f_por_comprobar > 0 ? f_por_comprobar * 0.35 : 0
     const f_ejecutado = f_transferido + f_retenciones + f_isr + f_pa - f_reintegros
     const f_remanente = f_monto_total - f_ejecutado
